@@ -1933,7 +1933,11 @@
     border-radius: 8px;
   }
 
-  /* Hide settings button on desktop, show in view-group */
+  /* Show settings dropdown on desktop */
+  .settings-dropdown {
+    display: block;
+  }
+
   .btn-settings {
     display: flex !important;
   }
