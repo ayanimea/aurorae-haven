@@ -81,7 +81,7 @@ describe('Schedule Component', () => {
     render(<Schedule />)
     // Sidebar should render without demo items
     // Demo items "Today's queue" and "Deep Work Warmup" were removed
-    const sidebar = document.querySelector('.schedule-sidebar')
+    const sidebar = document.querySelector('.sidebar')
     expect(sidebar).toBeInTheDocument()
   })
 
