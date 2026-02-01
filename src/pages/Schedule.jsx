@@ -41,10 +41,63 @@ function ScheduleBlock({
   top,
   height,
   isNext = false,
-  onClick
+  onClick,
+  onDoubleClick,
+  onLongPress
 }) {
   const blockClasses = `block ${type} ${className}`.trim()
   const ariaLabel = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${title} at ${time}${isNext ? ' - Next up' : ''}`
+  
+  // Long-press detection for mobile
+  const touchTimerRef = useRef(null)
+  const [touchStartPos, setTouchStartPos] = useState(null)
+
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0]
+    setTouchStartPos({ x: touch.clientX, y: touch.clientY })
+    
+    // Set a timer for long-press (500ms)
+    touchTimerRef.current = setTimeout(() => {
+      if (onLongPress) {
+        e.preventDefault()
+        onLongPress(e)
+      }
+    }, 500)
+  }
+
+  const handleTouchMove = (e) => {
+    // Cancel long-press if finger moves more than 10px
+    if (touchStartPos) {
+      const touch = e.touches[0]
+      const dx = Math.abs(touch.clientX - touchStartPos.x)
+      const dy = Math.abs(touch.clientY - touchStartPos.y)
+      
+      if (dx > 10 || dy > 10) {
+        if (touchTimerRef.current) {
+          clearTimeout(touchTimerRef.current)
+          touchTimerRef.current = null
+        }
+      }
+    }
+  }
+
+  const handleTouchEnd = () => {
+    // Clear the timer if touch ends before long-press threshold
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current)
+      touchTimerRef.current = null
+    }
+    setTouchStartPos(null)
+  }
+
+  useEffect(() => {
+    // Cleanup on unmount
+    return () => {
+      if (touchTimerRef.current) {
+        clearTimeout(touchTimerRef.current)
+      }
+    }
+  }, [])
 
   return (
     <div
@@ -52,6 +105,10 @@ function ScheduleBlock({
       style={{ top: `${top}px`, height: `${height}px` }}
       aria-label={ariaLabel}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      onTouchStart={onLongPress ? handleTouchStart : undefined}
+      onTouchMove={onLongPress ? handleTouchMove : undefined}
+      onTouchEnd={onLongPress ? handleTouchEnd : undefined}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={
@@ -80,7 +137,9 @@ ScheduleBlock.propTypes = {
   top: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
   isNext: PropTypes.bool,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
+  onDoubleClick: PropTypes.func,
+  onLongPress: PropTypes.func
 }
 
 // Reusable component for travel/preparation time blocks
@@ -414,6 +473,9 @@ function Schedule() {
     color: '#86f5e0',
     enabled: true
   })
+
+  // Event details view state
+  const [viewingEvent, setViewingEvent] = useState(null)
 
   // Refs for timeout cleanup and menu items caching
   const tabTimeoutRef = useRef(null)
@@ -825,6 +887,15 @@ function Schedule() {
       logger.error('Failed to clear test data:', error)
       // Error clearing test data
     }
+  }
+
+  // Handle viewing event details (double-click or long-press)
+  const handleViewEventDetails = (event) => {
+    setViewingEvent(event)
+  }
+
+  const handleCloseEventDetails = () => {
+    setViewingEvent(null)
   }
 
   // Generate month calendar grid (6 weeks x 7 days = 42 days)
@@ -1420,6 +1491,8 @@ function Schedule() {
                                 time={`${event.startTime}–${event.endTime}`}
                                 top={eventTop}
                                 height={eventHeight}
+                                onDoubleClick={() => handleViewEventDetails(event)}
+                                onLongPress={() => handleViewEventDetails(event)}
                               />
                             )
                           })}
@@ -1585,6 +1658,8 @@ function Schedule() {
                             id: event.id
                           })
                         }
+                        onDoubleClick={() => handleViewEventDetails(event)}
+                        onLongPress={() => handleViewEventDetails(event)}
                       />
                     )
                     return acc
