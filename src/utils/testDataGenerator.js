@@ -14,7 +14,17 @@ export async function generateTestData() {
   // Generating test data for schedule
   
   const today = dayjs()
-  const startOfWeek = today.startOf('week').add(1, 'day') // Monday
+  
+  // Get Monday of the current week
+  // dayjs weeks start on Sunday (day 0), Monday is day 1
+  let startOfWeek
+  if (today.day() === 0) {
+    // If today is Sunday, go back 6 days to get Monday of current week
+    startOfWeek = today.subtract(6, 'day')
+  } else {
+    // Otherwise, get the Monday of this week
+    startOfWeek = today.startOf('week').add(1, 'day')
+  }
   
   const testEvents = []
   
