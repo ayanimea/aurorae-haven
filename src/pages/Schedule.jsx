@@ -474,9 +474,6 @@ function Schedule() {
     enabled: true
   })
 
-  // Event details view state
-  const [viewingEvent, setViewingEvent] = useState(null)
-
   // Refs for timeout cleanup and menu items caching
   const tabTimeoutRef = useRef(null)
   const autoFocusTimeoutRef = useRef(null)
@@ -891,11 +888,10 @@ function Schedule() {
 
   // Handle viewing event details (double-click or long-press)
   const handleViewEventDetails = (event) => {
-    setViewingEvent(event)
-  }
-
-  const handleCloseEventDetails = () => {
-    setViewingEvent(null)
+    // TODO: Implement event details modal
+    // For now, just log the event
+    // eslint-disable-next-line no-console
+    console.log('View event details:', event)
   }
 
   // Generate month calendar grid (6 weeks x 7 days = 42 days)
