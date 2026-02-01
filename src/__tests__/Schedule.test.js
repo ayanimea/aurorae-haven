@@ -79,8 +79,10 @@ describe('Schedule Component', () => {
 
   test('renders sidebar sections', () => {
     render(<Schedule />)
-    expect(screen.getByText("Today's queue")).toBeInTheDocument()
-    expect(screen.getByText('Deep Work Warmup')).toBeInTheDocument()
+    // Sidebar should render without demo items
+    // Demo items "Today's queue" and "Deep Work Warmup" were removed
+    const sidebar = document.querySelector('.schedule-sidebar')
+    expect(sidebar).toBeInTheDocument()
   })
 
   test('renders time labels for schedule', () => {
