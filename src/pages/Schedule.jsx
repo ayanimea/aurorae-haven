@@ -1266,31 +1266,6 @@ function Schedule() {
                 </div>
               </div>
             )}
-
-            <div className='card' style={{ marginTop: showCalendars ? '12px' : 0 }}>
-              <div className='card-h'>
-                <strong>Today&apos;s queue</strong>
-              </div>
-              <div className='card-b'>
-                <div className='list'>
-                  <div className='list-row'>
-                    <span>Deep Work Warmup</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className='card' style={{ marginTop: '12px' }}>
-              <div className='card-h'>
-                <strong>Tasks</strong>
-              </div>
-              <div className='card-b'>
-                <div className='list'>
-                  <div className='list-row'>
-                    <span>Buy groceries</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </aside>
           <section>
             {viewMode === 'month' ? (
