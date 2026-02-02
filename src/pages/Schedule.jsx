@@ -905,9 +905,7 @@ function Schedule() {
   }
 
   // Handle viewing event details (double-click or long-press)
-  const handleViewEventDetails = (event) => {
-    // TODO: Implement event details modal
-    // For now, just log the event
+  const handleViewEventDetails = () => {
     // TODO: Implement event details modal
     // For now, this is a placeholder for future functionality
   }
