@@ -235,20 +235,21 @@ const generateHourLabels = (show24Hours) => {
 // Helper function to get visual row index for a given hour in 7am-midnight mode
 // Accounts for "Morning", "Afternoon", "Evening" label rows
 const getVisualRowForHour = (hour) => {
-  // Map of hour to visual row index
+  // Map of hour to visual row index in the grid
+  // Note: Hours 8, 12, and 18 are skipped (replaced by period labels)
   const hourToRow = {
     7: 0,   // 07:00
-    8: 1,   // Falls in "Morning" label row
+    // Hour 8 doesn't exist (replaced by "Morning" label at row 1)
     9: 2,   // 09:00
     10: 3,  // 10:00
     11: 4,  // 11:00
-    12: 5,  // Falls in "Afternoon" label row
+    // Hour 12 doesn't exist (replaced by "Afternoon" label at row 5)
     13: 6,  // 13:00
     14: 7,  // 14:00
     15: 8,  // 15:00
     16: 9,  // 16:00
     17: 10, // 17:00
-    18: 11, // Falls in "Evening" label row
+    // Hour 18 doesn't exist (replaced by "Evening" label at row 11)
     19: 12, // 19:00
     20: 13, // 20:00
     21: 14, // 21:00
@@ -297,7 +298,7 @@ const timeToPosition = (timeString, scheduleStartHour = SCHEDULE_START_HOUR, sch
       SCHEDULE_VERTICAL_OFFSET
     )
   } else {
-    // 6am-10pm mode: use visual row mapping to account for label rows
+    // 7am-midnight mode: use visual row mapping to account for label rows
     const visualRow = getVisualRowForHour(hours)
     const minuteOffset = (minutes / MINUTES_PER_HOUR) * pixelsPerHour
     return visualRow * pixelsPerHour + minuteOffset + SCHEDULE_VERTICAL_OFFSET
@@ -435,17 +436,34 @@ function Schedule() {
   // Calculate dynamic slot heights based on hour height
   const slotHeight = show24Hours ? hourHeight * 24 : hourHeight * 18 // 18 visual rows for 7am-midnight with labels
 
-  // Calculate time periods dynamically based on hour height
-  // Rows 0-4 (07:00-11:00): 5 rows for morning
-  // Rows 5-10 (12:00-17:00): 6 rows for afternoon  
-  // Rows 11-17 (18:00-00:00): 7 rows for evening
+  // Calculate time periods based on hour-to-row mapping so background bands align with the grid
+  // Morning: from SCHEDULE_START_HOUR (e.g. 07:00) up to 12:00
+  // Afternoon: from 12:00 up to 18:00
+  // Evening: from 18:00 up to SCHEDULE_END_HOUR (e.g. 00:00)
+  const morningStartRow = getVisualRowForHour(SCHEDULE_START_HOUR)
+  const afternoonStartRow = getVisualRowForHour(13) // 12:00 is skipped, use 13:00 row
+  const eveningStartRow = getVisualRowForHour(19) // 18:00 is skipped, use 19:00 row
+  const endRow = getVisualRowForHour(SCHEDULE_END_HOUR)
+
   const timePeriods = [
-    { className: 'time-period-morning', top: 0, height: hourHeight * 5 },
-    { className: 'time-period-afternoon', top: hourHeight * 5, height: hourHeight * 6 },
-    { className: 'time-period-evening', top: hourHeight * 11, height: hourHeight * 7 }
+    {
+      className: 'time-period-morning',
+      top: hourHeight * morningStartRow,
+      height: hourHeight * (afternoonStartRow - morningStartRow)
+    },
+    {
+      className: 'time-period-afternoon',
+      top: hourHeight * afternoonStartRow,
+      height: hourHeight * (eveningStartRow - afternoonStartRow)
+    },
+    {
+      className: 'time-period-evening',
+      top: hourHeight * eveningStartRow,
+      height: hourHeight * (endRow - eveningStartRow)
+    }
   ]
   
-  // Separator positions after each period label (rows 1, 5, 11)
+  // Separator positions after each period label (rows 1, 5, 11 with 4px visual offset)
   const separatorPositions = [
     hourHeight * 1 + 4, // After "Morning" label (row 1) + 4px visual offset
     hourHeight * 5 + 4, // After "Afternoon" label (row 5) + 4px visual offset
@@ -890,8 +908,8 @@ function Schedule() {
   const handleViewEventDetails = (event) => {
     // TODO: Implement event details modal
     // For now, just log the event
-    // eslint-disable-next-line no-console
-    console.log('View event details:', event)
+    // TODO: Implement event details modal
+    // For now, this is a placeholder for future functionality
   }
 
   // Generate month calendar grid (6 weeks x 7 days = 42 days)
@@ -1475,8 +1493,14 @@ function Schedule() {
                               eventTop = visualRow * pixelsPerHour + minuteOffset + SCHEDULE_VERTICAL_OFFSET
                             }
 
-                            const durationMinutes =
+                            let durationMinutes =
                               (endHour - startHour) * MINUTES_PER_HOUR + (endMinute - startMinute)
+
+                            // Handle events that span midnight by assuming the end time is on the next day
+                            if (durationMinutes <= 0) {
+                              durationMinutes += 24 * MINUTES_PER_HOUR
+                            }
+                            
                             const eventHeight = (durationMinutes / MINUTES_PER_HOUR) * pixelsPerHour
 
                             return (

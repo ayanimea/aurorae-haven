@@ -1739,8 +1739,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-left: 3px solid;
-  /* Match day/week view block styling */
+  /* Match day/week view block styling: 1px border on all sides, 3px left border for color coding */
   border: 1px solid rgba(150, 200, 255, 0.24);
   border-left: 3px solid #86f5e0;
   transition: all 0.2s ease;

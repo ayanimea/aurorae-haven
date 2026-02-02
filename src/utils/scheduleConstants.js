@@ -17,7 +17,7 @@ export const VALID_EVENT_TYPES = Object.values(EVENT_TYPES)
 
 // Schedule time range constants (in hours, 24-hour format)
 export const SCHEDULE_START_HOUR = 7
-export const SCHEDULE_END_HOUR = 24 // Midnight (00:00 next day)
+export const SCHEDULE_END_HOUR = 24 // Exclusive end of day: 24:00 == 00:00 next day. Using 24 (not 0) keeps midnight events at the end of the day's schedule for simpler boundary checks.
 
 // Display constants - each hour occupies 80 pixels in the UI (reduced for better overview)
 export const PIXELS_PER_HOUR = 80

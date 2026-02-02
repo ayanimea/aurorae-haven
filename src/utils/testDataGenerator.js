@@ -19,7 +19,7 @@ export async function generateTestData() {
   // dayjs weeks start on Sunday (day 0), Monday is day 1
   let startOfWeek
   if (today.day() === 0) {
-    // If today is Sunday, go back 6 days to get Monday of current week
+    // If today is Sunday (day 0), subtract 6 days to get this week's Monday (ISO 8601 week starts on Monday)
     startOfWeek = today.subtract(6, 'day')
   } else {
     // Otherwise, get the Monday of this week
