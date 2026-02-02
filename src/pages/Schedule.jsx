@@ -26,7 +26,6 @@ import {
   SCHEDULE_START_HOUR,
   SCHEDULE_END_HOUR,
   PIXELS_PER_HOUR,
-  SCHEDULE_VERTICAL_OFFSET,
   MINUTES_PER_HOUR
 } from '../utils/scheduleConstants'
 
@@ -1578,6 +1577,7 @@ function Schedule() {
                               const endMinuteOffset = (endMinute / MINUTES_PER_HOUR) * pixelsPerHour
                               const expectedEndPosition = endVisualRow * pixelsPerHour + endMinuteOffset
                               
+                              /* eslint-disable no-console */
                               console.log(`📍 Event Position Verification: "${event.title}"`)
                               console.log(`   Start: ${event.startTime} → Row ${visualRow} + ${startMinute}min`)
                               console.log(`   Top: ${expectedTop.toFixed(1)}px`)
@@ -1586,6 +1586,7 @@ function Schedule() {
                               console.log(`   Bottom: ${expectedBottom.toFixed(1)}px`)
                               console.log(`   Expected End Position: ${expectedEndPosition.toFixed(1)}px`)
                               console.log(`   ✓ Alignment: ${Math.abs(expectedBottom - expectedEndPosition) < 1 ? 'PERFECT' : 'OFF BY ' + (expectedBottom - expectedEndPosition).toFixed(1) + 'px'}`)
+                              /* eslint-enable no-console */
                             }
 
                             return (
@@ -1702,11 +1703,13 @@ function Schedule() {
                       const expectedBottom = expectedTop + height
                       const expectedEndPos = endRow * hourHeight + (endM / 60) * hourHeight
                       
+                      /* eslint-disable no-console */
                       console.log(`📍 Day View Event Verification: "${event.title}"`)
                       console.log(`   Start: ${event.startTime} → Row ${startRow} + ${startM}min → ${expectedTop.toFixed(1)}px`)
                       console.log(`   End: ${event.endTime} → Row ${endRow} + ${endM}min → ${expectedEndPos.toFixed(1)}px`)
                       console.log(`   Calculated: Top ${top.toFixed(1)}px + Height ${height.toFixed(1)}px = Bottom ${(top + height).toFixed(1)}px`)
                       console.log(`   ✓ Alignment: ${Math.abs((top + height) - expectedEndPos) < 1 ? 'PERFECT' : 'OFF BY ' + ((top + height) - expectedEndPos).toFixed(1) + 'px'}`)
+                      /* eslint-enable no-console */
                     }
 
                     // Filter out events completely outside schedule range
