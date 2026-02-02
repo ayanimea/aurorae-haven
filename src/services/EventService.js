@@ -8,11 +8,9 @@ import {
   getEventsForDay,
   getEventsForRange,
   updateEvent as updateEventDB,
-  deleteEvent as deleteEventDB,
-  getAll
+  deleteEvent as deleteEventDB
 } from '../utils/scheduleManager'
-import { STORES } from '../utils/indexedDBManager'
-import { deleteById } from '../utils/indexedDBManager'
+import { STORES, getAll, deleteById } from '../utils/indexedDBManager'
 
 /**
  * EventService class - Manages all event data operations
