@@ -44,7 +44,7 @@ export async function generateTestData() {
         endTime: '08:00',
         travelTime: 0,
         preparationTime: 0,
-        isTestData: true
+          isTestData: true
       })
       
       testEvents.push({
@@ -55,7 +55,7 @@ export async function generateTestData() {
         endTime: '09:00',
         travelTime: 0,
         preparationTime: 5,
-        isTestData: true
+          isTestData: true
       })
     }
     
@@ -80,7 +80,7 @@ export async function generateTestData() {
           endTime: '11:30',
           travelTime: 0,
           preparationTime: 5,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Lunch Break',
@@ -90,7 +90,7 @@ export async function generateTestData() {
           endTime: '13:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Sprint Planning',
@@ -100,7 +100,7 @@ export async function generateTestData() {
           endTime: '16:00',
           travelTime: 0,
           preparationTime: 15,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Documentation',
@@ -110,7 +110,7 @@ export async function generateTestData() {
           endTime: '18:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         break
         
@@ -123,7 +123,7 @@ export async function generateTestData() {
           endTime: '11:00',
           travelTime: 15,
           preparationTime: 20,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Feature Development',
@@ -133,7 +133,7 @@ export async function generateTestData() {
           endTime: '12:30',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Lunch with Team',
@@ -143,7 +143,7 @@ export async function generateTestData() {
           endTime: '13:30',
           travelTime: 10,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Bug Fixing',
@@ -153,7 +153,7 @@ export async function generateTestData() {
           endTime: '16:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Design Review',
@@ -163,7 +163,7 @@ export async function generateTestData() {
           endTime: '17:30',
           travelTime: 0,
           preparationTime: 10,
-        isTestData: true
+          isTestData: true
         })
         break
         
@@ -176,7 +176,7 @@ export async function generateTestData() {
           endTime: '12:00',
           travelTime: 0,
           preparationTime: 5,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Lunch Break',
@@ -186,7 +186,7 @@ export async function generateTestData() {
           endTime: '13:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Architecture Discussion',
@@ -196,7 +196,7 @@ export async function generateTestData() {
           endTime: '14:30',
           travelTime: 0,
           preparationTime: 15,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Pair Programming',
@@ -206,7 +206,7 @@ export async function generateTestData() {
           endTime: '17:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Yoga Class',
@@ -216,7 +216,7 @@ export async function generateTestData() {
           endTime: '19:00',
           travelTime: 15,
           preparationTime: 10,
-        isTestData: true
+          isTestData: true
         })
         break
         
@@ -229,7 +229,7 @@ export async function generateTestData() {
           endTime: '09:30',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Feature Implementation',
@@ -239,7 +239,7 @@ export async function generateTestData() {
           endTime: '12:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Team Lunch',
@@ -249,7 +249,7 @@ export async function generateTestData() {
           endTime: '13:00',
           travelTime: 10,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Testing & QA',
@@ -259,7 +259,7 @@ export async function generateTestData() {
           endTime: '15:30',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Weekly All-Hands',
@@ -269,7 +269,7 @@ export async function generateTestData() {
           endTime: '17:00',
           travelTime: 0,
           preparationTime: 5,
-        isTestData: true
+          isTestData: true
         })
         break
         
@@ -282,7 +282,7 @@ export async function generateTestData() {
           endTime: '11:00',
           travelTime: 0,
           preparationTime: 15,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Sprint Demo',
@@ -292,7 +292,7 @@ export async function generateTestData() {
           endTime: '12:00',
           travelTime: 0,
           preparationTime: 20,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Lunch Break',
@@ -302,7 +302,7 @@ export async function generateTestData() {
           endTime: '13:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Sprint Retrospective',
@@ -312,7 +312,7 @@ export async function generateTestData() {
           endTime: '14:30',
           travelTime: 0,
           preparationTime: 10,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Week Wrap-up',
@@ -322,7 +322,7 @@ export async function generateTestData() {
           endTime: '16:30',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Happy Hour',
@@ -332,7 +332,7 @@ export async function generateTestData() {
           endTime: '18:30',
           travelTime: 10,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         break
         
@@ -345,7 +345,7 @@ export async function generateTestData() {
           endTime: '09:30',
           travelTime: 15,
           preparationTime: 10,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Grocery Shopping',
@@ -355,7 +355,7 @@ export async function generateTestData() {
           endTime: '11:30',
           travelTime: 20,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Brunch',
@@ -365,7 +365,7 @@ export async function generateTestData() {
           endTime: '13:30',
           travelTime: 15,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Side Project',
@@ -375,7 +375,7 @@ export async function generateTestData() {
           endTime: '17:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Dinner with Friends',
@@ -385,7 +385,7 @@ export async function generateTestData() {
           endTime: '21:00',
           travelTime: 20,
           preparationTime: 30,
-        isTestData: true
+          isTestData: true
         })
         break
         
@@ -398,7 +398,7 @@ export async function generateTestData() {
           endTime: '09:30',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Reading Time',
@@ -408,7 +408,7 @@ export async function generateTestData() {
           endTime: '12:00',
           travelTime: 0,
           preparationTime: 0,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Family Lunch',
@@ -418,7 +418,7 @@ export async function generateTestData() {
           endTime: '14:00',
           travelTime: 25,
           preparationTime: 15,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Week Planning',
@@ -428,7 +428,7 @@ export async function generateTestData() {
           endTime: '16:30',
           travelTime: 0,
           preparationTime: 5,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Meal Prep',
@@ -438,7 +438,7 @@ export async function generateTestData() {
           endTime: '19:00',
           travelTime: 0,
           preparationTime: 10,
-        isTestData: true
+          isTestData: true
         })
         break
     }

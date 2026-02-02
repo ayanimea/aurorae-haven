@@ -61,7 +61,6 @@ export default [
         MutationObserver: 'readonly',
         process: 'readonly',
         Element: 'readonly',
-        getComputedStyle: 'readonly',
         // remove these if you now import them as modules:
         DOMPurify: 'readonly',
         marked: 'readonly',

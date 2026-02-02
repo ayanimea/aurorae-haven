@@ -47,9 +47,13 @@
   grid-template-rows: repeat(18, var(--hour-height)); /* Responsive hour height - 18 rows for 7am-midnight with labels */
 }
 .hour-col .h {
+  height: var(--hour-height); /* Match grid row height for proper event alignment */
+  box-sizing: border-box; /* Include border in height calculation */
   border-bottom: 1px dashed var(--line);
   padding: 6px 8px;
   color: var(--dim);
+  display: flex;
+  align-items: center; /* Vertically center label text within fixed height */
 }
 .slots {
   position: relative;
