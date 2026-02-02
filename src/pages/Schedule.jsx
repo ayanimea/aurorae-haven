@@ -1693,21 +1693,24 @@ function Schedule() {
                       hourHeight
                     )
 
-                    // Position verification for first valid event only (reduce console noise)
+                    // Comprehensive position verification for ALL events
+                    const [startH, startM] = event.startTime.split(':').map(Number)
+                    const [endH, endM] = event.endTime.split(':').map(Number)
+                    const startRow = getVisualRowForHour(startH)
+                    const endRow = getVisualRowForHour(endH)
+                    const expectedTop = startRow * hourHeight + (startM / 60) * hourHeight
+                    const expectedEndPos = endRow * hourHeight + (endM / 60) * hourHeight
+                    const topOffset = Math.abs(top - expectedTop)
+                    const bottomOffset = Math.abs((top + height) - expectedEndPos)
+                    const isAligned = topOffset < 1 && bottomOffset < 1
+                    
+                    // Log first event only (reduce console noise)
                     if (acc.length === 0) {
-                      const [startH, startM] = event.startTime.split(':').map(Number)
-                      const [endH, endM] = event.endTime.split(':').map(Number)
-                      const startRow = getVisualRowForHour(startH)
-                      const endRow = getVisualRowForHour(endH)
-                      const expectedTop = startRow * hourHeight + (startM / 60) * hourHeight
-                      const expectedEndPos = endRow * hourHeight + (endM / 60) * hourHeight
-                      
                       /* eslint-disable no-console */
-                      console.log(`📍 Day View Event Verification: "${event.title}"`)
-                      console.log(`   Start: ${event.startTime} → Row ${startRow} + ${startM}min → ${expectedTop.toFixed(1)}px`)
-                      console.log(`   End: ${event.endTime} → Row ${endRow} + ${endM}min → ${expectedEndPos.toFixed(1)}px`)
-                      console.log(`   Calculated: Top ${top.toFixed(1)}px + Height ${height.toFixed(1)}px = Bottom ${(top + height).toFixed(1)}px`)
-                      console.log(`   ✓ Alignment: ${Math.abs((top + height) - expectedEndPos) < 1 ? 'PERFECT' : 'OFF BY ' + ((top + height) - expectedEndPos).toFixed(1) + 'px'}`)
+                      console.log(`📍 Day View Verification: "${event.title}"`)
+                      console.log(`   Start: ${event.startTime} → Row ${startRow} → ${expectedTop.toFixed(1)}px (actual: ${top.toFixed(1)}px, offset: ${topOffset.toFixed(2)}px)`)
+                      console.log(`   End: ${event.endTime} → Row ${endRow} → ${expectedEndPos.toFixed(1)}px (actual: ${(top + height).toFixed(1)}px, offset: ${bottomOffset.toFixed(2)}px)`)
+                      console.log(`   ${isAligned ? '✓ PERFECT' : '⚠ MISALIGNED'}`)
                       /* eslint-enable no-console */
                     }
 
