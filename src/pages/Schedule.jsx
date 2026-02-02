@@ -931,9 +931,53 @@ function Schedule() {
   }
 
   // Handle viewing event details (double-click or long-press)
-  const handleViewEventDetails = () => {
-    // Inform users that this feature is not yet available instead of doing nothing
-    alert('Event details are not yet available. This feature is coming soon!')
+  const handleViewEventDetails = (event) => {
+    if (!event) {
+      alert('Event details are not yet available. This feature is coming soon!')
+      return
+    }
+
+    // Format time display
+    const formatTime = (timeStr) => {
+      if (!timeStr) return ''
+      const [hours, minutes] = timeStr.split(':')
+      if (show24Hours) {
+        return `${hours}:${minutes}`
+      }
+      const h = parseInt(hours)
+      const ampm = h >= 12 ? 'PM' : 'AM'
+      const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h
+      return `${displayHour}:${minutes} ${ampm}`
+    }
+
+    // Calculate duration
+    const calculateDuration = (start, end) => {
+      if (!start || !end) return ''
+      const [startH, startM] = start.split(':').map(Number)
+      const [endH, endM] = end.split(':').map(Number)
+      let durationMin = (endH * 60 + endM) - (startH * 60 + startM)
+      if (durationMin <= 0) durationMin += 24 * 60 // Handle midnight
+      const hours = Math.floor(durationMin / 60)
+      const mins = durationMin % 60
+      if (hours > 0 && mins > 0) return `${hours}h ${mins}m`
+      if (hours > 0) return `${hours}h`
+      return `${mins}m`
+    }
+
+    const startTime = formatTime(event.startTime)
+    const endTime = formatTime(event.endTime)
+    const duration = calculateDuration(event.startTime, event.endTime)
+
+    let details = `📅 ${event.title}\n\n`
+    details += `⏰ Time: ${startTime} - ${endTime}\n`
+    if (duration) details += `⏱️  Duration: ${duration}\n`
+    if (event.location) details += `📍 Location: ${event.location}\n`
+    if (event.description) details += `\n📝 ${event.description}\n`
+    if (event.categories && event.categories.length > 0) {
+      details += `\n🏷️  ${event.categories.join(', ')}`
+    }
+
+    alert(details)
   }
 
   // Generate month calendar grid (6 weeks x 7 days = 42 days)
@@ -1535,9 +1579,9 @@ function Schedule() {
                                 time={`${event.startTime}–${event.endTime}`}
                                 top={eventTop}
                                 height={eventHeight}
-                                onClick={handleViewEventDetails}
-                                onDoubleClick={handleViewEventDetails}
-                                onLongPress={handleViewEventDetails}
+                                onClick={() => handleViewEventDetails(event)}
+                                onDoubleClick={() => handleViewEventDetails(event)}
+                                onLongPress={() => handleViewEventDetails(event)}
                               />
                             )
                           })}
@@ -1700,14 +1744,9 @@ function Schedule() {
                         time={`${event.startTime}–${event.endTime}`}
                         top={top}
                         height={height}
-                        onClick={() =>
-                          // Log interaction for debugging (event ID only, no PII)
-                          logger.info('User interacted with schedule event', {
-                            id: event.id
-                          })
-                        }
-                        onDoubleClick={handleViewEventDetails}
-                        onLongPress={handleViewEventDetails}
+                        onClick={() => handleViewEventDetails(event)}
+                        onDoubleClick={() => handleViewEventDetails(event)}
+                        onLongPress={() => handleViewEventDetails(event)}
                       />
                     )
                     return acc
