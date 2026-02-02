@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../components/common/Icon'
 import EventModal from '../components/Schedule/EventModal'
@@ -170,19 +170,6 @@ TimePreparationBlock.propTypes = {
 
 // Static demo blocks removed - use "Generate Test Data" for realistic events
 
-// Get dynamic hour height from CSS custom property
-// Falls back to PIXELS_PER_HOUR constant if CSS variable not available
-const getHourHeight = () => {
-  if (typeof window === 'undefined') return PIXELS_PER_HOUR
-  const rootStyles = getComputedStyle(document.documentElement)
-  const hourHeight = rootStyles.getPropertyValue('--hour-height').trim()
-  if (hourHeight) {
-    const parsed = parseInt(hourHeight, 10)
-    return isNaN(parsed) ? PIXELS_PER_HOUR : parsed
-  }
-  return PIXELS_PER_HOUR
-}
-
 // Get dynamic schedule range based on 24-hour setting
 const getScheduleHours = (show24Hours) => {
   if (show24Hours) {
@@ -298,7 +285,7 @@ const getVisualRowForHour = (hour) => {
 
 // Convert time string (HH:MM) to pixel position
 // Returns -1 if time is invalid or outside schedule range
-const timeToPosition = (timeString, scheduleStartHour = SCHEDULE_START_HOUR, scheduleEndHour = SCHEDULE_END_HOUR, use24HourMode = false) => {
+const timeToPosition = (timeString, scheduleStartHour = SCHEDULE_START_HOUR, scheduleEndHour = SCHEDULE_END_HOUR, use24HourMode = false, hourHeight = PIXELS_PER_HOUR) => {
   // Input validation: check for null, type, and format
   if (
     !timeString ||
@@ -318,7 +305,7 @@ const timeToPosition = (timeString, scheduleStartHour = SCHEDULE_START_HOUR, sch
   // Check if time falls within schedule window
   if (hours < scheduleStartHour || hours >= scheduleEndHour) return -1
 
-  const pixelsPerHour = getHourHeight() // Get dynamic hour height
+  const pixelsPerHour = hourHeight // Use passed hourHeight parameter
 
   // Calculate pixel position from schedule start time
   if (use24HourMode) {
@@ -338,7 +325,7 @@ const timeToPosition = (timeString, scheduleStartHour = SCHEDULE_START_HOUR, sch
 
 // Convert duration in minutes to pixel height
 // Clamps event times to visible schedule window (07:00-00:00) to prevent overflow
-const durationToHeight = (startTime, endTime) => {
+const durationToHeight = (startTime, endTime, hourHeight = PIXELS_PER_HOUR) => {
   // Input validation: check for null, type, and format
   if (
     !startTime ||
@@ -401,7 +388,7 @@ const durationToHeight = (startTime, endTime) => {
     0,
     endTotalMinutes - startTotalMinutes
   )
-  return (visibleDurationMinutes / MINUTES_PER_HOUR) * getHourHeight()
+  return (visibleDurationMinutes / MINUTES_PER_HOUR) * hourHeight // Use passed hourHeight parameter
 }
 
 function Schedule() {
@@ -578,7 +565,7 @@ function Schedule() {
       const minutes = now.getMinutes()
       
       const scheduleHours = getScheduleHours(show24Hours)
-      const pixelsPerHour = getHourHeight() // Get dynamic hour height
+      const pixelsPerHour = hourHeight // Use hourHeight from state
 
       if (hours >= scheduleHours.start && hours < scheduleHours.end) {
         let position
@@ -613,7 +600,7 @@ function Schedule() {
       clearInterval(interval)
       window.removeEventListener('resize', updateCurrentTime)
     }
-  }, [show24Hours, viewMode])
+  }, [show24Hours, viewMode, hourHeight]) // Added hourHeight to dependencies
 
   // Load calendar subscriptions when calendars section is shown
   useEffect(() => {
@@ -1505,7 +1492,7 @@ function Schedule() {
                             const endHour = eventEnd.getHours()
                             const endMinute = eventEnd.getMinutes()
 
-                            const pixelsPerHour = getHourHeight() // Get dynamic hour height
+                            const pixelsPerHour = hourHeight // Use hourHeight from state
                             
                             let eventTop
                             if (show24Hours) {
@@ -1628,10 +1615,11 @@ function Schedule() {
                     const hours = getScheduleHours(show24Hours)
 
                     // Compute layout metrics once per event (performance optimization)
-                    const top = timeToPosition(event.startTime, hours.start, hours.end, show24Hours)
+                    const top = timeToPosition(event.startTime, hours.start, hours.end, show24Hours, hourHeight)
                     const height = durationToHeight(
                       event.startTime,
-                      event.endTime
+                      event.endTime,
+                      hourHeight
                     )
 
                     // Filter out events completely outside schedule range
@@ -1648,10 +1636,11 @@ function Schedule() {
 
                     // Render preparation time block if present
                     if (event.preparationTime && event.preparationTime > 0) {
-                      const prepTop = timeToPosition(prepStartTime, hours.start, hours.end, show24Hours)
+                      const prepTop = timeToPosition(prepStartTime, hours.start, hours.end, show24Hours, hourHeight)
                       const prepHeight = durationToHeight(
                         prepStartTime,
-                        event.startTime
+                        event.startTime,
+                        hourHeight
                       )
 
                       if (prepTop >= 0 && prepHeight > 0) {
@@ -1673,10 +1662,11 @@ function Schedule() {
                         prepStartTime,
                         event.travelTime
                       )
-                      const travelTop = timeToPosition(travelStartTime, hours.start, hours.end, show24Hours)
+                      const travelTop = timeToPosition(travelStartTime, hours.start, hours.end, show24Hours, hourHeight)
                       const travelHeight = durationToHeight(
                         travelStartTime,
-                        prepStartTime
+                        prepStartTime,
+                        hourHeight
                       )
 
                       if (travelTop >= 0 && travelHeight > 0) {
