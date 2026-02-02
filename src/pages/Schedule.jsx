@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import Icon from '../components/common/Icon'
 import EventModal from '../components/Schedule/EventModal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import ItemActionModal from '../components/ItemActionModal'
 import EventService from '../services/EventService'
 import {
   getCalendarSubscriptions,
@@ -1017,14 +1018,31 @@ function Schedule() {
     }
   }
 
-  // Handle viewing event details (double-click or long-press)
-  const handleViewEventDetails = (event) => {
-    if (!event) {
-      alert('Event details are not yet available. This feature is coming soon!')
-      return
+  // Event action modal state (for delete/edit functionality)
+  const [selectedEvent, setSelectedEvent] = useState(null)
+  
+  // Handle event click - show modal on mobile, no-op on desktop (wait for right-click)
+  const handleEventClick = useCallback((e, event) => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768
+    if (isMobile) {
+      e.preventDefault()
+      setSelectedEvent(event)
     }
+  }, [])
 
-    // Format time display
+  // Handle event right-click (context menu on desktop)
+  const handleEventContextMenu = useCallback((e, event) => {
+    e.preventDefault()
+    setSelectedEvent({
+      ...event,
+      isContextMenu: true,
+      contextMenuX: e.clientX,
+      contextMenuY: e.clientY
+    })
+  }, [])
+
+  // Format event content for modal display
+  const formatEventContent = useCallback((event) => {
     const formatTime = (timeStr) => {
       if (!timeStr) return ''
       const [hours, minutes] = timeStr.split(':')
@@ -1037,13 +1055,12 @@ function Schedule() {
       return `${displayHour}:${minutes} ${ampm}`
     }
 
-    // Calculate duration
     const calculateDuration = (start, end) => {
       if (!start || !end) return ''
       const [startH, startM] = start.split(':').map(Number)
       const [endH, endM] = end.split(':').map(Number)
       let durationMin = (endH * 60 + endM) - (startH * 60 + startM)
-      if (durationMin <= 0) durationMin += 24 * 60 // Handle midnight
+      if (durationMin <= 0) durationMin += 24 * 60
       const hours = Math.floor(durationMin / 60)
       const mins = durationMin % 60
       if (hours > 0 && mins > 0) return `${hours}h ${mins}m`
@@ -1055,17 +1072,52 @@ function Schedule() {
     const endTime = formatTime(event.endTime)
     const duration = calculateDuration(event.startTime, event.endTime)
 
-    let details = `📅 ${event.title}\n\n`
-    details += `⏰ Time: ${startTime} - ${endTime}\n`
-    if (duration) details += `⏱️  Duration: ${duration}\n`
-    if (event.location) details += `📍 Location: ${event.location}\n`
-    if (event.description) details += `\n📝 ${event.description}\n`
-    if (event.categories && event.categories.length > 0) {
-      details += `\n🏷️  ${event.categories.join(', ')}`
+    return (
+      <>
+        <p><strong>⏰ Time:</strong> {startTime} - {endTime}</p>
+        {duration && <p><strong>⏱️ Duration:</strong> {duration}</p>}
+        {event.location && <p><strong>📍 Location:</strong> {event.location}</p>}
+        {event.description && <p><strong>📝 Description:</strong> {event.description}</p>}
+        {event.categories && event.categories.length > 0 && (
+          <p><strong>🏷️ Categories:</strong> {event.categories.join(', ')}</p>
+        )}
+        {event.preparationTime > 0 && (
+          <p><strong>🎯 Prep Time:</strong> {event.preparationTime}m</p>
+        )}
+        {event.travelTime > 0 && (
+          <p><strong>🚗 Travel Time:</strong> {event.travelTime}m</p>
+        )}
+      </>
+    )
+  }, [show24Hours])
+
+  // Handle edit event
+  const handleEditEventAction = useCallback((event) => {
+    // TODO: Open edit modal when implemented
+    alert(`Edit functionality coming soon!\n\nEvent: ${event.title}`)
+  }, [])
+
+  // Handle delete event
+  const handleDeleteEventAction = useCallback(async (event) => {
+    const confirmDelete = window.confirm(
+      `Delete this event?\n\n"${event.title}"\n${event.startTime} - ${event.endTime}`
+    )
+    
+    if (!confirmDelete) {
+      return false // Don't close modal
     }
 
-    alert(details)
-  }
+    try {
+      await EventService.deleteEvent(event.id)
+      // Reload events
+      loadEvents()
+      return true // Close modal
+    } catch (error) {
+      logger.error('Failed to delete event:', error)
+      alert('Failed to delete event. Please try again.')
+      return false // Don't close modal
+    }
+  }, [loadEvents])
 
   // Generate month calendar grid (6 weeks x 7 days = 42 days)
   const generateMonthGrid = () => {
@@ -1720,9 +1772,8 @@ function Schedule() {
                                 height={eventHeight}
                                 left={event.columnIndex * (100 / event.columnCount)}
                                 width={100 / event.columnCount}
-                                onClick={() => handleViewEventDetails(event)}
-                                onDoubleClick={() => handleViewEventDetails(event)}
-                                onLongPress={() => handleViewEventDetails(event)}
+                                onClick={(e) => handleEventClick(e, event)}
+                                onContextMenu={(e) => handleEventContextMenu(e, event)}
                               />
                             )
                             
@@ -1896,9 +1947,8 @@ function Schedule() {
                         time={`${event.startTime}–${event.endTime}`}
                         top={top}
                         height={height}
-                        onClick={() => handleViewEventDetails(event)}
-                        onDoubleClick={() => handleViewEventDetails(event)}
-                        onLongPress={() => handleViewEventDetails(event)}
+                        onClick={(e) => handleEventClick(e, event)}
+                        onContextMenu={(e) => handleEventContextMenu(e, event)}
                         left={event.columnIndex * (100 / event.columnCount)}
                         width={100 / event.columnCount}
                       />
@@ -1913,6 +1963,15 @@ function Schedule() {
           </section>
         </div>
       </div>
+
+      {/* Event Action Modal (Delete/Edit) */}
+      <ItemActionModal
+        item={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        onEdit={handleEditEventAction}
+        onDelete={handleDeleteEventAction}
+        formatContent={formatEventContent}
+      />
     </>
   )
 }
