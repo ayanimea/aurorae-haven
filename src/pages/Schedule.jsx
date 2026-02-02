@@ -39,6 +39,8 @@ function ScheduleBlock({
   time,
   top,
   height,
+  left = 0,
+  width = 100,
   isNext = false,
   onClick,
   onDoubleClick,
@@ -101,7 +103,12 @@ function ScheduleBlock({
   return (
     <div
       className={blockClasses}
-      style={{ top: `${top}px`, height: `${height}px` }}
+      style={{ 
+        top: `${top}px`, 
+        height: `${height}px`,
+        left: `${left}%`,
+        width: `${width}%`
+      }}
       aria-label={ariaLabel}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
@@ -135,6 +142,8 @@ ScheduleBlock.propTypes = {
   time: PropTypes.string.isRequired,
   top: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
+  left: PropTypes.number,
+  width: PropTypes.number,
   isNext: PropTypes.bool,
   onClick: PropTypes.func,
   onDoubleClick: PropTypes.func,
@@ -387,6 +396,96 @@ const durationToHeight = (startTime, endTime, hourHeight = PIXELS_PER_HOUR) => {
     endTotalMinutes - startTotalMinutes
   )
   return (visibleDurationMinutes / MINUTES_PER_HOUR) * hourHeight // Use passed hourHeight parameter
+}
+
+// Helper: Convert time string to minutes since midnight
+const timeToMinutes = (timeStr) => {
+  const [hours, minutes] = timeStr.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+// Helper: Check if two events overlap
+const eventsOverlap = (event1, event2) => {
+  const start1 = timeToMinutes(event1.startTime)
+  const end1 = timeToMinutes(event1.endTime)
+  const start2 = timeToMinutes(event2.startTime)
+  const end2 = timeToMinutes(event2.endTime)
+  
+  // Handle midnight-spanning events
+  const adjustedEnd1 = end1 <= start1 ? end1 + 1440 : end1
+  const adjustedEnd2 = end2 <= start2 ? end2 + 1440 : end2
+  
+  // Events overlap if one starts before the other ends
+  return start1 < adjustedEnd2 && start2 < adjustedEnd1
+}
+
+// Assign column layout for overlapping events
+const assignColumns = (events) => {
+  if (events.length === 0) return events
+  
+  // Sort by start time, then by duration (longer events first)
+  const sorted = [...events].sort((a, b) => {
+    const startDiff = timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+    if (startDiff !== 0) return startDiff
+    
+    // If same start time, longer event first
+    const durA = timeToMinutes(a.endTime) - timeToMinutes(a.startTime)
+    const durB = timeToMinutes(b.endTime) - timeToMinutes(b.startTime)
+    return durB - durA
+  })
+  
+  // Find all overlap groups
+  const groups = []
+  for (const event of sorted) {
+    let placed = false
+    
+    // Try to add to existing group
+    for (const group of groups) {
+      if (group.some(e => eventsOverlap(e, event))) {
+        group.push(event)
+        placed = true
+        break
+      }
+    }
+    
+    // Create new group if no overlap
+    if (!placed) {
+      groups.push([event])
+    }
+  }
+  
+  // Assign columns within each group
+  return sorted.map(event => {
+    // Find which group this event belongs to
+    const group = groups.find(g => g.includes(event))
+    if (!group || group.length === 1) {
+      return { ...event, columnIndex: 0, columnCount: 1 }
+    }
+    
+    // Find column for this event (greedy algorithm)
+    const columns = []
+    for (const groupEvent of group) {
+      if (groupEvent === event) {
+        // Find first available column
+        let column = 0
+        while (columns[column] && eventsOverlap(columns[column], event)) {
+          column++
+        }
+        columns[column] = event
+        return { ...event, columnIndex: column, columnCount: group.length }
+      } else {
+        // Track occupied columns
+        let col = 0
+        while (columns[col]) {
+          if (!eventsOverlap(columns[col], groupEvent)) break
+          col++
+        }
+        if (!columns[col]) columns[col] = groupEvent
+      }
+    }
+    
+    return { ...event, columnIndex: 0, columnCount: 1 }
+  })
 }
 
 function Schedule() {
@@ -1532,7 +1631,11 @@ function Schedule() {
                           )}
                           
                           {/* Events for this day */}
-                          {day.events.map((event, eventIndex) => {
+                          {(() => {
+                            // Assign columns for overlapping events
+                            const eventsWithColumns = assignColumns(day.events)
+                            
+                            return eventsWithColumns.map((event, eventIndex) => {
                             const hours = getScheduleHours(show24Hours)
                             const eventStart = new Date(`2000-01-01T${event.startTime}`)
                             const eventEnd = new Date(`2000-01-01T${event.endTime}`)
@@ -1597,12 +1700,15 @@ function Schedule() {
                                 time={`${event.startTime}–${event.endTime}`}
                                 top={eventTop}
                                 height={eventHeight}
+                                left={event.columnIndex * (100 / event.columnCount)}
+                                width={100 / event.columnCount}
                                 onClick={() => handleViewEventDetails(event)}
                                 onDoubleClick={() => handleViewEventDetails(event)}
                                 onLongPress={() => handleViewEventDetails(event)}
                               />
                             )
-                          })}
+                          })
+                          })()}
                         </div>
                       </div>
                     ))}
@@ -1664,7 +1770,11 @@ function Schedule() {
                   {/* Dynamic events from database */}
                   {/* Note: User event interactions are logged (event ID only) for debugging purposes.
                        See PRIVACY.md for detailed information about our logging practices and data handling. */}
-                  {events.reduce((acc, event) => {
+                  {(() => {
+                    // Assign columns for overlapping events
+                    const eventsWithColumns = assignColumns(events)
+                    
+                    return eventsWithColumns.reduce((acc, event) => {
                     // Filter out invalid events with proper ID validation
                     // Allow ID >= 0 (0 can be valid in some database systems)
                     const hasValidId =
@@ -1786,10 +1896,13 @@ function Schedule() {
                         onClick={() => handleViewEventDetails(event)}
                         onDoubleClick={() => handleViewEventDetails(event)}
                         onLongPress={() => handleViewEventDetails(event)}
+                        left={event.columnIndex * (100 / event.columnCount)}
+                        width={100 / event.columnCount}
                       />
                     )
                     return acc
-                  }, [])}
+                  }, [])
+                  })()}
                 </div>
               </div>
             </div>
