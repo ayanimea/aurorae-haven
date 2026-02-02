@@ -3,13 +3,7 @@ import PropTypes from 'prop-types'
 import Icon from '../components/common/Icon'
 import EventModal from '../components/Schedule/EventModal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
-import {
-  createEvent,
-  deleteEvent,
-  getEventsForDay,
-  getEventsForWeek,
-  getEventsForRange
-} from '../utils/scheduleManager'
+import EventService from '../services/EventService'
 import {
   getCalendarSubscriptions,
   addCalendarSubscription,
@@ -630,19 +624,17 @@ function Schedule() {
     try {
       let loadedEvents
       if (viewMode === 'day') {
-        loadedEvents = await getEventsForDay(selectedDate.format('YYYY-MM-DD'))
+        loadedEvents = await EventService.getEventsForDate(selectedDate.format('YYYY-MM-DD'))
       } else if (viewMode === '3days') {
         // Load events for 3 consecutive days starting from selectedDate
-        const startDate = selectedDate.format('YYYY-MM-DD')
-        const endDate = selectedDate.add(2, 'day').format('YYYY-MM-DD')
-        loadedEvents = await getEventsForRange(startDate, endDate)
+        loadedEvents = await EventService.getEventsForDays(selectedDate.format('YYYY-MM-DD'), 3)
       } else if (viewMode === 'week') {
-        loadedEvents = await getEventsForWeek()
+        loadedEvents = await EventService.getEventsForWeek(selectedDate.format('YYYY-MM-DD'))
       } else if (viewMode === 'month') {
         // Get first and last day of the month view (includes prev/next month days)
         const startOfMonth = selectedDate.startOf('month').startOf('week')
         const endOfMonth = selectedDate.endOf('month').endOf('week')
-        loadedEvents = await getEventsForRange(
+        loadedEvents = await EventService.getEventsForRange(
           startOfMonth.format('YYYY-MM-DD'),
           endOfMonth.format('YYYY-MM-DD')
         )
@@ -869,12 +861,12 @@ function Schedule() {
   // Handle saving event
   const handleSaveEvent = async (eventData) => {
     try {
-      await createEvent(eventData)
+      await EventService.createEvent(eventData)
       // Reload events after creating new one, keeping the current view/date
       const loadedEvents =
         viewMode === 'day'
-          ? await getEventsForDay(selectedDate.format('YYYY-MM-DD'))
-          : await getEventsForWeek()
+          ? await EventService.getEventsForDate(selectedDate.format('YYYY-MM-DD'))
+          : await EventService.getEventsForWeek(selectedDate.format('YYYY-MM-DD'))
       // Ensure loadedEvents is always an array
       setEvents(Array.isArray(loadedEvents) ? loadedEvents : [])
       logger.log(`${eventData.type} event created successfully`)
@@ -1004,14 +996,10 @@ function Schedule() {
 
   const handleClearTestData = async () => {
     try {
-      // Delete all test data events from database
-      const testEvents = events.filter(event => event.isTestData)
+      // Delete all test data events from database using EventService
+      const deletedCount = await EventService.clearTestData()
       
-      for (const event of testEvents) {
-        await deleteEvent(event.id)
-      }
-      
-      logger.info(`Cleared ${testEvents.length} test events`)
+      logger.info(`Cleared ${deletedCount} test events`)
       
       // Reload events
       await loadEvents()
