@@ -1693,14 +1693,13 @@ function Schedule() {
                       hourHeight
                     )
 
-                    // Position verification for first event only (reduce console noise)
-                    if (index === 0 && dayEvents.length > 0) {
+                    // Position verification for first valid event only (reduce console noise)
+                    if (acc.length === 0) {
                       const [startH, startM] = event.startTime.split(':').map(Number)
                       const [endH, endM] = event.endTime.split(':').map(Number)
                       const startRow = getVisualRowForHour(startH)
                       const endRow = getVisualRowForHour(endH)
                       const expectedTop = startRow * hourHeight + (startM / 60) * hourHeight
-                      const expectedBottom = expectedTop + height
                       const expectedEndPos = endRow * hourHeight + (endM / 60) * hourHeight
                       
                       /* eslint-disable no-console */
