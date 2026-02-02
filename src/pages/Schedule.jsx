@@ -312,14 +312,13 @@ const timeToPosition = (timeString, scheduleStartHour = SCHEDULE_START_HOUR, sch
     // 24-hour mode: direct calculation, no label rows
     return (
       (hours - scheduleStartHour) * pixelsPerHour +
-      (minutes / MINUTES_PER_HOUR) * pixelsPerHour +
-      SCHEDULE_VERTICAL_OFFSET
+      (minutes / MINUTES_PER_HOUR) * pixelsPerHour
     )
   } else {
     // 7am-midnight mode: use visual row mapping to account for label rows
     const visualRow = getVisualRowForHour(hours)
     const minuteOffset = (minutes / MINUTES_PER_HOUR) * pixelsPerHour
-    return visualRow * pixelsPerHour + minuteOffset + SCHEDULE_VERTICAL_OFFSET
+    return visualRow * pixelsPerHour + minuteOffset
   }
 }
 
@@ -581,13 +580,12 @@ function Schedule() {
           // 24-hour mode: direct calculation
           position =
             (hours - scheduleHours.start) * pixelsPerHour +
-            (minutes / MINUTES_PER_HOUR) * pixelsPerHour +
-            SCHEDULE_VERTICAL_OFFSET
+            (minutes / MINUTES_PER_HOUR) * pixelsPerHour
         } else {
           // 7am-midnight mode: use visual row mapping
           const visualRow = getVisualRowForHour(hours)
           const minuteOffset = (minutes / MINUTES_PER_HOUR) * pixelsPerHour
-          position = visualRow * pixelsPerHour + minuteOffset + SCHEDULE_VERTICAL_OFFSET
+          position = visualRow * pixelsPerHour + minuteOffset
         }
         
         // No scaling needed - hour heights are now calculated dynamically
@@ -1551,14 +1549,13 @@ function Schedule() {
                               // 24-hour mode: direct calculation, no label rows
                               eventTop =
                                 (startHour - hours.start) * pixelsPerHour +
-                                (startMinute / MINUTES_PER_HOUR) * pixelsPerHour +
-                                SCHEDULE_VERTICAL_OFFSET
+                                (startMinute / MINUTES_PER_HOUR) * pixelsPerHour
                             } else {
                               // 7am-midnight mode: use visual row mapping to account for label rows
                               const visualRow = getVisualRowForHour(startHour)
                               // Calculate position within the hour based on minutes
                               const minuteOffset = (startMinute / MINUTES_PER_HOUR) * pixelsPerHour
-                              eventTop = visualRow * pixelsPerHour + minuteOffset + SCHEDULE_VERTICAL_OFFSET
+                              eventTop = visualRow * pixelsPerHour + minuteOffset
                             }
 
                             let durationMinutes =
