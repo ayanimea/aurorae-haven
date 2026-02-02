@@ -463,30 +463,36 @@ function Schedule() {
   const eveningStartRow = getVisualRowForHour(19) // 18:00 is skipped, use 19:00 row
   const endRow = getVisualRowForHour(SCHEDULE_END_HOUR)
 
-  const timePeriods = [
-    {
-      className: 'time-period-morning',
-      top: hourHeight * morningStartRow,
-      height: hourHeight * (afternoonStartRow - morningStartRow)
-    },
-    {
-      className: 'time-period-afternoon',
-      top: hourHeight * afternoonStartRow,
-      height: hourHeight * (eveningStartRow - afternoonStartRow)
-    },
-    {
-      className: 'time-period-evening',
-      top: hourHeight * eveningStartRow,
-      height: hourHeight * (endRow - eveningStartRow)
-    }
-  ]
+  const timePeriods = useMemo(
+    () => [
+      {
+        className: 'time-period-morning',
+        top: hourHeight * morningStartRow,
+        height: hourHeight * (afternoonStartRow - morningStartRow)
+      },
+      {
+        className: 'time-period-afternoon',
+        top: hourHeight * afternoonStartRow,
+        height: hourHeight * (eveningStartRow - afternoonStartRow)
+      },
+      {
+        className: 'time-period-evening',
+        top: hourHeight * eveningStartRow,
+        height: hourHeight * (endRow - eveningStartRow)
+      }
+    ],
+    [hourHeight, morningStartRow, afternoonStartRow, eveningStartRow, endRow]
+  )
   
   // Separator positions after each period label (rows 1, 5, 11 with 4px visual offset)
-  const separatorPositions = [
-    hourHeight * 1 + 4, // After "Morning" label (row 1) + 4px visual offset
-    hourHeight * 5 + 4, // After "Afternoon" label (row 5) + 4px visual offset
-    hourHeight * 11 + 4 // After "Evening" label (row 11) + 4px visual offset
-  ]
+  const separatorPositions = useMemo(
+    () => [
+      hourHeight * 1 + 4, // After "Morning" label (row 1) + 4px visual offset
+      hourHeight * 5 + 4, // After "Afternoon" label (row 5) + 4px visual offset
+      hourHeight * 11 + 4 // After "Evening" label (row 11) + 4px visual offset
+    ],
+    [hourHeight]
+  )
 
   // Dropdown state for event type selector
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -924,8 +930,8 @@ function Schedule() {
 
   // Handle viewing event details (double-click or long-press)
   const handleViewEventDetails = () => {
-    // TODO: Implement event details modal
-    // For now, this is a placeholder for future functionality
+    // Inform users that this feature is not yet available instead of doing nothing
+    alert('Event details are not yet available. This feature is coming soon!')
   }
 
   // Generate month calendar grid (6 weeks x 7 days = 42 days)
