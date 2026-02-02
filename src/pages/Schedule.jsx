@@ -1571,6 +1571,26 @@ function Schedule() {
                             
                             const eventHeight = (durationMinutes / MINUTES_PER_HOUR) * pixelsPerHour
 
+                            // Position verification logging
+                            if (eventIndex === 0) {
+                              const visualRow = getVisualRowForHour(startHour)
+                              const endVisualRow = getVisualRowForHour(endHour)
+                              const minuteOffset = (startMinute / MINUTES_PER_HOUR) * pixelsPerHour
+                              const expectedTop = visualRow * pixelsPerHour + minuteOffset
+                              const expectedBottom = expectedTop + eventHeight
+                              const endMinuteOffset = (endMinute / MINUTES_PER_HOUR) * pixelsPerHour
+                              const expectedEndPosition = endVisualRow * pixelsPerHour + endMinuteOffset
+                              
+                              console.log(`📍 Event Position Verification: "${event.title}"`)
+                              console.log(`   Start: ${event.startTime} → Row ${visualRow} + ${startMinute}min`)
+                              console.log(`   Top: ${expectedTop.toFixed(1)}px`)
+                              console.log(`   End: ${event.endTime} → Row ${endVisualRow} + ${endMinute}min`)
+                              console.log(`   Height: ${eventHeight.toFixed(1)}px`)
+                              console.log(`   Bottom: ${expectedBottom.toFixed(1)}px`)
+                              console.log(`   Expected End Position: ${expectedEndPosition.toFixed(1)}px`)
+                              console.log(`   ✓ Alignment: ${Math.abs(expectedBottom - expectedEndPosition) < 1 ? 'PERFECT' : 'OFF BY ' + (expectedBottom - expectedEndPosition).toFixed(1) + 'px'}`)
+                            }
+
                             return (
                               <ScheduleBlock
                                 key={eventIndex}
@@ -1674,6 +1694,23 @@ function Schedule() {
                       event.endTime,
                       hourHeight
                     )
+
+                    // Position verification for first event only (reduce console noise)
+                    if (index === 0 && dayEvents.length > 0) {
+                      const [startH, startM] = event.startTime.split(':').map(Number)
+                      const [endH, endM] = event.endTime.split(':').map(Number)
+                      const startRow = getVisualRowForHour(startH)
+                      const endRow = getVisualRowForHour(endH)
+                      const expectedTop = startRow * hourHeight + (startM / 60) * hourHeight
+                      const expectedBottom = expectedTop + height
+                      const expectedEndPos = endRow * hourHeight + (endM / 60) * hourHeight
+                      
+                      console.log(`📍 Day View Event Verification: "${event.title}"`)
+                      console.log(`   Start: ${event.startTime} → Row ${startRow} + ${startM}min → ${expectedTop.toFixed(1)}px`)
+                      console.log(`   End: ${event.endTime} → Row ${endRow} + ${endM}min → ${expectedEndPos.toFixed(1)}px`)
+                      console.log(`   Calculated: Top ${top.toFixed(1)}px + Height ${height.toFixed(1)}px = Bottom ${(top + height).toFixed(1)}px`)
+                      console.log(`   ✓ Alignment: ${Math.abs((top + height) - expectedEndPos) < 1 ? 'PERFECT' : 'OFF BY ' + ((top + height) - expectedEndPos).toFixed(1) + 'px'}`)
+                    }
 
                     // Filter out events completely outside schedule range
                     if (top < 0 || height <= 0) {
