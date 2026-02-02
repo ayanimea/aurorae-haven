@@ -273,14 +273,16 @@
   word-break: break-word;
 }
 .block .meta {
-  display: none; /* Hide time display - click event to see details */
-  font-size: 0.75rem;
-  color: var(--dim);
-  line-height: 1.2;
-  margin-top: auto; /* Push to bottom if space available */
+  /* Visually hidden but accessible to screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+  border-width: 0;
 }
 
 /* Preparation and travel time blocks */

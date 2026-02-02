@@ -226,27 +226,30 @@ const generateHourLabels = (show24Hours) => {
 const getVisualRowForHour = (hour) => {
   // Map of hour to visual row index in the grid
   // Note: Hours 8, 12, and 18 are skipped (replaced by period labels)
-  const hourToRow = {
-    7: 0,   // 07:00
-    // Hour 8 doesn't exist (replaced by "Morning" label at row 1)
-    9: 2,   // 09:00
-    10: 3,  // 10:00
-    11: 4,  // 11:00
-    // Hour 12 doesn't exist (replaced by "Afternoon" label at row 5)
-    13: 6,  // 13:00
-    14: 7,  // 14:00
-    15: 8,  // 15:00
-    16: 9,  // 16:00
-    17: 10, // 17:00
-    // Hour 18 doesn't exist (replaced by "Evening" label at row 11)
-    19: 12, // 19:00
-    20: 13, // 20:00
-    21: 14, // 21:00
-    22: 15, // 22:00
-    23: 16, // 23:00
-    0: 17,  // 00:00 (midnight)
-    24: 17  // 24:00 (also midnight)
-  }
+  // Generate hourToRow mapping dynamically based on schedule configuration
+  // This ensures consistency with generateHourLabels() and maintains single source of truth
+  const hourToRow = (() => {
+    const mapping = {}
+    const labelHours = new Set([8, 12, 18]) // Hours with period labels instead of hour numbers
+    let rowIndex = 0
+
+    // Build mapping for hours 7-23
+    for (let h = SCHEDULE_START_HOUR; h <= 23; h++) {
+      if (labelHours.has(h)) {
+        // This row is occupied by a period label (Morning/Afternoon/Evening)
+        rowIndex++
+      } else {
+        mapping[h] = rowIndex
+        rowIndex++
+      }
+    }
+
+    // Midnight (00:00 and 24:00) share the final row
+    mapping[0] = rowIndex
+    mapping[24] = rowIndex
+
+    return mapping
+  })()
   
   // Direct mapping when available
   const baseRow = hourToRow[hour]
@@ -1658,29 +1661,56 @@ function Schedule() {
                             
                             const eventHeight = (durationMinutes / MINUTES_PER_HOUR) * pixelsPerHour
 
-                            // Position verification logging
-                            if (eventIndex === 0) {
-                              const visualRow = getVisualRowForHour(startHour)
-                              const endVisualRow = getVisualRowForHour(endHour)
-                              const minuteOffset = (startMinute / MINUTES_PER_HOUR) * pixelsPerHour
-                              const expectedTop = visualRow * pixelsPerHour + minuteOffset
-                              const expectedBottom = expectedTop + eventHeight
-                              const endMinuteOffset = (endMinute / MINUTES_PER_HOUR) * pixelsPerHour
-                              const expectedEndPosition = endVisualRow * pixelsPerHour + endMinuteOffset
+                            // Render prep/travel blocks before event (in same column)
+                            const blocks = []
+                            
+                            // Preparation time block
+                            if (event.preparationTime && event.preparationTime > 0) {
+                              const prepStartTime = subtractDuration(event.startTime, event.preparationTime)
+                              const prepTop = timeToPosition(prepStartTime, hours.start, hours.end, show24Hours, pixelsPerHour)
+                              const prepHeight = durationToHeight(prepStartTime, event.startTime, pixelsPerHour)
                               
-                              /* eslint-disable no-console */
-                              console.log(`📍 Event Position Verification: "${event.title}"`)
-                              console.log(`   Start: ${event.startTime} → Row ${visualRow} + ${startMinute}min`)
-                              console.log(`   Top: ${expectedTop.toFixed(1)}px`)
-                              console.log(`   End: ${event.endTime} → Row ${endVisualRow} + ${endMinute}min`)
-                              console.log(`   Height: ${eventHeight.toFixed(1)}px`)
-                              console.log(`   Bottom: ${expectedBottom.toFixed(1)}px`)
-                              console.log(`   Expected End Position: ${expectedEndPosition.toFixed(1)}px`)
-                              console.log(`   ✓ Alignment: ${Math.abs(expectedBottom - expectedEndPosition) < 1 ? 'PERFECT' : 'OFF BY ' + (expectedBottom - expectedEndPosition).toFixed(1) + 'px'}`)
-                              /* eslint-enable no-console */
+                              if (prepTop >= 0 && prepHeight > 0) {
+                                blocks.push(
+                                  <ScheduleBlock
+                                    key={`prep-${event.id}`}
+                                    type="preparation"
+                                    time={`${event.preparationTime}m prep`}
+                                    top={prepTop}
+                                    height={prepHeight}
+                                    left={event.columnIndex * (100 / event.columnCount)}
+                                    width={100 / event.columnCount}
+                                  />
+                                )
+                              }
                             }
-
-                            return (
+                            
+                            // Travel time block
+                            if (event.travelTime && event.travelTime > 0) {
+                              const travelStartTime = subtractDuration(
+                                subtractDuration(event.startTime, event.preparationTime || 0),
+                                event.travelTime
+                              )
+                              const travelTop = timeToPosition(travelStartTime, hours.start, hours.end, show24Hours, pixelsPerHour)
+                              const travelHeight = durationToHeight(travelStartTime, subtractDuration(event.startTime, event.preparationTime || 0), pixelsPerHour)
+                              
+                              if (travelTop >= 0 && travelHeight > 0) {
+                                blocks.push(
+                                  <ScheduleBlock
+                                    key={`travel-${event.id}`}
+                                    type="travel"
+                                    time={`${event.travelTime}m travel`}
+                                    top={travelTop}
+                                    height={travelHeight}
+                                    left={event.columnIndex * (100 / event.columnCount)}
+                                    width={100 / event.columnCount}
+                                  />
+                                )
+                              }
+                            }
+                            
+                            // Main event block
+                            blocks.push(
                               <ScheduleBlock
                                 key={eventIndex}
                                 type={event.type}
@@ -1695,6 +1725,8 @@ function Schedule() {
                                 onLongPress={() => handleViewEventDetails(event)}
                               />
                             )
+                            
+                            return blocks
                           })
                           })()}
                         </div>
@@ -1791,27 +1823,6 @@ function Schedule() {
                       hourHeight
                     )
 
-                    // Comprehensive position verification for ALL events
-                    const [startH, startM] = event.startTime.split(':').map(Number)
-                    const [endH, endM] = event.endTime.split(':').map(Number)
-                    const startRow = getVisualRowForHour(startH)
-                    const endRow = getVisualRowForHour(endH)
-                    const expectedTop = startRow * hourHeight + (startM / 60) * hourHeight
-                    const expectedEndPos = endRow * hourHeight + (endM / 60) * hourHeight
-                    const topOffset = Math.abs(top - expectedTop)
-                    const bottomOffset = Math.abs((top + height) - expectedEndPos)
-                    const isAligned = topOffset < 1 && bottomOffset < 1
-                    
-                    // Log first event only (reduce console noise)
-                    if (acc.length === 0) {
-                      /* eslint-disable no-console */
-                      console.log(`📍 Day View Verification: "${event.title}"`)
-                      console.log(`   Start: ${event.startTime} → Row ${startRow} → ${expectedTop.toFixed(1)}px (actual: ${top.toFixed(1)}px, offset: ${topOffset.toFixed(2)}px)`)
-                      console.log(`   End: ${event.endTime} → Row ${endRow} → ${expectedEndPos.toFixed(1)}px (actual: ${(top + height).toFixed(1)}px, offset: ${bottomOffset.toFixed(2)}px)`)
-                      console.log(`   ${isAligned ? '✓ PERFECT' : '⚠ MISALIGNED'}`)
-                      /* eslint-enable no-console */
-                    }
-
                     // Filter out events completely outside schedule range
                     if (top < 0 || height <= 0) {
                       return acc
@@ -1835,12 +1846,14 @@ function Schedule() {
 
                       if (prepTop >= 0 && prepHeight > 0) {
                         acc.push(
-                          <TimePreparationBlock
+                          <ScheduleBlock
                             key={`prep-${event.id}`}
                             type='preparation'
                             top={prepTop}
                             height={prepHeight}
-                            time={`${event.preparationTime}m`}
+                            time={`${event.preparationTime}m prep`}
+                            left={event.columnIndex * (100 / event.columnCount)}
+                            width={100 / event.columnCount}
                           />
                         )
                       }
@@ -1861,12 +1874,14 @@ function Schedule() {
 
                       if (travelTop >= 0 && travelHeight > 0) {
                         acc.push(
-                          <TimePreparationBlock
+                          <ScheduleBlock
                             key={`travel-${event.id}`}
                             type='travel'
                             top={travelTop}
                             height={travelHeight}
-                            time={`${event.travelTime}m`}
+                            time={`${event.travelTime}m travel`}
+                            left={event.columnIndex * (100 / event.columnCount)}
+                            width={100 / event.columnCount}
                           />
                         )
                       }
