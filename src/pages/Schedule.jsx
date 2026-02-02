@@ -458,30 +458,32 @@ function Schedule() {
   // Morning: from SCHEDULE_START_HOUR (e.g. 07:00) up to 12:00
   // Afternoon: from 12:00 up to 18:00
   // Evening: from 18:00 up to SCHEDULE_END_HOUR (e.g. 00:00)
-  const morningStartRow = getVisualRowForHour(SCHEDULE_START_HOUR)
-  const afternoonStartRow = getVisualRowForHour(13) // 12:00 is skipped, use 13:00 row
-  const eveningStartRow = getVisualRowForHour(19) // 18:00 is skipped, use 19:00 row
-  const endRow = getVisualRowForHour(SCHEDULE_END_HOUR)
-
   const timePeriods = useMemo(
-    () => [
-      {
-        className: 'time-period-morning',
-        top: hourHeight * morningStartRow,
-        height: hourHeight * (afternoonStartRow - morningStartRow)
-      },
-      {
-        className: 'time-period-afternoon',
-        top: hourHeight * afternoonStartRow,
-        height: hourHeight * (eveningStartRow - afternoonStartRow)
-      },
-      {
-        className: 'time-period-evening',
-        top: hourHeight * eveningStartRow,
-        height: hourHeight * (endRow - eveningStartRow)
-      }
-    ],
-    [hourHeight, morningStartRow, afternoonStartRow, eveningStartRow, endRow]
+    () => {
+      const morningStartRow = getVisualRowForHour(SCHEDULE_START_HOUR)
+      const afternoonStartRow = getVisualRowForHour(13) // 12:00 is skipped, use 13:00 row
+      const eveningStartRow = getVisualRowForHour(19) // 18:00 is skipped, use 19:00 row
+      const endRow = getVisualRowForHour(SCHEDULE_END_HOUR)
+
+      return [
+        {
+          className: 'time-period-morning',
+          top: hourHeight * morningStartRow,
+          height: hourHeight * (afternoonStartRow - morningStartRow)
+        },
+        {
+          className: 'time-period-afternoon',
+          top: hourHeight * afternoonStartRow,
+          height: hourHeight * (eveningStartRow - afternoonStartRow)
+        },
+        {
+          className: 'time-period-evening',
+          top: hourHeight * eveningStartRow,
+          height: hourHeight * (endRow - eveningStartRow)
+        }
+      ]
+    },
+    [hourHeight]
   )
   
   // Separator positions after each period label (rows 1, 5, 11 with 4px visual offset)
@@ -1533,6 +1535,7 @@ function Schedule() {
                                 time={`${event.startTime}–${event.endTime}`}
                                 top={eventTop}
                                 height={eventHeight}
+                                onClick={handleViewEventDetails}
                                 onDoubleClick={handleViewEventDetails}
                                 onLongPress={handleViewEventDetails}
                               />

@@ -70,7 +70,7 @@ export async function generateTestData() {
           endTime: '09:30',
           travelTime: 0,
           preparationTime: 10,
-        isTestData: true
+          isTestData: true
         })
         testEvents.push({
           title: 'Code Review',
