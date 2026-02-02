@@ -17,11 +17,17 @@ jest.mock('../components/Schedule/EventModal', () => {
   }
 })
 
-// Mock scheduleManager functions
-jest.mock('../utils/scheduleManager', () => ({
-  createEvent: jest.fn(),
-  getEventsForDay: jest.fn().mockResolvedValue([]),
-  getEventsForWeek: jest.fn().mockResolvedValue([])
+// Mock EventService
+jest.mock('../services/EventService', () => ({
+  __esModule: true,
+  default: {
+    getEventsForDate: jest.fn().mockResolvedValue([]),
+    getEventsForWeek: jest.fn().mockResolvedValue([]),
+    getEventsForRange: jest.fn().mockResolvedValue([]),
+    getEventsForDays: jest.fn().mockResolvedValue([]),
+    createEvent: jest.fn(),
+    clearTestData: jest.fn().mockResolvedValue(0)
+  }
 }))
 
 // Mock logger
@@ -40,20 +46,18 @@ jest.mock('../utils/timeUtils', () => ({
 }))
 
 describe('Schedule Component', () => {
-  const mockGetEventsForDay =
-    require('../utils/scheduleManager').getEventsForDay
-  const mockGetEventsForWeek =
-    require('../utils/scheduleManager').getEventsForWeek
+  const EventService = require('../services/EventService').default
 
   beforeEach(() => {
     // Mock Date to return a consistent time for testing
     jest.useFakeTimers()
     jest.setSystemTime(new Date('2025-09-16T09:15:00'))
-    // Reset mocks
-    mockGetEventsForDay.mockClear()
-    mockGetEventsForWeek.mockClear()
-    mockGetEventsForDay.mockResolvedValue([])
-    mockGetEventsForWeek.mockResolvedValue([])
+    // Reset EventService mocks
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue([])
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+    EventService.getEventsForDays.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -156,8 +160,8 @@ describe('Schedule Component', () => {
 
     test('loads day events on initial render', () => {
       render(<Schedule />)
-      expect(mockGetEventsForDay).toHaveBeenCalledWith('2025-09-16')
-      expect(mockGetEventsForWeek).not.toHaveBeenCalled()
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
+      expect(EventService.getEventsForWeek).not.toHaveBeenCalled()
     })
 
     test('clicking view dropdown opens menu', async () => {
@@ -190,7 +194,7 @@ describe('Schedule Component', () => {
       fireEvent.click(weekMenuItem)
 
       // Check that week events were loaded
-      expect(mockGetEventsForWeek).toHaveBeenCalled()
+      expect(EventService.getEventsForWeek).toHaveBeenCalled()
       
       // Button should now show "1 Week"
       expect(viewButton).toHaveTextContent('1 Week')
@@ -214,7 +218,7 @@ describe('Schedule Component', () => {
 
       // Should still be on day view
       expect(viewButton).toHaveTextContent('1 Day')
-      expect(mockGetEventsForDay).toHaveBeenCalledWith('2025-09-16')
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
     })
   })
 })
