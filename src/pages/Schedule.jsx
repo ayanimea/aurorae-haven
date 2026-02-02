@@ -258,7 +258,38 @@ const getVisualRowForHour = (hour) => {
     0: 17,  // 00:00 (midnight)
     24: 17  // 24:00 (also midnight)
   }
-  return hourToRow[hour] ?? 0
+  
+  // Direct mapping when available
+  const baseRow = hourToRow[hour]
+  if (baseRow !== undefined) {
+    return baseRow
+  }
+
+  // Handle hours that are represented by period labels in the visual grid.
+  // Place them between the label row and the next hour row by interpolating
+  // between the surrounding hour rows.
+  if (hour === 8) {
+    const before = hourToRow[7]
+    const after = hourToRow[9]
+    if (before !== undefined && after !== undefined) {
+      return (before + after) / 2
+    }
+  } else if (hour === 12) {
+    const before = hourToRow[11]
+    const after = hourToRow[13]
+    if (before !== undefined && after !== undefined) {
+      return (before + after) / 2
+    }
+  } else if (hour === 18) {
+    const before = hourToRow[17]
+    const after = hourToRow[19]
+    if (before !== undefined && after !== undefined) {
+      return (before + after) / 2
+    }
+  }
+
+  // Fallback: align with top of schedule if no mapping is available
+  return 0
 }
 
 // TODO: Extract timeToPosition and durationToHeight to a testable utility module
@@ -1509,8 +1540,8 @@ function Schedule() {
                                 time={`${event.startTime}–${event.endTime}`}
                                 top={eventTop}
                                 height={eventHeight}
-                                onDoubleClick={() => handleViewEventDetails(event)}
-                                onLongPress={() => handleViewEventDetails(event)}
+                                onDoubleClick={handleViewEventDetails}
+                                onLongPress={handleViewEventDetails}
                               />
                             )
                           })}
@@ -1676,8 +1707,8 @@ function Schedule() {
                             id: event.id
                           })
                         }
-                        onDoubleClick={() => handleViewEventDetails(event)}
-                        onLongPress={() => handleViewEventDetails(event)}
+                        onDoubleClick={handleViewEventDetails}
+                        onLongPress={handleViewEventDetails}
                       />
                     )
                     return acc
