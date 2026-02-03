@@ -10,15 +10,15 @@
   --rbc-bg-secondary: rgba(16, 20, 44, 0.85);
   --rbc-bg-tertiary: rgba(16, 20, 44, 0.75);
   
-  /* Minimal borders - only for structure */
+  /* Minimal borders - keep hour lines for structure */
   --rbc-border-subtle: rgba(255, 255, 255, 0.02);
   --rbc-border-hour: rgba(255, 255, 255, 0.08);
   
-  /* Time-of-day background colors - subtle but visible */
-  --morning-bg: rgba(255, 223, 186, 0.08); /* Warm amber - 7am-12pm */
-  --afternoon-bg: rgba(187, 222, 251, 0.08); /* Soft daylight blue - 12pm-6pm */
-  --evening-bg: rgba(186, 141, 255, 0.08); /* Calm dusk purple - 6pm-11pm */
-  --night-bg: rgba(16, 20, 44, 0.15); /* Dark night - 11pm-7am */
+  /* Time-of-day background colors - strong and visible like reference image */
+  --morning-bg: rgba(255, 223, 186, 0.35); /* Warm amber - 7am-12pm */
+  --afternoon-bg: rgba(187, 222, 251, 0.30); /* Soft daylight blue - 12pm-6pm */
+  --evening-bg: rgba(186, 141, 255, 0.30); /* Calm dusk purple - 6pm-11pm */
+  --night-bg: rgba(16, 20, 44, 0.40); /* Dark night - 11pm-7am */
 }
 
 /* ===== Layout ===== */
@@ -166,26 +166,38 @@
 }
 
 /* Time-of-day background colors for Day and Week views */
-/* These provide temporal orientation without overwhelming */
+/* Strong visible bands with smooth gradients between periods */
 /* Morning: 7am-12pm */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+8):nth-child(-n+12) {
-  background: linear-gradient(to bottom, var(--morning-bg), var(--morning-bg));
+  background: linear-gradient(to bottom, 
+    var(--morning-bg), 
+    var(--morning-bg) 90%, 
+    var(--afternoon-bg) 100%);
 }
 
 /* Afternoon: 12pm-6pm */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+13):nth-child(-n+18) {
-  background: linear-gradient(to bottom, var(--afternoon-bg), var(--afternoon-bg));
+  background: linear-gradient(to bottom, 
+    var(--afternoon-bg), 
+    var(--afternoon-bg) 90%, 
+    var(--evening-bg) 100%);
 }
 
 /* Evening: 6pm-11pm */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+19):nth-child(-n+23) {
-  background: linear-gradient(to bottom, var(--evening-bg), var(--evening-bg));
+  background: linear-gradient(to bottom, 
+    var(--evening-bg), 
+    var(--evening-bg) 90%, 
+    var(--night-bg) 100%);
 }
 
 /* Night: 11pm-7am (23:00-07:00) */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+24),
 .rbc-day-slot .rbc-timeslot-group:nth-child(-n+7) {
-  background: linear-gradient(to bottom, var(--night-bg), var(--night-bg));
+  background: linear-gradient(to bottom, 
+    var(--night-bg), 
+    var(--night-bg) 90%, 
+    var(--morning-bg) 100%);
 }
 
 /* ===== Headers ===== */
