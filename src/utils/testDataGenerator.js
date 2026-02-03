@@ -46,7 +46,7 @@ export async function generateTestData() {
         endTime: '08:00',
         travelTime: 0,
         preparationTime: 0,
-          isTestData: true
+        isTestData: true
       })
       
       testEvents.push({
