@@ -9,6 +9,15 @@
   --rbc-bg-primary: rgba(16, 20, 44, 0.7);
   --rbc-bg-secondary: rgba(16, 20, 44, 0.5);
   --rbc-bg-tertiary: rgba(16, 20, 44, 0.3);
+  
+  /* Subtle borders - less distracting */
+  --rbc-border: rgba(255, 255, 255, 0.03);
+  
+  /* Time-of-day background colors - very subtle */
+  --morning-bg: rgba(255, 223, 186, 0.03); /* Warm soft orange - 7am-12pm */
+  --afternoon-bg: rgba(135, 206, 250, 0.03); /* Soft sky blue - 12pm-6pm */
+  --evening-bg: rgba(186, 141, 255, 0.03); /* Soft purple - 6pm-11pm */
+  --night-bg: rgba(16, 20, 44, 0.05); /* Darker - 11pm-7am */
 }
 
 /* ===== Layout ===== */
@@ -30,7 +39,7 @@
 .rbc-calendar {
   flex: 1;
   background: var(--rbc-bg-primary);
-  border: 1px solid var(--line);
+  border: 1px solid var(--rbc-border);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -44,7 +53,7 @@
   align-items: center;
   padding: 12px 16px;
   background: var(--rbc-bg-secondary);
-  border: 1px solid var(--line);
+  border: 1px solid var(--rbc-border);
   border-radius: 8px;
   margin-bottom: 12px;
   gap: 16px;
@@ -109,19 +118,19 @@
 /* ===== Time Grid (Closer to RBC Defaults) ===== */
 .rbc-time-view {
   flex: 1;
-  border: 1px solid var(--line);
+  border: 1px solid var(--rbc-border);
   border-radius: 8px;
   overflow: hidden;
   background: var(--rbc-bg-tertiary);
 }
 
 .rbc-time-header {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--rbc-border);
   background: var(--rbc-bg-secondary);
 }
 
 .rbc-time-header-content {
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--rbc-border);
 }
 
 .rbc-time-content {
@@ -134,7 +143,7 @@
 }
 
 .rbc-timeslot-group {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--rbc-border);
   min-height: 48px;
 }
 
@@ -148,14 +157,36 @@
   height: 2px;
 }
 
+/* Time-of-day background colors for Day and Week views */
+/* Morning: 7am-12pm */
+.rbc-day-slot .rbc-timeslot-group:nth-child(n+8):nth-child(-n+12) {
+  background: var(--morning-bg);
+}
+
+/* Afternoon: 12pm-6pm */
+.rbc-day-slot .rbc-timeslot-group:nth-child(n+13):nth-child(-n+18) {
+  background: var(--afternoon-bg);
+}
+
+/* Evening: 6pm-11pm */
+.rbc-day-slot .rbc-timeslot-group:nth-child(n+19):nth-child(-n+23) {
+  background: var(--evening-bg);
+}
+
+/* Night: 11pm-7am (23:00-07:00) */
+.rbc-day-slot .rbc-timeslot-group:nth-child(n+24),
+.rbc-day-slot .rbc-timeslot-group:nth-child(-n+7) {
+  background: var(--night-bg);
+}
+
 /* ===== Headers ===== */
 .rbc-header {
   padding: 10px 8px;
   font-weight: 600;
   color: var(--text);
   background: var(--rbc-bg-secondary);
-  border-bottom: 1px solid var(--line);
-  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--rbc-border);
+  border-left: 1px solid var(--rbc-border);
 }
 
 .rbc-header:first-child {
@@ -168,7 +199,7 @@
 
 /* ===== Month View (Simplified) ===== */
 .rbc-month-view {
-  border: 1px solid var(--line);
+  border: 1px solid var(--rbc-border);
   border-radius: 8px;
   overflow: hidden;
   background: var(--rbc-bg-tertiary);
@@ -179,11 +210,11 @@
 }
 
 .rbc-month-row {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--rbc-border);
 }
 
 .rbc-day-bg {
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--rbc-border);
 }
 
 .rbc-day-bg:first-child {
@@ -308,7 +339,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: var(--rbc-bg-secondary);
-  border: 1px solid var(--line);
+  border: 1px solid var(--rbc-border);
   border-radius: 12px;
   padding: 20px 40px;
   color: var(--text);
