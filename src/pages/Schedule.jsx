@@ -5,6 +5,7 @@ import EventModal from '../components/Schedule/EventModal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ItemActionModal from '../components/ItemActionModal'
 import EventService from '../services/EventService'
+import { useIsMobile } from '../hooks/useIsMobile'
 import {
   getCalendarSubscriptions,
   addCalendarSubscription,
@@ -423,12 +424,20 @@ const assignColumns = (events) => {
   
   // Sort by start time, then by duration (longer events first)
   const sorted = [...events].sort((a, b) => {
-    const startDiff = timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+    const startA = timeToMinutes(a.startTime)
+    const startB = timeToMinutes(b.startTime)
+    const startDiff = startA - startB
     if (startDiff !== 0) return startDiff
     
     // If same start time, longer event first
-    const durA = timeToMinutes(a.endTime) - timeToMinutes(a.startTime)
-    const durB = timeToMinutes(b.endTime) - timeToMinutes(b.startTime)
+    // Handle midnight-spanning events
+    const endA = timeToMinutes(a.endTime)
+    const endB = timeToMinutes(b.endTime)
+    const adjustedEndA = endA <= startA ? endA + 1440 : endA
+    const adjustedEndB = endB <= startB ? endB + 1440 : endB
+    
+    const durA = adjustedEndA - startA
+    const durB = adjustedEndB - startB
     return durB - durA
   })
   
@@ -460,6 +469,18 @@ const assignColumns = (events) => {
       return { ...event, columnIndex: 0, columnCount: 1 }
     }
     
+    // Calculate maximum depth (max overlapping events at any moment)
+    let maxDepth = 1
+    for (const e1 of group) {
+      let depth = 1
+      for (const e2 of group) {
+        if (e1 !== e2 && eventsOverlap(e1, e2)) {
+          depth++
+        }
+      }
+      maxDepth = Math.max(maxDepth, depth)
+    }
+    
     // Find column for this event (greedy algorithm)
     const columns = []
     for (const groupEvent of group) {
@@ -470,7 +491,7 @@ const assignColumns = (events) => {
           column++
         }
         columns[column] = event
-        return { ...event, columnIndex: column, columnCount: group.length }
+        return { ...event, columnIndex: column, columnCount: maxDepth }
       } else {
         // Track occupied columns
         let col = 0
@@ -508,6 +529,9 @@ function Schedule() {
   // Dynamic hour height (recalculated on mount and resize)
   const [hourHeight, setHourHeight] = useState(PIXELS_PER_HOUR)
   
+  // Mobile detection hook
+  const isMobile = useIsMobile()
+  
   // Calculate hour height dynamically to fit content on screen without scrolling
   // Update hour height on mount, resize, and view mode change
   useEffect(() => {
@@ -517,8 +541,19 @@ function Schedule() {
       // Get available viewport height
       const viewportHeight = window.innerHeight
       
-      // Account for header and controls (navbar ~80px + controls ~60px + padding ~20px = ~160px)
-      const headerOffset = 160
+      // Account for header and controls
+      // Try to read from CSS custom property first, fall back to 160px
+      let headerOffset = 160
+      if (typeof document !== 'undefined') {
+        const rootStyles = window.getComputedStyle(document.documentElement)
+        const cssHeaderOffset = rootStyles.getPropertyValue('--schedule-header-offset').trim()
+        if (cssHeaderOffset) {
+          const parsedOffset = parseInt(cssHeaderOffset, 10)
+          if (!Number.isNaN(parsedOffset) && parsedOffset >= 0) {
+            headerOffset = parsedOffset
+          }
+        }
+      }
       const availableHeight = viewportHeight - headerOffset
       
       // Calculate hour height based on number of visual rows (18 for 7am-midnight mode, 24 for 24-hour mode)
@@ -1021,14 +1056,18 @@ function Schedule() {
   // Event action modal state (for delete/edit functionality)
   const [selectedEvent, setSelectedEvent] = useState(null)
   
+  // Confirmation dialog state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [eventToDelete, setEventToDelete] = useState(null)
+  
   // Handle event click - show modal on mobile, no-op on desktop (wait for right-click)
   const handleEventClick = useCallback((e, event) => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768
     if (isMobile) {
       e.preventDefault()
       setSelectedEvent(event)
     }
-  }, [])
+    }
+  }, [isMobile])
 
   // Handle event right-click (context menu on desktop)
   const handleEventContextMenu = useCallback((e, event) => {
@@ -1093,31 +1132,55 @@ function Schedule() {
 
   // Handle edit event
   const handleEditEventAction = useCallback((event) => {
-    // TODO: Open edit modal when implemented
-    alert(`Edit functionality coming soon!\n\nEvent: ${event.title}`)
+    // Close modal first
+    setSelectedEvent(null)
+    // TODO: Open edit modal when implemented  
+    // For now, show message using ConfirmDialog
+    setEventToDelete({ ...event, isEdit: true })
+    setShowDeleteConfirm(true)
   }, [])
 
   // Handle delete event
   const handleDeleteEventAction = useCallback(async (event) => {
-    const confirmDelete = window.confirm(
-      `Delete this event?\n\n"${event.title}"\n${event.startTime} - ${event.endTime}`
-    )
-    
-    if (!confirmDelete) {
-      return false // Don't close modal
+    // Validate event ID
+    if (!event || !event.id) {
+      logger.error('Cannot delete event: missing event ID')
+      return false
     }
-
+    
+    // Close action modal
+    setSelectedEvent(null)
+    
+    // Show confirmation dialog
+    setEventToDelete(event)
+    setShowDeleteConfirm(true)
+    
+    return true // Close action modal
+  }, [])
+  
+  // Confirm delete handler
+  const confirmDelete = useCallback(async () => {
+    if (!eventToDelete) return
+    
+    // Handle edit placeholder
+    if (eventToDelete.isEdit) {
+      setShowDeleteConfirm(false)
+      setEventToDelete(null)
+      // TODO: Open edit modal
+      return
+    }
+    
     try {
-      await EventService.deleteEvent(event.id)
-      // Reload events
-      loadEvents()
-      return true // Close modal
+      await EventService.deleteEvent(eventToDelete.id)
+      // Await reload to ensure UI updates before continuing
+      await loadEvents()
+      setShowDeleteConfirm(false)
+      setEventToDelete(null)
     } catch (error) {
       logger.error('Failed to delete event:', error)
-      alert('Failed to delete event. Please try again.')
-      return false // Don't close modal
+      // Keep dialog open on error
     }
-  }, [loadEvents])
+  }, [eventToDelete, loadEvents])
 
   // Generate month calendar grid (6 weeks x 7 days = 42 days)
   const generateMonthGrid = () => {
@@ -1971,6 +2034,24 @@ function Schedule() {
         onEdit={handleEditEventAction}
         onDelete={handleDeleteEventAction}
         formatContent={formatEventContent}
+      />
+      
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false)
+          setEventToDelete(null)
+        }}
+        onConfirm={confirmDelete}
+        title={eventToDelete?.isEdit ? 'Edit Event' : 'Delete Event'}
+        message={
+          eventToDelete?.isEdit
+            ? `Edit functionality coming soon!\n\nEvent: ${eventToDelete.title}`
+            : `Are you sure you want to delete this event?\n\n"${eventToDelete?.title}"\n${eventToDelete?.startTime} - ${eventToDelete?.endTime}`
+        }
+        confirmText={eventToDelete?.isEdit ? 'OK' : 'Delete'}
+        confirmStyle={eventToDelete?.isEdit ? 'primary' : 'danger'}
       />
     </>
   )

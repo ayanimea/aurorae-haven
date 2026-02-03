@@ -269,6 +269,7 @@
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2; /* Limit to 2 lines to prevent overflow */
+  line-clamp: 2; /* Standard property for future browser support */
   -webkit-box-orient: vertical;
   word-break: break-word;
 }
