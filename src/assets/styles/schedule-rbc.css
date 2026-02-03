@@ -40,7 +40,13 @@
 /* ===== Calendar Container ===== */
 .rbc-calendar {
   flex: 1;
-  background: var(--rbc-bg-primary);
+  /* Radial gradient spotlight: lighter in center, darker at edges */
+  background: 
+    radial-gradient(ellipse at center, 
+      rgba(16, 20, 44, 0.30) 0%,
+      rgba(16, 20, 44, 0.45) 50%,
+      rgba(16, 20, 44, 0.65) 100%
+    );
   backdrop-filter: saturate(140%) blur(20px);
   -webkit-backdrop-filter: saturate(140%) blur(20px);
   border: 1px solid var(--rbc-border-subtle);
@@ -48,7 +54,7 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  /* Highly transparent to show starfield prominently */
+  /* Highly transparent to show starfield prominently with spotlight effect */
   position: relative;
   isolation: isolate;
   min-height: 0; /* Allow flex child to shrink below content size */
