@@ -95,7 +95,12 @@ class EventService {
    * @returns {Promise<number>} Event ID
    */
   async createEvent(event) {
-    return await createEventDB(event)
+    try {
+      return await createEventDB(event)
+    } catch (error) {
+      logger.error('EventService.createEvent error:', error)
+      throw error
+    }
   }
 
   /**
@@ -104,10 +109,15 @@ class EventService {
    * @returns {Promise<number>} Event ID
    */
   async updateEvent(event) {
-    if (!event.id) {
-      throw new Error('Event ID is required for update')
+    try {
+      if (!event.id) {
+        throw new Error('Event ID is required for update')
+      }
+      return await updateEventDB(event)
+    } catch (error) {
+      logger.error('EventService.updateEvent error:', error)
+      throw error
     }
-    return await updateEventDB(event)
   }
 
   /**
@@ -129,14 +139,16 @@ class EventService {
       const safeEvents = Array.isArray(allEvents) ? allEvents : []
       const testEvents = safeEvents.filter(event => event && event.isTestData === true)
       
-      // Delete in parallel for better performance
-      await Promise.all(
+      // Delete in parallel for better performance, track success/failure
+      const results = await Promise.allSettled(
         testEvents
           .filter(event => event && typeof event.id !== 'undefined')
           .map(event => deleteById(STORES.SCHEDULE, event.id))
       )
       
-      return testEvents.length
+      // Return count of successful deletions
+      const successCount = results.filter(r => r.status === 'fulfilled').length
+      return successCount
     } catch (error) {
       logger.error('EventService.clearTestData error:', error)
       return 0

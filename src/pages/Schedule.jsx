@@ -200,39 +200,39 @@ const generateHourLabels = (show24Hours) => {
     }))
   }
   
-  // 7am-midnight mode with period labels
-  return [
-    { label: '07:00', isLabel: false },
-    { label: 'Morning', isLabel: true },
-    { label: '09:00', isLabel: false },
-    { label: '10:00', isLabel: false },
-    { label: '11:00', isLabel: false },
-    { label: 'Afternoon', isLabel: true },
-    { label: '13:00', isLabel: false },
-    { label: '14:00', isLabel: false },
-    { label: '15:00', isLabel: false },
-    { label: '16:00', isLabel: false },
-    { label: '17:00', isLabel: false },
-    { label: 'Evening', isLabel: true },
-    { label: '19:00', isLabel: false },
-    { label: '20:00', isLabel: false },
-    { label: '21:00', isLabel: false },
-    { label: '22:00', isLabel: false },
-    { label: '23:00', isLabel: false },
-    { label: '00:00', isLabel: false }
-  ]
+  // 7am-midnight mode with period labels at hours defined in PERIOD_LABEL_HOURS
+  const labels = []
+  for (let hour = SCHEDULE_START_HOUR; hour <= 24; hour++) {
+    if (PERIOD_LABEL_HOURS.includes(hour)) {
+      // Add period label based on hour
+      if (hour === 8) labels.push({ label: 'Morning', isLabel: true })
+      else if (hour === 12) labels.push({ label: 'Afternoon', isLabel: true })
+      else if (hour === 18) labels.push({ label: 'Evening', isLabel: true })
+    } else {
+      // Add hour label (handle midnight as 00:00)
+      const displayHour = hour === 24 ? 0 : hour
+      labels.push({
+        label: `${String(displayHour).padStart(2, '0')}:00`,
+        isLabel: false
+      })
+    }
+  }
+  return labels
 }
+
+// Hours that get period labels instead of hour numbers
+const PERIOD_LABEL_HOURS = [8, 12, 18]
 
 // Helper function to get visual row index for a given hour in 7am-midnight mode
 // Accounts for "Morning", "Afternoon", "Evening" label rows
 const getVisualRowForHour = (hour) => {
   // Map of hour to visual row index in the grid
-  // Note: Hours 8, 12, and 18 are skipped (replaced by period labels)
+  // Note: Hours in PERIOD_LABEL_HOURS are skipped (replaced by period labels)
   // Generate hourToRow mapping dynamically based on schedule configuration
   // This ensures consistency with generateHourLabels() and maintains single source of truth
   const hourToRow = (() => {
     const mapping = {}
-    const labelHours = new Set([8, 12, 18]) // Hours with period labels instead of hour numbers
+    const labelHours = new Set(PERIOD_LABEL_HOURS) // Hours with period labels
     let rowIndex = 0
 
     // Build mapping for hours 7-23
@@ -469,8 +469,8 @@ const assignColumns = (events) => {
       return { ...event, columnIndex: 0, columnCount: 1 }
     }
     
-    // Calculate maximum depth (max overlapping events at any moment)
-    let maxDepth = 1
+    // Calculate maximum depth once per group (optimization: O(n²) instead of O(n³))
+    let groupMaxDepth = 1
     for (const e1 of group) {
       let depth = 1
       for (const e2 of group) {
@@ -478,7 +478,7 @@ const assignColumns = (events) => {
           depth++
         }
       }
-      maxDepth = Math.max(maxDepth, depth)
+      groupMaxDepth = Math.max(groupMaxDepth, depth)
     }
     
     // Find column for this event (greedy algorithm)
@@ -491,7 +491,7 @@ const assignColumns = (events) => {
           column++
         }
         columns[column] = event
-        return { ...event, columnIndex: column, columnCount: maxDepth }
+        return { ...event, columnIndex: column, columnCount: groupMaxDepth }
       } else {
         // Track occupied columns
         let col = 0
@@ -541,19 +541,8 @@ function Schedule() {
       // Get available viewport height
       const viewportHeight = window.innerHeight
       
-      // Account for header and controls
-      // Try to read from CSS custom property first, fall back to 160px
-      let headerOffset = 160
-      if (typeof document !== 'undefined') {
-        const rootStyles = window.getComputedStyle(document.documentElement)
-        const cssHeaderOffset = rootStyles.getPropertyValue('--schedule-header-offset').trim()
-        if (cssHeaderOffset) {
-          const parsedOffset = parseInt(cssHeaderOffset, 10)
-          if (!Number.isNaN(parsedOffset) && parsedOffset >= 0) {
-            headerOffset = parsedOffset
-          }
-        }
-      }
+      // Account for header and controls (fixed offset)
+      const headerOffset = 160
       const availableHeight = viewportHeight - headerOffset
       
       // Calculate hour height based on number of visual rows (18 for 7am-midnight mode, 24 for 24-hour mode)

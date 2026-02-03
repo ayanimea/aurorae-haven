@@ -47,6 +47,10 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
     const focusableElements = modalRef.current.querySelectorAll(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     )
+    
+    // Safety check: ensure there are focusable elements
+    if (focusableElements.length === 0) return
+    
     const firstElement = focusableElements[0]
     const lastElement = focusableElements[focusableElements.length - 1]
 
