@@ -29,21 +29,21 @@ const localizer = dateFnsLocalizer({
   locales: {}
 })
 
-// Custom view for 3-day
-class ThreeDayView extends React.Component {
-  render() {
-    const { date, ...props } = this.props
-    const start = startOfDay(date)
-    const range = [start, addDays(start, 1), addDays(start, 2)]
-    
-    return <Views.Week {...props} date={date} range={range} />
-  }
+// Custom view for 3-day - using Week view with custom range
+// RBC requires static methods for custom views
+function ThreeDayView(props) {
+  const { date } = props
+  const start = startOfDay(date)
+  const range = [start, addDays(start, 1), addDays(start, 2)]
+  
+  return <Views.Week {...props} range={range} />
 }
 
 ThreeDayView.propTypes = {
   date: PropTypes.instanceOf(Date).isRequired
 }
 
+// Static methods required by RBC for custom views
 ThreeDayView.range = (date) => {
   const start = startOfDay(date)
   return [start, addDays(start, 1), addDays(start, 2)]
@@ -63,7 +63,7 @@ ThreeDayView.navigate = (date, action) => {
 ThreeDayView.title = (date, { localizer }) => {
   const start = startOfDay(date)
   const end = addDays(start, 2)
-  return localizer.format({ start, end }, 'dayRangeHeaderFormat')
+  return `${localizer.format(start, 'MMM dd')} - ${localizer.format(end, 'MMM dd, yyyy')}`
 }
 
 function Schedule() {
