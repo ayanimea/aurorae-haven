@@ -6,18 +6,19 @@
 
 /* ===== CSS Variables for Consistency ===== */
 :root {
-  --rbc-bg-primary: rgba(16, 20, 44, 0.7);
-  --rbc-bg-secondary: rgba(16, 20, 44, 0.5);
-  --rbc-bg-tertiary: rgba(16, 20, 44, 0.3);
+  --rbc-bg-primary: rgba(16, 20, 44, 0.95);
+  --rbc-bg-secondary: rgba(16, 20, 44, 0.85);
+  --rbc-bg-tertiary: rgba(16, 20, 44, 0.75);
   
-  /* Subtle borders - less distracting */
-  --rbc-border: rgba(255, 255, 255, 0.03);
+  /* Minimal borders - only for structure */
+  --rbc-border-subtle: rgba(255, 255, 255, 0.02);
+  --rbc-border-hour: rgba(255, 255, 255, 0.08);
   
-  /* Time-of-day background colors - very subtle */
-  --morning-bg: rgba(255, 223, 186, 0.03); /* Warm soft orange - 7am-12pm */
-  --afternoon-bg: rgba(135, 206, 250, 0.03); /* Soft sky blue - 12pm-6pm */
-  --evening-bg: rgba(186, 141, 255, 0.03); /* Soft purple - 6pm-11pm */
-  --night-bg: rgba(16, 20, 44, 0.05); /* Darker - 11pm-7am */
+  /* Time-of-day background colors - subtle but visible */
+  --morning-bg: rgba(255, 223, 186, 0.08); /* Warm amber - 7am-12pm */
+  --afternoon-bg: rgba(187, 222, 251, 0.08); /* Soft daylight blue - 12pm-6pm */
+  --evening-bg: rgba(186, 141, 255, 0.08); /* Calm dusk purple - 6pm-11pm */
+  --night-bg: rgba(16, 20, 44, 0.15); /* Dark night - 11pm-7am */
 }
 
 /* ===== Layout ===== */
@@ -39,11 +40,14 @@
 .rbc-calendar {
   flex: 1;
   background: var(--rbc-bg-primary);
-  border: 1px solid var(--rbc-border);
+  border: 1px solid var(--rbc-border-subtle);
   border-radius: 12px;
   padding: 16px;
   display: flex;
   flex-direction: column;
+  /* Hide background pattern stars/noise for this view */
+  position: relative;
+  isolation: isolate;
 }
 
 /* ===== Custom Toolbar (Simplified) ===== */
@@ -53,7 +57,7 @@
   align-items: center;
   padding: 12px 16px;
   background: var(--rbc-bg-secondary);
-  border: 1px solid var(--rbc-border);
+  border: 1px solid var(--rbc-border-subtle);
   border-radius: 8px;
   margin-bottom: 12px;
   gap: 16px;
@@ -115,22 +119,22 @@
   outline-offset: 2px;
 }
 
-/* ===== Time Grid (Closer to RBC Defaults) ===== */
+/* ===== Time Grid - Minimal Grid Lines ===== */
 .rbc-time-view {
   flex: 1;
-  border: 1px solid var(--rbc-border);
+  border: 1px solid var(--rbc-border-hour);
   border-radius: 8px;
   overflow: hidden;
   background: var(--rbc-bg-tertiary);
 }
 
 .rbc-time-header {
-  border-bottom: 1px solid var(--rbc-border);
+  border-bottom: 1px solid var(--rbc-border-hour);
   background: var(--rbc-bg-secondary);
 }
 
 .rbc-time-header-content {
-  border-left: 1px solid var(--rbc-border);
+  border-left: 1px solid var(--rbc-border-subtle);
 }
 
 .rbc-time-content {
@@ -142,41 +146,46 @@
   color: var(--dim);
 }
 
+/* Hour separators only - remove minor grid lines */
 .rbc-timeslot-group {
-  border-bottom: 1px solid var(--rbc-border);
+  border-bottom: 1px solid var(--rbc-border-hour);
   min-height: 48px;
 }
 
+/* Remove borders from individual 15-min slots */
 .rbc-time-slot {
   color: var(--dim);
   font-size: 0.75rem;
+  border-top: none !important;
 }
 
 .rbc-current-time-indicator {
   background-color: var(--accent);
   height: 2px;
+  z-index: 3;
 }
 
 /* Time-of-day background colors for Day and Week views */
+/* These provide temporal orientation without overwhelming */
 /* Morning: 7am-12pm */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+8):nth-child(-n+12) {
-  background: var(--morning-bg);
+  background: linear-gradient(to bottom, var(--morning-bg), var(--morning-bg));
 }
 
 /* Afternoon: 12pm-6pm */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+13):nth-child(-n+18) {
-  background: var(--afternoon-bg);
+  background: linear-gradient(to bottom, var(--afternoon-bg), var(--afternoon-bg));
 }
 
 /* Evening: 6pm-11pm */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+19):nth-child(-n+23) {
-  background: var(--evening-bg);
+  background: linear-gradient(to bottom, var(--evening-bg), var(--evening-bg));
 }
 
 /* Night: 11pm-7am (23:00-07:00) */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+24),
 .rbc-day-slot .rbc-timeslot-group:nth-child(-n+7) {
-  background: var(--night-bg);
+  background: linear-gradient(to bottom, var(--night-bg), var(--night-bg));
 }
 
 /* ===== Headers ===== */
@@ -185,8 +194,8 @@
   font-weight: 600;
   color: var(--text);
   background: var(--rbc-bg-secondary);
-  border-bottom: 1px solid var(--rbc-border);
-  border-left: 1px solid var(--rbc-border);
+  border-bottom: 1px solid var(--rbc-border-hour);
+  border-left: 1px solid var(--rbc-border-subtle);
 }
 
 .rbc-header:first-child {
@@ -194,12 +203,12 @@
 }
 
 .rbc-today {
-  background-color: rgba(134, 245, 224, 0.1);
+  background-color: rgba(134, 245, 224, 0.15);
 }
 
-/* ===== Month View (Simplified) ===== */
+/* ===== Month View ===== */
 .rbc-month-view {
-  border: 1px solid var(--rbc-border);
+  border: 1px solid var(--rbc-border-hour);
   border-radius: 8px;
   overflow: hidden;
   background: var(--rbc-bg-tertiary);
@@ -210,11 +219,12 @@
 }
 
 .rbc-month-row {
-  border-top: 1px solid var(--rbc-border);
+  border-top: 1px solid var(--rbc-border-subtle);
 }
 
+/* Only show borders between days, not minor grid */
 .rbc-day-bg {
-  border-left: 1px solid var(--rbc-border);
+  border-left: 1px solid var(--rbc-border-subtle);
 }
 
 .rbc-day-bg:first-child {
@@ -222,7 +232,8 @@
 }
 
 .rbc-off-range-bg {
-  background: rgba(16, 20, 44, 0.15);
+  background: rgba(16, 20, 44, 0.2);
+  opacity: 0.5;
 }
 
 .rbc-date-cell {
@@ -237,19 +248,23 @@
   font-weight: 600;
 }
 
-/* ===== Events ===== */
+/* ===== Events - Stand Out More ===== */
 .rbc-event {
   background-color: var(--accent-soft);
   color: var(--text);
-  border: 1px solid var(--accent);
+  border: 2px solid var(--accent);
   border-radius: 8px;
-  padding: 4px 8px;
+  padding: 6px 10px;
   cursor: pointer;
   font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .rbc-event:hover {
   background-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(134, 245, 224, 0.3);
+  transform: translateY(-1px);
 }
 
 .rbc-event:focus {
@@ -259,39 +274,39 @@
 
 /* Event type-specific colors - essential for neurodivergent users */
 .rbc-event.event-routine {
-  background-color: rgba(186, 141, 255, 0.2);
-  border-color: rgba(186, 141, 255, 0.8);
+  background-color: rgba(186, 141, 255, 0.25);
+  border-color: rgba(186, 141, 255, 0.9);
 }
 
 .rbc-event.event-routine:hover {
-  background-color: rgba(186, 141, 255, 0.4);
+  background-color: rgba(186, 141, 255, 0.5);
 }
 
 .rbc-event.event-task {
-  background-color: rgba(134, 245, 224, 0.2);
-  border-color: rgba(134, 245, 224, 0.8);
+  background-color: rgba(134, 245, 224, 0.25);
+  border-color: rgba(134, 245, 224, 0.9);
 }
 
 .rbc-event.event-task:hover {
-  background-color: rgba(134, 245, 224, 0.4);
+  background-color: rgba(134, 245, 224, 0.5);
 }
 
 .rbc-event.event-meeting {
-  background-color: rgba(135, 206, 250, 0.2);
-  border-color: rgba(135, 206, 250, 0.8);
+  background-color: rgba(135, 206, 250, 0.25);
+  border-color: rgba(135, 206, 250, 0.9);
 }
 
 .rbc-event.event-meeting:hover {
-  background-color: rgba(135, 206, 250, 0.4);
+  background-color: rgba(135, 206, 250, 0.5);
 }
 
 .rbc-event.event-habit {
-  background-color: rgba(255, 223, 186, 0.2);
-  border-color: rgba(255, 223, 186, 0.8);
+  background-color: rgba(255, 223, 186, 0.25);
+  border-color: rgba(255, 223, 186, 0.9);
 }
 
 .rbc-event.event-habit:hover {
-  background-color: rgba(255, 223, 186, 0.4);
+  background-color: rgba(255, 223, 186, 0.5);
 }
 
 .rbc-event-content {
