@@ -476,15 +476,15 @@ const assignColumns = (events) => {
     }
   }
   
-  // Assign columns within each group
-  return sorted.map(event => {
-    // Find which group this event belongs to
-    const group = groups.find(g => g.includes(event))
-    if (!group || group.length === 1) {
-      return { ...event, columnIndex: 0, columnCount: 1 }
+  // Calculate max depth for each group ONCE (Items 1-2: performance fix)
+  // Store in Map to avoid recalculating for every event
+  const groupMaxDepths = new Map()
+  for (const group of groups) {
+    if (group.length === 1) {
+      groupMaxDepths.set(group, 1)
+      continue
     }
     
-    // Calculate maximum simultaneous depth (Item 3: fix to count actual max overlapping at any point)
     // Find all unique time points where events start or end
     const timePoints = new Set()
     for (const e of group) {
@@ -493,7 +493,7 @@ const assignColumns = (events) => {
     }
     
     // For each time point, count how many events are active
-    let groupMaxDepth = 1
+    let maxDepth = 1
     for (const timePoint of timePoints) {
       let activeCount = 0
       for (const e of group) {
@@ -506,8 +506,22 @@ const assignColumns = (events) => {
           activeCount++
         }
       }
-      groupMaxDepth = Math.max(groupMaxDepth, activeCount)
+      maxDepth = Math.max(maxDepth, activeCount)
     }
+    
+    groupMaxDepths.set(group, maxDepth)
+  }
+  
+  // Assign columns within each group
+  return sorted.map(event => {
+    // Find which group this event belongs to
+    const group = groups.find(g => g.includes(event))
+    if (!group || group.length === 1) {
+      return { ...event, columnIndex: 0, columnCount: 1 }
+    }
+    
+    // Get pre-calculated max depth for this group (no recalculation needed!)
+    const groupMaxDepth = groupMaxDepths.get(group) || 1
     
     // Find column for this event (greedy algorithm)
     const columns = []

@@ -273,7 +273,6 @@ describe('useIsMobile Hook', () => {
       })
 
       const { result } = renderHook(() => useIsMobile())
-      const initialResult = result.current
 
       act(() => {
         Object.defineProperty(window, 'innerWidth', {
