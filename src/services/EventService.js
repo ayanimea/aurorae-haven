@@ -23,8 +23,14 @@ class EventService {
    * @returns {Promise<Array>} Array of events for the date
    */
   async getEventsForDate(date) {
-    const dateStr = this._normalizeDateString(date)
-    return await getEventsForDay(dateStr)
+    try {
+      const dateStr = this._normalizeDateString(date)
+      const events = await getEventsForDay(dateStr)
+      return Array.isArray(events) ? events : []
+    } catch (error) {
+      console.error('EventService.getEventsForDate error:', error)
+      return []
+    }
   }
 
   /**
@@ -33,8 +39,14 @@ class EventService {
    * @returns {Promise<Array>} Array of events for the week
    */
   async getEventsForWeek(referenceDate = new Date()) {
-    const { startDate, endDate } = this._getWeekRange(referenceDate)
-    return await getEventsForRange(startDate, endDate)
+    try {
+      const { startDate, endDate } = this._getWeekRange(referenceDate)
+      const events = await getEventsForRange(startDate, endDate)
+      return Array.isArray(events) ? events : []
+    } catch (error) {
+      console.error('EventService.getEventsForWeek error:', error)
+      return []
+    }
   }
 
   /**
@@ -44,9 +56,15 @@ class EventService {
    * @returns {Promise<Array>} Array of events in the range
    */
   async getEventsForRange(startDate, endDate) {
-    const start = this._normalizeDateString(startDate)
-    const end = this._normalizeDateString(endDate)
-    return await getEventsForRange(start, end)
+    try {
+      const start = this._normalizeDateString(startDate)
+      const end = this._normalizeDateString(endDate)
+      const events = await getEventsForRange(start, end)
+      return Array.isArray(events) ? events : []
+    } catch (error) {
+      console.error('EventService.getEventsForRange error:', error)
+      return []
+    }
   }
 
   /**
@@ -56,11 +74,18 @@ class EventService {
    * @returns {Promise<Array>} Array of events
    */
   async getEventsForDays(startDate, days) {
-    const start = new Date(startDate)
-    const end = new Date(start)
-    end.setDate(start.getDate() + days - 1)
-    
-    return await this.getEventsForRange(start, end)
+    try {
+      // Use dayjs or manual date manipulation to avoid timezone issues
+      const startStr = this._normalizeDateString(startDate)
+      const start = new Date(startStr + 'T00:00:00') // Add time to ensure local timezone
+      const end = new Date(start)
+      end.setDate(start.getDate() + days - 1)
+      
+      return await this.getEventsForRange(start, end)
+    } catch (error) {
+      console.error('EventService.getEventsForDays error:', error)
+      return []
+    }
   }
 
   /**
@@ -98,13 +123,23 @@ class EventService {
    * @returns {Promise<number>} Number of events deleted
    */
   async clearTestData() {
-    const allEvents = await getAll(STORES.SCHEDULE)
-    const testEvents = allEvents.filter(event => event.isTestData === true)
-    
-    // Delete in parallel for better performance
-    await Promise.all(testEvents.map(event => deleteById(STORES.SCHEDULE, event.id)))
-    
-    return testEvents.length
+    try {
+      const allEvents = await getAll(STORES.SCHEDULE)
+      const safeEvents = Array.isArray(allEvents) ? allEvents : []
+      const testEvents = safeEvents.filter(event => event && event.isTestData === true)
+      
+      // Delete in parallel for better performance
+      await Promise.all(
+        testEvents
+          .filter(event => event && typeof event.id !== 'undefined')
+          .map(event => deleteById(STORES.SCHEDULE, event.id))
+      )
+      
+      return testEvents.length
+    } catch (error) {
+      console.error('EventService.clearTestData error:', error)
+      return 0
+    }
   }
 
   /**
@@ -139,6 +174,7 @@ class EventService {
 
   /**
    * Get start and end dates for week containing reference date
+   * Uses ISO 8601 standard: weeks start on Monday
    * @private
    * @param {string|Date} referenceDate - Date within the week
    * @returns {{startDate: string, endDate: string}} Week range
@@ -146,11 +182,17 @@ class EventService {
   _getWeekRange(referenceDate) {
     const date = new Date(referenceDate)
     
-    // Get start of week (Sunday)
-    const startOfWeek = new Date(date)
-    startOfWeek.setDate(date.getDate() - date.getDay())
+    // Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const dayOfWeek = date.getDay()
     
-    // Get end of week (Saturday)
+    // Convert to ISO 8601 (Monday = 0, Sunday = 6)
+    const isoDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    
+    // Get start of week (Monday)
+    const startOfWeek = new Date(date)
+    startOfWeek.setDate(date.getDate() - isoDay)
+    
+    // Get end of week (Sunday)
     const endOfWeek = new Date(startOfWeek)
     endOfWeek.setDate(startOfWeek.getDate() + 6)
     
