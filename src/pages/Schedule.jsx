@@ -45,10 +45,9 @@ function Schedule() {
   const [showActionModal, setShowActionModal] = useState(false)
 
   // Get time format preference from settings (default to 24-hour)
-  const use24HourFormat = useMemo(() => {
-    const settings = getSettings()
-    return settings.schedule?.use24HourFormat ?? true
-  }, [])
+  // Read directly without memo to ensure it updates when settings change
+  const settings = getSettings()
+  const use24HourFormat = settings.schedule?.use24HourFormat ?? true
 
   // Convert events to RBC format
   const rbcEvents = useMemo(() => toRBCEvents(events), [events])
@@ -215,6 +214,7 @@ function Schedule() {
             toolbar: (props) => (
               <CustomToolbar
                 {...props}
+                views={['day', 'week', 'month']}
                 onScheduleEvent={handleScheduleEvent}
                 EVENT_TYPES={EVENT_TYPES}
               />

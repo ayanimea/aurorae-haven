@@ -130,6 +130,34 @@ describe('eventAdapter', () => {
       const rbcEvent = toRBCEvent(event)
       expect(rbcEvent).toBeNull()
     })
+
+    it('should return null for invalid start time format', () => {
+      const event = {
+        id: '7',
+        title: 'Bad Start Time',
+        day: '2026-02-03',
+        startTime: 'invalid-time',
+        endTime: '11:00',
+        type: 'task'
+      }
+
+      const rbcEvent = toRBCEvent(event)
+      expect(rbcEvent).toBeNull()
+    })
+
+    it('should return null for invalid end time format', () => {
+      const event = {
+        id: '8',
+        title: 'Bad End Time',
+        day: '2026-02-03',
+        startTime: '10:00',
+        endTime: '25:00',
+        type: 'task'
+      }
+
+      const rbcEvent = toRBCEvent(event)
+      expect(rbcEvent).toBeNull()
+    })
   })
 
   describe('toRBCEvents', () => {
