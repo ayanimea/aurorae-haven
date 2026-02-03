@@ -165,8 +165,6 @@
 }
 .block {
   position: absolute;
-  left: 10px;
-  right: 10px;
   border-radius: 10px;
   padding: 8px 12px;
   background: rgba(142, 200, 255, 0.14);
@@ -1939,7 +1937,7 @@
   }
 
   /* View mode + settings group on the right */
-  .view-group {
+  .settings-group {
     order: 3;
     margin-left: auto; /* Push to right */
     background: rgba(255, 255, 255, 0.02);

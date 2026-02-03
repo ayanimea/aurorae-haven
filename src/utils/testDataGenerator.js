@@ -57,7 +57,7 @@ export async function generateTestData() {
         endTime: '09:00',
         travelTime: 0,
         preparationTime: 5,
-          isTestData: true
+        isTestData: true
       })
     }
     
@@ -459,12 +459,4 @@ export async function generateTestData() {
   
   // Created test events successfully
   return createdCount
-}
-
-/**
- * Clear all test data from schedule
- */
-export async function clearTestData() {
-  // This would require implementing a deleteAll function in scheduleManager
-  // Clear test data not implemented yet
 }

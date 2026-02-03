@@ -1066,7 +1066,7 @@ function Schedule() {
 
   const handleToggleSubscription = async (id, enabled) => {
     try {
-      await updateCalendarSubscription(id, { enabled: !enabled })
+      await updateCalendarSubscription({ id, enabled: !enabled })
       // Reload subscriptions
       const subs = await getCalendarSubscriptions()
       setSubscriptions(subs)
@@ -1137,8 +1137,15 @@ function Schedule() {
   const handleEventClick = useCallback((e, event) => {
     e.preventDefault()
     e.stopPropagation()
+    
+    // On desktop, do nothing here; context menu is handled via right-click
+    if (!isMobile) {
+      return
+    }
+    
+    // On mobile, open the event action modal
     setSelectedEvent(event)
-  }, [])
+  }, [isMobile])
 
   // Handle event right-click (context menu on desktop)
   const handleEventContextMenu = useCallback((e, event) => {
@@ -2025,6 +2032,7 @@ function Schedule() {
                         acc.push(
                           <ScheduleBlock
                             key={`prep-${event.id}`}
+                            title='Preparation'
                             type='preparation'
                             top={prepTop}
                             height={prepHeight}
@@ -2053,6 +2061,7 @@ function Schedule() {
                         acc.push(
                           <ScheduleBlock
                             key={`travel-${event.id}`}
+                            title='Travel'
                             type='travel'
                             top={travelTop}
                             height={travelHeight}
@@ -2102,7 +2111,7 @@ function Schedule() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        onClose={() => {
+        onCancel={() => {
           setShowDeleteConfirm(false)
           setEventToDelete(null)
         }}
@@ -2114,7 +2123,7 @@ function Schedule() {
             : `Are you sure you want to delete this event?\n\n"${eventToDelete?.title}"\n${eventToDelete?.startTime} - ${eventToDelete?.endTime}`
         }
         confirmText={eventToDelete?.isEdit ? 'OK' : 'Delete'}
-        confirmStyle={eventToDelete?.isEdit ? 'primary' : 'danger'}
+        confirmDanger={!eventToDelete?.isEdit}
       />
     </>
   )

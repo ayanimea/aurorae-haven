@@ -20,7 +20,7 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
   const prevItemRef = useRef(item) // Track previous item to detect transitions
 
   // Compute derived values from props (before early return)
-  const isContextMenu = item ? (item.isContextMenu || !isMobile) : false
+  const isContextMenu = !!(item && item.isContextMenu)
 
   // Store previously focused element for focus restoration (Item 6: handle rapid modal switches)
   useEffect(() => {
