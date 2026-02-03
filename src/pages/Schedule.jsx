@@ -94,14 +94,15 @@ function ScheduleBlock({
   }
 
   useEffect(() => {
-    // Cleanup on unmount or when event/props change (Item 1: prevent memory leak)
+    // Cleanup on unmount (Item 1: prevent memory leak)
+    // Note: onLongPress is stable prop, no need to reset timer when it changes
     return () => {
       if (touchTimerRef.current) {
         clearTimeout(touchTimerRef.current)
         touchTimerRef.current = null
       }
     }
-  }, [onLongPress])
+  }, [])
 
   return (
     <div
@@ -592,7 +593,9 @@ function Schedule() {
   }, [show24Hours]) // Recalculate when 24-hour mode changes
   
   // Calculate dynamic slot heights based on hour height
-  const slotHeight = show24Hours ? hourHeight * 24 : hourHeight * 18 // 18 visual rows for 7am-midnight with labels
+  // For 7am-midnight mode: 18 visual rows (includes 3 period label rows)
+  const numVisualRows = show24Hours ? (SCHEDULE_END_HOUR - SCHEDULE_START_HOUR) : 18
+  const slotHeight = hourHeight * numVisualRows
 
   // Calculate time periods based on hour-to-row mapping so background bands align with the grid
   // Morning: from SCHEDULE_START_HOUR (e.g. 07:00) up to 12:00
@@ -1156,7 +1159,7 @@ function Schedule() {
     setShowDeleteConfirm(true)
   }, [])
 
-  // Handle delete event (Item 2: use functional setter to avoid race condition)
+  // Handle delete event (Item 2: use batched state updates to avoid race condition)
   const handleDeleteEventAction = useCallback(async (event) => {
     // Validate event ID
     if (!event || !event.id) {
@@ -1164,15 +1167,10 @@ function Schedule() {
       return false
     }
     
-    // Atomically update state to avoid race condition
-    setSelectedEvent(prevEvent => {
-      if (prevEvent) {
-        // Set event to delete and show dialog
-        setEventToDelete(event)
-        setShowDeleteConfirm(true)
-      }
-      return null // Close action modal
-    })
+    // Batch state updates together (React 18 auto-batches, but explicit for clarity)
+    setEventToDelete(event)
+    setShowDeleteConfirm(true)
+    setSelectedEvent(null) // Close action modal
     
     return true // Close action modal
   }, [])
