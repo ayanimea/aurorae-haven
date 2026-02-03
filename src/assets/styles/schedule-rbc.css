@@ -50,7 +50,7 @@
   /* Allow starfield background to show through */
   position: relative;
   isolation: isolate;
-  overflow: hidden; /* Prevent overflow of calendar container */
+  min-height: 0; /* Allow flex child to shrink below content size */
 }
 
 /* Ensure time content can scroll to show full day */
@@ -58,12 +58,13 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-height: 0; /* Allow flex child to shrink */
 }
 
 .rbc-time-content {
   flex: 1;
   overflow-y: auto; /* Allow scrolling through full day */
+  min-height: 0; /* Allow flex child to shrink */
 }
 .calendar-toolbar {
   display: flex;
