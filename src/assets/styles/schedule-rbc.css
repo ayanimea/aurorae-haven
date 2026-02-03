@@ -6,9 +6,10 @@
 
 /* ===== CSS Variables for Consistency ===== */
 :root {
-  --rbc-bg-primary: rgba(16, 20, 44, 0.95);
-  --rbc-bg-secondary: rgba(16, 20, 44, 0.85);
-  --rbc-bg-tertiary: rgba(16, 20, 44, 0.75);
+  /* Romantic starfield background - more transparent to show stars */
+  --rbc-bg-primary: rgba(16, 20, 44, 0.65);
+  --rbc-bg-secondary: rgba(16, 20, 44, 0.55);
+  --rbc-bg-tertiary: rgba(16, 20, 44, 0.45);
   
   /* Minimal borders - keep hour lines for structure */
   --rbc-border-subtle: rgba(255, 255, 255, 0.02);
@@ -40,14 +41,16 @@
 .rbc-calendar {
   flex: 1;
   background: var(--rbc-bg-primary);
+  backdrop-filter: saturate(120%) blur(10px);
   border: 1px solid var(--rbc-border-subtle);
   border-radius: 12px;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  /* Hide background pattern stars/noise for this view */
+  /* Allow starfield background to show through */
   position: relative;
   isolation: isolate;
+}
 }
 
 /* ===== Custom Toolbar (Simplified) ===== */
