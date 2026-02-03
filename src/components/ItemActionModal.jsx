@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
-import { useIsMobile } from '../hooks/useIsMobile'
 import { adjustMenuPosition } from '../utils/positionUtils'
 import './ItemActionModal.css'
 
@@ -13,7 +12,6 @@ import './ItemActionModal.css'
  */
 function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
   // All hooks must be called before any conditional returns
-  const isMobile = useIsMobile()
   const modalRef = useRef(null)
   const firstButtonRef = useRef(null)
   const previouslyFocusedElement = useRef(null)

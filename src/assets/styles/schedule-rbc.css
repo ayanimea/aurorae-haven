@@ -1,0 +1,415 @@
+/**
+ * React Big Calendar Custom Styling
+ * Integrates RBC with Aurorae Haven's glass-ui/astro theme
+ */
+
+/* ===== Layout ===== */
+.page-schedule {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* ===== Calendar Container ===== */
+.rbc-calendar {
+  flex: 1;
+  background: rgba(16, 20, 44, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Custom Toolbar ===== */
+.calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(16, 20, 44, 0.5);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar-left h2 {
+  margin: 0 0 4px 0;
+  font-size: 1.75rem;
+  color: var(--accent);
+}
+
+.toolbar-left .date-display {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.875rem;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.view-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.view-selector label {
+  color: var(--dim);
+  font-size: 0.875rem;
+}
+
+.view-dropdown {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(16, 20, 44, 0.7);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.view-dropdown:hover {
+  border-color: var(--accent);
+  background: rgba(16, 20, 44, 0.9);
+}
+
+.view-dropdown:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ===== Time Grid ===== */
+.rbc-time-view {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(16, 20, 44, 0.3);
+}
+
+.rbc-time-header {
+  border-bottom: 1px solid var(--line);
+  background: rgba(16, 20, 44, 0.5);
+}
+
+.rbc-time-header-content {
+  border-left: 1px solid var(--line);
+}
+
+.rbc-time-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.rbc-time-gutter {
+  background: rgba(16, 20, 44, 0.5);
+  color: var(--dim);
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px dashed var(--line);
+  min-height: 60px;
+}
+
+.rbc-time-slot {
+  color: var(--dim);
+  font-size: 0.75rem;
+}
+
+.rbc-current-time-indicator {
+  background-color: var(--accent);
+  height: 2px;
+}
+
+/* ===== Day/Week View Headers ===== */
+.rbc-header {
+  padding: 10px 8px;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(16, 20, 44, 0.5);
+  border-bottom: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.rbc-header:first-child {
+  border-left: none;
+}
+
+.rbc-today {
+  background-color: rgba(134, 245, 224, 0.1);
+}
+
+/* ===== Month View ===== */
+.rbc-month-view {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(16, 20, 44, 0.3);
+}
+
+.rbc-month-header {
+  background: rgba(16, 20, 44, 0.5);
+}
+
+.rbc-month-row {
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.rbc-day-bg {
+  border-left: 1px solid var(--line);
+}
+
+.rbc-day-bg:first-child {
+  border-left: none;
+}
+
+.rbc-off-range-bg {
+  background: rgba(16, 20, 44, 0.2);
+}
+
+.rbc-date-cell {
+  padding: 4px 8px;
+  text-align: right;
+  color: var(--dim);
+  font-size: 0.875rem;
+}
+
+.rbc-now .rbc-date-cell {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ===== Events ===== */
+.rbc-event {
+  background-color: var(--accent-soft);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.rbc-event:hover {
+  background-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(134, 245, 224, 0.3);
+}
+
+.rbc-event:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Event type-specific colors */
+.rbc-event.event-routine {
+  background-color: rgba(186, 141, 255, 0.2);
+  border-color: rgba(186, 141, 255, 0.8);
+}
+
+.rbc-event.event-routine:hover {
+  background-color: rgba(186, 141, 255, 0.4);
+}
+
+.rbc-event.event-task {
+  background-color: rgba(134, 245, 224, 0.2);
+  border-color: rgba(134, 245, 224, 0.8);
+}
+
+.rbc-event.event-task:hover {
+  background-color: rgba(134, 245, 224, 0.4);
+}
+
+.rbc-event.event-meeting {
+  background-color: rgba(135, 206, 250, 0.2);
+  border-color: rgba(135, 206, 250, 0.8);
+}
+
+.rbc-event.event-meeting:hover {
+  background-color: rgba(135, 206, 250, 0.4);
+}
+
+.rbc-event.event-habit {
+  background-color: rgba(255, 223, 186, 0.2);
+  border-color: rgba(255, 223, 186, 0.8);
+}
+
+.rbc-event.event-habit:hover {
+  background-color: rgba(255, 223, 186, 0.4);
+}
+
+.rbc-event-label {
+  font-size: 0.75rem;
+  color: var(--dim);
+}
+
+.rbc-event-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rbc-event-continues-prior,
+.rbc-event-continues-after {
+  opacity: 0.8;
+}
+
+/* ===== Selection ===== */
+.rbc-slot-selection {
+  background-color: rgba(134, 245, 224, 0.2);
+  border: 2px solid var(--accent);
+}
+
+.rbc-selected {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ===== Overlays ===== */
+.rbc-overlay {
+  background: rgba(16, 20, 44, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.rbc-overlay-header {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ===== Loading & Error States ===== */
+.loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(16, 20, 44, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 40px;
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.error-message {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(186, 63, 63, 0.9);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+/* ===== Mobile Responsiveness ===== */
+@media (max-width: 768px) {
+  .calendar-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-left,
+  .toolbar-right {
+    width: 100%;
+  }
+
+  .toolbar-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nav-buttons,
+  .view-selector {
+    justify-content: space-between;
+  }
+
+  .rbc-toolbar {
+    font-size: 0.875rem;
+  }
+
+  .rbc-event {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+  }
+
+  .rbc-time-slot {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .schedule-container {
+    padding: 10px;
+  }
+
+  .calendar-toolbar {
+    padding: 12px;
+  }
+
+  .toolbar-left h2 {
+    font-size: 1.25rem;
+  }
+
+  .rbc-time-slot {
+    min-height: 30px;
+  }
+}
+
+/* ===== Accessibility ===== */
+.rbc-event:focus-visible,
+.rbc-day-slot:focus-visible,
+.rbc-time-slot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .rbc-event {
+    border-width: 2px;
+  }
+
+  .calendar-toolbar,
+  .rbc-calendar {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .rbc-event,
+  .view-dropdown {
+    transition: none;
+  }
+}
