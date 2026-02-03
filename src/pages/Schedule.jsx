@@ -1066,7 +1066,6 @@ function Schedule() {
       e.preventDefault()
       setSelectedEvent(event)
     }
-    }
   }, [isMobile])
 
   // Handle event right-click (context menu on desktop)
@@ -1158,8 +1157,8 @@ function Schedule() {
     return true // Close action modal
   }, [])
   
-  // Confirm delete handler
-  const confirmDelete = useCallback(async () => {
+  // Confirm event delete handler
+  const confirmEventDelete = useCallback(async () => {
     if (!eventToDelete) return
     
     // Handle edit placeholder
@@ -2043,7 +2042,7 @@ function Schedule() {
           setShowDeleteConfirm(false)
           setEventToDelete(null)
         }}
-        onConfirm={confirmDelete}
+        onConfirm={confirmEventDelete}
         title={eventToDelete?.isEdit ? 'Edit Event' : 'Delete Event'}
         message={
           eventToDelete?.isEdit

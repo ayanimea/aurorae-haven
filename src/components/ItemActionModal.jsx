@@ -12,16 +12,19 @@ import './ItemActionModal.css'
  * Desktop: Shows on right-click as context menu
  */
 function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
-  if (!item) return null
-
+  // All hooks must be called before any conditional returns
   const isMobile = useIsMobile()
-  const isContextMenu = item.isContextMenu || !isMobile
   const modalRef = useRef(null)
   const firstButtonRef = useRef(null)
   const previouslyFocusedElement = useRef(null)
 
+  // Compute derived values from props (before early return)
+  const isContextMenu = item ? (item.isContextMenu || !isMobile) : false
+
   // Store previously focused element for focus restoration
   useEffect(() => {
+    if (!item) return
+
     previouslyFocusedElement.current = document.activeElement
     
     // Focus first button when modal opens
@@ -35,46 +38,57 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
         previouslyFocusedElement.current.focus()
       }
     }
-  }, [])
+  }, [item])
 
   // Focus trap for full modal
   useEffect(() => {
-    if (!isContextMenu && modalRef.current) {
-      const focusableElements = modalRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-      const firstElement = focusableElements[0]
-      const lastElement = focusableElements[focusableElements.length - 1]
+    if (!item || isContextMenu || !modalRef.current) return
 
-      const handleTabKey = (e) => {
-        if (e.key !== 'Tab') return
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const firstElement = focusableElements[0]
+    const lastElement = focusableElements[focusableElements.length - 1]
 
-        if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement.focus()
-            e.preventDefault()
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus()
-            e.preventDefault()
-          }
+    const handleTabKey = (e) => {
+      if (e.key !== 'Tab') return
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus()
+          e.preventDefault()
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus()
+          e.preventDefault()
         }
       }
-
-      document.addEventListener('keydown', handleTabKey)
-      return () => document.removeEventListener('keydown', handleTabKey)
     }
-  }, [isContextMenu])
+
+    document.addEventListener('keydown', handleTabKey)
+    return () => document.removeEventListener('keydown', handleTabKey)
+  }, [item, isContextMenu])
+
+  // Global escape key handler
+  useEffect(() => {
+    if (!item) return
+
+    const handleEscapeKey = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscapeKey)
+    return () => document.removeEventListener('keydown', handleEscapeKey)
+  }, [item, onClose])
+
+  // Early return AFTER all hooks
+  if (!item) return null
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }
-
-  const handleEscapeKey = (e) => {
-    if (e.key === 'Escape') {
       onClose()
     }
   }
@@ -104,10 +118,9 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
 
     return (
       <div 
-        className="item-action-backdrop" 
+        className="item-action-backdrop"
+        role="presentation"
         onClick={handleBackdropClick}
-        onKeyDown={handleEscapeKey}
-        aria-label="Close menu"
       >
         <div 
           className="item-action-context-menu"
@@ -146,10 +159,9 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
 
   return (
     <div 
-      className="item-action-backdrop" 
+      className="item-action-backdrop"
+      role="presentation"
       onClick={handleBackdropClick}
-      onKeyDown={handleEscapeKey}
-      aria-label="Close modal"
     >
       <div 
         ref={modalRef}

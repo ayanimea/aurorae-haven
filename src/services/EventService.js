@@ -11,6 +11,7 @@ import {
   deleteEvent as deleteEventDB
 } from '../utils/scheduleManager'
 import { STORES, getAll, deleteById } from '../utils/indexedDBManager'
+import logger from '../utils/logger'
 
 /**
  * EventService class - Manages all event data operations
@@ -28,7 +29,7 @@ class EventService {
       const events = await getEventsForDay(dateStr)
       return Array.isArray(events) ? events : []
     } catch (error) {
-      console.error('EventService.getEventsForDate error:', error)
+      logger.error('EventService.getEventsForDate error:', error)
       return []
     }
   }
@@ -44,7 +45,7 @@ class EventService {
       const events = await getEventsForRange(startDate, endDate)
       return Array.isArray(events) ? events : []
     } catch (error) {
-      console.error('EventService.getEventsForWeek error:', error)
+      logger.error('EventService.getEventsForWeek error:', error)
       return []
     }
   }
@@ -62,7 +63,7 @@ class EventService {
       const events = await getEventsForRange(start, end)
       return Array.isArray(events) ? events : []
     } catch (error) {
-      console.error('EventService.getEventsForRange error:', error)
+      logger.error('EventService.getEventsForRange error:', error)
       return []
     }
   }
@@ -83,7 +84,7 @@ class EventService {
       
       return await this.getEventsForRange(start, end)
     } catch (error) {
-      console.error('EventService.getEventsForDays error:', error)
+      logger.error('EventService.getEventsForDays error:', error)
       return []
     }
   }
@@ -137,7 +138,7 @@ class EventService {
       
       return testEvents.length
     } catch (error) {
-      console.error('EventService.clearTestData error:', error)
+      logger.error('EventService.clearTestData error:', error)
       return 0
     }
   }
