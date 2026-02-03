@@ -20,11 +20,11 @@ import '../assets/styles/schedule-rbc.css'
 
 const logger = createLogger('Schedule')
 
-// Configure date-fns localizer for React Big Calendar
+// Configure date-fns localizer for React Big Calendar with European settings
 const localizer = dateFnsLocalizer({
   format,
   parse,
-  startOfWeek,
+  startOfWeek: (date) => startOfWeek(date, { weekStartsOn: 1 }), // Monday start (European)
   getDay,
   locales: {}
 })

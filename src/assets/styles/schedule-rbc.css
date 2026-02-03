@@ -50,10 +50,21 @@
   /* Allow starfield background to show through */
   position: relative;
   isolation: isolate;
-}
+  overflow: hidden; /* Prevent overflow of calendar container */
 }
 
-/* ===== Custom Toolbar (Simplified) ===== */
+/* Ensure time content can scroll to show full day */
+.rbc-time-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rbc-time-content {
+  flex: 1;
+  overflow-y: auto; /* Allow scrolling through full day */
+}
 .calendar-toolbar {
   display: flex;
   justify-content: space-between;
@@ -140,11 +151,8 @@
   border-left: 1px solid var(--rbc-border-subtle);
 }
 
-.rbc-time-content {
-  flex: 1;
-}
 
-.rbc-time-gutter {
+/* ===== Custom Toolbar (Simplified) ===== */.rbc-time-gutter {
   background: var(--rbc-bg-secondary);
   color: var(--dim);
 }
@@ -170,37 +178,35 @@
 
 /* Time-of-day background colors for Day and Week views */
 /* Strong visible bands with smooth gradients between periods */
-/* Morning: 7am-12pm */
-.rbc-day-slot .rbc-timeslot-group:nth-child(n+8):nth-child(-n+12) {
+/* Adjusted for min={7am}: slot 1 = 7am, slot 6 = 12pm, slot 12 = 6pm, slot 17 = 11pm */
+
+/* Morning: 7am-12pm (slots 1-5) */
+.rbc-day-slot .rbc-timeslot-group:nth-child(n+1):nth-child(-n+5) {
   background: linear-gradient(to bottom, 
     var(--morning-bg), 
     var(--morning-bg) 90%, 
     var(--afternoon-bg) 100%);
 }
 
-/* Afternoon: 12pm-6pm */
-.rbc-day-slot .rbc-timeslot-group:nth-child(n+13):nth-child(-n+18) {
+/* Afternoon: 12pm-6pm (slots 6-11) */
+.rbc-day-slot .rbc-timeslot-group:nth-child(n+6):nth-child(-n+11) {
   background: linear-gradient(to bottom, 
     var(--afternoon-bg), 
     var(--afternoon-bg) 90%, 
     var(--evening-bg) 100%);
 }
 
-/* Evening: 6pm-11pm */
-.rbc-day-slot .rbc-timeslot-group:nth-child(n+19):nth-child(-n+23) {
+/* Evening: 6pm-11pm (slots 12-16) */
+.rbc-day-slot .rbc-timeslot-group:nth-child(n+12):nth-child(-n+16) {
   background: linear-gradient(to bottom, 
     var(--evening-bg), 
     var(--evening-bg) 90%, 
     var(--night-bg) 100%);
 }
 
-/* Night: 11pm-7am (23:00-07:00) */
-.rbc-day-slot .rbc-timeslot-group:nth-child(n+24),
-.rbc-day-slot .rbc-timeslot-group:nth-child(-n+7) {
-  background: linear-gradient(to bottom, 
-    var(--night-bg), 
-    var(--night-bg) 90%, 
-    var(--morning-bg) 100%);
+/* Night: 11pm-midnight (slots 17+) */
+.rbc-day-slot .rbc-timeslot-group:nth-child(n+17) {
+  background: var(--night-bg);
 }
 
 /* ===== Headers ===== */
