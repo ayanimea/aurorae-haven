@@ -309,12 +309,14 @@ describe('EventService', () => {
 
     test('returns empty array for invalid date components', async () => {
       // This date has invalid month (13) and day (40)
-      // But it passes the regex check, so it gets parsed
+      // But it passes the regex check and Number parsing
+      // JavaScript Date constructor normalizes invalid dates (2024-13-40 becomes 2025-02-09)
+      // So this test verifies the service handles such dates gracefully
       const result = await EventService.getEventsForDays('2024-13-40', 7)
 
+      // Date is parsed and normalized by JavaScript, so it returns results
+      // rather than an error. This is expected behavior.
       expect(result).toEqual([])
-      // The date is actually parsed successfully by Date constructor which normalizes it
-      // So we check that the result is empty due to other validation
     })
 
     test('returns empty array and logs error on exception', async () => {
