@@ -152,7 +152,7 @@
 }
 
 
-/* ===== Custom Toolbar (Simplified) ===== */.rbc-time-gutter {
+.rbc-time-gutter {
   background: var(--rbc-bg-secondary);
   color: var(--dim);
 }
