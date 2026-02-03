@@ -21,7 +21,6 @@ function CustomToolbar({
 }) {
   const viewLabels = {
     day: 'Day',
-    '3days': '3-Day',
     week: 'Week',
     month: 'Month'
   }

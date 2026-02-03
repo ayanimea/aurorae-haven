@@ -1,7 +1,15 @@
 /**
  * React Big Calendar Custom Styling
- * Integrates RBC with Aurorae Haven's glass-ui/astro theme
+ * Simplified styling that integrates RBC with Aurorae Haven's glass-ui/astro theme
+ * Maintains accessibility and neurodivergent-friendly design
  */
+
+/* ===== CSS Variables for Consistency ===== */
+:root {
+  --rbc-bg-primary: rgba(16, 20, 44, 0.7);
+  --rbc-bg-secondary: rgba(16, 20, 44, 0.5);
+  --rbc-bg-tertiary: rgba(16, 20, 44, 0.3);
+}
 
 /* ===== Layout ===== */
 .page-schedule {
@@ -21,7 +29,7 @@
 /* ===== Calendar Container ===== */
 .rbc-calendar {
   flex: 1;
-  background: rgba(16, 20, 44, 0.7);
+  background: var(--rbc-bg-primary);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 10px;
@@ -36,7 +44,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: rgba(16, 20, 44, 0.5);
+  background: var(--rbc-bg-secondary);
   border: 1px solid var(--line);
   border-radius: 12px;
   margin-bottom: 16px;
@@ -84,16 +92,14 @@
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(16, 20, 44, 0.7);
+  background: var(--rbc-bg-primary);
   color: var(--text);
   cursor: pointer;
   font-size: 0.875rem;
-  transition: all 0.2s ease;
 }
 
 .view-dropdown:hover {
   border-color: var(--accent);
-  background: rgba(16, 20, 44, 0.9);
 }
 
 .view-dropdown:focus {
@@ -107,12 +113,12 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(16, 20, 44, 0.3);
+  background: var(--rbc-bg-tertiary);
 }
 
 .rbc-time-header {
   border-bottom: 1px solid var(--line);
-  background: rgba(16, 20, 44, 0.5);
+  background: var(--rbc-bg-secondary);
 }
 
 .rbc-time-header-content {
@@ -125,7 +131,7 @@
 }
 
 .rbc-time-gutter {
-  background: rgba(16, 20, 44, 0.5);
+  background: var(--rbc-bg-secondary);
   color: var(--dim);
 }
 
@@ -144,12 +150,12 @@
   height: 2px;
 }
 
-/* ===== Day/Week View Headers ===== */
+/* ===== Headers ===== */
 .rbc-header {
   padding: 10px 8px;
   font-weight: 600;
   color: var(--text);
-  background: rgba(16, 20, 44, 0.5);
+  background: var(--rbc-bg-secondary);
   border-bottom: 1px solid var(--line);
   border-left: 1px solid var(--line);
 }
@@ -167,16 +173,15 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(16, 20, 44, 0.3);
+  background: var(--rbc-bg-tertiary);
 }
 
 .rbc-month-header {
-  background: rgba(16, 20, 44, 0.5);
+  background: var(--rbc-bg-secondary);
 }
 
 .rbc-month-row {
   border-top: 1px solid var(--line);
-  overflow: hidden;
 }
 
 .rbc-day-bg {
@@ -211,14 +216,11 @@
   border-radius: 8px;
   padding: 4px 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
   font-size: 0.875rem;
 }
 
 .rbc-event:hover {
   background-color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(134, 245, 224, 0.3);
 }
 
 .rbc-event:focus {
@@ -226,7 +228,7 @@
   outline-offset: 2px;
 }
 
-/* Event type-specific colors */
+/* Event type-specific colors - essential for neurodivergent users */
 .rbc-event.event-routine {
   background-color: rgba(186, 141, 255, 0.2);
   border-color: rgba(186, 141, 255, 0.8);
@@ -263,11 +265,6 @@
   background-color: rgba(255, 223, 186, 0.4);
 }
 
-.rbc-event-label {
-  font-size: 0.75rem;
-  color: var(--dim);
-}
-
 .rbc-event-content {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -277,6 +274,7 @@
   font-weight: 500;
 }
 
+/* Preparation and travel time indicators - important for planning */
 .event-pre-activities {
   display: flex;
   gap: 6px;
@@ -294,11 +292,6 @@
   cursor: help;
 }
 
-.rbc-event-continues-prior,
-.rbc-event-continues-after {
-  opacity: 0.8;
-}
-
 /* ===== Selection ===== */
 .rbc-slot-selection {
   background-color: rgba(134, 245, 224, 0.2);
@@ -310,35 +303,17 @@
   border-color: var(--accent);
 }
 
-/* ===== Overlays ===== */
-.rbc-overlay {
-  background: rgba(16, 20, 44, 0.95);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-
-.rbc-overlay-header {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 8px;
-  color: var(--text);
-  font-weight: 600;
-}
-
 /* ===== Loading & Error States ===== */
 .loading-overlay {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(16, 20, 44, 0.9);
+  background: var(--rbc-bg-secondary);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 20px 40px;
   color: var(--text);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .error-message {
@@ -349,7 +324,6 @@
   color: white;
   padding: 12px 20px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 1000;
 }
 
@@ -373,10 +347,6 @@
   .nav-buttons,
   .view-selector {
     justify-content: space-between;
-  }
-
-  .rbc-toolbar {
-    font-size: 0.875rem;
   }
 
   .rbc-event {
@@ -408,6 +378,7 @@
 }
 
 /* ===== Accessibility ===== */
+/* Maintained for keyboard navigation and screen readers */
 .rbc-event:focus-visible,
 .rbc-day-slot:focus-visible,
 .rbc-time-slot:focus-visible {
@@ -427,7 +398,7 @@
   }
 }
 
-/* Reduced motion support */
+/* Reduced motion support - essential for neurodivergent users */
 @media (prefers-reduced-motion: reduce) {
   .rbc-event,
   .view-dropdown {

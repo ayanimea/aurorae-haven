@@ -4,9 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import PropTypes from 'prop-types'
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar'
-import { format, parse, startOfWeek, getDay, addDays, startOfDay } from 'date-fns'
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
+import { format, parse, startOfWeek, getDay, addDays } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
 import CustomToolbar from '../components/Schedule/CustomToolbar'
@@ -28,43 +27,6 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales: {}
 })
-
-// Custom view for 3-day - using Week view with custom range
-// RBC requires static methods for custom views
-function ThreeDayView(props) {
-  const { date } = props
-  const start = startOfDay(date)
-  const range = [start, addDays(start, 1), addDays(start, 2)]
-  
-  return <Views.Week {...props} range={range} />
-}
-
-ThreeDayView.propTypes = {
-  date: PropTypes.instanceOf(Date).isRequired
-}
-
-// Static methods required by RBC for custom views
-ThreeDayView.range = (date) => {
-  const start = startOfDay(date)
-  return [start, addDays(start, 1), addDays(start, 2)]
-}
-
-ThreeDayView.navigate = (date, action) => {
-  switch (action) {
-    case 'PREV':
-      return addDays(date, -3)
-    case 'NEXT':
-      return addDays(date, 3)
-    default:
-      return date
-  }
-}
-
-ThreeDayView.title = (date, { localizer }) => {
-  const start = startOfDay(date)
-  const end = addDays(start, 2)
-  return `${localizer.format(start, 'MMM dd')} - ${localizer.format(end, 'MMM dd, yyyy')}`
-}
 
 function Schedule() {
   // State management
@@ -95,8 +57,6 @@ function Schedule() {
 
       if (view === 'day') {
         loadedEvents = await EventService.getEventsForDate(dateStr)
-      } else if (view === '3days') {
-        loadedEvents = await EventService.getEventsForDays(dateStr, 3)
       } else if (view === 'week') {
         loadedEvents = await EventService.getEventsForWeek(dateStr)
       } else if (view === 'month') {
@@ -202,7 +162,6 @@ function Schedule() {
   const views = useMemo(
     () => ({
       day: true,
-      '3days': ThreeDayView,
       week: true,
       month: true
     }),
