@@ -5,7 +5,6 @@ import EventModal from '../components/Schedule/EventModal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ItemActionModal from '../components/ItemActionModal'
 import EventService from '../services/EventService'
-import { useIsMobile } from '../hooks/useIsMobile'
 import {
   getCalendarSubscriptions,
   addCalendarSubscription,
@@ -528,9 +527,6 @@ function Schedule() {
   
   // Dynamic hour height (recalculated on mount and resize)
   const [hourHeight, setHourHeight] = useState(PIXELS_PER_HOUR)
-  
-  // Mobile detection hook
-  const isMobile = useIsMobile()
   
   // Calculate hour height dynamically to fit content on screen without scrolling
   // Update hour height on mount, resize, and view mode change
