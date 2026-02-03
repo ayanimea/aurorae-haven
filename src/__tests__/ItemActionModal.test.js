@@ -95,9 +95,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('renders edit and delete menu items in context menu', () => {
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
+
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -143,6 +145,7 @@ describe('ItemActionModal Component', () => {
     test('calls adjustMenuPosition with context menu coordinates', () => {
       const itemWithPosition = {
         ...mockItem,
+        isContextMenu: true,
         contextMenuX: 100,
         contextMenuY: 200
       }
@@ -160,9 +163,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('uses default coordinates when not provided', () => {
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
+
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -174,10 +179,11 @@ describe('ItemActionModal Component', () => {
 
     test('applies adjusted position styles to context menu', () => {
       adjustMenuPosition.mockReturnValue({ x: 150, y: 250 })
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       const { container } = render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -208,9 +214,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('calls onEdit and onClose when edit menu item clicked in context menu', () => {
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
+
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -220,7 +228,7 @@ describe('ItemActionModal Component', () => {
       const editMenuItem = screen.getByRole('menuitem', { name: /edit/i })
       fireEvent.click(editMenuItem)
 
-      expect(mockOnEdit).toHaveBeenCalledWith(mockItem)
+      expect(mockOnEdit).toHaveBeenCalledWith(contextMenuItem)
       expect(mockOnClose).toHaveBeenCalledTimes(1)
     })
 
@@ -566,9 +574,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('context menu has role="menu"', () => {
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
+
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -579,9 +589,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('context menu has aria-label', () => {
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
+
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -593,9 +605,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('context menu items have role="menuitem"', () => {
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
+
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
