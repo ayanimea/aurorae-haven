@@ -140,11 +140,12 @@ let lastPrefixTimestamp = 0
  * Generate a timestamp-based ID with collision prevention
  * Ensures uniqueness even for same-millisecond operations by using counters
  * @param {string} prefix - Optional prefix for the ID
+ * @param {number} providedTimestamp - Optional timestamp to use (for consistency with metadata)
  * @returns {string|number} Unique timestamp ID (prefixed string or numeric)
  * @private
  */
-function generateTimestampIdWithCollisionPrevention(prefix = '') {
-  const timestamp = Date.now()
+function generateTimestampIdWithCollisionPrevention(prefix = '', providedTimestamp = null) {
+  const timestamp = providedTimestamp !== null ? providedTimestamp : Date.now()
 
   if (prefix) {
     // Handle prefixed IDs with per-prefix counter
@@ -193,11 +194,13 @@ export function normalizeEntity(entity, options = {}) {
   const metadata = generateMetadata()
 
   // Generate unique ID - add counter to handle same-millisecond creates
+  // Pass metadata.timestamp to ensure ID generation uses the same timestamp value
+  // This prevents timing issues where Date.now() is called multiple times
   let id
   if (entity.id) {
     id = entity.id
   } else {
-    id = generateTimestampIdWithCollisionPrevention(options.idPrefix)
+    id = generateTimestampIdWithCollisionPrevention(options.idPrefix, metadata.timestamp)
   }
 
   return {

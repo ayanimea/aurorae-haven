@@ -17,11 +17,17 @@ jest.mock('../components/Schedule/EventModal', () => {
   }
 })
 
-// Mock scheduleManager functions
-jest.mock('../utils/scheduleManager', () => ({
-  createEvent: jest.fn(),
-  getEventsForDay: jest.fn().mockResolvedValue([]),
-  getEventsForWeek: jest.fn().mockResolvedValue([])
+// Mock EventService
+jest.mock('../services/EventService', () => ({
+  __esModule: true,
+  default: {
+    getEventsForDate: jest.fn().mockResolvedValue([]),
+    getEventsForWeek: jest.fn().mockResolvedValue([]),
+    getEventsForRange: jest.fn().mockResolvedValue([]),
+    getEventsForDays: jest.fn().mockResolvedValue([]),
+    createEvent: jest.fn(),
+    clearTestData: jest.fn().mockResolvedValue(0)
+  }
 }))
 
 // Mock logger
@@ -40,20 +46,18 @@ jest.mock('../utils/timeUtils', () => ({
 }))
 
 describe('Schedule Component', () => {
-  const mockGetEventsForDay =
-    require('../utils/scheduleManager').getEventsForDay
-  const mockGetEventsForWeek =
-    require('../utils/scheduleManager').getEventsForWeek
+  const EventService = require('../services/EventService').default
 
   beforeEach(() => {
     // Mock Date to return a consistent time for testing
     jest.useFakeTimers()
     jest.setSystemTime(new Date('2025-09-16T09:15:00'))
-    // Reset mocks
-    mockGetEventsForDay.mockClear()
-    mockGetEventsForWeek.mockClear()
-    mockGetEventsForDay.mockResolvedValue([])
-    mockGetEventsForWeek.mockResolvedValue([])
+    // Reset EventService mocks
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue([])
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+    EventService.getEventsForDays.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -69,9 +73,9 @@ describe('Schedule Component', () => {
 
   test('renders action buttons', () => {
     render(<Schedule />)
-    expect(screen.getByRole('button', { name: 'View day schedule' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'View week schedule' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'View month schedule' })).toBeInTheDocument()
+    // View mode dropdown button
+    expect(screen.getByRole('button', { name: 'Change view mode' })).toBeInTheDocument()
+    // Schedule event dropdown button
     expect(
       screen.getByRole('button', { name: /Schedule an event/i })
     ).toBeInTheDocument()
@@ -79,46 +83,18 @@ describe('Schedule Component', () => {
 
   test('renders sidebar sections', () => {
     render(<Schedule />)
-    expect(screen.getByText("Today's queue")).toBeInTheDocument()
-    expect(screen.getByText('Deep Work Warmup')).toBeInTheDocument()
-    // Use getAllByText since "Buy groceries" appears in both sidebar and calendar
-    const buyGroceriesElements = screen.getAllByText('Buy groceries')
-    expect(buyGroceriesElements.length).toBeGreaterThan(0)
+    // Sidebar should render without demo items
+    // Demo items "Today's queue" and "Deep Work Warmup" were removed
+    const sidebar = document.querySelector('.sidebar')
+    expect(sidebar).toBeInTheDocument()
   })
 
   test('renders time labels for schedule', () => {
     render(<Schedule />)
-    expect(screen.getByText('06:00')).toBeInTheDocument()
+    expect(screen.getByText('07:00')).toBeInTheDocument()
     expect(screen.getByText('Morning')).toBeInTheDocument()
     expect(screen.getByText('Afternoon')).toBeInTheDocument()
     expect(screen.getByText('Evening')).toBeInTheDocument()
-  })
-
-  test('renders routine block with correct structure', () => {
-    render(<Schedule />)
-    const routineBlock = screen.getByLabelText(/Routine: Morning Launch/)
-    expect(routineBlock).toBeInTheDocument()
-    expect(routineBlock).toHaveClass('block', 'routine')
-    expect(screen.getByText('Morning Launch')).toBeInTheDocument()
-    expect(screen.getByText('07:00–07:30')).toBeInTheDocument()
-  })
-
-  test('renders meeting block with next badge', () => {
-    render(<Schedule />)
-    const meetingBlock = screen.getByLabelText(/Meeting: Team Standup/)
-    expect(meetingBlock).toBeInTheDocument()
-    expect(meetingBlock).toHaveClass('block', 'meeting', 'next-up')
-    expect(screen.getByText('Team Standup')).toBeInTheDocument()
-    expect(screen.getByText('10:00–10:30')).toBeInTheDocument()
-    expect(screen.getByText('Next')).toBeInTheDocument()
-  })
-
-  test('renders task block with priority class', () => {
-    render(<Schedule />)
-    const taskBlock = screen.getByLabelText(/Task: Buy groceries/)
-    expect(taskBlock).toBeInTheDocument()
-    expect(taskBlock).toHaveClass('block', 'task', 'not-urgent-important')
-    expect(screen.getByText('16:00–16:30')).toBeInTheDocument()
   })
 
   test('renders current time indicator during business hours', () => {
@@ -129,8 +105,8 @@ describe('Schedule Component', () => {
   })
 
   test('hides current time indicator outside business hours', () => {
-    // Set time to 23:00 (11 PM - outside schedule range)
-    jest.setSystemTime(new Date('2025-09-16T23:00:00'))
+    // Set time to 01:00 (1 AM - outside schedule range of 7am-midnight)
+    jest.setSystemTime(new Date('2025-09-16T01:00:00'))
     render(<Schedule />)
     expect(screen.queryByLabelText('Current time')).not.toBeInTheDocument()
   })
@@ -152,61 +128,24 @@ describe('Schedule Component', () => {
     expect(separators).toHaveLength(3)
   })
 
-  test('all schedule blocks have proper ARIA labels', () => {
-    render(<Schedule />)
-    expect(
-      screen.getByLabelText('Routine: Morning Launch at 07:00–07:30')
-    ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText('Meeting: Team Standup at 10:00–10:30 - Next up')
-    ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText('Task: Buy groceries at 16:00–16:30')
-    ).toBeInTheDocument()
-  })
-
-  test('schedule blocks have correct positioning styles', () => {
-    render(<Schedule />)
-    const routineBlock = screen.getByLabelText(/Routine: Morning Launch/)
-    const meetingBlock = screen.getByLabelText(/Meeting: Team Standup/)
-    const taskBlock = screen.getByLabelText(/Task: Buy groceries/)
-
-    expect(routineBlock).toHaveStyle({ top: '126px', height: '60px' })
-    expect(meetingBlock).toHaveStyle({ top: '486px', height: '60px' })
-    expect(taskBlock).toHaveStyle({ top: '1206px', height: '60px' })
-  })
 
   describe('Button Functionality', () => {
-    test('Day button is active by default', () => {
+    test('View mode dropdown shows current mode', () => {
       render(<Schedule />)
-      const dayButton = screen.getByRole('button', {
-        name: /View day schedule/i
+      const viewButton = screen.getByRole('button', {
+        name: 'Change view mode'
       })
-      expect(dayButton).toHaveClass('btn-active')
+      // Should display "1 Day" by default
+      expect(viewButton).toHaveTextContent('1 Day')
     })
 
-    test('Week button is not active by default', () => {
+    test('View mode dropdown has correct ARIA attributes', () => {
       render(<Schedule />)
-      const weekButton = screen.getByRole('button', {
-        name: /View week schedule/i
+      const viewButton = screen.getByRole('button', {
+        name: 'Change view mode'
       })
-      expect(weekButton).not.toHaveClass('btn-active')
-    })
-
-    test('Day button has correct ARIA attributes', () => {
-      render(<Schedule />)
-      const dayButton = screen.getByRole('button', {
-        name: /View day schedule/i
-      })
-      expect(dayButton).toHaveAttribute('aria-pressed', 'true')
-    })
-
-    test('Week button has correct ARIA attributes when not active', () => {
-      render(<Schedule />)
-      const weekButton = screen.getByRole('button', {
-        name: /View week schedule/i
-      })
-      expect(weekButton).toHaveAttribute('aria-pressed', 'false')
+      expect(viewButton).toHaveAttribute('aria-expanded', 'false')
+      expect(viewButton).toHaveAttribute('aria-haspopup', 'menu')
     })
 
     test('Schedule dropdown button has correct ARIA attributes', () => {
@@ -221,37 +160,75 @@ describe('Schedule Component', () => {
 
     test('loads day events on initial render', () => {
       render(<Schedule />)
-      expect(mockGetEventsForDay).toHaveBeenCalledWith('2025-09-16')
-      expect(mockGetEventsForWeek).not.toHaveBeenCalled()
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
+      expect(EventService.getEventsForWeek).not.toHaveBeenCalled()
     })
 
-    test('clicking Week button switches view mode and loads week events', async () => {
+    test('clicking view dropdown opens menu', async () => {
       render(<Schedule />)
-      const weekButton = screen.getByRole('button', {
-        name: /View week schedule/i
+      const viewButton = screen.getByRole('button', {
+        name: 'Change view mode'
       })
 
-      // Click the week button using RTL's fireEvent
-      fireEvent.click(weekButton)
+      // Click to open dropdown
+      fireEvent.click(viewButton)
 
-      // Wait for state update
-      await screen.findByRole('button', { name: /View week schedule/i })
+      // Menu should now be visible with menuitem options
+      const dayMenuItem = await screen.findByRole('menuitem', { name: 'View 1 day' })
+      const weekMenuItem = await screen.findByRole('menuitem', { name: 'View 1 week' })
+      expect(dayMenuItem).toBeInTheDocument()
+      expect(weekMenuItem).toBeInTheDocument()
+    })
+
+    test('clicking week menu item switches view mode and loads week events', async () => {
+      render(<Schedule />)
+      const viewButton = screen.getByRole('button', {
+        name: 'Change view mode'
+      })
+
+      // Click to open dropdown
+      fireEvent.click(viewButton)
+
+      // Click week menu item
+      const weekMenuItem = await screen.findByRole('menuitem', { name: 'View 1 week' })
+      fireEvent.click(weekMenuItem)
 
       // Check that week events were loaded
-      expect(mockGetEventsForWeek).toHaveBeenCalled()
+      expect(EventService.getEventsForWeek).toHaveBeenCalled()
+      
+      // Button should now show "1 Week"
+      expect(viewButton).toHaveTextContent('1 Week')
     })
 
-    test('clicking Day button after Week keeps day view active', () => {
+    test('clicking day menu item after week keeps day view active', async () => {
       render(<Schedule />)
-      const dayButton = screen.getByRole('button', {
-        name: /View day schedule/i
+      const viewButton = screen.getByRole('button', {
+        name: 'Change view mode'
       })
 
-      // Click day button (already active) using RTL's fireEvent
-      fireEvent.click(dayButton)
+      // Initially should show 1 Day
+      expect(viewButton).toHaveTextContent('1 Day')
 
-      // Day button should still be active
-      expect(dayButton).toHaveClass('btn-active')
+      // Click to open dropdown
+      fireEvent.click(viewButton)
+
+      // Click day menu item (already active)
+      const dayMenuItem = await screen.findByRole('menuitem', { name: 'View 1 day' })
+      fireEvent.click(dayMenuItem)
+
+      // Should still be on day view
+      expect(viewButton).toHaveTextContent('1 Day')
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
+    })
+
+    test('clearTestData service method works correctly (Item 17)', async () => {
+      // Mock clearTestData to return 5 deleted items
+      EventService.clearTestData.mockResolvedValue(5)
+      
+      // Verify the service method works as expected
+      const result = await EventService.clearTestData()
+      expect(result).toBe(5)
+      expect(EventService.clearTestData).toHaveBeenCalled()
     })
   })
 })

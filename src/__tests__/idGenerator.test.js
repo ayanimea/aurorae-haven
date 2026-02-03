@@ -256,25 +256,36 @@ describe('idGenerator', () => {
       // This prevents contamination from previous tests' module-level counters
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      // Create multiple entities synchronously (within same millisecond)
-      const entities = []
-      for (let i = 0; i < 5; i++) {
-        entities.push(normalizeEntity({ name: `Entity ${i}` }))
-      }
+      // Mock Date.now() to return a fixed timestamp for all entity creations
+      // This ensures all entities are created "within the same millisecond" for testing collision prevention
+      const fixedTimestamp = 1234567890000
+      const originalDateNow = Date.now
+      Date.now = jest.fn(() => fixedTimestamp)
 
-      // Verify all IDs are unique
-      const ids = entities.map((e) => e.id)
-      const uniqueIds = new Set(ids)
-      expect(uniqueIds.size).toBe(ids.length)
+      try {
+        // Create multiple entities synchronously (within same millisecond)
+        const entities = []
+        for (let i = 0; i < 5; i++) {
+          entities.push(normalizeEntity({ name: `Entity ${i}` }))
+        }
 
-      // First ID should be numeric timestamp
-      expect(typeof ids[0]).toBe('number')
-      expect(ids[0]).toBeGreaterThan(0)
+        // Verify all IDs are unique
+        const ids = entities.map((e) => e.id)
+        const uniqueIds = new Set(ids)
+        expect(uniqueIds.size).toBe(ids.length)
 
-      // Subsequent IDs should be strings with counter suffix (since created in same ms)
-      for (let i = 1; i < ids.length; i++) {
-        expect(typeof ids[i]).toBe('string')
-        expect(ids[i]).toMatch(/^\d+\.\d{3}$/)
+        // First ID should be numeric timestamp
+        expect(typeof ids[0]).toBe('number')
+        expect(ids[0]).toBe(fixedTimestamp)
+
+        // Subsequent IDs should be strings with counter suffix (since created in same ms)
+        for (let i = 1; i < ids.length; i++) {
+          expect(typeof ids[i]).toBe('string')
+          expect(ids[i]).toMatch(/^\d+\.\d{3}$/)
+        }
+      } finally {
+        // Restore original Date.now()
+        Date.now = originalDateNow
       }
     })
 
