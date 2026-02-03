@@ -14,8 +14,6 @@ function CustomToolbar({
   views,
   onNavigate,
   onView,
-  show24Hours,
-  onToggle24Hours,
   onScheduleEvent,
   EVENT_TYPES
 }) {
@@ -106,29 +104,16 @@ function CustomToolbar({
           </select>
         </div>
 
-        {/* 24-hour toggle */}
+        {/* Schedule event button */}
         <button
           type="button"
-          onClick={onToggle24Hours}
-          className="btn-secondary"
-          aria-label={`Switch to ${show24Hours ? '12' : '24'}-hour format`}
+          className="btn-primary"
+          aria-label="Schedule an event"
+          onClick={() => onScheduleEvent(EVENT_TYPES.TASK)}
         >
-          <Icon name="clock" />
-          {show24Hours ? '24h' : '12h'}
+          <Icon name="plus" />
+          Schedule
         </button>
-
-        {/* Schedule event button */}
-        <div className="schedule-event-dropdown">
-          <button
-            type="button"
-            className="btn-primary"
-            aria-label="Schedule an event"
-            onClick={() => onScheduleEvent(EVENT_TYPES.TASK)}
-          >
-            <Icon name="plus" />
-            Schedule
-          </button>
-        </div>
       </div>
     </div>
   )
@@ -140,8 +125,6 @@ CustomToolbar.propTypes = {
   views: PropTypes.arrayOf(PropTypes.string).isRequired,
   onNavigate: PropTypes.func.isRequired,
   onView: PropTypes.func.isRequired,
-  show24Hours: PropTypes.bool.isRequired,
-  onToggle24Hours: PropTypes.func.isRequired,
   onScheduleEvent: PropTypes.func.isRequired,
   EVENT_TYPES: PropTypes.object.isRequired
 }

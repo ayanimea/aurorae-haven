@@ -35,7 +35,6 @@ function Schedule() {
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [show24Hours, setShow24Hours] = useState(false)
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -154,10 +153,6 @@ function Schedule() {
     setIsModalOpen(true)
   }
 
-  const handleToggle24Hours = () => {
-    setShow24Hours((prev) => !prev)
-  }
-
   // Calendar configuration
   const views = useMemo(
     () => ({
@@ -170,20 +165,18 @@ function Schedule() {
 
   const formats = useMemo(
     () => ({
-      timeGutterFormat: show24Hours ? 'HH:mm' : 'h a',
+      timeGutterFormat: 'h a',
       eventTimeRangeFormat: ({ start, end }) => {
-        const formatStr = show24Hours ? 'HH:mm' : 'h:mm a'
-        return `${format(start, formatStr)} - ${format(end, formatStr)}`
+        return `${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`
       },
       agendaTimeRangeFormat: ({ start, end }) => {
-        const formatStr = show24Hours ? 'HH:mm' : 'h:mm a'
-        return `${format(start, formatStr)} - ${format(end, formatStr)}`
+        return `${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`
       },
       dayFormat: 'EEE dd',
       dayHeaderFormat: 'EEEE, MMMM d',
       monthHeaderFormat: 'MMMM yyyy'
     }),
-    [show24Hours]
+    []
   )
 
   return (
@@ -210,8 +203,6 @@ function Schedule() {
             toolbar: (props) => (
               <CustomToolbar
                 {...props}
-                show24Hours={show24Hours}
-                onToggle24Hours={handleToggle24Hours}
                 onScheduleEvent={handleScheduleEvent}
                 EVENT_TYPES={EVENT_TYPES}
               />
