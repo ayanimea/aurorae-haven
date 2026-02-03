@@ -6,20 +6,20 @@
 
 /* ===== CSS Variables for Consistency ===== */
 :root {
-  /* Romantic starfield background - more transparent to show stars */
-  --rbc-bg-primary: rgba(16, 20, 44, 0.65);
-  --rbc-bg-secondary: rgba(16, 20, 44, 0.55);
-  --rbc-bg-tertiary: rgba(16, 20, 44, 0.45);
+  /* Romantic starfield background - highly transparent to show stars prominently */
+  --rbc-bg-primary: rgba(16, 20, 44, 0.45);
+  --rbc-bg-secondary: rgba(16, 20, 44, 0.35);
+  --rbc-bg-tertiary: rgba(16, 20, 44, 0.25);
   
   /* Minimal borders - keep hour lines for structure */
   --rbc-border-subtle: rgba(255, 255, 255, 0.02);
-  --rbc-border-hour: rgba(255, 255, 255, 0.08);
+  --rbc-border-hour: rgba(255, 255, 255, 0.06);
   
-  /* Time-of-day background colors - strong and visible like reference image */
-  --morning-bg: rgba(255, 223, 186, 0.35); /* Warm amber - 7am-12pm */
-  --afternoon-bg: rgba(187, 222, 251, 0.30); /* Soft daylight blue - 12pm-6pm */
-  --evening-bg: rgba(186, 141, 255, 0.30); /* Calm dusk purple - 6pm-11pm */
-  --night-bg: rgba(16, 20, 44, 0.40); /* Dark night - 11pm-7am */
+  /* Time-of-day background colors - VIBRANT and clearly visible like reference image */
+  --morning-bg: rgba(255, 223, 186, 0.70); /* Warm amber - 7am-12pm */
+  --afternoon-bg: rgba(187, 222, 251, 0.65); /* Soft daylight blue - 12pm-6pm */
+  --evening-bg: rgba(186, 141, 255, 0.65); /* Calm dusk purple - 6pm-11pm */
+  --night-bg: rgba(16, 20, 44, 0.75); /* Dark night - 11pm-7am */
 }
 
 /* ===== Layout ===== */
@@ -41,13 +41,14 @@
 .rbc-calendar {
   flex: 1;
   background: var(--rbc-bg-primary);
-  backdrop-filter: saturate(120%) blur(10px);
+  backdrop-filter: saturate(140%) blur(20px);
+  -webkit-backdrop-filter: saturate(140%) blur(20px);
   border: 1px solid var(--rbc-border-subtle);
   border-radius: 12px;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  /* Allow starfield background to show through */
+  /* Highly transparent to show starfield prominently */
   position: relative;
   isolation: isolate;
   min-height: 0; /* Allow flex child to shrink below content size */
@@ -178,34 +179,37 @@
 }
 
 /* Time-of-day background colors for Day and Week views */
-/* Strong visible bands with smooth gradients between periods */
+/* VIBRANT bands with smooth gradient transitions like reference design */
 /* Adjusted for min={7am}: slot 1 = 7am, slot 6 = 12pm, slot 12 = 6pm, slot 17 = 11pm */
 
-/* Morning: 7am-12pm (slots 1-5) */
+/* Morning: 7am-12pm (slots 1-5) - blend into afternoon at end */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+1):nth-child(-n+5) {
   background: linear-gradient(to bottom, 
-    var(--morning-bg), 
-    var(--morning-bg) 90%, 
-    var(--afternoon-bg) 100%);
+    var(--morning-bg) 0%, 
+    var(--morning-bg) 80%, 
+    rgba(255, 223, 186, 0.70) 85%,
+    rgba(187, 222, 251, 0.65) 100%);
 }
 
-/* Afternoon: 12pm-6pm (slots 6-11) */
+/* Afternoon: 12pm-6pm (slots 6-11) - blend from morning, into evening */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+6):nth-child(-n+11) {
   background: linear-gradient(to bottom, 
-    var(--afternoon-bg), 
-    var(--afternoon-bg) 90%, 
-    var(--evening-bg) 100%);
+    rgba(187, 222, 251, 0.65) 0%,
+    var(--afternoon-bg) 20%, 
+    var(--afternoon-bg) 80%, 
+    rgba(186, 141, 255, 0.65) 100%);
 }
 
-/* Evening: 6pm-11pm (slots 12-16) */
+/* Evening: 6pm-11pm (slots 12-16) - blend from afternoon, into night */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+12):nth-child(-n+16) {
   background: linear-gradient(to bottom, 
-    var(--evening-bg), 
-    var(--evening-bg) 90%, 
-    var(--night-bg) 100%);
+    rgba(186, 141, 255, 0.65) 0%,
+    var(--evening-bg) 20%, 
+    var(--evening-bg) 80%, 
+    rgba(16, 20, 44, 0.75) 100%);
 }
 
-/* Night: 11pm-midnight (slots 17+) */
+/* Night: 11pm-midnight (slots 17+) - solid dark */
 .rbc-day-slot .rbc-timeslot-group:nth-child(n+17) {
   background: var(--night-bg);
 }
@@ -270,22 +274,25 @@
   font-weight: 600;
 }
 
-/* ===== Events - Stand Out More ===== */
+/* ===== Events - Softer, integrated appearance like reference ===== */
 .rbc-event {
-  background-color: var(--accent-soft);
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
   color: var(--text);
-  border: 2px solid var(--accent);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
 .rbc-event:hover {
-  background-color: var(--accent);
-  box-shadow: 0 4px 12px rgba(134, 245, 224, 0.3);
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15);
   transform: translateY(-1px);
 }
 
@@ -294,41 +301,49 @@
   outline-offset: 2px;
 }
 
-/* Event type-specific colors - essential for neurodivergent users */
+/* Event type-specific colors - softer integration with glass effect */
 .rbc-event.event-routine {
-  background-color: rgba(186, 141, 255, 0.25);
-  border-color: rgba(186, 141, 255, 0.9);
+  background-color: rgba(186, 141, 255, 0.20);
+  border-color: rgba(186, 141, 255, 0.5);
+  backdrop-filter: blur(10px);
 }
 
 .rbc-event.event-routine:hover {
-  background-color: rgba(186, 141, 255, 0.5);
+  background-color: rgba(186, 141, 255, 0.35);
+  border-color: rgba(186, 141, 255, 0.7);
 }
 
 .rbc-event.event-task {
-  background-color: rgba(134, 245, 224, 0.25);
-  border-color: rgba(134, 245, 224, 0.9);
+  background-color: rgba(134, 245, 224, 0.20);
+  border-color: rgba(134, 245, 224, 0.5);
+  backdrop-filter: blur(10px);
 }
 
 .rbc-event.event-task:hover {
-  background-color: rgba(134, 245, 224, 0.5);
+  background-color: rgba(134, 245, 224, 0.35);
+  border-color: rgba(134, 245, 224, 0.7);
 }
 
 .rbc-event.event-meeting {
-  background-color: rgba(135, 206, 250, 0.25);
-  border-color: rgba(135, 206, 250, 0.9);
+  background-color: rgba(135, 206, 250, 0.20);
+  border-color: rgba(135, 206, 250, 0.5);
+  backdrop-filter: blur(10px);
 }
 
 .rbc-event.event-meeting:hover {
-  background-color: rgba(135, 206, 250, 0.5);
+  background-color: rgba(135, 206, 250, 0.35);
+  border-color: rgba(135, 206, 250, 0.7);
 }
 
 .rbc-event.event-habit {
-  background-color: rgba(255, 223, 186, 0.25);
-  border-color: rgba(255, 223, 186, 0.9);
+  background-color: rgba(255, 223, 186, 0.20);
+  border-color: rgba(255, 223, 186, 0.5);
+  backdrop-filter: blur(10px);
 }
 
 .rbc-event.event-habit:hover {
-  background-color: rgba(255, 223, 186, 0.5);
+  background-color: rgba(255, 223, 186, 0.35);
+  border-color: rgba(255, 223, 186, 0.7);
 }
 
 .rbc-event-content {
