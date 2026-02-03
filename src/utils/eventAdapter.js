@@ -23,9 +23,19 @@ export const toRBCEvent = (event) => {
     // Parse the day (YYYY-MM-DD format)
     const dayDate = parseISO(event.day)
     
+    // Validate the parsed date
+    if (isNaN(dayDate.getTime())) {
+      return null
+    }
+    
     // Parse start and end times (HH:mm format)
     const startTime = parse(event.startTime, 'HH:mm', dayDate)
     let endTime = parse(event.endTime, 'HH:mm', dayDate)
+    
+    // Validate parsed times
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+      return null
+    }
     
     // Handle events that span midnight (endTime < startTime)
     if (endTime <= startTime) {

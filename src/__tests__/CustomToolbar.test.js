@@ -14,9 +14,16 @@ describe('CustomToolbar Component', () => {
   const defaultProps = {
     date: new Date('2026-02-03T12:00:00'),
     view: 'day',
+    views: ['day', 'week', 'month'],
     onNavigate: jest.fn(),
     onView: jest.fn(),
-    onScheduleEvent: jest.fn()
+    onScheduleEvent: jest.fn(),
+    EVENT_TYPES: {
+      TASK: 'task',
+      ROUTINE: 'routine',
+      MEETING: 'meeting',
+      HABIT: 'habit'
+    }
   }
 
   beforeEach(() => {
@@ -25,7 +32,7 @@ describe('CustomToolbar Component', () => {
 
   it('should render the toolbar', () => {
     render(<CustomToolbar {...defaultProps} />)
-    expect(screen.getByText('Schedule')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Schedule' })).toBeInTheDocument()
   })
 
   it('should display formatted date', () => {
@@ -36,7 +43,7 @@ describe('CustomToolbar Component', () => {
 
   it('should call onNavigate with PREV when previous button is clicked', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const prevButton = screen.getByLabelText('Previous')
+    const prevButton = screen.getByLabelText('Previous period')
     fireEvent.click(prevButton)
     expect(defaultProps.onNavigate).toHaveBeenCalledWith('PREV')
   })
@@ -50,49 +57,49 @@ describe('CustomToolbar Component', () => {
 
   it('should call onNavigate with NEXT when next button is clicked', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const nextButton = screen.getByLabelText('Next')
+    const nextButton = screen.getByLabelText('Next period')
     fireEvent.click(nextButton)
     expect(defaultProps.onNavigate).toHaveBeenCalledWith('NEXT')
   })
 
-  it('should call onView with day when day button is clicked', () => {
+  it('should call onView with day when day is selected', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const dayButton = screen.getByText('Day')
-    fireEvent.click(dayButton)
+    const viewDropdown = screen.getByLabelText('Change view mode')
+    fireEvent.change(viewDropdown, { target: { value: 'day' } })
     expect(defaultProps.onView).toHaveBeenCalledWith('day')
   })
 
-  it('should call onView with week when week button is clicked', () => {
+  it('should call onView with week when week is selected', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const weekButton = screen.getByText('Week')
-    fireEvent.click(weekButton)
+    const viewDropdown = screen.getByLabelText('Change view mode')
+    fireEvent.change(viewDropdown, { target: { value: 'week' } })
     expect(defaultProps.onView).toHaveBeenCalledWith('week')
   })
 
-  it('should call onView with month when month button is clicked', () => {
+  it('should call onView with month when month is selected', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const monthButton = screen.getByText('Month')
-    fireEvent.click(monthButton)
+    const viewDropdown = screen.getByLabelText('Change view mode')
+    fireEvent.change(viewDropdown, { target: { value: 'month' } })
     expect(defaultProps.onView).toHaveBeenCalledWith('month')
   })
 
-  it('should apply active class to current view button', () => {
-    const { container } = render(<CustomToolbar {...defaultProps} view="week" />)
-    const weekButton = screen.getByText('Week')
-    expect(weekButton.classList.contains('active')).toBe(true)
+  it('should show current view in dropdown', () => {
+    render(<CustomToolbar {...defaultProps} view="week" />)
+    const viewDropdown = screen.getByLabelText('Change view mode')
+    expect(viewDropdown.value).toBe('week')
   })
 
   it('should call onScheduleEvent when schedule button is clicked', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const scheduleButton = screen.getByText('Schedule')
+    const scheduleButton = screen.getByLabelText('Schedule an event')
     fireEvent.click(scheduleButton)
-    expect(defaultProps.onScheduleEvent).toHaveBeenCalled()
+    expect(defaultProps.onScheduleEvent).toHaveBeenCalledWith('task')
   })
 
   it('should render navigation icons', () => {
     render(<CustomToolbar {...defaultProps} />)
-    expect(screen.getByTestId('icon-chevron-left')).toBeInTheDocument()
-    expect(screen.getByTestId('icon-chevron-right')).toBeInTheDocument()
+    expect(screen.getByTestId('icon-chevronLeft')).toBeInTheDocument()
+    expect(screen.getByTestId('icon-chevronRight')).toBeInTheDocument()
   })
 
   it('should render schedule icon', () => {
@@ -102,8 +109,8 @@ describe('CustomToolbar Component', () => {
 
   it('should have proper ARIA labels for navigation', () => {
     render(<CustomToolbar {...defaultProps} />)
-    expect(screen.getByLabelText('Previous')).toBeInTheDocument()
-    expect(screen.getByLabelText('Next')).toBeInTheDocument()
+    expect(screen.getByLabelText('Previous period')).toBeInTheDocument()
+    expect(screen.getByLabelText('Next period')).toBeInTheDocument()
   })
 
   it('should render all view options', () => {
@@ -127,11 +134,11 @@ describe('CustomToolbar Component', () => {
 
   it('should update when view prop changes', () => {
     const { rerender } = render(<CustomToolbar {...defaultProps} view="day" />)
-    expect(screen.getByText('Day').classList.contains('active')).toBe(true)
+    const viewDropdown = screen.getByLabelText('Change view mode')
+    expect(viewDropdown.value).toBe('day')
 
     rerender(<CustomToolbar {...defaultProps} view="month" />)
-    expect(screen.getByText('Month').classList.contains('active')).toBe(true)
-    expect(screen.getByText('Day').classList.contains('active')).toBe(false)
+    expect(viewDropdown.value).toBe('month')
   })
 
   it('should update when date prop changes', () => {
