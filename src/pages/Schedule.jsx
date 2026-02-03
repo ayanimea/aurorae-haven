@@ -33,13 +33,14 @@ import PropTypes from 'prop-types'
 // Custom view for 3-day
 const ThreeDayView = ({ date, ...props }) => {
   const start = startOfDay(date)
-  const end = addDays(start, 2)
+  const day2 = addDays(start, 1)
+  const day3 = addDays(start, 2)
   
   return (
     <Calendar.Views.Day
       {...props}
       date={date}
-      range={[start, addDays(start, 1), end]}
+      range={[start, day2, day3]}
     />
   )
 }

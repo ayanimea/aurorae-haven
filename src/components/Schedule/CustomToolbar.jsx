@@ -69,7 +69,7 @@ function CustomToolbar({
             className="btn-icon"
             aria-label="Previous period"
           >
-            <Icon name="chevron-left" />
+            <Icon name="chevronLeft" />
           </button>
           <button
             type="button"
@@ -85,7 +85,7 @@ function CustomToolbar({
             className="btn-icon"
             aria-label="Next period"
           >
-            <Icon name="chevron-right" />
+            <Icon name="chevronRight" />
           </button>
         </div>
 
