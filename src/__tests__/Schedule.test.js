@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 
@@ -17,6 +17,40 @@ jest.mock('../components/Schedule/EventModal', () => {
   }
 })
 
+// Mock CustomToolbar component
+jest.mock('../components/Schedule/CustomToolbar', () => {
+  return function CustomToolbar({ date, onToggle24Hours, onScheduleEvent }) {
+    return (
+      <div className="calendar-toolbar">
+        <div className="toolbar-left">
+          <h2>Schedule</h2>
+          <p className="date-display">
+            {date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+          </p>
+        </div>
+        <div className="toolbar-right">
+          <button onClick={onToggle24Hours}>Toggle 24h</button>
+          <button onClick={() => onScheduleEvent('task')}>Schedule</button>
+        </div>
+      </div>
+    )
+  }
+})
+
+// Mock CustomEvent component
+jest.mock('../components/Schedule/CustomEvent', () => {
+  return function CustomEvent({ event }) {
+    return <div>{event.title}</div>
+  }
+})
+
+// Mock ItemActionModal component
+jest.mock('../components/ItemActionModal', () => {
+  return function ItemActionModal() {
+    return null
+  }
+})
+
 // Mock EventService
 jest.mock('../services/EventService', () => ({
   __esModule: true,
@@ -26,6 +60,8 @@ jest.mock('../services/EventService', () => ({
     getEventsForRange: jest.fn().mockResolvedValue([]),
     getEventsForDays: jest.fn().mockResolvedValue([]),
     createEvent: jest.fn(),
+    updateEvent: jest.fn(),
+    deleteEvent: jest.fn(),
     clearTestData: jest.fn().mockResolvedValue(0)
   }
 }))
@@ -40,12 +76,27 @@ jest.mock('../utils/logger', () => ({
   }))
 }))
 
-// Mock getCurrentDateISO to return consistent date for testing
-jest.mock('../utils/timeUtils', () => ({
-  getCurrentDateISO: jest.fn(() => '2025-09-16')
-}))
+// Mock react-big-calendar to avoid rendering issues in tests
+jest.mock('react-big-calendar', () => {
+  const React = require('react')
+  return {
+    Calendar: ({ components, date }) => {
+      const Toolbar = components?.toolbar
+      return (
+        <div className="rbc-calendar">
+          {Toolbar && <Toolbar date={date} view="day" views={['day', '3days', 'week', 'month']} onNavigate={() => {}} onView={() => {}} />}
+          <div className="rbc-time-view" />
+        </div>
+      )
+    },
+    dateFnsLocalizer: () => ({}),
+    Views: {
+      Day: () => null
+    }
+  }
+})
 
-describe('Schedule Component', () => {
+describe('Schedule Component with React Big Calendar', () => {
   const EventService = require('../services/EventService').default
 
   beforeEach(() => {
@@ -64,171 +115,67 @@ describe('Schedule Component', () => {
     jest.useRealTimers()
   })
 
-  test('renders Schedule component with header', () => {
+  test('renders Schedule component with header', async () => {
     render(<Schedule />)
-    const scheduleElements = screen.getAllByText(/Schedule/)
-    expect(scheduleElements.length).toBeGreaterThan(0)
-    expect(screen.getByText('Today · 16/09/2025')).toBeInTheDocument()
+    
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Schedule' })).toBeInTheDocument()
+    })
+    
+    // Date should be formatted as DD/MM/YYYY
+    expect(screen.getByText(/16\/09\/2025/)).toBeInTheDocument()
   })
 
-  test('renders action buttons', () => {
-    render(<Schedule />)
-    // View mode dropdown button
-    expect(screen.getByRole('button', { name: 'Change view mode' })).toBeInTheDocument()
-    // Schedule event dropdown button
-    expect(
-      screen.getByRole('button', { name: /Schedule an event/i })
-    ).toBeInTheDocument()
-  })
-
-  test('renders sidebar sections', () => {
-    render(<Schedule />)
-    // Sidebar should render without demo items
-    // Demo items "Today's queue" and "Deep Work Warmup" were removed
-    const sidebar = document.querySelector('.sidebar')
-    expect(sidebar).toBeInTheDocument()
-  })
-
-  test('renders time labels for schedule', () => {
-    render(<Schedule />)
-    expect(screen.getByText('07:00')).toBeInTheDocument()
-    expect(screen.getByText('Morning')).toBeInTheDocument()
-    expect(screen.getByText('Afternoon')).toBeInTheDocument()
-    expect(screen.getByText('Evening')).toBeInTheDocument()
-  })
-
-  test('renders current time indicator during business hours', () => {
-    render(<Schedule />)
-    const timeIndicator = screen.getByLabelText('Current time')
-    expect(timeIndicator).toBeInTheDocument()
-    expect(screen.getByText('Now')).toBeInTheDocument()
-  })
-
-  test('hides current time indicator outside business hours', () => {
-    // Set time to 01:00 (1 AM - outside schedule range of 7am-midnight)
-    jest.setSystemTime(new Date('2025-09-16T01:00:00'))
-    render(<Schedule />)
-    expect(screen.queryByLabelText('Current time')).not.toBeInTheDocument()
-  })
-
-  test('renders time period backgrounds', () => {
+  test('renders calendar container', async () => {
     const { container } = render(<Schedule />)
-    const morningPeriod = container.querySelector('.time-period-morning')
-    const afternoonPeriod = container.querySelector('.time-period-afternoon')
-    const eveningPeriod = container.querySelector('.time-period-evening')
-
-    expect(morningPeriod).toBeInTheDocument()
-    expect(afternoonPeriod).toBeInTheDocument()
-    expect(eveningPeriod).toBeInTheDocument()
+    
+    await waitFor(() => {
+      expect(container.querySelector('.schedule-container')).toBeInTheDocument()
+      expect(container.querySelector('.rbc-calendar')).toBeInTheDocument()
+    })
   })
 
-  test('renders time period separators', () => {
-    const { container } = render(<Schedule />)
-    const separators = container.querySelectorAll('.time-period-separator')
-    expect(separators).toHaveLength(3)
+  test('renders toolbar with schedule button', async () => {
+    render(<Schedule />)
+    
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument()
+    })
   })
 
-
-  describe('Button Functionality', () => {
-    test('View mode dropdown shows current mode', () => {
-      render(<Schedule />)
-      const viewButton = screen.getByRole('button', {
-        name: 'Change view mode'
-      })
-      // Should display "1 Day" by default
-      expect(viewButton).toHaveTextContent('1 Day')
-    })
-
-    test('View mode dropdown has correct ARIA attributes', () => {
-      render(<Schedule />)
-      const viewButton = screen.getByRole('button', {
-        name: 'Change view mode'
-      })
-      expect(viewButton).toHaveAttribute('aria-expanded', 'false')
-      expect(viewButton).toHaveAttribute('aria-haspopup', 'menu')
-    })
-
-    test('Schedule dropdown button has correct ARIA attributes', () => {
-      render(<Schedule />)
-      const scheduleButton = screen.getByRole('button', {
-        name: /Schedule an event/i
-      })
-      expect(scheduleButton).toBeInTheDocument()
-      expect(scheduleButton).toHaveAttribute('aria-expanded', 'false')
-      expect(scheduleButton).toHaveAttribute('aria-haspopup', 'menu')
-    })
-
-    test('loads day events on initial render', () => {
-      render(<Schedule />)
-      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
-      expect(EventService.getEventsForWeek).not.toHaveBeenCalled()
-    })
-
-    test('clicking view dropdown opens menu', async () => {
-      render(<Schedule />)
-      const viewButton = screen.getByRole('button', {
-        name: 'Change view mode'
-      })
-
-      // Click to open dropdown
-      fireEvent.click(viewButton)
-
-      // Menu should now be visible with menuitem options
-      const dayMenuItem = await screen.findByRole('menuitem', { name: 'View 1 day' })
-      const weekMenuItem = await screen.findByRole('menuitem', { name: 'View 1 week' })
-      expect(dayMenuItem).toBeInTheDocument()
-      expect(weekMenuItem).toBeInTheDocument()
-    })
-
-    test('clicking week menu item switches view mode and loads week events', async () => {
-      render(<Schedule />)
-      const viewButton = screen.getByRole('button', {
-        name: 'Change view mode'
-      })
-
-      // Click to open dropdown
-      fireEvent.click(viewButton)
-
-      // Click week menu item
-      const weekMenuItem = await screen.findByRole('menuitem', { name: 'View 1 week' })
-      fireEvent.click(weekMenuItem)
-
-      // Check that week events were loaded
-      expect(EventService.getEventsForWeek).toHaveBeenCalled()
-      
-      // Button should now show "1 Week"
-      expect(viewButton).toHaveTextContent('1 Week')
-    })
-
-    test('clicking day menu item after week keeps day view active', async () => {
-      render(<Schedule />)
-      const viewButton = screen.getByRole('button', {
-        name: 'Change view mode'
-      })
-
-      // Initially should show 1 Day
-      expect(viewButton).toHaveTextContent('1 Day')
-
-      // Click to open dropdown
-      fireEvent.click(viewButton)
-
-      // Click day menu item (already active)
-      const dayMenuItem = await screen.findByRole('menuitem', { name: 'View 1 day' })
-      fireEvent.click(dayMenuItem)
-
-      // Should still be on day view
-      expect(viewButton).toHaveTextContent('1 Day')
+  test('calls EventService.getEventsForDate on mount with day view', async () => {
+    render(<Schedule />)
+    
+    await waitFor(() => {
       expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
     })
+  })
 
-    test('clearTestData service method works correctly (Item 17)', async () => {
-      // Mock clearTestData to return 5 deleted items
-      EventService.clearTestData.mockResolvedValue(5)
-      
-      // Verify the service method works as expected
-      const result = await EventService.clearTestData()
-      expect(result).toBe(5)
-      expect(EventService.clearTestData).toHaveBeenCalled()
+  test('shows loading state initially', () => {
+    render(<Schedule />)
+    
+    // Loading overlay should be visible initially
+    expect(screen.getByText('Loading events...')).toBeInTheDocument()
+  })
+
+  test('renders without errors when events are loaded', async () => {
+    const mockEvents = [
+      {
+        id: '1',
+        title: 'Test Event',
+        day: '2025-09-16',
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'task'
+      }
+    ]
+    
+    EventService.getEventsForDate.mockResolvedValue(mockEvents)
+    
+    render(<Schedule />)
+    
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalled()
     })
   })
 })
