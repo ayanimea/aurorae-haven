@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1176 KB compressed
+- ✅ Total size: 1186 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-03 21:00:53 UTC
+**Last Updated**: 2026-02-03 23:23:21 UTC
 **Source Branch**: migrate-to-react-big-calendar
-**Source Commit**: ec4e84c
+**Source Commit**: fbdf454
 
 ---
 
