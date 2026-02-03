@@ -4,7 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
+import PropTypes from 'prop-types'
+import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar'
 import { format, parse, startOfWeek, getDay, addDays, startOfDay } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
@@ -28,21 +29,41 @@ const localizer = dateFnsLocalizer({
   locales: {}
 })
 
-import PropTypes from 'prop-types'
-
 // Custom view for 3-day
-const ThreeDayView = ({ date, ...props }) => {
+class ThreeDayView extends React.Component {
+  render() {
+    const { date, ...props } = this.props
+    const start = startOfDay(date)
+    const range = [start, addDays(start, 1), addDays(start, 2)]
+    
+    return <Views.Week {...props} date={date} range={range} />
+  }
+}
+
+ThreeDayView.propTypes = {
+  date: PropTypes.instanceOf(Date).isRequired
+}
+
+ThreeDayView.range = (date) => {
   const start = startOfDay(date)
-  const day2 = addDays(start, 1)
-  const day3 = addDays(start, 2)
-  
-  return (
-    <Calendar.Views.Day
-      {...props}
-      date={date}
-      range={[start, day2, day3]}
-    />
-  )
+  return [start, addDays(start, 1), addDays(start, 2)]
+}
+
+ThreeDayView.navigate = (date, action) => {
+  switch (action) {
+    case 'PREV':
+      return addDays(date, -3)
+    case 'NEXT':
+      return addDays(date, 3)
+    default:
+      return date
+  }
+}
+
+ThreeDayView.title = (date, { localizer }) => {
+  const start = startOfDay(date)
+  const end = addDays(start, 2)
+  return localizer.format({ start, end }, 'dayRangeHeaderFormat')
 }
 
 function Schedule() {
@@ -206,8 +227,6 @@ function Schedule() {
     [show24Hours]
   )
 
-  const defaultDate = useMemo(() => new Date(), [])
-
   return (
     <div className="page page-schedule">
       <div className="schedule-container">
@@ -225,7 +244,6 @@ function Schedule() {
           popup
           step={15}
           timeslots={4}
-          defaultDate={defaultDate}
           min={new Date(2000, 0, 1, 7, 0)}
           max={new Date(2000, 0, 1, 24, 0)}
           formats={formats}
@@ -271,23 +289,17 @@ function Schedule() {
       {/* Action Modal for Edit/Delete */}
       {showActionModal && eventToDelete && (
         <ItemActionModal
-          isOpen={showActionModal}
+          item={eventToDelete}
           onClose={() => {
             setShowActionModal(false)
             setEventToDelete(null)
           }}
           onEdit={handleEditEvent}
           onDelete={handleDeleteEvent}
-          itemType="event"
-          itemTitle={eventToDelete.title}
         />
       )}
     </div>
   )
-}
-
-ThreeDayView.propTypes = {
-  date: PropTypes.instanceOf(Date).isRequired
 }
 
 export default Schedule

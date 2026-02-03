@@ -273,6 +273,27 @@
   text-overflow: ellipsis;
 }
 
+.event-title {
+  font-weight: 500;
+}
+
+.event-pre-activities {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+.event-pre-activities span {
+  white-space: nowrap;
+}
+
+.prep-time,
+.travel-time {
+  cursor: help;
+}
+
 .rbc-event-continues-prior,
 .rbc-event-continues-after {
   opacity: 0.8;

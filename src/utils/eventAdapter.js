@@ -3,7 +3,7 @@
  * Converts between our event data model and RBC's expected format
  */
 
-import { parseISO, parse, format } from 'date-fns'
+import { parseISO, parse, format, addDays } from 'date-fns'
 import { createLogger } from './logger'
 
 const logger = createLogger('EventAdapter')
@@ -25,7 +25,12 @@ export const toRBCEvent = (event) => {
     
     // Parse start and end times (HH:mm format)
     const startTime = parse(event.startTime, 'HH:mm', dayDate)
-    const endTime = parse(event.endTime, 'HH:mm', dayDate)
+    let endTime = parse(event.endTime, 'HH:mm', dayDate)
+    
+    // Handle events that span midnight (endTime < startTime)
+    if (endTime <= startTime) {
+      endTime = addDays(endTime, 1)
+    }
 
     return {
       id: event.id,
