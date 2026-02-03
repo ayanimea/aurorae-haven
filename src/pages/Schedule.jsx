@@ -1051,11 +1051,10 @@ function Schedule() {
   
   // Handle event click - show modal on mobile, no-op on desktop (wait for right-click)
   const handleEventClick = useCallback((e, event) => {
-    if (isMobile) {
-      e.preventDefault()
-      setSelectedEvent(event)
-    }
-  }, [isMobile])
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedEvent(event)
+  }, [])
 
   // Handle event right-click (context menu on desktop)
   const handleEventContextMenu = useCallback((e, event) => {
