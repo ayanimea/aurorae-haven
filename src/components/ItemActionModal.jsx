@@ -17,27 +17,39 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
   const modalRef = useRef(null)
   const firstButtonRef = useRef(null)
   const previouslyFocusedElement = useRef(null)
+  const prevItemRef = useRef(item) // Track previous item to detect transitions
 
   // Compute derived values from props (before early return)
   const isContextMenu = item ? (item.isContextMenu || !isMobile) : false
 
-  // Store previously focused element for focus restoration
+  // Store previously focused element for focus restoration (Item 6: handle rapid modal switches)
   useEffect(() => {
-    if (!item) return
+    const wasOpen = prevItemRef.current != null
+    const isOpen = item != null
 
-    previouslyFocusedElement.current = document.activeElement
-    
-    // Focus first button when modal opens
-    if (firstButtonRef.current) {
-      firstButtonRef.current.focus()
-    }
-    
-    // Restore focus on unmount
-    return () => {
-      if (previouslyFocusedElement.current) {
-        previouslyFocusedElement.current.focus()
+    // Modal just opened: capture the previously focused element and move focus into the modal
+    if (!wasOpen && isOpen) {
+      if (typeof document !== 'undefined') {
+        previouslyFocusedElement.current = document.activeElement
+      }
+
+      if (firstButtonRef.current && typeof firstButtonRef.current.focus === 'function') {
+        firstButtonRef.current.focus()
       }
     }
+
+    // Modal just closed: restore focus to the element that was focused before opening
+    if (wasOpen && !isOpen) {
+      if (
+        previouslyFocusedElement.current &&
+        typeof previouslyFocusedElement.current.focus === 'function'
+      ) {
+        previouslyFocusedElement.current.focus()
+      }
+      previouslyFocusedElement.current = null
+    }
+
+    prevItemRef.current = item
   }, [item])
 
   // Combined focus trap and escape key handler (Item 20: optimize by combining effects)

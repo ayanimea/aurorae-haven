@@ -76,9 +76,40 @@ class EventService {
    */
   async getEventsForDays(startDate, days) {
     try {
+      // Validate days parameter (Item 7: add validation)
+      if (typeof days !== 'number' || days < 1 || !Number.isInteger(days)) {
+        logger.error('EventService.getEventsForDays: invalid days parameter', {
+          days,
+          type: typeof days
+        })
+        return []
+      }
+
       // Use UTC to avoid timezone issues (Item 13: fix timezone handling)
       const startStr = this._normalizeDateString(startDate)
-      const [year, month, day] = startStr.split('-').map(Number)
+      const parts = startStr.split('-')
+      
+      // Validate date format (Item 7: handle malformed dates)
+      if (parts.length !== 3) {
+        logger.error('EventService.getEventsForDays: malformed date string', {
+          startStr,
+          parts
+        })
+        return []
+      }
+      
+      const [year, month, day] = parts.map(Number)
+      
+      // Validate parsed numbers
+      if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+        logger.error('EventService.getEventsForDays: invalid date components', {
+          year,
+          month,
+          day
+        })
+        return []
+      }
+      
       const start = new Date(Date.UTC(year, month - 1, day))
       const end = new Date(start)
       end.setUTCDate(start.getUTCDate() + days - 1)

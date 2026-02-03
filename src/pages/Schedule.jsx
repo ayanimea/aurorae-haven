@@ -94,15 +94,20 @@ function ScheduleBlock({
   }
 
   useEffect(() => {
+    // Clear any pending long-press timer when onLongPress changes (Item 9: prevent stale callbacks)
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current)
+      touchTimerRef.current = null
+    }
+
     // Cleanup on unmount (Item 1: prevent memory leak)
-    // Note: onLongPress is stable prop, no need to reset timer when it changes
     return () => {
       if (touchTimerRef.current) {
         clearTimeout(touchTimerRef.current)
         touchTimerRef.current = null
       }
     }
-  }, [])
+  }, [onLongPress]) // Item 9: Added onLongPress to dependency array
 
   return (
     <div
@@ -579,11 +584,13 @@ function Schedule() {
     
     const updateHourHeight = () => {
       const dynamicHeight = calculateDynamicHourHeight()
+      const numRows = show24Hours ? (SCHEDULE_END_HOUR - SCHEDULE_START_HOUR) : 18
       setHourHeight(dynamicHeight)
       
-      // Update CSS custom property so CSS can use the same value
+      // Update CSS custom properties so CSS can use the same values (Item 1: fix 24-hour mode grid)
       if (typeof document !== 'undefined') {
         document.documentElement.style.setProperty('--hour-height', `${dynamicHeight}px`)
+        document.documentElement.style.setProperty('--num-visual-rows', `${numRows}`)
       }
     }
     
@@ -598,40 +605,71 @@ function Schedule() {
   const slotHeight = hourHeight * numVisualRows
 
   // Calculate time periods based on hour-to-row mapping so background bands align with the grid
-  // Morning: from SCHEDULE_START_HOUR (e.g. 07:00) up to 12:00
-  // Afternoon: from 12:00 up to 18:00
-  // Evening: from 18:00 up to SCHEDULE_END_HOUR (e.g. 00:00)
+  // In 7am-midnight mode: Morning (7-12), Afternoon (12-18), Evening (18-24)
+  // In 24-hour mode: Use direct hour positions without period labels (Item 5)
   const timePeriods = useMemo(
     () => {
-      const morningStartRow = getVisualRowForHour(SCHEDULE_START_HOUR)
-      const afternoonStartRow = getVisualRowForHour(13) // 12:00 is skipped, use 13:00 row
-      const eveningStartRow = getVisualRowForHour(19) // 18:00 is skipped, use 19:00 row
-      const endRow = getVisualRowForHour(SCHEDULE_END_HOUR)
+      if (show24Hours) {
+        // In 24-hour mode, calculate positions directly from hours (no period label rows)
+        const morningStart = SCHEDULE_START_HOUR // 7
+        const afternoonStart = 12
+        const eveningStart = 18
+        const end = SCHEDULE_END_HOUR // 24
+        
+        return [
+          {
+            className: 'time-period-morning',
+            top: hourHeight * (morningStart - SCHEDULE_START_HOUR),
+            height: hourHeight * (afternoonStart - morningStart)
+          },
+          {
+            className: 'time-period-afternoon',
+            top: hourHeight * (afternoonStart - SCHEDULE_START_HOUR),
+            height: hourHeight * (eveningStart - afternoonStart)
+          },
+          {
+            className: 'time-period-evening',
+            top: hourHeight * (eveningStart - SCHEDULE_START_HOUR),
+            height: hourHeight * (end - eveningStart)
+          }
+        ]
+      } else {
+        // In 7am-midnight mode, use getVisualRowForHour to account for period label rows
+        const morningStartRow = getVisualRowForHour(SCHEDULE_START_HOUR)
+        const afternoonStartRow = getVisualRowForHour(13) // 12:00 is skipped, use 13:00 row
+        const eveningStartRow = getVisualRowForHour(19) // 18:00 is skipped, use 19:00 row
+        const endRow = getVisualRowForHour(SCHEDULE_END_HOUR)
 
-      return [
-        {
-          className: 'time-period-morning',
-          top: hourHeight * morningStartRow,
-          height: hourHeight * (afternoonStartRow - morningStartRow)
-        },
-        {
-          className: 'time-period-afternoon',
-          top: hourHeight * afternoonStartRow,
-          height: hourHeight * (eveningStartRow - afternoonStartRow)
-        },
-        {
-          className: 'time-period-evening',
-          top: hourHeight * eveningStartRow,
-          height: hourHeight * (endRow - eveningStartRow)
-        }
-      ]
+        return [
+          {
+            className: 'time-period-morning',
+            top: hourHeight * morningStartRow,
+            height: hourHeight * (afternoonStartRow - morningStartRow)
+          },
+          {
+            className: 'time-period-afternoon',
+            top: hourHeight * afternoonStartRow,
+            height: hourHeight * (eveningStartRow - afternoonStartRow)
+          },
+          {
+            className: 'time-period-evening',
+            top: hourHeight * eveningStartRow,
+            height: hourHeight * (endRow - eveningStartRow)
+          }
+        ]
+      }
     },
-    [hourHeight] // Item 16: Note - getVisualRowForHour and constants are stable, no need to include
+    [hourHeight, show24Hours] // Item 5: Added show24Hours dependency
   )
   
-  // Separator positions after each period label (Item 7: inline calculation to avoid dependency warning)
+  // Separator positions after each period label (Item 10: conditional on show24Hours)
+  // Only render separators in 7am-midnight mode (where period labels exist)
   const separatorPositions = useMemo(
     () => {
+      if (show24Hours) {
+        return [] // No separators in 24-hour mode (no period labels)
+      }
+      
       const visualOffset = 4
       return [
         hourHeight * 1 + visualOffset, // After "Morning" label (row 1)
@@ -639,7 +677,7 @@ function Schedule() {
         hourHeight * 11 + visualOffset // After "Evening" label (row 11)
       ]
     },
-    [hourHeight]
+    [hourHeight, show24Hours] // Item 10: Added show24Hours dependency
   )
 
   // Dropdown state for event type selector

@@ -44,7 +44,9 @@
 }
 .hour-col {
   display: grid;
-  grid-template-rows: repeat(18, var(--hour-height)); /* Responsive hour height - 18 rows for 7am-midnight with labels */
+  /* Dynamic grid rows set by JavaScript based on show24Hours mode */
+  /* --num-visual-rows is 18 for 7am-midnight (with period labels), or 17 for 24-hour mode */
+  grid-template-rows: repeat(var(--num-visual-rows, 18), var(--hour-height));
 }
 .hour-col .h {
   height: var(--hour-height); /* Match grid row height for proper event alignment */
