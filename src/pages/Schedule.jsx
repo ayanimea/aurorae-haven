@@ -14,6 +14,7 @@ import EventService from '../services/EventService'
 import { toRBCEvents, createEventFromSlot } from '../utils/eventAdapter'
 import { createLogger } from '../utils/logger'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
+import { getSettings } from '../utils/settingsManager'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import '../assets/styles/schedule-rbc.css'
 
@@ -42,6 +43,12 @@ function Schedule() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [eventToDelete, setEventToDelete] = useState(null)
   const [showActionModal, setShowActionModal] = useState(false)
+
+  // Get time format preference from settings (default to 24-hour)
+  const use24HourFormat = useMemo(() => {
+    const settings = getSettings()
+    return settings.schedule?.use24HourFormat ?? true
+  }, [])
 
   // Convert events to RBC format
   const rbcEvents = useMemo(() => toRBCEvents(events), [events])
@@ -164,19 +171,24 @@ function Schedule() {
   )
 
   const formats = useMemo(
-    () => ({
-      timeGutterFormat: 'h a',
-      eventTimeRangeFormat: ({ start, end }) => {
-        return `${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`
-      },
-      agendaTimeRangeFormat: ({ start, end }) => {
-        return `${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`
-      },
-      dayFormat: 'EEE dd',
-      dayHeaderFormat: 'EEEE, MMMM d',
-      monthHeaderFormat: 'MMMM yyyy'
-    }),
-    []
+    () => {
+      const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
+      const gutterFormat = use24HourFormat ? 'HH:mm' : 'h a'
+      
+      return {
+        timeGutterFormat: gutterFormat,
+        eventTimeRangeFormat: ({ start, end }) => {
+          return `${format(start, timeFormat)} - ${format(end, timeFormat)}`
+        },
+        agendaTimeRangeFormat: ({ start, end }) => {
+          return `${format(start, timeFormat)} - ${format(end, timeFormat)}`
+        },
+        dayFormat: 'EEE dd',
+        dayHeaderFormat: 'EEEE, MMMM d',
+        monthHeaderFormat: 'MMMM yyyy'
+      }
+    },
+    [use24HourFormat]
   )
 
   return (
@@ -197,7 +209,7 @@ function Schedule() {
           step={15}
           timeslots={4}
           min={new Date(2000, 0, 1, 7, 0)}
-          max={new Date(2000, 0, 1, 24, 0)}
+          max={new Date(2000, 0, 2, 0, 0)}
           formats={formats}
           components={{
             toolbar: (props) => (

@@ -67,41 +67,6 @@ export const toRBCEvents = (events) => {
 }
 
 /**
- * Convert RBC event back to our event format
- * @param {Object} rbcEvent - Event from React Big Calendar
- * @returns {Object} Event in our format
- */
-export const fromRBCEvent = (rbcEvent) => {
-  try {
-    if (!rbcEvent) {
-      logger.error('fromRBCEvent: event is null or undefined')
-      return null
-    }
-
-    // Extract date in YYYY-MM-DD format
-    const day = format(rbcEvent.start, 'yyyy-MM-dd')
-    
-    // Extract times in HH:mm format
-    const startTime = format(rbcEvent.start, 'HH:mm')
-    const endTime = format(rbcEvent.end, 'HH:mm')
-
-    return {
-      id: rbcEvent.id,
-      title: rbcEvent.title,
-      day,
-      startTime,
-      endTime,
-      type: rbcEvent.resource?.type || 'task',
-      travelTime: rbcEvent.resource?.travelTime || 0,
-      preparationTime: rbcEvent.resource?.preparationTime || 0
-    }
-  } catch (error) {
-    logger.error('Error converting RBC event to our format:', error, rbcEvent)
-    return null
-  }
-}
-
-/**
  * Create a new event from date/time selection
  * @param {Object} slotInfo - Slot info from RBC
  * @returns {Object} Event data for EventModal
