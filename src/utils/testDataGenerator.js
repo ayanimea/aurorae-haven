@@ -15,8 +15,10 @@ export async function generateTestData() {
   
   const today = dayjs()
   
-  // Get Monday of the current week
-  // dayjs weeks start on Sunday (day 0), Monday is day 1
+  // Get Monday of the current week (Item 19: ISO 8601 week calculation)
+  // ISO 8601: Weeks start on Monday. dayjs weeks start on Sunday (day 0), Monday is day 1.
+  // If today is Sunday (day 0), subtract 6 days to get this week's Monday.
+  // Otherwise, use dayjs startOf('week') which gives Sunday, then add 1 day to get Monday.
   let startOfWeek
   if (today.day() === 0) {
     // If today is Sunday (day 0), subtract 6 days to get this week's Monday (ISO 8601 week starts on Monday)

@@ -76,11 +76,12 @@ class EventService {
    */
   async getEventsForDays(startDate, days) {
     try {
-      // Use dayjs or manual date manipulation to avoid timezone issues
+      // Use UTC to avoid timezone issues (Item 13: fix timezone handling)
       const startStr = this._normalizeDateString(startDate)
-      const start = new Date(startStr + 'T00:00:00') // Add time to ensure local timezone
+      const [year, month, day] = startStr.split('-').map(Number)
+      const start = new Date(Date.UTC(year, month - 1, day))
       const end = new Date(start)
-      end.setDate(start.getDate() + days - 1)
+      end.setUTCDate(start.getUTCDate() + days - 1)
       
       return await this.getEventsForRange(start, end)
     } catch (error) {
@@ -175,6 +176,8 @@ class EventService {
     if (typeof date === 'string') {
       // Already a string, validate format
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        // Log warning before throwing (Item 15: add warning for invalid dates)
+        logger.warn(`Invalid date format: ${date}. Expected YYYY-MM-DD`)
         throw new Error(`Invalid date format: ${date}. Expected YYYY-MM-DD`)
       }
       return date

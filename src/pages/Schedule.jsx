@@ -26,6 +26,13 @@ import {
 
 const logger = createLogger('Schedule')
 
+// Touch interaction constants (Items 8)
+const LONG_PRESS_DURATION_MS = 500
+const TOUCH_MOVEMENT_THRESHOLD_PX = 10
+
+// Layout constants (Item 6)
+const HEADER_OFFSET_PX = 160 // Fixed offset for header and controls in dynamic height calculation
+
 // Reusable ScheduleBlock component
 function ScheduleBlock({
   type,
@@ -52,23 +59,23 @@ function ScheduleBlock({
     const touch = e.touches[0]
     setTouchStartPos({ x: touch.clientX, y: touch.clientY })
     
-    // Set a timer for long-press (500ms)
+    // Set a timer for long-press
     touchTimerRef.current = setTimeout(() => {
       if (onLongPress) {
         e.preventDefault()
         onLongPress(e)
       }
-    }, 500)
+    }, LONG_PRESS_DURATION_MS)
   }
 
   const handleTouchMove = (e) => {
-    // Cancel long-press if finger moves more than 10px
+    // Cancel long-press if finger moves more than threshold
     if (touchStartPos) {
       const touch = e.touches[0]
       const dx = Math.abs(touch.clientX - touchStartPos.x)
       const dy = Math.abs(touch.clientY - touchStartPos.y)
       
-      if (dx > 10 || dy > 10) {
+      if (dx > TOUCH_MOVEMENT_THRESHOLD_PX || dy > TOUCH_MOVEMENT_THRESHOLD_PX) {
         if (touchTimerRef.current) {
           clearTimeout(touchTimerRef.current)
           touchTimerRef.current = null
@@ -87,13 +94,14 @@ function ScheduleBlock({
   }
 
   useEffect(() => {
-    // Cleanup on unmount
+    // Cleanup on unmount or when event/props change (Item 1: prevent memory leak)
     return () => {
       if (touchTimerRef.current) {
         clearTimeout(touchTimerRef.current)
+        touchTimerRef.current = null
       }
     }
-  }, [])
+  }, [onLongPress])
 
   return (
     <div
@@ -222,38 +230,35 @@ const generateHourLabels = (show24Hours) => {
 // Hours that get period labels instead of hour numbers
 const PERIOD_LABEL_HOURS = [8, 12, 18]
 
+// Memoize hourToRow mapping at module level (Item 9: performance optimization)
+const createHourToRowMapping = (() => {
+  const mapping = {}
+  const labelHours = new Set(PERIOD_LABEL_HOURS) // Hours with period labels
+  let rowIndex = 0
+
+  // Build mapping for hours 7-23
+  for (let h = SCHEDULE_START_HOUR; h <= 23; h++) {
+    if (labelHours.has(h)) {
+      // This row is occupied by a period label (Morning/Afternoon/Evening)
+      rowIndex++
+    } else {
+      mapping[h] = rowIndex
+      rowIndex++
+    }
+  }
+
+  // Midnight (00:00 and 24:00) share the final row
+  mapping[0] = rowIndex
+  mapping[24] = rowIndex
+
+  return mapping
+})()
+
 // Helper function to get visual row index for a given hour in 7am-midnight mode
 // Accounts for "Morning", "Afternoon", "Evening" label rows
 const getVisualRowForHour = (hour) => {
-  // Map of hour to visual row index in the grid
-  // Note: Hours in PERIOD_LABEL_HOURS are skipped (replaced by period labels)
-  // Generate hourToRow mapping dynamically based on schedule configuration
-  // This ensures consistency with generateHourLabels() and maintains single source of truth
-  const hourToRow = (() => {
-    const mapping = {}
-    const labelHours = new Set(PERIOD_LABEL_HOURS) // Hours with period labels
-    let rowIndex = 0
-
-    // Build mapping for hours 7-23
-    for (let h = SCHEDULE_START_HOUR; h <= 23; h++) {
-      if (labelHours.has(h)) {
-        // This row is occupied by a period label (Morning/Afternoon/Evening)
-        rowIndex++
-      } else {
-        mapping[h] = rowIndex
-        rowIndex++
-      }
-    }
-
-    // Midnight (00:00 and 24:00) share the final row
-    mapping[0] = rowIndex
-    mapping[24] = rowIndex
-
-    return mapping
-  })()
-  
-  // Direct mapping when available
-  const baseRow = hourToRow[hour]
+  // Direct mapping when available (using precomputed module-level mapping)
+  const baseRow = createHourToRowMapping[hour]
   if (baseRow !== undefined) {
     return baseRow
   }
@@ -262,20 +267,20 @@ const getVisualRowForHour = (hour) => {
   // Place them between the label row and the next hour row by interpolating
   // between the surrounding hour rows.
   if (hour === 8) {
-    const before = hourToRow[7]
-    const after = hourToRow[9]
+    const before = createHourToRowMapping[7]
+    const after = createHourToRowMapping[9]
     if (before !== undefined && after !== undefined) {
       return (before + after) / 2
     }
   } else if (hour === 12) {
-    const before = hourToRow[11]
-    const after = hourToRow[13]
+    const before = createHourToRowMapping[11]
+    const after = createHourToRowMapping[13]
     if (before !== undefined && after !== undefined) {
       return (before + after) / 2
     }
   } else if (hour === 18) {
-    const before = hourToRow[17]
-    const after = hourToRow[19]
+    const before = createHourToRowMapping[17]
+    const after = createHourToRowMapping[19]
     if (before !== undefined && after !== undefined) {
       return (before + after) / 2
     }
@@ -308,8 +313,8 @@ const timeToPosition = (timeString, scheduleStartHour = SCHEDULE_START_HOUR, sch
 
   // Validate numeric conversion
   if (isNaN(hours) || isNaN(minutes)) return -1
-  // Check if time falls within schedule window
-  if (hours < scheduleStartHour || hours >= scheduleEndHour) return -1
+  // Check if time falls within schedule window (Item 12: allow 24:00 as valid end time)
+  if (hours < scheduleStartHour || hours > scheduleEndHour) return -1
 
   const pixelsPerHour = hourHeight // Use passed hourHeight parameter
 
@@ -409,6 +414,11 @@ const eventsOverlap = (event1, event2) => {
   const start2 = timeToMinutes(event2.startTime)
   const end2 = timeToMinutes(event2.endTime)
   
+  // Handle zero-duration events (Item 11: return false for events with no duration)
+  if (start1 === end1 || start2 === end2) {
+    return false
+  }
+  
   // Handle midnight-spanning events
   const adjustedEnd1 = end1 <= start1 ? end1 + 1440 : end1
   const adjustedEnd2 = end2 <= start2 ? end2 + 1440 : end2
@@ -468,16 +478,29 @@ const assignColumns = (events) => {
       return { ...event, columnIndex: 0, columnCount: 1 }
     }
     
-    // Calculate maximum depth once per group (optimization: O(n²) instead of O(n³))
+    // Calculate maximum simultaneous depth (Item 3: fix to count actual max overlapping at any point)
+    // Find all unique time points where events start or end
+    const timePoints = new Set()
+    for (const e of group) {
+      timePoints.add(timeToMinutes(e.startTime))
+      timePoints.add(timeToMinutes(e.endTime))
+    }
+    
+    // For each time point, count how many events are active
     let groupMaxDepth = 1
-    for (const e1 of group) {
-      let depth = 1
-      for (const e2 of group) {
-        if (e1 !== e2 && eventsOverlap(e1, e2)) {
-          depth++
+    for (const timePoint of timePoints) {
+      let activeCount = 0
+      for (const e of group) {
+        const start = timeToMinutes(e.startTime)
+        const end = timeToMinutes(e.endTime)
+        const adjustedEnd = end <= start ? end + 1440 : end
+        
+        // Event is active if timePoint is within [start, end)
+        if (timePoint >= start && timePoint < adjustedEnd) {
+          activeCount++
         }
       }
-      groupMaxDepth = Math.max(groupMaxDepth, depth)
+      groupMaxDepth = Math.max(groupMaxDepth, activeCount)
     }
     
     // Find column for this event (greedy algorithm)
@@ -522,6 +545,9 @@ function Schedule() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Memoize assignColumns results to prevent recalculation on every render (Item 5)
+  const eventsWithColumns = useMemo(() => assignColumns(events), [events])
+
   // Display settings
   const [show24Hours, setShow24Hours] = useState(false) // Toggle for 24-hour display
   
@@ -537,12 +563,11 @@ function Schedule() {
       // Get available viewport height
       const viewportHeight = window.innerHeight
       
-      // Account for header and controls (fixed offset)
-      const headerOffset = 160
-      const availableHeight = viewportHeight - headerOffset
+      // Account for header and controls
+      const availableHeight = viewportHeight - HEADER_OFFSET_PX
       
-      // Calculate hour height based on number of visual rows (18 for 7am-midnight mode, 24 for 24-hour mode)
-      const numRows = show24Hours ? 24 : 18
+      // Calculate hour height based on number of visual rows (Item 14: calculate dynamically from constants)
+      const numRows = show24Hours ? (SCHEDULE_END_HOUR - SCHEDULE_START_HOUR) : 18
       const calculatedHeight = Math.floor(availableHeight / numRows)
       
       // Set reasonable bounds: minimum 40px, maximum 120px per hour
@@ -598,16 +623,19 @@ function Schedule() {
         }
       ]
     },
-    [hourHeight]
+    [hourHeight] // Item 16: Note - getVisualRowForHour and constants are stable, no need to include
   )
   
-  // Separator positions after each period label (rows 1, 5, 11 with 4px visual offset)
+  // Separator positions after each period label (Item 7: inline calculation to avoid dependency warning)
   const separatorPositions = useMemo(
-    () => [
-      hourHeight * 1 + 4, // After "Morning" label (row 1) + 4px visual offset
-      hourHeight * 5 + 4, // After "Afternoon" label (row 5) + 4px visual offset
-      hourHeight * 11 + 4 // After "Evening" label (row 11) + 4px visual offset
-    ],
+    () => {
+      const visualOffset = 4
+      return [
+        hourHeight * 1 + visualOffset, // After "Morning" label (row 1)
+        hourHeight * 5 + visualOffset, // After "Afternoon" label (row 5)
+        hourHeight * 11 + visualOffset // After "Evening" label (row 11)
+      ]
+    },
     [hourHeight]
   )
 
@@ -650,8 +678,13 @@ function Schedule() {
       if (viewMode === 'day') {
         loadedEvents = await EventService.getEventsForDate(selectedDate.format('YYYY-MM-DD'))
       } else if (viewMode === '3days') {
-        // Load events for 3 consecutive days starting from selectedDate
-        loadedEvents = await EventService.getEventsForDays(selectedDate.format('YYYY-MM-DD'), 3)
+        // Load events for 3 consecutive days starting from selectedDate (Item 4: add try-catch)
+        try {
+          loadedEvents = await EventService.getEventsForDays(selectedDate.format('YYYY-MM-DD'), 3)
+        } catch (error) {
+          logger.error('Failed to load 3-day events:', error)
+          loadedEvents = []
+        }
       } else if (viewMode === 'week') {
         loadedEvents = await EventService.getEventsForWeek(selectedDate.format('YYYY-MM-DD'))
       } else if (viewMode === 'month') {
@@ -1063,33 +1096,33 @@ function Schedule() {
     })
   }, [])
 
-  // Format event content for modal display
+  // Format event content for modal display (Item 10: memoize helpers with useCallback)
+  const formatTime = useCallback((timeStr) => {
+    if (!timeStr) return ''
+    const [hours, minutes] = timeStr.split(':')
+    if (show24Hours) {
+      return `${hours}:${minutes}`
+    }
+    const h = parseInt(hours)
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h
+    return `${displayHour}:${minutes} ${ampm}`
+  }, [show24Hours])
+
+  const calculateDuration = useCallback((start, end) => {
+    if (!start || !end) return ''
+    const [startH, startM] = start.split(':').map(Number)
+    const [endH, endM] = end.split(':').map(Number)
+    let durationMin = (endH * 60 + endM) - (startH * 60 + startM)
+    if (durationMin <= 0) durationMin += 24 * 60
+    const hours = Math.floor(durationMin / 60)
+    const mins = durationMin % 60
+    if (hours > 0 && mins > 0) return `${hours}h ${mins}m`
+    if (hours > 0) return `${hours}h`
+    return `${mins}m`
+  }, [])
+
   const formatEventContent = useCallback((event) => {
-    const formatTime = (timeStr) => {
-      if (!timeStr) return ''
-      const [hours, minutes] = timeStr.split(':')
-      if (show24Hours) {
-        return `${hours}:${minutes}`
-      }
-      const h = parseInt(hours)
-      const ampm = h >= 12 ? 'PM' : 'AM'
-      const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h
-      return `${displayHour}:${minutes} ${ampm}`
-    }
-
-    const calculateDuration = (start, end) => {
-      if (!start || !end) return ''
-      const [startH, startM] = start.split(':').map(Number)
-      const [endH, endM] = end.split(':').map(Number)
-      let durationMin = (endH * 60 + endM) - (startH * 60 + startM)
-      if (durationMin <= 0) durationMin += 24 * 60
-      const hours = Math.floor(durationMin / 60)
-      const mins = durationMin % 60
-      if (hours > 0 && mins > 0) return `${hours}h ${mins}m`
-      if (hours > 0) return `${hours}h`
-      return `${mins}m`
-    }
-
     const startTime = formatTime(event.startTime)
     const endTime = formatTime(event.endTime)
     const duration = calculateDuration(event.startTime, event.endTime)
@@ -1111,7 +1144,7 @@ function Schedule() {
         )}
       </>
     )
-  }, [show24Hours])
+  }, [formatTime, calculateDuration])
 
   // Handle edit event
   const handleEditEventAction = useCallback((event) => {
@@ -1123,7 +1156,7 @@ function Schedule() {
     setShowDeleteConfirm(true)
   }, [])
 
-  // Handle delete event
+  // Handle delete event (Item 2: use functional setter to avoid race condition)
   const handleDeleteEventAction = useCallback(async (event) => {
     // Validate event ID
     if (!event || !event.id) {
@@ -1131,12 +1164,15 @@ function Schedule() {
       return false
     }
     
-    // Close action modal
-    setSelectedEvent(null)
-    
-    // Show confirmation dialog
-    setEventToDelete(event)
-    setShowDeleteConfirm(true)
+    // Atomically update state to avoid race condition
+    setSelectedEvent(prevEvent => {
+      if (prevEvent) {
+        // Set event to delete and show dialog
+        setEventToDelete(event)
+        setShowDeleteConfirm(true)
+      }
+      return null // Close action modal
+    })
     
     return true // Close action modal
   }, [])
@@ -1186,7 +1222,8 @@ function Schedule() {
   }
 
   // Generate week grid (7 days starting from selected date's week start)
-  const generateWeekGrid = () => {
+  // Memoized to prevent recalculation and includes assignColumns for each day (Item 5)
+  const generateWeekGrid = useMemo(() => {
     // Start from Monday (add 1 day to Sunday start)
     const startOfWeek = selectedDate.startOf('week').add(1, 'day') // Monday
     const weekDays = []
@@ -1197,14 +1234,14 @@ function Schedule() {
       weekDays.push({
         date: day,
         isToday: day.isSame(dayjs(), 'day'),
-        events: dayEvents
+        events: assignColumns(dayEvents) // Pre-assign columns here
       })
     }
     
     return weekDays // Returns Mon, Tue, Wed, Thu, Fri, Sat, Sun
-  }
+  }, [selectedDate, events])
 
-  const generate3DaysGrid = () => {
+  const generate3DaysGrid = useMemo(() => {
     // Generate 3 consecutive days starting from selectedDate
     const threeDays = []
     
@@ -1214,12 +1251,12 @@ function Schedule() {
       threeDays.push({
         date: day,
         isToday: day.isSame(dayjs(), 'day'),
-        events: dayEvents
+        events: assignColumns(dayEvents) // Pre-assign columns here
       })
     }
     
     return threeDays
-  }
+  }, [selectedDate, events])
 
   return (
     <>
@@ -1668,7 +1705,7 @@ function Schedule() {
                     {/* Empty cell for hour column - aligns with hours below */}
                     <div className='week-header-spacer'></div>
                     {/* Day headers */}
-                    {(viewMode === 'week' ? generateWeekGrid() : generate3DaysGrid()).map((day, index) => (
+                    {(viewMode === 'week' ? generateWeekGrid : generate3DaysGrid).map((day, index) => (
                       <div key={index} className={`week-day-header ${day.isToday ? 'today' : ''}`}>
                         <div className='week-day-name'>{day.date.format('ddd')}</div>
                         <div className='week-day-date'>{day.date.format('D')}</div>
@@ -1689,7 +1726,7 @@ function Schedule() {
                       ))}
                     </div>
                     {/* Day columns */}
-                    {(viewMode === 'week' ? generateWeekGrid() : generate3DaysGrid()).map((day, dayIndex) => (
+                    {(viewMode === 'week' ? generateWeekGrid : generate3DaysGrid).map((day, dayIndex) => (
                       <div key={dayIndex} className='week-day-column'>
                         <div className='week-slots' style={{ height: `${slotHeight}px`, position: 'relative' }}>
                           {/* Time period backgrounds */}
@@ -1719,12 +1756,8 @@ function Schedule() {
                             </div>
                           )}
                           
-                          {/* Events for this day */}
-                          {(() => {
-                            // Assign columns for overlapping events
-                            const eventsWithColumns = assignColumns(day.events)
-                            
-                            return eventsWithColumns.map((event, eventIndex) => {
+                          {/* Events for this day - columns pre-assigned (Item 5) */}
+                          {day.events.map((event, eventIndex) => {
                             const hours = getScheduleHours(show24Hours)
                             const eventStart = new Date(`2000-01-01T${event.startTime}`)
                             const eventEnd = new Date(`2000-01-01T${event.endTime}`)
@@ -1824,8 +1857,7 @@ function Schedule() {
                             )
                             
                             return blocks
-                          })
-                          })()}
+                          })}
                         </div>
                       </div>
                     ))}
@@ -1888,9 +1920,7 @@ function Schedule() {
                   {/* Note: User event interactions are logged (event ID only) for debugging purposes.
                        See PRIVACY.md for detailed information about our logging practices and data handling. */}
                   {(() => {
-                    // Assign columns for overlapping events
-                    const eventsWithColumns = assignColumns(events)
-                    
+                    // Use memoized eventsWithColumns (Item 5: prevent duplicate assignColumns calls)
                     return eventsWithColumns.reduce((acc, event) => {
                     // Filter out invalid events with proper ID validation
                     // Allow ID >= 0 (0 can be valid in some database systems)

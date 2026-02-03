@@ -40,53 +40,52 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
     }
   }, [item])
 
-  // Focus trap for full modal
-  useEffect(() => {
-    if (!item || isContextMenu || !modalRef.current) return
-
-    const focusableElements = modalRef.current.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    )
-    
-    // Safety check: ensure there are focusable elements
-    if (focusableElements.length === 0) return
-    
-    const firstElement = focusableElements[0]
-    const lastElement = focusableElements[focusableElements.length - 1]
-
-    const handleTabKey = (e) => {
-      if (e.key !== 'Tab') return
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          lastElement.focus()
-          e.preventDefault()
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          firstElement.focus()
-          e.preventDefault()
-        }
-      }
-    }
-
-    document.addEventListener('keydown', handleTabKey)
-    return () => document.removeEventListener('keydown', handleTabKey)
-  }, [item, isContextMenu])
-
-  // Global escape key handler
+  // Combined focus trap and escape key handler (Item 20: optimize by combining effects)
   useEffect(() => {
     if (!item) return
 
-    const handleEscapeKey = (e) => {
-      if (e.key === 'Escape') {
-        onClose()
+    // Cache focusable elements for focus trap (only for full modal, not context menu)
+    let focusableElements = []
+    let firstElement = null
+    let lastElement = null
+    
+    if (!isContextMenu && modalRef.current) {
+      focusableElements = Array.from(modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ))
+      
+      if (focusableElements.length > 0) {
+        firstElement = focusableElements[0]
+        lastElement = focusableElements[focusableElements.length - 1]
       }
     }
 
-    document.addEventListener('keydown', handleEscapeKey)
-    return () => document.removeEventListener('keydown', handleEscapeKey)
-  }, [item, onClose])
+    const handleKeyDown = (e) => {
+      // Escape key handler
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+
+      // Focus trap (only for full modal with focusable elements)
+      if (e.key === 'Tab' && firstElement && lastElement) {
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus()
+            e.preventDefault()
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus()
+            e.preventDefault()
+          }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [item, isContextMenu, onClose])
 
   // Early return AFTER all hooks
   if (!item) return null
