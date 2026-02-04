@@ -1,4 +1,4 @@
-<!--
+/**
 COPILOT / LLM INSTRUCTIONS — SCHEDULE UI (DO NOT SIMPLIFY)
 
 This Schedule UI is intentionally subtle and layered.
@@ -49,7 +49,7 @@ Key constraints (NON-NEGOTIABLE):
 
 If unsure: DO NOT GUESS.
 Ask for clarification or preserve the existing structure.
--->
+*/
 
 /**
  * Schedule Page - Calendar view for events using React Big Calendar
