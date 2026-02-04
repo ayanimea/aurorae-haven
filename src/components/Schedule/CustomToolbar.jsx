@@ -94,7 +94,6 @@ function CustomToolbar({
             value={view}
             onChange={(e) => onView(e.target.value)}
             className="view-dropdown"
-            aria-label="Change view mode"
           >
             {views.map((v) => (
               <option key={v} value={v}>
