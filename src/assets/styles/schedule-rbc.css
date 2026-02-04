@@ -21,9 +21,11 @@
   --evening-bg: rgba(186, 141, 255, 0.65); /* Calm dusk purple - 6pm-11pm */
   --night-bg: rgba(16, 20, 44, 0.75); /* Dark night - 11pm-7am */
   
-  /* Responsive sizing - use rem instead of px for better scaling */
-  --rbc-timeslot-height: 0.625rem; /* 10px equivalent - compressed view */
-  --rbc-timeslot-height-mobile: 0.5rem; /* 8px equivalent - even more compressed on mobile */
+  /* Responsive sizing - HYBRID APPROACH: viewport-height-based adaptation
+   * Default (short screens <600px): Full readability, requires scrolling
+   * This ensures maximum readability on mobile, small windows, and when browser devtools are open */
+  --rbc-timeslot-height: 2.5rem; /* 40px - Maximum readability (default for short viewports) */
+  --rbc-timeslot-height-mobile: 2rem; /* 32px - Mobile gets slightly smaller but still very readable */
   --rbc-padding-base: 1.25rem; /* 20px equivalent */
   --rbc-padding-small: 0.625rem; /* 10px equivalent */
   --rbc-padding-tiny: 0.375rem; /* 6px equivalent */
@@ -31,6 +33,22 @@
   --rbc-border-width-thick: 0.125rem; /* 2px equivalent */
   --rbc-radius-small: 0.375rem; /* 6px equivalent */
   --rbc-radius-medium: 0.5rem; /* 8px equivalent */
+}
+
+/* Medium viewports (600-899px height): Balanced approach - minimal scrolling, good readability */
+@media (min-height: 600px) and (max-height: 899px) {
+  :root {
+    --rbc-timeslot-height: 1.5rem; /* 24px - Balanced: 6rem/hour = 102rem total (1,632px) */
+    --rbc-timeslot-height-mobile: 1.25rem; /* 20px - Mobile balanced view */
+  }
+}
+
+/* Tall viewports (≥900px height): Compressed view - full day visible without scrolling */
+@media (min-height: 900px) {
+  :root {
+    --rbc-timeslot-height: 0.625rem; /* 10px - Compressed: 2.5rem/hour = 42.5rem total (680px) */
+    --rbc-timeslot-height-mobile: 0.5rem; /* 8px - Mobile compressed view */
+  }
 }
 
 /* ===== Layout ===== */
@@ -177,7 +195,11 @@
 /* Hour separators only - remove minor grid lines */
 .rbc-timeslot-group {
   border-bottom: var(--rbc-border-width) solid var(--rbc-border-hour);
-  min-height: var(--rbc-timeslot-height); /* Compressed view: 0.625rem × 4 timeslots = 2.5rem per hour */
+  min-height: var(--rbc-timeslot-height); 
+  /* Adaptive height based on viewport:
+   * Tall screens (≥900px): 0.625rem = compressed, full day visible
+   * Medium (600-899px): 1.5rem = balanced, minimal scrolling  
+   * Short (<600px): 2.5rem = maximum readability, requires scrolling */
 }
 
 /* Remove borders from individual 15-min slots */
@@ -439,7 +461,9 @@
   }
 
   .rbc-timeslot-group {
-    min-height: var(--rbc-timeslot-height-mobile); /* Mobile: even more compressed for smaller screens */
+    min-height: var(--rbc-timeslot-height-mobile); 
+    /* Mobile uses adaptive mobile height based on viewport:
+     * Tall: 0.5rem, Medium: 1.25rem, Short: 2rem */
   }
 }
 
