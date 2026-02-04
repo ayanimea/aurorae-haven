@@ -38,7 +38,9 @@ export const toRBCEvent = (event) => {
     }
     
     // Handle events that span midnight (endTime < startTime)
-    if (endTime <= startTime) {
+    // Use strict less-than to only handle true midnight-spanning events
+    // Zero-duration events (start === end) are valid (e.g., reminders, bookmarks)
+    if (endTime < startTime) {
       endTime = addDays(endTime, 1)
     }
 

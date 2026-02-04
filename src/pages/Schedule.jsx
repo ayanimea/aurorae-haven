@@ -20,6 +20,12 @@ import '../assets/styles/schedule-rbc.css'
 
 const logger = createLogger('Schedule')
 
+// Format helper functions (module level to avoid recreation on each render)
+const createTimeFormatter = (use24HourFormat) => {
+  const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
+  return ({ start, end }) => `${format(start, timeFormat)} - ${format(end, timeFormat)}`
+}
+
 // Configure date-fns localizer for React Big Calendar with European settings
 const localizer = dateFnsLocalizer({
   format,
@@ -45,7 +51,9 @@ function Schedule() {
   const [showActionModal, setShowActionModal] = useState(false)
 
   // Get time format preference from settings (default to 24-hour)
-  // Read directly without memo to ensure it updates when settings change
+  // Reading settings directly (no memo) - changes in localStorage only reflected
+  // when this component re-renders. For automatic updates on external changes, 
+  // implement a settings subscription/refresh mechanism.
   const settings = getSettings()
   const use24HourFormat = settings.schedule?.use24HourFormat ?? true
 
@@ -103,7 +111,8 @@ function Schedule() {
   const handleSelectEvent = useCallback((event) => {
     const originalEvent = event.resource?.originalEvent
     if (originalEvent) {
-      setEventToDelete(originalEvent)
+      const isContextMenu = event.resource?.isContextMenu ?? event.isContextMenu ?? false
+      setEventToDelete({ ...originalEvent, isContextMenu })
       setShowActionModal(true)
     }
   }, [])
@@ -173,15 +182,12 @@ function Schedule() {
     () => {
       const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
       const gutterFormat = use24HourFormat ? 'HH:mm' : 'h a'
+      const timeFormatter = createTimeFormatter(use24HourFormat)
       
       return {
         timeGutterFormat: gutterFormat,
-        eventTimeRangeFormat: ({ start, end }) => {
-          return `${format(start, timeFormat)} - ${format(end, timeFormat)}`
-        },
-        agendaTimeRangeFormat: ({ start, end }) => {
-          return `${format(start, timeFormat)} - ${format(end, timeFormat)}`
-        },
+        eventTimeRangeFormat: timeFormatter,
+        agendaTimeRangeFormat: timeFormatter,
         dayFormat: 'EEE dd',
         dayHeaderFormat: 'EEEE, MMMM d',
         monthHeaderFormat: 'MMMM yyyy'
@@ -210,6 +216,7 @@ function Schedule() {
           min={new Date(2000, 0, 1, 7, 0)}
           max={new Date(2000, 0, 2, 0, 0)}
           formats={formats}
+          aria-label="Event calendar"
           components={{
             toolbar: (props) => (
               <CustomToolbar
