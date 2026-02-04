@@ -14,14 +14,11 @@ import TimeBands from '../components/Schedule/TimeBands'
 import ErrorBoundary from '../components/ErrorBoundary'
 import EventService from '../services/EventService'
 import { toRBCEvents, createEventFromSlot } from '../utils/eventAdapter'
-import { createLogger } from '../utils/logger'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import '../assets/styles/schedule-rbc.css'
 import '../components/ErrorBoundary.css'
-
-const logger = createLogger('Schedule')
 
 // Format helper functions (module level to avoid recreation on each render)
 const createTimeFormatter = (use24HourFormat) => {
@@ -89,7 +86,7 @@ function Schedule() {
 
       setEvents(loadedEvents)
     } catch (err) {
-      logger.error('Failed to load events:', err)
+      console.error('Failed to load events:', err)
       setError('Failed to load events. Please try again.')
     } finally {
       setIsLoading(false)
@@ -104,24 +101,24 @@ function Schedule() {
   // Event handlers
   const handleSelectSlot = useCallback((slotInfo) => {
     try {
-      logger.debug('Slot selected:', slotInfo)
+      console.log('Slot selected:', slotInfo)
       const eventData = createEventFromSlot(slotInfo)
       if (eventData) {
         setSelectedEvent(eventData)
         setSelectedEventType(EVENT_TYPES.TASK)
         setIsModalOpen(true)
       } else {
-        logger.warn('Failed to create event data from slot')
+        console.warn('Failed to create event data from slot')
       }
     } catch (err) {
-      logger.error('[Schedule] Error handling slot selection:', err)
+      console.error('[Schedule] Error handling slot selection:', err)
       setError('Failed to create event. Please try again.')
     }
   }, [])
 
   const handleSelectEvent = useCallback((event) => {
     try {
-      logger.debug('Event selected:', event)
+      console.log('Event selected:', event)
       const originalEvent = event.resource?.originalEvent
       if (originalEvent) {
         const isContextMenu =
@@ -129,10 +126,10 @@ function Schedule() {
         setEventToDelete({ ...originalEvent, isContextMenu })
         setShowActionModal(true)
       } else {
-        logger.warn('Event selected but no originalEvent found in resource')
+        console.warn('Event selected but no originalEvent found in resource')
       }
     } catch (err) {
-      logger.error('[Schedule] Error handling event selection:', err)
+      console.error('[Schedule] Error handling event selection:', err)
       setError('Failed to select event. Please try again.')
     }
   }, [])
@@ -151,10 +148,10 @@ function Schedule() {
         (typeof eventData.id === 'string' || typeof eventData.id === 'number')
 
       if (isUpdate) {
-        logger.debug('Updating event:', eventData.id)
+        console.log('Updating event:', eventData.id)
         await EventService.updateEvent(eventData.id, eventData)
       } else {
-        logger.debug('Creating new event')
+        console.log('Creating new event')
         await EventService.createEvent(eventData)
       }
 
@@ -162,14 +159,14 @@ function Schedule() {
       setIsModalOpen(false)
       setSelectedEvent(null)
     } catch (err) {
-      logger.error('[Schedule] Failed to save event:', err)
+      console.error('[Schedule] Failed to save event:', err)
       setError('Failed to save event. Please try again.')
     }
   }
 
   const handleDeleteEvent = async () => {
     if (!eventToDelete) {
-      logger.warn('handleDeleteEvent called with no eventToDelete')
+      console.warn('handleDeleteEvent called with no eventToDelete')
       return
     }
 
@@ -178,13 +175,13 @@ function Schedule() {
         throw new Error('Event ID is required for deletion')
       }
 
-      logger.debug('Deleting event:', eventToDelete.id)
+      console.log('Deleting event:', eventToDelete.id)
       await EventService.deleteEvent(eventToDelete.id)
       await loadEvents()
       setShowActionModal(false)
       setEventToDelete(null)
     } catch (err) {
-      logger.error('[Schedule] Failed to delete event:', err)
+      console.error('[Schedule] Failed to delete event:', err)
       setError('Failed to delete event. Please try again.')
     }
   }
@@ -192,16 +189,16 @@ function Schedule() {
   const handleEditEvent = () => {
     try {
       if (eventToDelete) {
-        logger.debug('Editing event:', eventToDelete.id)
+        console.log('Editing event:', eventToDelete.id)
         setSelectedEvent(eventToDelete)
         setSelectedEventType(eventToDelete.type)
         setShowActionModal(false)
         setIsModalOpen(true)
       } else {
-        logger.warn('handleEditEvent called with no eventToDelete')
+        console.warn('handleEditEvent called with no eventToDelete')
       }
     } catch (err) {
-      logger.error('[Schedule] Error handling edit event:', err)
+      console.error('[Schedule] Error handling edit event:', err)
       setError('Failed to edit event. Please try again.')
     }
   }
@@ -214,18 +211,18 @@ function Schedule() {
       // Clear any errors when closing modal
       setError('')
     } catch (err) {
-      logger.error('[Schedule] Error closing modal:', err)
+      console.error('[Schedule] Error closing modal:', err)
     }
   }
 
   const handleScheduleEvent = (eventType) => {
     try {
-      logger.debug('Schedule event button clicked:', eventType)
+      console.log('Schedule event button clicked:', eventType)
       setSelectedEventType(eventType)
       setSelectedEvent(null)
       setIsModalOpen(true)
     } catch (err) {
-      logger.error('[Schedule] Error handling schedule event:', err)
+      console.error('[Schedule] Error handling schedule event:', err)
       setError('Failed to open event creation. Please try again.')
     }
   }
