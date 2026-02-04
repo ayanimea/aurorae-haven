@@ -9,7 +9,8 @@ import { format, parse, startOfWeek, getDay, addDays } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
 import CustomToolbar from '../components/Schedule/CustomToolbar'
-import CustomEvent from '../components/Schedule/CustomEvent'
+import SolidEventCard from '../components/Schedule/SolidEventCard'
+import TimeBands from '../components/Schedule/TimeBands'
 import EventService from '../services/EventService'
 import { toRBCEvents, createEventFromSlot } from '../utils/eventAdapter'
 import { createLogger } from '../utils/logger'
@@ -199,39 +200,42 @@ function Schedule() {
   return (
     <div className="page page-schedule">
       <div className="schedule-container">
-        <Calendar
-          localizer={localizer}
-          events={rbcEvents}
-          view={view}
-          views={views}
-          date={date}
-          onNavigate={setDate}
-          onView={setView}
-          onSelectSlot={handleSelectSlot}
-          onSelectEvent={handleSelectEvent}
-          selectable
-          popup
-          step={15}
-          timeslots={4}
-          min={new Date(2000, 0, 1, 7, 0)}
-          max={new Date(2000, 0, 2, 0, 0)}
-          formats={formats}
-          aria-label="Event calendar"
-          components={{
-            toolbar: (props) => (
-              <CustomToolbar
-                {...props}
-                views={['day', 'week', 'month']}
-                onScheduleEvent={handleScheduleEvent}
-                EVENT_TYPES={EVENT_TYPES}
-              />
-            ),
-            event: CustomEvent
-          }}
-          eventPropGetter={(event) => ({
-            className: `event-${event.resource?.type || 'task'}`
-          })}
-        />
+        <div className="schedule-wrapper">
+          <TimeBands />
+          <Calendar
+            localizer={localizer}
+            events={rbcEvents}
+            view={view}
+            views={views}
+            date={date}
+            onNavigate={setDate}
+            onView={setView}
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
+            selectable
+            popup
+            step={15}
+            timeslots={4}
+            min={new Date(2000, 0, 1, 7, 0)}
+            max={new Date(2000, 0, 2, 0, 0)}
+            formats={formats}
+            aria-label="Event calendar"
+            components={{
+              toolbar: (props) => (
+                <CustomToolbar
+                  {...props}
+                  views={['day', 'week', 'month']}
+                  onScheduleEvent={handleScheduleEvent}
+                  EVENT_TYPES={EVENT_TYPES}
+                />
+              ),
+              event: SolidEventCard
+            }}
+            eventPropGetter={(event) => ({
+              className: `event-${event.resource?.type || 'task'}`
+            })}
+          />
+        </div>
 
         {isLoading && (
           <div className="loading-overlay">

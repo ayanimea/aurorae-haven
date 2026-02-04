@@ -8,28 +8,43 @@
  * 1: Time-of-day bands (context - handled by TimeBands component)
  * 2: Grid lines (structure - minimal, subordinate)
  * 3: Events (primary content - solid cards via SolidEventCard component)
+ * 
+ * This stylesheet focuses on RBC integration and grid structure.
+ * Time bands and event cards have their own component stylesheets.
  */
 
 /* ===== CSS Variables ===== */
 :root {
+  /* Calendar container - calm, not opaque */
   --schedule-bg: rgba(16, 20, 44, 0.25);
   --schedule-border: rgba(255, 255, 255, 0.08);
+  
+  /* Grid lines - structural but subordinate */
   --grid-hour: rgba(255, 255, 255, 0.12);
   --grid-subtle: rgba(255, 255, 255, 0.04);
-  --rbc-timeslot-height: 2.5rem;
+  
+  /* Responsive timeslot heights - HYBRID viewport-based approach */
+  --rbc-timeslot-height: 2.5rem; /* Default: Maximum readability */
   --rbc-padding-base: 1.25rem;
   --rbc-padding-small: 0.625rem;
   --rbc-radius-medium: 0.5rem;
 }
 
+/* Medium viewports: Balanced */
 @media (min-height: 600px) and (max-height: 899px) {
-  :root { --rbc-timeslot-height: 1.5rem; }
+  :root {
+    --rbc-timeslot-height: 1.5rem;
+  }
 }
 
+/* Tall viewports: Compressed */
 @media (min-height: 900px) {
-  :root { --rbc-timeslot-height: 0.625rem; }
+  :root {
+    --rbc-timeslot-height: 0.625rem;
+  }
 }
 
+/* ===== Layout Structure ===== */
 .page-schedule {
   height: 100vh;
   display: flex;
@@ -44,6 +59,7 @@
   min-height: 0;
 }
 
+/* Wrapper for TimeBands + Calendar positioning */
 .schedule-wrapper {
   flex: 1;
   position: relative;
@@ -52,6 +68,7 @@
   min-height: 0;
 }
 
+/* ===== Calendar Container ===== */
 .rbc-calendar {
   flex: 1;
   background: var(--schedule-bg);
@@ -64,9 +81,10 @@
   flex-direction: column;
   min-height: 0;
   position: relative;
-  z-index: 2;
+  z-index: 2; /* Above time bands (1) */
 }
 
+/* ===== Time View Structure ===== */
 .rbc-time-view {
   flex: 1;
   display: flex;
@@ -74,7 +92,7 @@
   min-height: 0;
   border: 1px solid var(--grid-hour);
   border-radius: var(--rbc-radius-medium);
-  background: transparent;
+  background: transparent; /* Let time bands show through */
   overflow: hidden;
 }
 
@@ -83,9 +101,10 @@
   overflow-y: auto;
   min-height: 0;
   position: relative;
-  z-index: 2;
+  z-index: 2; /* Grid is z-index 2, events will be 3 */
 }
 
+/* ===== Custom Toolbar ===== */
 .calendar-toolbar {
   display: flex;
   justify-content: space-between;
@@ -154,6 +173,7 @@
   outline-offset: 2px;
 }
 
+/* ===== Grid Layer - Minimal, Structural ===== */
 .rbc-time-header {
   border-bottom: 1px solid var(--grid-hour);
   background: rgba(16, 20, 44, 0.35);
@@ -170,24 +190,28 @@
   z-index: 2;
 }
 
+/* Hour separators - structural but subordinate */
 .rbc-timeslot-group {
   border-bottom: 1px solid var(--grid-hour);
   min-height: var(--rbc-timeslot-height);
-  background: transparent;
+  background: transparent; /* Let time bands show through */
 }
 
+/* No borders on individual 15-min slots */
 .rbc-time-slot {
   color: var(--dim);
   font-size: 0.7rem;
   border-top: none !important;
 }
 
+/* Current time indicator */
 .rbc-current-time-indicator {
   background-color: var(--accent);
   height: 2px;
-  z-index: 4;
+  z-index: 4; /* Above everything including events */
 }
 
+/* ===== Day Column ===== */
 .rbc-day-slot {
   position: relative;
 }
@@ -196,6 +220,8 @@
   position: relative;
 }
 
+/* ===== Events - Using SolidEventCard component ===== */
+/* RBC event wrapper - minimal styling, let component handle appearance */
 .rbc-event {
   padding: 0;
   border: none;
@@ -208,7 +234,7 @@
 }
 
 .rbc-event-label {
-  display: none;
+  display: none; /* Hide RBC's default time label */
 }
 
 .rbc-event-content {
@@ -216,10 +242,12 @@
   width: 100%;
 }
 
+/* Selected event state */
 .rbc-selected {
   background: none;
 }
 
+/* ===== Headers ===== */
 .rbc-header {
   padding: var(--rbc-padding-small) 0.375rem;
   font-weight: 600;
@@ -237,6 +265,7 @@
   background-color: rgba(134, 245, 224, 0.10);
 }
 
+/* ===== Month View ===== */
 .rbc-month-view {
   border: 1px solid var(--grid-hour);
   border-radius: var(--rbc-radius-medium);
@@ -264,6 +293,7 @@
   background: rgba(16, 20, 44, 0.15);
 }
 
+/* ===== Week View ===== */
 .rbc-time-header-content {
   min-height: 40px;
 }
@@ -273,6 +303,7 @@
   border-bottom: 1px solid var(--grid-hour);
 }
 
+/* ===== Agenda View ===== */
 .rbc-agenda-view {
   background: rgba(16, 20, 44, 0.15);
   border: 1px solid var(--grid-hour);
@@ -294,12 +325,14 @@
   color: var(--text);
 }
 
+/* ===== Selection ===== */
 .rbc-slot-selection {
   background-color: rgba(134, 245, 224, 0.15);
   border: 2px solid rgba(134, 245, 224, 0.5);
   z-index: 10;
 }
 
+/* ===== Loading & Error States ===== */
 .loading-overlay {
   position: absolute;
   top: 50%;
@@ -321,21 +354,41 @@
   margin-top: 12px;
 }
 
+/* ===== Mobile Responsive ===== */
 @media (max-width: 768px) {
-  .schedule-container { padding: 0.75rem; }
-  .rbc-calendar { padding: 12px; }
+  .schedule-container {
+    padding: 0.75rem;
+  }
+  
+  .rbc-calendar {
+    padding: 12px;
+  }
+  
   .calendar-toolbar {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
-  .toolbar-left h2 { font-size: 1.25rem; }
-  .toolbar-right { justify-content: space-between; }
-  .rbc-time-slot { font-size: 0.65rem; }
+  
+  .toolbar-left h2 {
+    font-size: 1.25rem;
+  }
+  
+  .toolbar-right {
+    justify-content: space-between;
+  }
+  
+  .rbc-time-slot {
+    font-size: 0.65rem;
+  }
 }
 
+/* ===== Accessibility ===== */
 @media (prefers-reduced-motion: reduce) {
-  .solid-event-card, .view-dropdown { transition: none; }
+  .solid-event-card,
+  .view-dropdown {
+    transition: none;
+  }
 }
 
 @media (prefers-contrast: high) {
@@ -345,12 +398,18 @@
   }
 }
 
+/* ===== Print Styles ===== */
 @media print {
-  .calendar-toolbar, .rbc-time-gutter { display: none; }
+  .calendar-toolbar,
+  .rbc-time-gutter {
+    display: none;
+  }
+  
   .rbc-calendar {
     border: 1px solid #000;
     background: #fff;
   }
+  
   .solid-event-card {
     background: #fff;
     border: 1px solid #000;
