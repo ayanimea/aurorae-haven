@@ -175,7 +175,7 @@ describe('Schedule Component with React Big Calendar', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Schedule' })
+        screen.getByRole('button', { name: '+ Schedule' })
       ).toBeInTheDocument()
     })
   })
