@@ -123,6 +123,7 @@ function Schedule() {
   )
 
   useEffect(() => {
+    // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
     const handleStorage = () => {
       try {
         const updatedValue = getSettings().schedule?.use24HourFormat
@@ -130,12 +131,29 @@ function Schedule() {
           setUse24HourFormat(updatedValue)
         }
       } catch (err) {
-        console.error('Failed to sync 24-hour format from settings:', err)
+        console.error('Failed to sync 24-hour format from settings (storage):', err)
+      }
+    }
+
+    // Handle same-tab updates via custom 'settingsUpdated' event
+    // Settings page should dispatch: window.dispatchEvent(new CustomEvent('settingsUpdated'))
+    const handleSettingsUpdated = () => {
+      try {
+        const updatedValue = getSettings().schedule?.use24HourFormat
+        if (typeof updatedValue === 'boolean') {
+          setUse24HourFormat(updatedValue)
+        }
+      } catch (err) {
+        console.error('Failed to sync 24-hour format from settings (custom event):', err)
       }
     }
 
     window.addEventListener('storage', handleStorage)
-    return () => window.removeEventListener('storage', handleStorage)
+    window.addEventListener('settingsUpdated', handleSettingsUpdated)
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('settingsUpdated', handleSettingsUpdated)
+    }
   }, [])
 
   // Convert events to RBC format
@@ -226,11 +244,6 @@ function Schedule() {
       }
     } catch (err) {
       console.error('[Schedule] Error handling context menu:', err)
-    }
-  }, [])
-    } catch (err) {
-      console.error('[Schedule] Error handling event selection:', err)
-      setError('Failed to select event. Please try again.')
     }
   }, [])
 
