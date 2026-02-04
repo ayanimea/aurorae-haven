@@ -232,7 +232,7 @@ function Schedule() {
     }
   }, [])
 
-  const handleEventContextMenu = useCallback((event, e) => {
+  const handleEventContextMenu = useCallback((event) => {
     try {
       console.log('Event context menu:', event)
       const originalEvent = event.resource?.originalEvent

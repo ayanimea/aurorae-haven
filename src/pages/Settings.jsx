@@ -491,6 +491,7 @@ function Settings() {
                   updateSetting('schedule', newSettings.schedule)
                   // Dispatch custom event for same-tab reactivity in Schedule component
                   if (typeof window !== 'undefined') {
+                    // eslint-disable-next-line no-undef
                     window.dispatchEvent(new CustomEvent('settingsUpdated'))
                   }
                   showMessage('Time format updated successfully')
