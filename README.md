@@ -6,7 +6,7 @@ Welcome to the offline packages branch! This branch contains the latest offline 
 
 Click on the `.tar.gz` file above to download the latest offline package.
 
-**Latest Package**: `aurorae-haven-offline-v1.0.0.tar.gz`
+**Latest Package**: `aurorae-haven-offline-v1.0.1.tar.gz`
 
 ## 🚀 Quick Start
 
@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1203 KB compressed
+- ✅ Total size: 1184 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-04 16:33:11 UTC
-**Source Branch**: main
-**Source Commit**: f845eb5
+**Last Updated**: 2026-02-04 16:34:23 UTC
+**Source Branch**: migrate-to-react-big-calendar
+**Source Commit**: 5153f3e
 
 ---
 
