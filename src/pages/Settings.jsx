@@ -489,6 +489,10 @@ function Settings() {
                   }
                   setSettingsState(newSettings)
                   updateSetting('schedule', newSettings.schedule)
+                  // Dispatch custom event for same-tab reactivity in Schedule component
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('settingsUpdated'))
+                  }
                   showMessage('Time format updated successfully')
                 }}
                 className='settings-checkbox'

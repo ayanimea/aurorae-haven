@@ -6,7 +6,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../../components/common/Icon'
-import { format } from 'date-fns'
+import { format, isSameDay } from 'date-fns'
 
 function CustomToolbar({
   date,
@@ -42,10 +42,8 @@ function CustomToolbar({
 
   const getTodayLabel = () => {
     const today = new Date()
-    const isToday =
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
+    // Use date-fns isSameDay for robust date comparison
+    const isToday = isSameDay(date, today)
 
     return isToday ? `Today · ${formatDate()}` : formatDate()
   }
