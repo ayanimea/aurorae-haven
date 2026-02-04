@@ -313,12 +313,48 @@
 }
 
 .error-message {
-  padding: 16px;
-  background: rgba(239, 68, 68, 0.15);
+  position: fixed;
+  top: 5rem;
+  right: 1.25rem;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 1rem 3rem 1rem 1.25rem;
+  border-radius: 0.5rem;
   border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 8px;
-  color: #fca5a5;
-  margin-top: 12px;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-width: 25rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+.error-dismiss {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.error-dismiss:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 768px) {

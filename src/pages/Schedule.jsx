@@ -11,6 +11,7 @@ import ItemActionModal from '../components/ItemActionModal'
 import CustomToolbar from '../components/Schedule/CustomToolbar'
 import SolidEventCard from '../components/Schedule/SolidEventCard'
 import TimeBands from '../components/Schedule/TimeBands'
+import ErrorBoundary from '../components/ErrorBoundary'
 import EventService from '../services/EventService'
 import { toRBCEvents, createEventFromSlot } from '../utils/eventAdapter'
 import { createLogger } from '../utils/logger'
@@ -18,6 +19,7 @@ import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import '../assets/styles/schedule-rbc.css'
+import '../components/ErrorBoundary.css'
 
 const logger = createLogger('Schedule')
 
@@ -99,74 +101,130 @@ function Schedule() {
   // Event handlers
   const handleSelectSlot = useCallback(
     (slotInfo) => {
-      const eventData = createEventFromSlot(slotInfo)
-      if (eventData) {
-        setSelectedEvent(eventData)
-        setSelectedEventType(EVENT_TYPES.TASK)
-        setIsModalOpen(true)
+      try {
+        logger.debug('Slot selected:', slotInfo)
+        const eventData = createEventFromSlot(slotInfo)
+        if (eventData) {
+          setSelectedEvent(eventData)
+          setSelectedEventType(EVENT_TYPES.TASK)
+          setIsModalOpen(true)
+        } else {
+          logger.warn('Failed to create event data from slot')
+        }
+      } catch (err) {
+        logger.error('[Schedule] Error handling slot selection:', err)
+        setError('Failed to create event. Please try again.')
       }
     },
     []
   )
 
   const handleSelectEvent = useCallback((event) => {
-    const originalEvent = event.resource?.originalEvent
-    if (originalEvent) {
-      const isContextMenu = event.resource?.isContextMenu ?? event.isContextMenu ?? false
-      setEventToDelete({ ...originalEvent, isContextMenu })
-      setShowActionModal(true)
+    try {
+      logger.debug('Event selected:', event)
+      const originalEvent = event.resource?.originalEvent
+      if (originalEvent) {
+        const isContextMenu = event.resource?.isContextMenu ?? event.isContextMenu ?? false
+        setEventToDelete({ ...originalEvent, isContextMenu })
+        setShowActionModal(true)
+      } else {
+        logger.warn('Event selected but no originalEvent found in resource')
+      }
+    } catch (err) {
+      logger.error('[Schedule] Error handling event selection:', err)
+      setError('Failed to select event. Please try again.')
     }
   }, [])
 
   const handleSaveEvent = async (eventData) => {
     try {
-      if (eventData.id) {
+      // Ensure we have a valid event object
+      if (!eventData) {
+        throw new Error('No event data provided')
+      }
+
+      // Check if this is an update or create
+      // For updates, we need both an ID and it must be a string/number
+      const isUpdate = eventData.id && (typeof eventData.id === 'string' || typeof eventData.id === 'number')
+      
+      if (isUpdate) {
+        logger.debug('Updating event:', eventData.id)
         await EventService.updateEvent(eventData.id, eventData)
       } else {
+        logger.debug('Creating new event')
         await EventService.createEvent(eventData)
       }
+      
       await loadEvents()
       setIsModalOpen(false)
       setSelectedEvent(null)
     } catch (err) {
-      logger.error('Failed to save event:', err)
+      logger.error('[Schedule] Failed to save event:', err)
       setError('Failed to save event. Please try again.')
     }
   }
 
   const handleDeleteEvent = async () => {
-    if (!eventToDelete) return
+    if (!eventToDelete) {
+      logger.warn('handleDeleteEvent called with no eventToDelete')
+      return
+    }
 
     try {
+      if (!eventToDelete.id) {
+        throw new Error('Event ID is required for deletion')
+      }
+      
+      logger.debug('Deleting event:', eventToDelete.id)
       await EventService.deleteEvent(eventToDelete.id)
       await loadEvents()
       setShowActionModal(false)
       setEventToDelete(null)
     } catch (err) {
-      logger.error('Failed to delete event:', err)
+      logger.error('[Schedule] Failed to delete event:', err)
       setError('Failed to delete event. Please try again.')
     }
   }
 
   const handleEditEvent = () => {
-    if (eventToDelete) {
-      setSelectedEvent(eventToDelete)
-      setSelectedEventType(eventToDelete.type)
-      setShowActionModal(false)
-      setIsModalOpen(true)
+    try {
+      if (eventToDelete) {
+        logger.debug('Editing event:', eventToDelete.id)
+        setSelectedEvent(eventToDelete)
+        setSelectedEventType(eventToDelete.type)
+        setShowActionModal(false)
+        setIsModalOpen(true)
+      } else {
+        logger.warn('handleEditEvent called with no eventToDelete')
+      }
+    } catch (err) {
+      logger.error('[Schedule] Error handling edit event:', err)
+      setError('Failed to edit event. Please try again.')
     }
   }
 
   const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setSelectedEvent(null)
-    setSelectedEventType(null)
+    try {
+      setIsModalOpen(false)
+      setSelectedEvent(null)
+      setSelectedEventType(null)
+      // Clear any errors when closing modal
+      setError('')
+    } catch (err) {
+      logger.error('[Schedule] Error closing modal:', err)
+    }
   }
 
   const handleScheduleEvent = (eventType) => {
-    setSelectedEventType(eventType)
-    setSelectedEvent(null)
-    setIsModalOpen(true)
+    try {
+      logger.debug('Schedule event button clicked:', eventType)
+      setSelectedEventType(eventType)
+      setSelectedEvent(null)
+      setIsModalOpen(true)
+    } catch (err) {
+      logger.error('[Schedule] Error handling schedule event:', err)
+      setError('Failed to open event creation. Please try again.')
+    }
   }
 
   // Calendar configuration
@@ -197,80 +255,89 @@ function Schedule() {
   )
 
   return (
-    <div className="page page-schedule">
-      <div className="schedule-container">
-        <div className="schedule-wrapper">
-          <TimeBands />
-          <Calendar
-            localizer={localizer}
-            events={rbcEvents}
-            view={view}
-            views={views}
-            date={date}
-            onNavigate={setDate}
-            onView={setView}
-            onSelectSlot={handleSelectSlot}
-            onSelectEvent={handleSelectEvent}
-            selectable
-            popup
-            step={15}
-            timeslots={4}
-            min={new Date(2000, 0, 1, 7, 0)}
-            max={new Date(2000, 0, 2, 0, 0)}
-            formats={formats}
-            aria-label="Event calendar"
-            components={{
-              toolbar: (props) => (
-                <CustomToolbar
-                  {...props}
-                  views={['day', 'week', 'month']}
-                  onScheduleEvent={handleScheduleEvent}
-                  EVENT_TYPES={EVENT_TYPES}
-                />
-              ),
-              event: SolidEventCard
-            }}
-            eventPropGetter={(event) => ({
-              className: `event-${event.resource?.type || 'task'}`
-            })}
-          />
+    <ErrorBoundary>
+      <div className="page page-schedule">
+        <div className="schedule-container">
+          <div className="schedule-wrapper">
+            <TimeBands />
+            <Calendar
+              localizer={localizer}
+              events={rbcEvents}
+              view={view}
+              views={views}
+              date={date}
+              onNavigate={setDate}
+              onView={setView}
+              onSelectSlot={handleSelectSlot}
+              onSelectEvent={handleSelectEvent}
+              selectable
+              popup
+              step={15}
+              timeslots={4}
+              min={new Date(2000, 0, 1, 7, 0)}
+              max={new Date(2000, 0, 2, 0, 0)}
+              formats={formats}
+              aria-label="Event calendar"
+              components={{
+                toolbar: (props) => (
+                  <CustomToolbar
+                    {...props}
+                    views={['day', 'week', 'month']}
+                    onScheduleEvent={handleScheduleEvent}
+                    EVENT_TYPES={EVENT_TYPES}
+                  />
+                ),
+                event: SolidEventCard
+              }}
+              eventPropGetter={(event) => ({
+                className: `event-${event.resource?.type || 'task'}`
+              })}
+            />
+          </div>
+
+          {isLoading && (
+            <div className="loading-overlay">
+              <p>Loading events...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="error-message" role="alert">
+              {error}
+              <button 
+                onClick={() => setError('')}
+                className="error-dismiss"
+                aria-label="Dismiss error"
+              >
+                ×
+              </button>
+            </div>
+          )}
         </div>
 
-        {isLoading && (
-          <div className="loading-overlay">
-            <p>Loading events...</p>
-          </div>
-        )}
+        {/* Event Modal */}
+        <EventModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSaveEvent}
+          eventType={selectedEventType}
+          initialData={selectedEvent}
+        />
 
-        {error && (
-          <div className="error-message" role="alert">
-            {error}
-          </div>
+        {/* Action Modal for Edit/Delete */}
+        {showActionModal && eventToDelete && (
+          <ItemActionModal
+            item={eventToDelete}
+            onClose={() => {
+              setShowActionModal(false)
+              setEventToDelete(null)
+            }}
+            onEdit={handleEditEvent}
+            onDelete={handleDeleteEvent}
+          />
         )}
       </div>
-
-      {/* Event Modal */}
-      <EventModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveEvent}
-        eventType={selectedEventType}
-        initialData={selectedEvent}
-      />
-
-      {/* Action Modal for Edit/Delete */}
-      {showActionModal && eventToDelete && (
-        <ItemActionModal
-          item={eventToDelete}
-          onClose={() => {
-            setShowActionModal(false)
-            setEventToDelete(null)
-          }}
-          onEdit={handleEditEvent}
-          onDelete={handleDeleteEvent}
-        />
-      )}
-    </div>
+    </ErrorBoundary>
   )
 }
 
