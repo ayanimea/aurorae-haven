@@ -20,6 +20,12 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import '../assets/styles/schedule-rbc.css'
 import '../components/ErrorBoundary.css'
 
+/* eslint-disable no-console */
+// Console statements are intentionally used throughout this file for production debugging
+// and error handling. They replaced a custom logger that was being minified incorrectly
+// in production builds (see commit 511b225). These console calls are production-safe
+// and provide essential debugging information for user-reported issues.
+
 // Format helper functions (module level to avoid recreation on each render)
 const createTimeFormatter = (use24HourFormat) => {
   const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
