@@ -166,13 +166,13 @@
 /* Hour separators only - remove minor grid lines */
 .rbc-timeslot-group {
   border-bottom: 1px solid var(--rbc-border-hour);
-  min-height: 48px;
+  min-height: 10px; /* Dramatically reduced: 10px × 4 timeslots = 40px per hour, 17 hours = 680px total */
 }
 
 /* Remove borders from individual 15-min slots */
 .rbc-time-slot {
   color: var(--dim);
-  font-size: 0.75rem;
+  font-size: 0.7rem; /* Slightly smaller for compressed view */
   border-top: none !important;
 }
 
@@ -284,13 +284,17 @@
   backdrop-filter: blur(8px);
   color: var(--text);
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: 6px;
+  padding: 2px 6px; /* Reduced padding for compressed view */
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 0.75rem; /* Smaller font for compressed view */
   font-weight: 500;
+  line-height: 1.2; /* Tighter line height */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
+  overflow: hidden; /* Hide overflow in compact view */
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rbc-event:hover {
@@ -453,7 +457,7 @@
   }
 
   .rbc-timeslot-group {
-    min-height: 40px;
+    min-height: 8px; /* Mobile: even more compressed for smaller screens */
   }
 }
 
