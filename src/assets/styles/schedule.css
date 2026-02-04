@@ -1,3 +1,61 @@
+/*
+REFERENCE: See /docs/schedule-ui-spec.md and /docs/schedule-after-mockup.png
+Any deviation from those visuals is a regression.
+*/
+
+/*
+COPILOT / LLM INSTRUCTIONS — SCHEDULE UI (DO NOT SIMPLIFY)
+
+This Schedule UI is intentionally subtle and layered.
+Do NOT approximate, simplify, or “clean up” the visuals.
+
+Key constraints (NON-NEGOTIABLE):
+
+1. Time-of-day styling is NOT row coloring.
+   - Do NOT apply background colors to hour rows.
+   - Do NOT use a single global background gradient.
+   - Time-of-day bands MUST be implemented as a separate,
+     absolutely-positioned background layer.
+
+2. The schedule has FOUR visual layers, in this order:
+   1) Event cards (primary focus)
+   2) Current-time indicator (if present)
+   3) Hour grid lines (structural only)
+   4) Time-of-day bands (semantic orientation)
+   Decorative backgrounds are below all of the above.
+
+3. Time-of-day bands are SEMANTIC, not decorative.
+   - Morning / Afternoon / Evening / Night MUST be perceptible
+     without reading hour labels.
+   - Bands must be visually distinct from each other,
+     but remain low-contrast and calm.
+   - If converting the UI to grayscale makes all hours look identical,
+     the implementation is WRONG.
+
+4. Bands must be DISCRETE ZONES, not a continuous gradient.
+   - Each band covers a defined time range.
+   - Each band has its own soft internal gradient.
+   - Adjacent bands may overlap softly, but must differ in hue or luminance.
+
+5. Event cards must visually dominate.
+   - Cards float above bands (z-index, elevation).
+   - Cards NEVER inherit band colors.
+   - If background draws attention before events, FAIL.
+
+6. Time scaling MUST be proportional and non-hardcoded.
+   - All vertical sizing derives from a minute-based unit.
+   - Do NOT hardcode pixel heights for hours or events.
+   - Use CSS variables and calculations only.
+
+7. This UI prioritises ORIENTATION over decoration.
+   - Calm but legible.
+   - Structured but non-mechanical.
+   - If it looks “efficient” but feels disorienting, it is WRONG.
+
+If unsure: DO NOT GUESS.
+Ask for clarification or preserve the existing structure.
+*/
+
 /* ===== Schedule ===== */
 :root {
   /* Dynamic hour height - calculated by JavaScript based on available viewport space */

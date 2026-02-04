@@ -1,0 +1,128 @@
+/**
+ * SolidEventCard Styling - Canonical Visual Specification
+ * 
+ * Events are the primary visual anchor - they must be the most dominant elements
+ * No glass-morphism, no semi-transparency - solid, clear, readable cards
+ */
+
+:root {
+  /* Event card colors - EXACT canonical values */
+  --event-bg: #161b22;
+  --event-border: #2a3240;
+  --event-text: #e6edf3;
+  --event-text-dim: rgba(230, 237, 243, 0.7);
+  
+  /* Event card measurements */
+  --event-radius: 0.875rem; /* 14px */
+  --event-padding-v: 0.75rem; /* 12px */
+  --event-padding-h: 1rem; /* 16px */
+}
+
+.solid-event-card {
+  position: relative;
+  z-index: 3; /* Above bands (1) and grid (2) */
+  
+  /* Solid background - no glass effect */
+  background: var(--event-bg);
+  border: 1px solid var(--event-border);
+  border-radius: var(--event-radius);
+  
+  padding: var(--event-padding-v) var(--event-padding-h);
+  
+  /* Dual-layer shadow for soft elevation */
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  
+  /* Typography */
+  color: var(--event-text);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  
+  /* Prevent text overflow */
+  overflow: hidden;
+  
+  /* Smooth transitions */
+  transition: 
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.solid-event-card:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-color: rgba(134, 245, 224, 0.3); /* Subtle accent on hover */
+}
+
+.solid-event-card:active {
+  transform: translateY(0);
+}
+
+/* Event title - prominent */
+.event-title {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+  color: var(--event-text);
+}
+
+/* Pre-activities (prep/travel) - subtle context */
+.event-pre-activities {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+  font-size: 0.8rem;
+  color: var(--event-text-dim);
+  align-items: center;
+}
+
+.prep-indicator,
+.travel-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0.85;
+}
+
+/* Type-specific left border accent (subtle) */
+.event-type-routine {
+  border-left: 3px solid rgba(134, 245, 224, 0.5); /* Accent teal */
+}
+
+.event-type-task {
+  border-left: 3px solid rgba(96, 165, 250, 0.5); /* Blue */
+}
+
+.event-type-meeting {
+  border-left: 3px solid rgba(249, 115, 22, 0.5); /* Orange */
+}
+
+.event-type-habit {
+  border-left: 3px solid rgba(167, 139, 250, 0.5); /* Purple */
+}
+
+/* Focus state for accessibility */
+.solid-event-card:focus-visible {
+  outline: 2px solid rgba(134, 245, 224, 0.6);
+  outline-offset: 2px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .solid-event-card {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9rem;
+  }
+  
+  .event-title {
+    font-size: 0.9rem;
+  }
+  
+  .event-pre-activities {
+    font-size: 0.75rem;
+  }
+}

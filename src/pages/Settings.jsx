@@ -469,6 +469,47 @@ function Settings() {
           </div>
         )}
 
+        {/* Schedule Settings */}
+        <div className='settings-divider'>
+          <h3 className='settings-section-title'>Schedule</h3>
+          
+          {/* 24-Hour Format Toggle */}
+          <div className='settings-field'>
+            <label className='settings-checkbox-label'>
+              <input
+                type='checkbox'
+                checked={settings.schedule?.use24HourFormat ?? true}
+                onChange={(e) => {
+                  const newSettings = {
+                    ...settings,
+                    schedule: {
+                      ...settings.schedule,
+                      use24HourFormat: e.target.checked
+                    }
+                  }
+                  setSettingsState(newSettings)
+                  updateSetting('schedule', newSettings.schedule)
+                  // Dispatch custom event for same-tab reactivity in Schedule component
+                  if (typeof window !== 'undefined') {
+                    // eslint-disable-next-line no-undef
+                    window.dispatchEvent(new CustomEvent('settingsUpdated'))
+                  }
+                  showMessage('Time format updated successfully')
+                }}
+                className='settings-checkbox'
+                aria-describedby='24hour-format-hint'
+              />
+              <strong>Use 24-Hour Time Format</strong>
+            </label>
+            <small
+              id='24hour-format-hint'
+              className='settings-checkbox-hint'
+            >
+              Display times in 24-hour format (e.g., 14:00 instead of 2:00 PM)
+            </small>
+          </div>
+        </div>
+
         {/* Other Settings Placeholder */}
         <div className='settings-divider'>
           <h3 className='settings-section-title'>Other Settings</h3>

@@ -461,32 +461,7 @@ body.density-cozy {
   /* Increase navbar opacity for better readability on mobile */
   .appbar {
     background: rgba(16, 20, 44, 0.85);
-  }
-
-  .navbar-center {
-    display: none;
-  }
-
-  .mobile-settings-button {
-    display: flex;
-    margin-left: auto;
-  }
-
-  .hamburger-button {
-    display: flex;
-  }
-
-  .navbar-right .icon-button,
-  .navbar-right .btn {
-    display: none;
-  }
-
-  .mobile-menu {
-    display: block;
-  }
-
-  /* Priority 1: Auto-hide header in landscape mode */
-  .appbar {
+    /* Priority 1: Auto-hide header in landscape mode */
     transition:
       transform 0.3s ease,
       left 0.3s ease;

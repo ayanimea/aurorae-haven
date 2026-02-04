@@ -8,15 +8,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ItemActionModal from '../components/ItemActionModal'
 
 // Mock dependencies
-jest.mock('../hooks/useIsMobile', () => ({
-  useIsMobile: jest.fn()
-}))
-
 jest.mock('../utils/positionUtils', () => ({
   adjustMenuPosition: jest.fn((x, y) => ({ x, y }))
 }))
 
-import { useIsMobile } from '../hooks/useIsMobile'
 import { adjustMenuPosition } from '../utils/positionUtils'
 
 describe('ItemActionModal Component', () => {
@@ -33,7 +28,6 @@ describe('ItemActionModal Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    useIsMobile.mockReturnValue(false)
     adjustMenuPosition.mockImplementation((x, y) => ({ x, y }))
     document.body.innerHTML = ''
   })
@@ -53,9 +47,7 @@ describe('ItemActionModal Component', () => {
       expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     })
 
-    test('renders full modal on mobile', () => {
-      useIsMobile.mockReturnValue(true)
-
+    test('renders full modal when no context menu flag', () => {
       render(
         <ItemActionModal
           item={mockItem}
@@ -71,25 +63,7 @@ describe('ItemActionModal Component', () => {
       expect(screen.getByText('Test description')).toBeInTheDocument()
     })
 
-    test('renders context menu on desktop', () => {
-      useIsMobile.mockReturnValue(false)
-
-      render(
-        <ItemActionModal
-          item={mockItem}
-          onClose={mockOnClose}
-          onEdit={mockOnEdit}
-          onDelete={mockOnDelete}
-        />
-      )
-
-      expect(screen.getByRole('menu')).toBeInTheDocument()
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    })
-
     test('renders context menu when isContextMenu flag is true', () => {
-      useIsMobile.mockReturnValue(true)
-
       const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       render(
@@ -106,8 +80,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('renders edit and delete buttons in full modal', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -123,11 +95,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('renders edit and delete menu items in context menu', () => {
-      useIsMobile.mockReturnValue(false)
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -136,13 +108,15 @@ describe('ItemActionModal Component', () => {
 
       const menuItems = screen.getAllByRole('menuitem')
       expect(menuItems).toHaveLength(2)
-      expect(screen.getByRole('menuitem', { name: /edit/i })).toBeInTheDocument()
-      expect(screen.getByRole('menuitem', { name: /delete/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('menuitem', { name: /edit/i })
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole('menuitem', { name: /delete/i })
+      ).toBeInTheDocument()
     })
 
     test('calls formatContent when provided', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -158,8 +132,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('renders without formatContent', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -175,10 +147,9 @@ describe('ItemActionModal Component', () => {
 
   describe('Context menu positioning', () => {
     test('calls adjustMenuPosition with context menu coordinates', () => {
-      useIsMobile.mockReturnValue(false)
-
       const itemWithPosition = {
         ...mockItem,
+        isContextMenu: true,
         contextMenuX: 100,
         contextMenuY: 200
       }
@@ -196,11 +167,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('uses default coordinates when not provided', () => {
-      useIsMobile.mockReturnValue(false)
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -211,12 +182,12 @@ describe('ItemActionModal Component', () => {
     })
 
     test('applies adjusted position styles to context menu', () => {
-      useIsMobile.mockReturnValue(false)
       adjustMenuPosition.mockReturnValue({ x: 150, y: 250 })
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       const { container } = render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -224,14 +195,16 @@ describe('ItemActionModal Component', () => {
       )
 
       const menu = container.querySelector('.item-action-context-menu')
-      expect(menu).toHaveStyle({ left: '150px', top: '250px', position: 'fixed' })
+      expect(menu).toHaveStyle({
+        left: '150px',
+        top: '250px',
+        position: 'fixed'
+      })
     })
   })
 
   describe('Interactions', () => {
     test('calls onEdit and onClose when edit button clicked in full modal', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -241,7 +214,9 @@ describe('ItemActionModal Component', () => {
         />
       )
 
-      const editButton = screen.getAllByRole('button').find(btn => btn.textContent.includes('Edit'))
+      const editButton = screen
+        .getAllByRole('button')
+        .find((btn) => btn.textContent.includes('Edit'))
       fireEvent.click(editButton)
 
       expect(mockOnEdit).toHaveBeenCalledWith(mockItem)
@@ -249,11 +224,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('calls onEdit and onClose when edit menu item clicked in context menu', () => {
-      useIsMobile.mockReturnValue(false)
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -263,12 +238,11 @@ describe('ItemActionModal Component', () => {
       const editMenuItem = screen.getByRole('menuitem', { name: /edit/i })
       fireEvent.click(editMenuItem)
 
-      expect(mockOnEdit).toHaveBeenCalledWith(mockItem)
+      expect(mockOnEdit).toHaveBeenCalledWith(contextMenuItem)
       expect(mockOnClose).toHaveBeenCalledTimes(1)
     })
 
     test('calls onDelete when delete button clicked and confirmed', async () => {
-      useIsMobile.mockReturnValue(true)
       mockOnDelete.mockResolvedValue(true)
 
       render(
@@ -280,7 +254,9 @@ describe('ItemActionModal Component', () => {
         />
       )
 
-      const deleteButton = screen.getAllByRole('button').find(btn => btn.textContent.includes('Delete'))
+      const deleteButton = screen
+        .getAllByRole('button')
+        .find((btn) => btn.textContent.includes('Delete'))
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
@@ -291,7 +267,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('does not close when delete is cancelled', async () => {
-      useIsMobile.mockReturnValue(true)
       mockOnDelete.mockResolvedValue(false)
 
       render(
@@ -303,7 +278,9 @@ describe('ItemActionModal Component', () => {
         />
       )
 
-      const deleteButton = screen.getAllByRole('button').find(btn => btn.textContent.includes('Delete'))
+      const deleteButton = screen
+        .getAllByRole('button')
+        .find((btn) => btn.textContent.includes('Delete'))
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
@@ -314,8 +291,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('calls onClose when clicking backdrop', () => {
-      useIsMobile.mockReturnValue(true)
-
       const { container } = render(
         <ItemActionModal
           item={mockItem}
@@ -332,8 +307,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('does not call onClose when clicking modal content', () => {
-      useIsMobile.mockReturnValue(true)
-
       const { container } = render(
         <ItemActionModal
           item={mockItem}
@@ -350,8 +323,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('calls onClose when close button clicked', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -370,8 +341,6 @@ describe('ItemActionModal Component', () => {
 
   describe('Keyboard navigation', () => {
     test('calls onClose when Escape key pressed', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -387,8 +356,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('calls onClose when Escape pressed in context menu', () => {
-      useIsMobile.mockReturnValue(false)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -404,8 +371,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('does not call onClose for other keys', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -423,8 +388,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('implements focus trap for Tab key in full modal', () => {
-      useIsMobile.mockReturnValue(true)
-
       const { container } = render(
         <ItemActionModal
           item={mockItem}
@@ -442,14 +405,12 @@ describe('ItemActionModal Component', () => {
       expect(document.activeElement).toBe(lastButton)
 
       fireEvent.keyDown(document, { key: 'Tab' })
-      
+
       // Focus trap should cycle to first button
       expect(firstButton.focus).toBeDefined()
     })
 
     test('implements reverse focus trap for Shift+Tab in full modal', () => {
-      useIsMobile.mockReturnValue(true)
-
       const { container } = render(
         <ItemActionModal
           item={mockItem}
@@ -466,14 +427,12 @@ describe('ItemActionModal Component', () => {
       expect(document.activeElement).toBe(firstButton)
 
       fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
-      
+
       // Focus trap should cycle to last button
       expect(buttons.length).toBeGreaterThan(0)
     })
 
     test('does not apply focus trap in context menu', () => {
-      useIsMobile.mockReturnValue(false)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -492,8 +451,6 @@ describe('ItemActionModal Component', () => {
 
   describe('Focus management', () => {
     test('focuses first button when modal opens', async () => {
-      useIsMobile.mockReturnValue(true)
-
       const { rerender } = render(
         <ItemActionModal
           item={null}
@@ -516,13 +473,11 @@ describe('ItemActionModal Component', () => {
       await waitFor(() => {
         const buttons = screen.getAllByRole('button')
         const activeElement = document.activeElement
-        expect(buttons.some(btn => btn === activeElement)).toBe(true)
+        expect(buttons.some((btn) => btn === activeElement)).toBe(true)
       })
     })
 
     test('restores focus to previous element when modal closes', async () => {
-      useIsMobile.mockReturnValue(true)
-
       const triggerButton = document.createElement('button')
       triggerButton.textContent = 'Trigger'
       document.body.appendChild(triggerButton)
@@ -549,16 +504,17 @@ describe('ItemActionModal Component', () => {
       )
 
       // Focus restoration happens in useEffect cleanup
-      await waitFor(() => {
-        expect(document.activeElement).toBe(triggerButton)
-      }, { timeout: 2000 })
+      await waitFor(
+        () => {
+          expect(document.activeElement).toBe(triggerButton)
+        },
+        { timeout: 2000 }
+      )
 
       document.body.removeChild(triggerButton)
     })
 
     test('handles rapid modal switches', async () => {
-      useIsMobile.mockReturnValue(true)
-
       const item1 = { ...mockItem, id: 1, title: 'Item 1' }
       const item2 = { ...mockItem, id: 2, title: 'Item 2' }
 
@@ -591,8 +547,6 @@ describe('ItemActionModal Component', () => {
 
   describe('Accessibility', () => {
     test('full modal has role="dialog"', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -606,8 +560,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('full modal has aria-modal="true"', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -622,8 +574,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('full modal has aria-labelledby pointing to title', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -641,11 +591,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('context menu has role="menu"', () => {
-      useIsMobile.mockReturnValue(false)
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -656,11 +606,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('context menu has aria-label', () => {
-      useIsMobile.mockReturnValue(false)
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -672,11 +622,11 @@ describe('ItemActionModal Component', () => {
     })
 
     test('context menu items have role="menuitem"', () => {
-      useIsMobile.mockReturnValue(false)
+      const contextMenuItem = { ...mockItem, isContextMenu: true }
 
       render(
         <ItemActionModal
-          item={mockItem}
+          item={contextMenuItem}
           onClose={mockOnClose}
           onEdit={mockOnEdit}
           onDelete={mockOnDelete}
@@ -688,8 +638,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('close button has aria-label', () => {
-      useIsMobile.mockReturnValue(true)
-
       render(
         <ItemActionModal
           item={mockItem}
@@ -704,8 +652,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('backdrop has role="presentation"', () => {
-      useIsMobile.mockReturnValue(true)
-
       const { container } = render(
         <ItemActionModal
           item={mockItem}
@@ -722,8 +668,6 @@ describe('ItemActionModal Component', () => {
 
   describe('Edge cases', () => {
     test('handles item with no title', () => {
-      useIsMobile.mockReturnValue(true)
-
       const itemWithoutTitle = { id: 1, description: 'No title' }
 
       render(
@@ -739,7 +683,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('handles null formatContent return', () => {
-      useIsMobile.mockReturnValue(true)
       const nullFormatContent = jest.fn(() => null)
 
       render(
@@ -757,8 +700,6 @@ describe('ItemActionModal Component', () => {
     })
 
     test('cleans up event listeners on unmount', () => {
-      useIsMobile.mockReturnValue(true)
-
       const removeEventListenerSpy = jest.spyOn(document, 'removeEventListener')
 
       const { unmount } = render(
@@ -772,7 +713,10 @@ describe('ItemActionModal Component', () => {
 
       unmount()
 
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function))
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        'keydown',
+        expect.any(Function)
+      )
 
       removeEventListenerSpy.mockRestore()
     })
@@ -780,9 +724,6 @@ describe('ItemActionModal Component', () => {
     test('handles SSR environment gracefully', () => {
       const originalDocument = global.document
       delete global.document
-
-      useIsMobile.mockReturnValue(true)
-
       const { rerender } = render(
         <ItemActionModal
           item={null}

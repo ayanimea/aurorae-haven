@@ -104,7 +104,7 @@ describe('EventService', () => {
 
       expect(scheduleManager.getEventsForRange).toHaveBeenCalledWith(
         '2024-01-15', // Monday
-        '2024-01-21'  // Sunday
+        '2024-01-21' // Sunday
       )
       expect(result).toEqual(mockEvents)
     })
@@ -117,7 +117,7 @@ describe('EventService', () => {
 
       expect(scheduleManager.getEventsForRange).toHaveBeenCalledWith(
         '2024-01-15', // Monday of that week
-        '2024-01-21'  // Sunday
+        '2024-01-21' // Sunday
       )
     })
 
@@ -129,7 +129,7 @@ describe('EventService', () => {
 
       expect(scheduleManager.getEventsForRange).toHaveBeenCalledWith(
         '2024-01-15', // Same Monday
-        '2024-01-21'  // Sunday
+        '2024-01-21' // Sunday
       )
     })
 
@@ -171,7 +171,10 @@ describe('EventService', () => {
       const mockEvents = [{ id: 1, title: 'Event 1' }]
       scheduleManager.getEventsForRange.mockResolvedValue(mockEvents)
 
-      const result = await EventService.getEventsForRange('2024-01-01', '2024-01-31')
+      const result = await EventService.getEventsForRange(
+        '2024-01-01',
+        '2024-01-31'
+      )
 
       expect(scheduleManager.getEventsForRange).toHaveBeenCalledWith(
         '2024-01-01',
@@ -197,7 +200,10 @@ describe('EventService', () => {
     test('returns empty array when getEventsForRange returns null', async () => {
       scheduleManager.getEventsForRange.mockResolvedValue(null)
 
-      const result = await EventService.getEventsForRange('2024-01-01', '2024-01-31')
+      const result = await EventService.getEventsForRange(
+        '2024-01-01',
+        '2024-01-31'
+      )
 
       expect(result).toEqual([])
     })
@@ -206,7 +212,10 @@ describe('EventService', () => {
       const error = new Error('Range error')
       scheduleManager.getEventsForRange.mockRejectedValue(error)
 
-      const result = await EventService.getEventsForRange('2024-01-01', '2024-01-31')
+      const result = await EventService.getEventsForRange(
+        '2024-01-01',
+        '2024-01-31'
+      )
 
       expect(result).toEqual([])
       expect(logger.error).toHaveBeenCalledWith(
@@ -266,7 +275,10 @@ describe('EventService', () => {
     })
 
     test('returns empty array for invalid days parameter (non-number)', async () => {
-      const result = await EventService.getEventsForDays('2024-01-15', 'invalid')
+      const result = await EventService.getEventsForDays(
+        '2024-01-15',
+        'invalid'
+      )
 
       expect(result).toEqual([])
       expect(logger.error).toHaveBeenCalledWith(
@@ -349,7 +361,9 @@ describe('EventService', () => {
       const error = new Error('Create failed')
       scheduleManager.createEvent.mockRejectedValue(error)
 
-      await expect(EventService.createEvent({})).rejects.toThrow('Create failed')
+      await expect(EventService.createEvent({})).rejects.toThrow(
+        'Create failed'
+      )
       expect(logger.error).toHaveBeenCalledWith(
         'EventService.createEvent error:',
         error
@@ -384,7 +398,9 @@ describe('EventService', () => {
 
       const event = { id: 1, title: 'Event' }
 
-      await expect(EventService.updateEvent(event)).rejects.toThrow('Update failed')
+      await expect(EventService.updateEvent(event)).rejects.toThrow(
+        'Update failed'
+      )
       expect(logger.error).toHaveBeenCalledWith(
         'EventService.updateEvent error:',
         error
@@ -568,7 +584,7 @@ describe('EventService', () => {
 
       expect(scheduleManager.getEventsForRange).toHaveBeenCalledWith(
         '2024-01-15', // Monday
-        '2024-01-21'  // Sunday
+        '2024-01-21' // Sunday
       )
     })
 
