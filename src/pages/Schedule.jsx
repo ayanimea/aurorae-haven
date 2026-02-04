@@ -181,7 +181,6 @@ function Schedule() {
 
   const formats = useMemo(
     () => {
-      const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
       const gutterFormat = use24HourFormat ? 'HH:mm' : 'h a'
       const timeFormatter = createTimeFormatter(use24HourFormat)
       
