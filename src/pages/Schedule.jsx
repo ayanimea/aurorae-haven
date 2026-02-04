@@ -58,10 +58,10 @@ function Schedule() {
   const [showActionModal, setShowActionModal] = useState(false)
 
   // Get time format preference from settings (default to 24-hour)
-  // Reading settings directly (no memo) - changes in localStorage only reflected
-  // when this component re-renders. For automatic updates on external changes,
-  // implement a settings subscription/refresh mechanism.
-  const settings = getSettings()
+  // Memoized to avoid repeated localStorage reads on every render.
+  // Changes in localStorage are only reflected when component re-renders for other reasons.
+  // For automatic updates on external changes, implement a settings subscription mechanism.
+  const settings = useMemo(() => getSettings(), [])
   const use24HourFormat = settings.schedule?.use24HourFormat ?? true
 
   // Convert events to RBC format
