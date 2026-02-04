@@ -19,7 +19,15 @@ jest.mock('../components/Schedule/EventModal', () => {
 
 // Mock CustomToolbar component
 jest.mock('../components/Schedule/CustomToolbar', () => {
-  return function CustomToolbar({ date, onToggle24Hours, onScheduleEvent }) {
+  return function CustomToolbar({
+    date,
+    view,
+    views,
+    onNavigate,
+    onView,
+    onScheduleEvent,
+    EVENT_TYPES
+  }) {
     return (
       <div className='calendar-toolbar'>
         <div className='toolbar-left'>
@@ -32,9 +40,22 @@ jest.mock('../components/Schedule/CustomToolbar', () => {
             })}
           </p>
         </div>
+        <div className='toolbar-center'>
+          <button onClick={() => onNavigate('PREV')}>Previous</button>
+          <button onClick={() => onNavigate('TODAY')}>Today</button>
+          <button onClick={() => onNavigate('NEXT')}>Next</button>
+          <select value={view} onChange={(e) => onView(e.target.value)}>
+            {views.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className='toolbar-right'>
-          <button onClick={onToggle24Hours}>Toggle 24h</button>
-          <button onClick={() => onScheduleEvent('task')}>Schedule</button>
+          <button onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}>
+            + Schedule
+          </button>
         </div>
       </div>
     )
@@ -92,7 +113,7 @@ jest.mock('react-big-calendar', () => {
             <Toolbar
               date={date}
               view='day'
-              views={['day', '3days', 'week', 'month']}
+              views={['day', 'week', 'month']}
               onNavigate={() => {}}
               onView={() => {}}
             />

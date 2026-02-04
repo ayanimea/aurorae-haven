@@ -116,11 +116,27 @@ function Schedule() {
   const [showActionModal, setShowActionModal] = useState(false)
 
   // Get time format preference from settings (default to 24-hour)
-  // Memoized to avoid repeated localStorage reads on every render.
-  // Changes in localStorage are only reflected when component re-renders for other reasons.
-  // For automatic updates on external changes, implement a settings subscription mechanism.
-  const settings = useMemo(() => getSettings(), [])
-  const use24HourFormat = settings.schedule?.use24HourFormat ?? true
+  // Reactive settings: useState + storage listener for cross-tab updates
+  // Settings changes in Settings page or other tabs now reflect immediately
+  const [use24HourFormat, setUse24HourFormat] = useState(
+    () => getSettings().schedule?.use24HourFormat ?? true
+  )
+
+  useEffect(() => {
+    const handleStorage = () => {
+      try {
+        const updatedValue = getSettings().schedule?.use24HourFormat
+        if (typeof updatedValue === 'boolean') {
+          setUse24HourFormat(updatedValue)
+        }
+      } catch (err) {
+        console.error('Failed to sync 24-hour format from settings:', err)
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
   // Convert events to RBC format
   const rbcEvents = useMemo(() => toRBCEvents(events), [events])
@@ -192,6 +208,26 @@ function Schedule() {
       } else {
         console.warn('Event selected but no originalEvent found in resource')
       }
+    } catch (err) {
+      console.error('[Schedule] Error handling event selection:', err)
+      setError('Failed to open event. Please try again.')
+    }
+  }, [])
+
+  const handleEventContextMenu = useCallback((event, e) => {
+    try {
+      console.log('Event context menu:', event)
+      const originalEvent = event.resource?.originalEvent
+      if (originalEvent) {
+        setEventToDelete({ ...originalEvent, isContextMenu: true })
+        setShowActionModal(true)
+      } else {
+        console.warn('Context menu triggered but no originalEvent found')
+      }
+    } catch (err) {
+      console.error('[Schedule] Error handling context menu:', err)
+    }
+  }, [])
     } catch (err) {
       console.error('[Schedule] Error handling event selection:', err)
       setError('Failed to select event. Please try again.')
@@ -348,7 +384,12 @@ function Schedule() {
                     EVENT_TYPES={EVENT_TYPES}
                   />
                 ),
-                event: SolidEventCard
+                event: (props) => (
+                  <SolidEventCard
+                    {...props}
+                    onContextMenu={handleEventContextMenu}
+                  />
+                )
               }}
               eventPropGetter={(event) => ({
                 className: `event-${event.resource?.type || 'task'}`

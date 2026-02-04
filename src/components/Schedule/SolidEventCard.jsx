@@ -17,7 +17,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import './SolidEventCard.css'
 
-function SolidEventCard({ event }) {
+function SolidEventCard({ event, onContextMenu }) {
   const { title, resource } = event
   const eventType = resource?.type || 'task'
   const prepTime = resource?.preparationTime || 0
@@ -25,11 +25,19 @@ function SolidEventCard({ event }) {
 
   const hasPreActivities = prepTime > 0 || travelTime > 0
 
+  const handleContextMenu = (e) => {
+    e.preventDefault()
+    if (onContextMenu) {
+      onContextMenu(event, e)
+    }
+  }
+
   return (
     <div
       className={`solid-event-card event-type-${eventType}`}
       role='article'
       aria-label={`${eventType}: ${title}`}
+      onContextMenu={handleContextMenu}
     >
       <strong className='event-title'>{title}</strong>
       {hasPreActivities && (
@@ -64,7 +72,8 @@ SolidEventCard.propTypes = {
       preparationTime: PropTypes.number,
       travelTime: PropTypes.number
     })
-  }).isRequired
+  }).isRequired,
+  onContextMenu: PropTypes.func
 }
 
 export default SolidEventCard
