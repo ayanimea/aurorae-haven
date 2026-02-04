@@ -1,4 +1,9 @@
 /**
+REFERENCE: See /docs/schedule-ui-spec.md and /docs/schedule-after-mockup.png
+Any deviation from those visuals is a regression.
+*/
+
+/**
 COPILOT / LLM INSTRUCTIONS — SCHEDULE UI (DO NOT SIMPLIFY)
 
 This Schedule UI is intentionally subtle and layered.
