@@ -64,21 +64,21 @@ describe('CustomToolbar Component', () => {
 
   it('should call onView with day when day is selected', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const viewDropdown = screen.getByLabelText('Change view mode')
+    const viewDropdown = screen.getByLabelText('View:')
     fireEvent.change(viewDropdown, { target: { value: 'day' } })
     expect(defaultProps.onView).toHaveBeenCalledWith('day')
   })
 
   it('should call onView with week when week is selected', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const viewDropdown = screen.getByLabelText('Change view mode')
+    const viewDropdown = screen.getByLabelText('View:')
     fireEvent.change(viewDropdown, { target: { value: 'week' } })
     expect(defaultProps.onView).toHaveBeenCalledWith('week')
   })
 
   it('should call onView with month when month is selected', () => {
     render(<CustomToolbar {...defaultProps} />)
-    const viewDropdown = screen.getByLabelText('Change view mode')
+    const viewDropdown = screen.getByLabelText('View:')
     fireEvent.change(viewDropdown, { target: { value: 'month' } })
     expect(defaultProps.onView).toHaveBeenCalledWith('month')
   })
