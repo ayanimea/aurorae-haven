@@ -1,4 +1,8 @@
-import { toRBCEvent, toRBCEvents, createEventFromSlot } from '../utils/eventAdapter'
+import {
+  toRBCEvent,
+  toRBCEvents,
+  createEventFromSlot
+} from '../utils/eventAdapter'
 import { parseISO } from 'date-fns'
 
 // Mock logger

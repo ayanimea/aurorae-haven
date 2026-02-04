@@ -5,6 +5,7 @@
  */
 
 import React from 'react'
+import PropTypes from 'prop-types'
 import { createLogger } from '../utils/logger'
 
 const logger = createLogger('ErrorBoundary')
@@ -12,14 +13,14 @@ const logger = createLogger('ErrorBoundary')
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { 
+    this.state = {
       hasError: false,
       error: null,
       errorInfo: null
     }
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     // Update state so the next render will show the fallback UI
     return { hasError: true }
   }
@@ -27,7 +28,7 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // Log the error to console and logger
     logger.error('ErrorBoundary caught an error:', error, errorInfo)
-    
+
     this.setState({
       error,
       errorInfo
@@ -46,13 +47,13 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       // Fallback UI
       return (
-        <div className="error-boundary-fallback" role="alert">
-          <div className="error-boundary-content">
+        <div className='error-boundary-fallback' role='alert'>
+          <div className='error-boundary-content'>
             <h2>Something went wrong</h2>
-            <p>We're sorry, but something unexpected happened.</p>
-            
+            <p>We&apos;re sorry, but something unexpected happened.</p>
+
             {this.state.error && (
-              <details className="error-details">
+              <details className='error-details'>
                 <summary>Error details</summary>
                 <pre>{this.state.error.toString()}</pre>
                 {this.state.errorInfo && (
@@ -60,17 +61,14 @@ class ErrorBoundary extends React.Component {
                 )}
               </details>
             )}
-            
-            <div className="error-actions">
-              <button 
-                onClick={this.handleReset}
-                className="btn btn-primary"
-              >
+
+            <div className='error-actions'>
+              <button onClick={this.handleReset} className='btn btn-primary'>
                 Try Again
               </button>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
-                className="btn btn-secondary"
+                className='btn btn-secondary'
               >
                 Reload Page
               </button>
@@ -82,6 +80,10 @@ class ErrorBoundary extends React.Component {
 
     return this.props.children
   }
+}
+
+ErrorBoundary.propTypes = {
+  children: PropTypes.node.isRequired
 }
 
 export default ErrorBoundary

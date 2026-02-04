@@ -21,14 +21,18 @@ jest.mock('../components/Schedule/EventModal', () => {
 jest.mock('../components/Schedule/CustomToolbar', () => {
   return function CustomToolbar({ date, onToggle24Hours, onScheduleEvent }) {
     return (
-      <div className="calendar-toolbar">
-        <div className="toolbar-left">
+      <div className='calendar-toolbar'>
+        <div className='toolbar-left'>
           <h2>Schedule</h2>
-          <p className="date-display">
-            {date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+          <p className='date-display'>
+            {date.toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            })}
           </p>
         </div>
-        <div className="toolbar-right">
+        <div className='toolbar-right'>
           <button onClick={onToggle24Hours}>Toggle 24h</button>
           <button onClick={() => onScheduleEvent('task')}>Schedule</button>
         </div>
@@ -83,9 +87,17 @@ jest.mock('react-big-calendar', () => {
     Calendar: ({ components, date }) => {
       const Toolbar = components?.toolbar
       return (
-        <div className="rbc-calendar">
-          {Toolbar && <Toolbar date={date} view="day" views={['day', '3days', 'week', 'month']} onNavigate={() => {}} onView={() => {}} />}
-          <div className="rbc-time-view" />
+        <div className='rbc-calendar'>
+          {Toolbar && (
+            <Toolbar
+              date={date}
+              view='day'
+              views={['day', '3days', 'week', 'month']}
+              onNavigate={() => {}}
+              onView={() => {}}
+            />
+          )}
+          <div className='rbc-time-view' />
         </div>
       )
     },
@@ -117,18 +129,20 @@ describe('Schedule Component with React Big Calendar', () => {
 
   test('renders Schedule component with header', async () => {
     render(<Schedule />)
-    
+
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Schedule' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('heading', { name: 'Schedule' })
+      ).toBeInTheDocument()
     })
-    
+
     // Date should be formatted as DD/MM/YYYY
     expect(screen.getByText(/16\/09\/2025/)).toBeInTheDocument()
   })
 
   test('renders calendar container', async () => {
     const { container } = render(<Schedule />)
-    
+
     await waitFor(() => {
       expect(container.querySelector('.schedule-container')).toBeInTheDocument()
       expect(container.querySelector('.rbc-calendar')).toBeInTheDocument()
@@ -137,15 +151,17 @@ describe('Schedule Component with React Big Calendar', () => {
 
   test('renders toolbar with schedule button', async () => {
     render(<Schedule />)
-    
+
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: 'Schedule' })
+      ).toBeInTheDocument()
     })
   })
 
   test('calls EventService.getEventsForDate on mount with day view', async () => {
     render(<Schedule />)
-    
+
     await waitFor(() => {
       expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
     })
@@ -153,7 +169,7 @@ describe('Schedule Component with React Big Calendar', () => {
 
   test('shows loading state initially', () => {
     render(<Schedule />)
-    
+
     // Loading overlay should be visible initially
     expect(screen.getByText('Loading events...')).toBeInTheDocument()
   })
@@ -169,11 +185,11 @@ describe('Schedule Component with React Big Calendar', () => {
         type: 'task'
       }
     ]
-    
+
     EventService.getEventsForDate.mockResolvedValue(mockEvents)
-    
+
     render(<Schedule />)
-    
+
     await waitFor(() => {
       expect(EventService.getEventsForDate).toHaveBeenCalled()
     })

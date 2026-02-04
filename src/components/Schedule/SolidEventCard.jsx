@@ -1,6 +1,6 @@
 /**
  * SolidEventCard Component - Canonical Event Card Implementation
- * 
+ *
  * Purpose: Primary visual anchor - events are the most dominant elements
  * Visual characteristics:
  * - Solid dark background (#161b22)
@@ -9,7 +9,7 @@
  * - Soft elevation (dual-layer shadows)
  * - Neutral background (no type-specific colors on background)
  * - Clear separation from time bands
- * 
+ *
  * This is the "hero" of the schedule - everything else is context
  */
 
@@ -22,25 +22,31 @@ function SolidEventCard({ event }) {
   const eventType = resource?.type || 'task'
   const prepTime = resource?.preparationTime || 0
   const travelTime = resource?.travelTime || 0
-  
+
   const hasPreActivities = prepTime > 0 || travelTime > 0
 
   return (
-    <div 
+    <div
       className={`solid-event-card event-type-${eventType}`}
-      role="article"
+      role='article'
       aria-label={`${eventType}: ${title}`}
     >
-      <strong className="event-title">{title}</strong>
+      <strong className='event-title'>{title}</strong>
       {hasPreActivities && (
-        <div className="event-pre-activities">
+        <div className='event-pre-activities'>
           {prepTime > 0 && (
-            <span className="prep-indicator" title={`Preparation: ${prepTime} min`}>
+            <span
+              className='prep-indicator'
+              title={`Preparation: ${prepTime} min`}
+            >
               🎯 {prepTime}m
             </span>
           )}
           {travelTime > 0 && (
-            <span className="travel-indicator" title={`Travel: ${travelTime} min`}>
+            <span
+              className='travel-indicator'
+              title={`Travel: ${travelTime} min`}
+            >
               🚗 {travelTime}m
             </span>
           )}

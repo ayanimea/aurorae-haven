@@ -345,13 +345,13 @@ describe('idGenerator', () => {
 
       // Count how many IDs were created in the same millisecond (have string format)
       const stringIds = ids.filter((id) => typeof id === 'string')
-      
+
       // If we created multiple IDs in same millisecond, verify format
       if (stringIds.length > 0) {
         stringIds.forEach((id) => {
           expect(id).toMatch(/^\d+\.\d{3}$/)
         })
-        
+
         // Group string IDs by their millisecond timestamp and verify
         // that counters within each group are sequential starting from 1.
         const countersByTimestamp = {}

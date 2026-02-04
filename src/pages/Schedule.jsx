@@ -26,7 +26,8 @@ const logger = createLogger('Schedule')
 // Format helper functions (module level to avoid recreation on each render)
 const createTimeFormatter = (use24HourFormat) => {
   const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
-  return ({ start, end }) => `${format(start, timeFormat)} - ${format(end, timeFormat)}`
+  return ({ start, end }) =>
+    `${format(start, timeFormat)} - ${format(end, timeFormat)}`
 }
 
 // Configure date-fns localizer for React Big Calendar with European settings
@@ -55,7 +56,7 @@ function Schedule() {
 
   // Get time format preference from settings (default to 24-hour)
   // Reading settings directly (no memo) - changes in localStorage only reflected
-  // when this component re-renders. For automatic updates on external changes, 
+  // when this component re-renders. For automatic updates on external changes,
   // implement a settings subscription/refresh mechanism.
   const settings = getSettings()
   const use24HourFormat = settings.schedule?.use24HourFormat ?? true
@@ -76,7 +77,9 @@ function Schedule() {
       } else if (view === 'week') {
         loadedEvents = await EventService.getEventsForWeek(dateStr)
       } else if (view === 'month') {
-        const startOfMonth = startOfWeek(new Date(date.getFullYear(), date.getMonth(), 1))
+        const startOfMonth = startOfWeek(
+          new Date(date.getFullYear(), date.getMonth(), 1)
+        )
         const endOfMonth = addDays(startOfMonth, 41) // 6 weeks
         loadedEvents = await EventService.getEventsForRange(
           format(startOfMonth, 'yyyy-MM-dd'),
@@ -99,32 +102,30 @@ function Schedule() {
   }, [loadEvents])
 
   // Event handlers
-  const handleSelectSlot = useCallback(
-    (slotInfo) => {
-      try {
-        logger.debug('Slot selected:', slotInfo)
-        const eventData = createEventFromSlot(slotInfo)
-        if (eventData) {
-          setSelectedEvent(eventData)
-          setSelectedEventType(EVENT_TYPES.TASK)
-          setIsModalOpen(true)
-        } else {
-          logger.warn('Failed to create event data from slot')
-        }
-      } catch (err) {
-        logger.error('[Schedule] Error handling slot selection:', err)
-        setError('Failed to create event. Please try again.')
+  const handleSelectSlot = useCallback((slotInfo) => {
+    try {
+      logger.debug('Slot selected:', slotInfo)
+      const eventData = createEventFromSlot(slotInfo)
+      if (eventData) {
+        setSelectedEvent(eventData)
+        setSelectedEventType(EVENT_TYPES.TASK)
+        setIsModalOpen(true)
+      } else {
+        logger.warn('Failed to create event data from slot')
       }
-    },
-    []
-  )
+    } catch (err) {
+      logger.error('[Schedule] Error handling slot selection:', err)
+      setError('Failed to create event. Please try again.')
+    }
+  }, [])
 
   const handleSelectEvent = useCallback((event) => {
     try {
       logger.debug('Event selected:', event)
       const originalEvent = event.resource?.originalEvent
       if (originalEvent) {
-        const isContextMenu = event.resource?.isContextMenu ?? event.isContextMenu ?? false
+        const isContextMenu =
+          event.resource?.isContextMenu ?? event.isContextMenu ?? false
         setEventToDelete({ ...originalEvent, isContextMenu })
         setShowActionModal(true)
       } else {
@@ -145,8 +146,10 @@ function Schedule() {
 
       // Check if this is an update or create
       // For updates, we need both an ID and it must be a string/number
-      const isUpdate = eventData.id && (typeof eventData.id === 'string' || typeof eventData.id === 'number')
-      
+      const isUpdate =
+        eventData.id &&
+        (typeof eventData.id === 'string' || typeof eventData.id === 'number')
+
       if (isUpdate) {
         logger.debug('Updating event:', eventData.id)
         await EventService.updateEvent(eventData.id, eventData)
@@ -154,7 +157,7 @@ function Schedule() {
         logger.debug('Creating new event')
         await EventService.createEvent(eventData)
       }
-      
+
       await loadEvents()
       setIsModalOpen(false)
       setSelectedEvent(null)
@@ -174,7 +177,7 @@ function Schedule() {
       if (!eventToDelete.id) {
         throw new Error('Event ID is required for deletion')
       }
-      
+
       logger.debug('Deleting event:', eventToDelete.id)
       await EventService.deleteEvent(eventToDelete.id)
       await loadEvents()
@@ -237,28 +240,25 @@ function Schedule() {
     []
   )
 
-  const formats = useMemo(
-    () => {
-      const gutterFormat = use24HourFormat ? 'HH:mm' : 'h a'
-      const timeFormatter = createTimeFormatter(use24HourFormat)
-      
-      return {
-        timeGutterFormat: gutterFormat,
-        eventTimeRangeFormat: timeFormatter,
-        agendaTimeRangeFormat: timeFormatter,
-        dayFormat: 'EEE dd',
-        dayHeaderFormat: 'EEEE, MMMM d',
-        monthHeaderFormat: 'MMMM yyyy'
-      }
-    },
-    [use24HourFormat]
-  )
+  const formats = useMemo(() => {
+    const gutterFormat = use24HourFormat ? 'HH:mm' : 'h a'
+    const timeFormatter = createTimeFormatter(use24HourFormat)
+
+    return {
+      timeGutterFormat: gutterFormat,
+      eventTimeRangeFormat: timeFormatter,
+      agendaTimeRangeFormat: timeFormatter,
+      dayFormat: 'EEE dd',
+      dayHeaderFormat: 'EEEE, MMMM d',
+      monthHeaderFormat: 'MMMM yyyy'
+    }
+  }, [use24HourFormat])
 
   return (
     <ErrorBoundary>
-      <div className="page page-schedule">
-        <div className="schedule-container">
-          <div className="schedule-wrapper">
+      <div className='page page-schedule'>
+        <div className='schedule-container'>
+          <div className='schedule-wrapper'>
             <TimeBands />
             <Calendar
               localizer={localizer}
@@ -277,7 +277,7 @@ function Schedule() {
               min={new Date(2000, 0, 1, 7, 0)}
               max={new Date(2000, 0, 2, 0, 0)}
               formats={formats}
-              aria-label="Event calendar"
+              aria-label='Event calendar'
               components={{
                 toolbar: (props) => (
                   <CustomToolbar
@@ -296,18 +296,18 @@ function Schedule() {
           </div>
 
           {isLoading && (
-            <div className="loading-overlay">
+            <div className='loading-overlay'>
               <p>Loading events...</p>
             </div>
           )}
 
           {error && (
-            <div className="error-message" role="alert">
+            <div className='error-message' role='alert'>
               {error}
-              <button 
+              <button
                 onClick={() => setError('')}
-                className="error-dismiss"
-                aria-label="Dismiss error"
+                className='error-dismiss'
+                aria-label='Dismiss error'
               >
                 ×
               </button>

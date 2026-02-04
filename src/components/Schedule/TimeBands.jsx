@@ -1,7 +1,7 @@
 /**
  * TimeBands Component - Provides soft gradient time-of-day visual context
  * Canonical implementation per visual specification
- * 
+ *
  * Purpose: Allow users to recognize where they are in the day without reading text
  * Visual hierarchy: Below events (z-index: 1), above background (z-index: 0)
  */
@@ -48,7 +48,7 @@ function TimeBands() {
   ]
 
   return (
-    <div className="schedule-bands-container" aria-hidden="true">
+    <div className='schedule-bands-container' aria-hidden='true'>
       {bands.map((band) => (
         <div
           key={band.name}

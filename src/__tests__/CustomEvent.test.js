@@ -128,7 +128,9 @@ describe('CustomEvent Component', () => {
     }
 
     const { container } = render(<CustomEvent event={event} />)
-    expect(container.querySelector('.event-pre-activities')).not.toBeInTheDocument()
+    expect(
+      container.querySelector('.event-pre-activities')
+    ).not.toBeInTheDocument()
   })
 
   it('should handle missing resource gracefully', () => {
@@ -149,6 +151,8 @@ describe('CustomEvent Component', () => {
     }
 
     const { container } = render(<CustomEvent event={event} />)
-    expect(container.querySelector('.event-pre-activities')).not.toBeInTheDocument()
+    expect(
+      container.querySelector('.event-pre-activities')
+    ).not.toBeInTheDocument()
   })
 })

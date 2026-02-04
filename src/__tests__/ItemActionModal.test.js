@@ -108,8 +108,12 @@ describe('ItemActionModal Component', () => {
 
       const menuItems = screen.getAllByRole('menuitem')
       expect(menuItems).toHaveLength(2)
-      expect(screen.getByRole('menuitem', { name: /edit/i })).toBeInTheDocument()
-      expect(screen.getByRole('menuitem', { name: /delete/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('menuitem', { name: /edit/i })
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole('menuitem', { name: /delete/i })
+      ).toBeInTheDocument()
     })
 
     test('calls formatContent when provided', () => {
@@ -191,7 +195,11 @@ describe('ItemActionModal Component', () => {
       )
 
       const menu = container.querySelector('.item-action-context-menu')
-      expect(menu).toHaveStyle({ left: '150px', top: '250px', position: 'fixed' })
+      expect(menu).toHaveStyle({
+        left: '150px',
+        top: '250px',
+        position: 'fixed'
+      })
     })
   })
 
@@ -206,7 +214,9 @@ describe('ItemActionModal Component', () => {
         />
       )
 
-      const editButton = screen.getAllByRole('button').find(btn => btn.textContent.includes('Edit'))
+      const editButton = screen
+        .getAllByRole('button')
+        .find((btn) => btn.textContent.includes('Edit'))
       fireEvent.click(editButton)
 
       expect(mockOnEdit).toHaveBeenCalledWith(mockItem)
@@ -244,7 +254,9 @@ describe('ItemActionModal Component', () => {
         />
       )
 
-      const deleteButton = screen.getAllByRole('button').find(btn => btn.textContent.includes('Delete'))
+      const deleteButton = screen
+        .getAllByRole('button')
+        .find((btn) => btn.textContent.includes('Delete'))
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
@@ -266,7 +278,9 @@ describe('ItemActionModal Component', () => {
         />
       )
 
-      const deleteButton = screen.getAllByRole('button').find(btn => btn.textContent.includes('Delete'))
+      const deleteButton = screen
+        .getAllByRole('button')
+        .find((btn) => btn.textContent.includes('Delete'))
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
@@ -391,7 +405,7 @@ describe('ItemActionModal Component', () => {
       expect(document.activeElement).toBe(lastButton)
 
       fireEvent.keyDown(document, { key: 'Tab' })
-      
+
       // Focus trap should cycle to first button
       expect(firstButton.focus).toBeDefined()
     })
@@ -413,7 +427,7 @@ describe('ItemActionModal Component', () => {
       expect(document.activeElement).toBe(firstButton)
 
       fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
-      
+
       // Focus trap should cycle to last button
       expect(buttons.length).toBeGreaterThan(0)
     })
@@ -459,7 +473,7 @@ describe('ItemActionModal Component', () => {
       await waitFor(() => {
         const buttons = screen.getAllByRole('button')
         const activeElement = document.activeElement
-        expect(buttons.some(btn => btn === activeElement)).toBe(true)
+        expect(buttons.some((btn) => btn === activeElement)).toBe(true)
       })
     })
 
@@ -490,9 +504,12 @@ describe('ItemActionModal Component', () => {
       )
 
       // Focus restoration happens in useEffect cleanup
-      await waitFor(() => {
-        expect(document.activeElement).toBe(triggerButton)
-      }, { timeout: 2000 })
+      await waitFor(
+        () => {
+          expect(document.activeElement).toBe(triggerButton)
+        },
+        { timeout: 2000 }
+      )
 
       document.body.removeChild(triggerButton)
     })
@@ -696,7 +713,10 @@ describe('ItemActionModal Component', () => {
 
       unmount()
 
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function))
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        'keydown',
+        expect.any(Function)
+      )
 
       removeEventListenerSpy.mockRestore()
     })

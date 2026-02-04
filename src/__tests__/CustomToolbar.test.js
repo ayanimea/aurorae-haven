@@ -32,7 +32,9 @@ describe('CustomToolbar Component', () => {
 
   it('should render the toolbar', () => {
     render(<CustomToolbar {...defaultProps} />)
-    expect(screen.getByRole('heading', { name: 'Schedule' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Schedule' })
+    ).toBeInTheDocument()
   })
 
   it('should display formatted date', () => {
@@ -84,7 +86,7 @@ describe('CustomToolbar Component', () => {
   })
 
   it('should show current view in dropdown', () => {
-    render(<CustomToolbar {...defaultProps} view="week" />)
+    render(<CustomToolbar {...defaultProps} view='week' />)
     const viewDropdown = screen.getByLabelText('Change view mode')
     expect(viewDropdown.value).toBe('week')
   })
@@ -133,16 +135,18 @@ describe('CustomToolbar Component', () => {
   })
 
   it('should update when view prop changes', () => {
-    const { rerender } = render(<CustomToolbar {...defaultProps} view="day" />)
+    const { rerender } = render(<CustomToolbar {...defaultProps} view='day' />)
     const viewDropdown = screen.getByLabelText('Change view mode')
     expect(viewDropdown.value).toBe('day')
 
-    rerender(<CustomToolbar {...defaultProps} view="month" />)
+    rerender(<CustomToolbar {...defaultProps} view='month' />)
     expect(viewDropdown.value).toBe('month')
   })
 
   it('should update when date prop changes', () => {
-    const { rerender } = render(<CustomToolbar {...defaultProps} date={new Date('2026-02-03')} />)
+    const { rerender } = render(
+      <CustomToolbar {...defaultProps} date={new Date('2026-02-03')} />
+    )
     expect(screen.getByText(/03\/02\/2026/)).toBeInTheDocument()
 
     rerender(<CustomToolbar {...defaultProps} date={new Date('2026-12-25')} />)
