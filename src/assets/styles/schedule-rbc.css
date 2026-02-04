@@ -75,7 +75,7 @@
   border: 1px solid var(--grid-hour);
   border-radius: var(--rbc-radius-medium);
   background: transparent;
-  overflow: hidden;
+  /* NO overflow:hidden - must allow child .rbc-time-content to scroll */
 }
 
 .rbc-time-content {
