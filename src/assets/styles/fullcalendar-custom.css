@@ -278,8 +278,8 @@
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
-  /* Offset for toolbar + header - adjust based on actual toolbar height */
-  padding-top: 150px;
+  /* Use CSS custom property for consistent toolbar height */
+  padding-top: var(--toolbar-height);
 }
 
 /* Z-index hierarchy (from top to bottom):

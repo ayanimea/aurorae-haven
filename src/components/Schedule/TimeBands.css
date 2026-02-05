@@ -13,6 +13,9 @@
  */
 
 :root {
+  /* Toolbar height - used for consistent positioning across components */
+  --toolbar-height: 150px;
+  
   /* Time-of-day atmospheres - Optimized for dark backgrounds */
   /* Enhanced opacity to ensure visible hue shifts match mockup perceptibility */
   /* Morning: warm orange/amber tones for gentle activation */
@@ -46,8 +49,8 @@
   pointer-events: none;
   overflow: hidden;
   /* Ensure bands don't interfere with toolbar - they should only overlay the time grid */
-  /* The toolbar is ~150px, so offset the bands */
-  padding-top: 150px;
+  /* Use CSS custom property for consistent toolbar height */
+  padding-top: var(--toolbar-height);
 }
 
 .schedule-band {

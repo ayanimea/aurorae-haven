@@ -92,6 +92,9 @@ function Schedule() {
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
   
+  // WeakMap for storing context menu handlers (better memory management than DOM properties)
+  const contextMenuHandlersRef = useRef(new WeakMap())
+  
   // State management
   const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
   const [date, setDate] = useState(new Date())
@@ -316,9 +319,38 @@ function Schedule() {
     return viewMap[normalizedView] || 'timeGridDay'
   }, [])
 
-  // Handle view change for FullCalendar
-  const handleViewChange = useCallback((newView) => {
-    setView(newView)
+  // Sync view state changes with FullCalendar
+  useEffect(() => {
+    const calendarApi = calendarRef.current?.getApi()
+    if (calendarApi) {
+      const fullCalendarView = getFullCalendarView(view)
+      if (calendarApi.view.type !== fullCalendarView) {
+        calendarApi.changeView(fullCalendarView)
+      }
+    }
+  }, [view, getFullCalendarView])
+
+  // Sync date state changes with FullCalendar
+  useEffect(() => {
+    const calendarApi = calendarRef.current?.getApi()
+    if (calendarApi) {
+      const currentDate = calendarApi.getDate()
+      // Only update if dates differ significantly (avoid infinite loops)
+      if (Math.abs(currentDate.getTime() - date.getTime()) > 1000) {
+        calendarApi.gotoDate(date)
+      }
+    }
+  }, [date])
+
+  // Handle view change from toolbar (receives FullCalendar view name, converts to normalized)
+  const handleViewChange = useCallback((newFullCalendarView) => {
+    const normalizedViewMap = {
+      timeGridDay: 'day',
+      timeGridWeek: 'week',
+      dayGridMonth: 'month'
+    }
+    const normalizedView = normalizedViewMap[newFullCalendarView] || 'day'
+    setView(normalizedView)
   }, [])
 
   // Handle event click (FullCalendar)
@@ -328,6 +360,7 @@ function Schedule() {
     
     if (originalEvent) {
       setSelectedEvent(originalEvent)
+      setSelectedEventType(originalEvent.type || EVENT_TYPES.TASK)
       setIsModalOpen(true)
     }
   }, [])
@@ -341,13 +374,14 @@ function Schedule() {
     const newEvent = createEventFromSlot(slotInfo)
     if (newEvent) {
       setSelectedEvent(newEvent)
+      setSelectedEventType(newEvent.type || EVENT_TYPES.TASK)
       setIsModalOpen(true)
     }
     // Clear the selection
     selectInfo.view.calendar.unselect()
   }, [])
 
-  // Handle event context menu (right-click)
+  // Handle event context menu (right-click) using WeakMap for better memory management
   const handleEventMouseEnter = useCallback(
     (mouseEnterInfo) => {
       const el = mouseEnterInfo.el
@@ -356,8 +390,8 @@ function Schedule() {
         return
       }
 
-      // Remove any existing contextmenu handler attached by this logic
-      const previousHandler = el.__auroraeContextMenuHandler
+      // Remove any existing contextmenu handler
+      const previousHandler = contextMenuHandlersRef.current.get(el)
       if (typeof previousHandler === 'function') {
         el.removeEventListener('contextmenu', previousHandler)
       }
@@ -370,8 +404,8 @@ function Schedule() {
         }
       }
 
-      // Store the handler on the element so we can clean it up on subsequent mouseenter events
-      el.__auroraeContextMenuHandler = contextMenuHandler
+      // Store the handler in WeakMap for proper garbage collection
+      contextMenuHandlersRef.current.set(el, contextMenuHandler)
       el.addEventListener('contextmenu', contextMenuHandler)
     },
     [handleEventContextMenu]
@@ -387,7 +421,7 @@ function Schedule() {
             {/* Custom Toolbar */}
             <CustomToolbar
               date={date}
-              view={view}
+              view={getFullCalendarView(view)}
               views={['timeGridDay', 'timeGridWeek', 'dayGridMonth']}
               onNavigate={(action) => {
                 const calendarApi = calendarRef.current?.getApi()
@@ -415,52 +449,53 @@ function Schedule() {
               EVENT_TYPES={EVENT_TYPES}
             />
 
-            {/* FullCalendar - Full day view 07:00 to 24:00 */}
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-              initialView={getFullCalendarView(view)}
-              initialDate={date}
-              events={fullCalendarEvents}
-              slotMinTime={slotMinTime}
-              slotMaxTime={slotMaxTime}
-              slotDuration="00:15:00"
-              slotLabelInterval="01:00:00"
-              headerToolbar={false}
-              height="auto"
-              expandRows={true}
-              slotLabelFormat={{
-                hour: use24HourFormat ? '2-digit' : 'numeric',
-                minute: '2-digit',
-                hour12: !use24HourFormat,
-                meridiem: use24HourFormat ? false : 'short'
-              }}
-              eventTimeFormat={{
-                hour: use24HourFormat ? '2-digit' : 'numeric',
-                minute: '2-digit',
-                hour12: !use24HourFormat
-              }}
-              firstDay={1}
-              selectable={true}
-              selectMirror={true}
-              editable={false}
-              aria-label="Event calendar"
-              eventClick={handleEventClick}
-              select={handleDateSelect}
-              eventMouseEnter={handleEventMouseEnter}
-              eventContent={(eventInfo) => (
-                <SolidEventCard
-                  event={{
-                    ...eventInfo.event,
-                    resource: {
-                      type: eventInfo.event.extendedProps?.type,
-                      originalEvent: eventInfo.event.extendedProps?.originalEvent
-                    }
-                  }}
-                  onContextMenu={handleEventContextMenu}
-                />
-              )}
-            />
+            {/* FullCalendar - Wrapped for aria-label support */}
+            <div role="region" aria-label="Event calendar">
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+                initialView={getFullCalendarView(view)}
+                initialDate={date}
+                events={fullCalendarEvents}
+                slotMinTime={slotMinTime}
+                slotMaxTime={slotMaxTime}
+                slotDuration="00:15:00"
+                slotLabelInterval="01:00:00"
+                headerToolbar={false}
+                height="auto"
+                expandRows={true}
+                slotLabelFormat={{
+                  hour: use24HourFormat ? '2-digit' : 'numeric',
+                  minute: '2-digit',
+                  hour12: !use24HourFormat,
+                  meridiem: use24HourFormat ? false : 'short'
+                }}
+                eventTimeFormat={{
+                  hour: use24HourFormat ? '2-digit' : 'numeric',
+                  minute: '2-digit',
+                  hour12: !use24HourFormat
+                }}
+                firstDay={1}
+                selectable={true}
+                selectMirror={true}
+                editable={false}
+                eventClick={handleEventClick}
+                select={handleDateSelect}
+                eventMouseEnter={handleEventMouseEnter}
+                eventContent={(eventInfo) => (
+                  <SolidEventCard
+                    event={{
+                      ...eventInfo.event,
+                      resource: {
+                        type: eventInfo.event.extendedProps?.type,
+                        originalEvent: eventInfo.event.extendedProps?.originalEvent
+                      }
+                    }}
+                  />
+                )}
+              />
+            </div>
+
           </div>
 
           {isLoading && (

@@ -3,11 +3,12 @@
  * Converts between our event data model and calendar libraries' expected formats.
  *
  * Calendar library strategy:
- * - Supports both React Big Calendar (RBC) and FullCalendar.
- * - FullCalendar is the primary target for new development and features.
- * - RBC support is maintained for existing/legacy views that still depend on it.
- *   Once all consumers are migrated to FullCalendar, RBC-specific adapters
- *   (toRBCEvent, toRBCEvents) are candidates for deprecation and eventual removal.
+ * - Historically supported both React Big Calendar (RBC) and FullCalendar.
+ * - FullCalendar is now the primary and sole calendar library used by Schedule
+ *   and other production views.
+ * - RBC-specific adapters (toRBCEvent, toRBCEvents, and related helpers) are kept
+ *   only for test coverage and potential short-term rollback during migration and
+ *   are considered deprecated and candidates for eventual removal.
  */
 
 import { parseISO, parse, format, addDays } from 'date-fns'
@@ -153,7 +154,7 @@ export const toFullCalendarEvents = (events) => {
 
 /**
  * Create a new event from date/time selection
- * @param {Object} slotInfo - Slot info from RBC
+ * @param {Object} slotInfo - Slot/selection info from the calendar (React Big Calendar or FullCalendar)
  * @returns {Object} Event data for EventModal
  */
 export const createEventFromSlot = (slotInfo) => {
