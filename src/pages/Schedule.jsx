@@ -80,9 +80,11 @@ import '../components/ErrorBoundary.css'
 
 /* eslint-disable no-console */
 // Console statements are intentionally used throughout this file for production debugging
-// and error handling. They replaced a custom logger that was being minified incorrectly
-// in production builds (see commit 511b225). These console calls are production-safe
-// and provide essential debugging information for user-reported issues.
+// and error handling. They replaced a custom logger utility that was causing issues in
+// production builds where Vite's minification was removing the logger module entirely,
+// resulting in "logger is not defined" runtime errors. Direct console usage is immune
+// to tree-shaking and ensures reliable error reporting in production environments.
+// See commit 511b225 for the migration from custom logger to console methods.
 
 // Format helper functions (module level to avoid recreation on each render)
 const createTimeFormatter = (use24HourFormat) => {
