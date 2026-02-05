@@ -61,11 +61,8 @@ Ask for clarification or preserve the existing structure.
  * Manages routines, tasks, meetings, and habits with a clean, accessible interface
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import FullCalendar from '@fullcalendar/react'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import interactionPlugin from '@fullcalendar/interaction'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
 import { format, parse, startOfWeek, getDay, addDays } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
@@ -74,13 +71,11 @@ import SolidEventCard from '../components/Schedule/SolidEventCard'
 import TimeBands from '../components/Schedule/TimeBands'
 import ErrorBoundary from '../components/ErrorBoundary'
 import EventService from '../services/EventService'
-import { toFullCalendarEvents, createEventFromSlot } from '../utils/eventAdapter'
+import { toRBCEvents, createEventFromSlot } from '../utils/eventAdapter'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
-import '@fullcalendar/core/index.css'
-import '@fullcalendar/daygrid/index.css'
-import '@fullcalendar/timegrid/index.css'
-import '../assets/styles/fullcalendar-custom.css'
+import 'react-big-calendar/lib/css/react-big-calendar.css'
+import '../assets/styles/schedule-rbc.css'
 import '../components/ErrorBoundary.css'
 
 /* eslint-disable no-console */
@@ -98,12 +93,18 @@ const createTimeFormatter = (use24HourFormat) => {
     `${format(start, timeFormat)} - ${format(end, timeFormat)}`
 }
 
+// Configure date-fns localizer for React Big Calendar with European settings
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: (date) => startOfWeek(date, { weekStartsOn: 1 }), // Monday start (European)
+  getDay,
+  locales: {}
+})
+
 function Schedule() {
-  // FullCalendar ref for API access
-  const calendarRef = useRef(null)
-  
   // State management
-  const [view, setView] = useState('timeGridDay') // FullCalendar view names
+  const [view, setView] = useState('day')
   const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -163,8 +164,8 @@ function Schedule() {
     }
   }, [])
 
-  // Convert events to FullCalendar format
-  const fullCalendarEvents = useMemo(() => toFullCalendarEvents(events), [events])
+  // Convert events to RBC format
+  const rbcEvents = useMemo(() => toRBCEvents(events), [events])
 
   // Load events based on current view and date
   const loadEvents = useCallback(async () => {
@@ -371,65 +372,17 @@ function Schedule() {
     }
   }, [use24HourFormat])
 
-  // Compute min/max times for the schedule view (07:00 to 24:00)
-  const slotMinTime = '07:00:00'
-  const slotMaxTime = '24:00:00'
-
-  // Handle view change for FullCalendar
-  const handleViewChange = useCallback((newView) => {
-    setView(newView)
-    if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi()
-      calendarApi.changeView(newView)
-    }
-  }, [])
-
-  // Handle date navigation for FullCalendar
-  const handleDateChange = useCallback((newDate) => {
-    setDate(newDate)
-    if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi()
-      calendarApi.gotoDate(newDate)
-    }
-  }, [])
-
-  // Handle event click (FullCalendar)
-  const handleEventClick = useCallback((clickInfo) => {
-    const event = clickInfo.event
-    const originalEvent = event.extendedProps?.originalEvent
+  // Compute min/max times for the schedule view
+  // RBC requires min/max to have the same date as the 'date' prop for correct rendering
+  const { minTime, maxTime } = useMemo(() => {
+    const min = new Date(date)
+    min.setHours(7, 0, 0, 0) // 7:00 AM
     
-    if (originalEvent) {
-      setSelectedEvent(originalEvent)
-      setIsModalOpen(true)
-    }
-  }, [])
-
-  // Handle date select (FullCalendar equivalent of onSelectSlot)
-  const handleDateSelect = useCallback((selectInfo) => {
-    const slotInfo = {
-      start: selectInfo.start,
-      end: selectInfo.end
-    }
-    const newEvent = createEventFromSlot(slotInfo)
-    if (newEvent) {
-      setSelectedEvent(newEvent)
-      setIsModalOpen(true)
-    }
-    // Clear the selection
-    selectInfo.view.calendar.unselect()
-  }, [])
-
-  // Handle event context menu (right-click)
-  const handleEventMouseEnter = useCallback((mouseEnterInfo) => {
-    // Store event for potential context menu
-    mouseEnterInfo.el.addEventListener('contextmenu', (e) => {
-      e.preventDefault()
-      const originalEvent = mouseEnterInfo.event.extendedProps?.originalEvent
-      if (originalEvent) {
-        handleEventContextMenu(originalEvent)
-      }
-    })
-  }, [])
+    const max = new Date(date)
+    max.setHours(24, 0, 0, 0) // Midnight (next day)
+    
+    return { minTime: min, maxTime: max }
+  }, [date])
 
   return (
     <ErrorBoundary>
@@ -437,96 +390,44 @@ function Schedule() {
         <div className='schedule-container'>
           <div className='schedule-wrapper'>
             <TimeBands />
-            
-            {/* Custom Toolbar */}
-            <CustomToolbar
-              date={date}
+            <Calendar
+              localizer={localizer}
+              events={rbcEvents}
               view={view}
-              views={['timeGridDay', 'timeGridWeek', 'dayGridMonth']}
-              onNavigate={(action) => {
-                const calendarApi = calendarRef.current?.getApi()
-                if (!calendarApi) return
-                
-                switch (action) {
-                  case 'PREV':
-                    calendarApi.prev()
-                    setDate(calendarApi.getDate())
-                    break
-                  case 'NEXT':
-                    calendarApi.next()
-                    setDate(calendarApi.getDate())
-                    break
-                  case 'TODAY':
-                    calendarApi.today()
-                    setDate(calendarApi.getDate())
-                    break
-                  default:
-                    break
-                }
+              views={views}
+              date={date}
+              onNavigate={setDate}
+              onView={setView}
+              onSelectSlot={handleSelectSlot}
+              onSelectEvent={handleSelectEvent}
+              selectable
+              popup
+              step={15}
+              timeslots={4}
+              min={minTime}
+              max={maxTime}
+              style={{ height: 2000 }}
+              formats={formats}
+              aria-label='Event calendar'
+              components={{
+                toolbar: (props) => (
+                  <CustomToolbar
+                    {...props}
+                    views={['day', 'week', 'month']}
+                    onScheduleEvent={handleScheduleEvent}
+                    EVENT_TYPES={EVENT_TYPES}
+                  />
+                ),
+                event: (props) => (
+                  <SolidEventCard
+                    {...props}
+                    onContextMenu={handleEventContextMenu}
+                  />
+                )
               }}
-              onView={handleViewChange}
-              onScheduleEvent={handleScheduleEvent}
-              EVENT_TYPES={EVENT_TYPES}
-            />
-
-            {/* FullCalendar */}
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-              initialView={view}
-              initialDate={date}
-              events={fullCalendarEvents}
-              
-              {/* Time settings - 07:00 to 24:00 */}
-              slotMinTime={slotMinTime}
-              slotMaxTime={slotMaxTime}
-              slotDuration="00:15:00"
-              slotLabelInterval="01:00:00"
-              
-              {/* Display settings */}
-              headerToolbar={false} // We use CustomToolbar instead
-              height="auto"
-              expandRows={true}
-              
-              {/* Time format */}
-              slotLabelFormat={{
-                hour: use24HourFormat ? '2-digit' : 'numeric',
-                minute: '2-digit',
-                hour12: !use24HourFormat,
-                meridiem: use24HourFormat ? false : 'short'
-              }}
-              eventTimeFormat={{
-                hour: use24HourFormat ? '2-digit' : 'numeric',
-                minute: '2-digit',
-                hour12: !use24HourFormat
-              }}
-              
-              {/* Week settings (Monday start for European) */}
-              firstDay={1}
-              
-              {/* Interaction */}
-              selectable={true}
-              selectMirror={true}
-              editable={true}
-              
-              {/* Event handlers */}
-              eventClick={handleEventClick}
-              select={handleDateSelect}
-              eventMouseEnter={handleEventMouseEnter}
-              
-              {/* Event rendering */}
-              eventContent={(eventInfo) => (
-                <SolidEventCard
-                  event={{
-                    ...eventInfo.event,
-                    resource: {
-                      type: eventInfo.event.extendedProps?.type,
-                      originalEvent: eventInfo.event.extendedProps?.originalEvent
-                    }
-                  }}
-                  onContextMenu={handleEventContextMenu}
-                />
-              )}
+              eventPropGetter={(event) => ({
+                className: `event-${event.resource?.type || 'task'}`
+              })}
             />
           </div>
 

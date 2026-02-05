@@ -20,7 +20,11 @@ function CustomToolbar({
   const viewLabels = {
     day: 'Day',
     week: 'Week',
-    month: 'Month'
+    month: 'Month',
+    // FullCalendar view names
+    timeGridDay: 'Day',
+    timeGridWeek: 'Week',
+    dayGridMonth: 'Month'
   }
 
   const handleToday = () => {
