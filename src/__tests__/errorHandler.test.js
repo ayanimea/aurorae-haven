@@ -45,11 +45,15 @@ describe('errorHandler', () => {
 
     // Mock window methods needed for error handler
     const mockDispatchEvent = jest.fn()
-    jest.spyOn(global.window, 'dispatchEvent').mockImplementation(mockDispatchEvent)
-    
+    jest
+      .spyOn(global.window, 'dispatchEvent')
+      .mockImplementation(mockDispatchEvent)
+
     // Mock document.getElementById
     const mockGetElementById = jest.fn(() => mockToastElement)
-    jest.spyOn(global.document, 'getElementById').mockImplementation(mockGetElementById)
+    jest
+      .spyOn(global.document, 'getElementById')
+      .mockImplementation(mockGetElementById)
 
     // Store references to mocks for assertions
     global.window.__mockDispatchEvent = mockDispatchEvent

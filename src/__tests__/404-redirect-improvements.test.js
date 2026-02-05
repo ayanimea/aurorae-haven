@@ -25,8 +25,10 @@ describe('404.html Redirect Improvements', () => {
         this.data = {}
       }
     }
-    
-    sessionStorageSpy = jest.spyOn(global, 'sessionStorage', 'get').mockReturnValue(mockSessionStorage)
+
+    sessionStorageSpy = jest
+      .spyOn(global, 'sessionStorage', 'get')
+      .mockReturnValue(mockSessionStorage)
   })
 
   afterEach(() => {

@@ -742,7 +742,7 @@ describe('ItemActionModal Component', () => {
           onDelete={mockOnDelete}
         />
       )
-      
+
       // If we get here without errors, the test passes
       expect(true).toBe(true)
     })

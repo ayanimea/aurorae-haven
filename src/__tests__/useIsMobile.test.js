@@ -159,7 +159,10 @@ describe('useIsMobile Hook', () => {
 
       unmount()
 
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', addedListener)
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        'resize',
+        addedListener
+      )
 
       addEventListenerSpy.mockRestore()
       removeEventListenerSpy.mockRestore()
@@ -474,17 +477,20 @@ describe('useIsMobile Hook', () => {
       [1280, false, 'Small desktop'],
       [1366, false, 'Common laptop'],
       [1920, false, 'Full HD desktop']
-    ])('window width %ipx (%s) returns isMobile=%s', (width, expected, description) => {
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: width
-      })
+    ])(
+      'window width %ipx (%s) returns isMobile=%s',
+      (width, expected, description) => {
+        Object.defineProperty(window, 'innerWidth', {
+          writable: true,
+          configurable: true,
+          value: width
+        })
 
-      const { result } = renderHook(() => useIsMobile())
+        const { result } = renderHook(() => useIsMobile())
 
-      expect(result.current).toBe(expected)
-    })
+        expect(result.current).toBe(expected)
+      }
+    )
   })
 
   describe('React hooks rules', () => {
