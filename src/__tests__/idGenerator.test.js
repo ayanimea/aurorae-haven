@@ -259,8 +259,7 @@ describe('idGenerator', () => {
       // Mock Date.now() to return a fixed timestamp for all entity creations
       // This ensures all entities are created "within the same millisecond" for testing collision prevention
       const fixedTimestamp = 1234567890000
-      const originalDateNow = Date.now
-      Date.now = jest.fn(() => fixedTimestamp)
+      const dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(fixedTimestamp)
 
       try {
         // Create multiple entities synchronously (within same millisecond)
@@ -284,8 +283,8 @@ describe('idGenerator', () => {
           expect(ids[i]).toMatch(/^\d+\.\d{3}$/)
         }
       } finally {
-        // Restore original Date.now()
-        Date.now = originalDateNow
+        // Restore original Date.now() using Jest's built-in cleanup
+        dateNowSpy.mockRestore()
       }
     })
 

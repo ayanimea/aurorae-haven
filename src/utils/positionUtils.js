@@ -15,17 +15,23 @@ export const adjustMenuPosition = (x, y, menuWidth, menuHeight) => {
   const viewportHeight = window.innerHeight
   const padding = 10 // Padding from viewport edge
 
+  // Handle oversized menus: if menu is larger than viewport, constrain to viewport dimensions
+  const maxWidth = viewportWidth - 2 * padding
+  const maxHeight = viewportHeight - 2 * padding
+  const constrainedWidth = Math.min(menuWidth, maxWidth)
+  const constrainedHeight = Math.min(menuHeight, maxHeight)
+
   let adjustedX = x
   let adjustedY = y
 
   // Adjust horizontal position if menu would overflow right edge
-  if (x + menuWidth + padding > viewportWidth) {
-    adjustedX = viewportWidth - menuWidth - padding
+  if (x + constrainedWidth + padding > viewportWidth) {
+    adjustedX = viewportWidth - constrainedWidth - padding
   }
 
   // Adjust vertical position if menu would overflow bottom edge
-  if (y + menuHeight + padding > viewportHeight) {
-    adjustedY = viewportHeight - menuHeight - padding
+  if (y + constrainedHeight + padding > viewportHeight) {
+    adjustedY = viewportHeight - constrainedHeight - padding
   }
 
   // Ensure menu doesn't go off left edge

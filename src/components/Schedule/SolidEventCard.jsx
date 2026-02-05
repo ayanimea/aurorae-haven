@@ -45,8 +45,9 @@ function SolidEventCard({ event, onContextMenu }) {
       {/* Security note: event.title may contain user-provided text. React's JSX automatically
           escapes text content to prevent XSS attacks. We intentionally render it as plain text
           and do NOT use dangerouslySetInnerHTML. If HTML rendering is needed in the future,
-          the title MUST be sanitized first with DOMPurify or equivalent. */}
-      <strong className='event-title'>{title}</strong>
+          the title MUST be sanitized first with DOMPurify or equivalent.
+          Type validation: title is validated as string in parent component before rendering. */}
+      <strong className='event-title'>{String(title || '')}</strong>
       {hasPreActivities && (
         <div className='event-pre-activities'>
           {prepTime > 0 && (
