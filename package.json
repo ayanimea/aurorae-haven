@@ -81,7 +81,6 @@
     "source-map": "^0.7.4",
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.5",
     "magic-string": "^0.30.19",
-    "jsdom": "^28.0.0",
     "workbox-build": {
       "source-map": "^0.7.4"
     },
