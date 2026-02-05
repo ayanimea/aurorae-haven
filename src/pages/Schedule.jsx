@@ -198,18 +198,6 @@ function Schedule() {
     loadEvents()
   }, [loadEvents])
 
-  // Auto-populate fake data on first load (dev mode only)
-  useEffect(() => {
-    if (import.meta.env.DEV && events.length === 0 && !isLoading) {
-      console.log('[Schedule] Auto-populating fake data for development...')
-      // Small delay to ensure component is fully mounted
-      const timer = setTimeout(() => {
-        handlePopulateFakeData()
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [events.length, isLoading, handlePopulateFakeData])
-
   // Event handlers
   const handleEventContextMenu = useCallback((event) => {
     try {
@@ -368,6 +356,18 @@ function Schedule() {
       setIsLoading(false)
     }
   }, [loadEvents])
+
+  // Auto-populate fake data on first load (dev mode only)
+  useEffect(() => {
+    if (import.meta.env.DEV && events.length === 0 && !isLoading) {
+      console.log('[Schedule] Auto-populating fake data for development...')
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        handlePopulateFakeData()
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [events.length, isLoading, handlePopulateFakeData])
 
   /**
    * Development-only: Clear all events from calendar
