@@ -461,32 +461,7 @@ body.density-cozy {
   /* Increase navbar opacity for better readability on mobile */
   .appbar {
     background: rgba(16, 20, 44, 0.85);
-  }
-
-  .navbar-center {
-    display: none;
-  }
-
-  .mobile-settings-button {
-    display: flex;
-    margin-left: auto;
-  }
-
-  .hamburger-button {
-    display: flex;
-  }
-
-  .navbar-right .icon-button,
-  .navbar-right .btn {
-    display: none;
-  }
-
-  .mobile-menu {
-    display: block;
-  }
-
-  /* Priority 1: Auto-hide header in landscape mode */
-  .appbar {
+    /* Priority 1: Auto-hide header in landscape mode */
     transition:
       transform 0.3s ease,
       left 0.3s ease;
@@ -857,11 +832,15 @@ body.density-cozy {
 
 /* Shell & glass cards - adjusted for fixed navbar */
 .shell {
-  max-width: 1240px;
+  max-width: min(100%, 1920px);
+  width: 100%;
+  min-height: calc(100vh - 70px * var(--density-multiplier));
   margin: 0 auto;
   padding: calc(70px * var(--density-multiplier))
     calc(18px * var(--density-multiplier))
     calc(24px * var(--density-multiplier));
+  display: flex;
+  flex-direction: column;
   transition:
     max-width 0.3s ease,
     padding-left 0.3s ease;
@@ -873,12 +852,7 @@ body.mobile-menu-open .shell {
   padding-left: calc(66px * var(--density-multiplier));
 }
 
-/* Expand shell for Brain Dump to utilize more horizontal space on desktop */
-/* NOTE: The :has() selector is only supported in modern browsers (Chrome 105+, Safari 15.4+, Firefox 121+).
-   Users on older browsers may not see this style applied. Consider providing a fallback if broader compatibility is needed. */
-.shell:has(.brain-dump-container) {
-  max-width: 1600px;
-}
+/* Shell already uses full width - no special case needed for Brain Dump */
 
 /* Apply density multiplier to card paddings
    Note: Only outer padding is affected by density controls.

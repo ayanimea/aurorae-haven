@@ -181,6 +181,16 @@ function Icon({ name, className = 'icon', ...props }) {
         <polyline points='6 9 12 15 18 9' />
       </>
     ),
+    chevronLeft: (
+      <>
+        <polyline points='15 18 9 12 15 6' />
+      </>
+    ),
+    chevronRight: (
+      <>
+        <polyline points='9 18 15 12 9 6' />
+      </>
+    ),
     repeat: (
       <>
         <polyline points='17 1 21 5 17 9' />

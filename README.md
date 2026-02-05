@@ -36,7 +36,7 @@ See the [ROADMAP.md](./ROADMAP.md) for detailed milestones (Alpha, Beta, v1.0, v
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/aurorae-haven/aurorae-haven.git
+   git clone https://github.com/ayanimea/aurorae-haven.git
    cd aurorae-haven
    ```
 
@@ -89,7 +89,7 @@ Aurorae Haven is now a Progressive Web App! You can install it on your device:
 
 **Download the full website for offline use without build tools!**
 
-1. Go to the [GitHub Actions page](https://github.com/aurorae-haven/aurorae-haven/actions/workflows/upload-pages-artifact.yml)
+1. Go to the [GitHub Actions page](https://github.com/ayanimea/aurorae-haven/actions/workflows/upload-pages-artifact.yml)
 2. Click on the latest successful workflow run
 3. Scroll down to "Artifacts" section
 4. Download `offline-package`

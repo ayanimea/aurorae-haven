@@ -34,6 +34,9 @@ const DEFAULT_SETTINGS = {
   advanced: {
     useIndexedDB: true,
     debugMode: false
+  },
+  schedule: {
+    use24HourFormat: true // Default to 24-hour format (neurodivergent-friendly, clearer)
   }
 }
 
