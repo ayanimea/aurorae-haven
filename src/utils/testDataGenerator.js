@@ -5,6 +5,7 @@
 
 import dayjs from 'dayjs'
 import { createEvent } from './scheduleManager'
+import { error as logError } from './logger'
 
 /**
  * Generate test events for the current week

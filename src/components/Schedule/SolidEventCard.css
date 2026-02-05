@@ -105,6 +105,10 @@
   border-left: 3px solid rgba(167, 139, 250, 0.5); /* Purple */
 }
 
+.event-type-break {
+  border-left: 3px solid rgba(34, 197, 94, 0.5); /* Green */
+}
+
 /* Focus state for accessibility */
 .solid-event-card:focus-visible {
   outline: 2px solid rgba(134, 245, 224, 0.6);
