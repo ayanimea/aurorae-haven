@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 
@@ -17,11 +17,81 @@ jest.mock('../components/Schedule/EventModal', () => {
   }
 })
 
-// Mock scheduleManager functions
-jest.mock('../utils/scheduleManager', () => ({
-  createEvent: jest.fn(),
-  getEventsForDay: jest.fn().mockResolvedValue([]),
-  getEventsForWeek: jest.fn().mockResolvedValue([])
+// Mock CustomToolbar component
+jest.mock('../components/Schedule/CustomToolbar', () => {
+  return function CustomToolbar({
+    date,
+    view,
+    views,
+    onNavigate,
+    onView,
+    onScheduleEvent,
+    EVENT_TYPES
+  }) {
+    return (
+      <div className='calendar-toolbar'>
+        <div className='toolbar-left'>
+          <h2>Schedule</h2>
+          <p className='date-display'>
+            {date.toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            })}
+          </p>
+        </div>
+        <div className='toolbar-center'>
+          <button onClick={() => onNavigate('PREV')}>Previous</button>
+          <button onClick={() => onNavigate('TODAY')}>Today</button>
+          <button onClick={() => onNavigate('NEXT')}>Next</button>
+          <select value={view} onChange={(e) => onView(e.target.value)}>
+            {views.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className='toolbar-right'>
+          <button 
+            onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}
+            aria-label="Schedule an event"
+          >
+            + Schedule
+          </button>
+        </div>
+      </div>
+    )
+  }
+})
+
+// Mock CustomEvent component
+jest.mock('../components/Schedule/CustomEvent', () => {
+  return function CustomEvent({ event }) {
+    return <div>{event.title}</div>
+  }
+})
+
+// Mock ItemActionModal component
+jest.mock('../components/ItemActionModal', () => {
+  return function ItemActionModal() {
+    return null
+  }
+})
+
+// Mock EventService
+jest.mock('../services/EventService', () => ({
+  __esModule: true,
+  default: {
+    getEventsForDate: jest.fn().mockResolvedValue([]),
+    getEventsForWeek: jest.fn().mockResolvedValue([]),
+    getEventsForRange: jest.fn().mockResolvedValue([]),
+    getEventsForDays: jest.fn().mockResolvedValue([]),
+    createEvent: jest.fn(),
+    updateEvent: jest.fn(),
+    deleteEvent: jest.fn(),
+    clearTestData: jest.fn().mockResolvedValue(0)
+  }
 }))
 
 // Mock logger
@@ -34,223 +104,118 @@ jest.mock('../utils/logger', () => ({
   }))
 }))
 
-// Mock getCurrentDateISO to return consistent date for testing
-jest.mock('../utils/timeUtils', () => ({
-  getCurrentDateISO: jest.fn(() => '2025-09-16')
-}))
+// Mock react-big-calendar to avoid rendering issues in tests
+jest.mock('react-big-calendar', () => {
+  const React = require('react')
+  return {
+    Calendar: ({ components, date }) => {
+      const Toolbar = components?.toolbar
+      return (
+        <div className='rbc-calendar'>
+          {Toolbar && (
+            <Toolbar
+              date={date}
+              view='day'
+              views={['day', 'week', 'month']}
+              onNavigate={() => {}}
+              onView={() => {}}
+            />
+          )}
+          <div className='rbc-time-view' />
+        </div>
+      )
+    },
+    dateFnsLocalizer: () => ({}),
+    Views: {
+      Day: () => null
+    }
+  }
+})
 
-describe('Schedule Component', () => {
-  const mockGetEventsForDay =
-    require('../utils/scheduleManager').getEventsForDay
-  const mockGetEventsForWeek =
-    require('../utils/scheduleManager').getEventsForWeek
+describe('Schedule Component with React Big Calendar', () => {
+  const EventService = require('../services/EventService').default
 
   beforeEach(() => {
     // Mock Date to return a consistent time for testing
     jest.useFakeTimers()
     jest.setSystemTime(new Date('2025-09-16T09:15:00'))
-    // Reset mocks
-    mockGetEventsForDay.mockClear()
-    mockGetEventsForWeek.mockClear()
-    mockGetEventsForDay.mockResolvedValue([])
-    mockGetEventsForWeek.mockResolvedValue([])
+    // Reset EventService mocks
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue([])
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+    EventService.getEventsForDays.mockResolvedValue([])
   })
 
   afterEach(() => {
     jest.useRealTimers()
   })
 
-  test('renders Schedule component with header', () => {
+  test('renders Schedule component with header', async () => {
     render(<Schedule />)
-    const scheduleElements = screen.getAllByText(/Schedule/)
-    expect(scheduleElements.length).toBeGreaterThan(0)
-    expect(screen.getByText('Today · Tue 16/09/2025')).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Schedule' })
+      ).toBeInTheDocument()
+    })
+
+    // Date should be formatted as DD/MM/YYYY
+    expect(screen.getByText(/16\/09\/2025/)).toBeInTheDocument()
   })
 
-  test('renders action buttons', () => {
-    render(<Schedule />)
-    expect(screen.getByRole('button', { name: /Day/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Week/i })).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /Schedule an event/i })
-    ).toBeInTheDocument()
-  })
-
-  test('renders sidebar sections', () => {
-    render(<Schedule />)
-    expect(screen.getByText("Today's queue")).toBeInTheDocument()
-    expect(screen.getByText('Deep Work Warmup')).toBeInTheDocument()
-    // Use getAllByText since "Buy groceries" appears in both sidebar and calendar
-    const buyGroceriesElements = screen.getAllByText('Buy groceries')
-    expect(buyGroceriesElements.length).toBeGreaterThan(0)
-  })
-
-  test('renders time labels for schedule', () => {
-    render(<Schedule />)
-    expect(screen.getByText('06:00')).toBeInTheDocument()
-    expect(screen.getByText('Morning')).toBeInTheDocument()
-    expect(screen.getByText('Afternoon')).toBeInTheDocument()
-    expect(screen.getByText('Evening')).toBeInTheDocument()
-  })
-
-  test('renders routine block with correct structure', () => {
-    render(<Schedule />)
-    const routineBlock = screen.getByLabelText(/Routine: Morning Launch/)
-    expect(routineBlock).toBeInTheDocument()
-    expect(routineBlock).toHaveClass('block', 'routine')
-    expect(screen.getByText('Morning Launch')).toBeInTheDocument()
-    expect(screen.getByText('07:00–07:30')).toBeInTheDocument()
-  })
-
-  test('renders meeting block with next badge', () => {
-    render(<Schedule />)
-    const meetingBlock = screen.getByLabelText(/Meeting: Team Standup/)
-    expect(meetingBlock).toBeInTheDocument()
-    expect(meetingBlock).toHaveClass('block', 'meeting', 'next-up')
-    expect(screen.getByText('Team Standup')).toBeInTheDocument()
-    expect(screen.getByText('10:00–10:30')).toBeInTheDocument()
-    expect(screen.getByText('Next')).toBeInTheDocument()
-  })
-
-  test('renders task block with priority class', () => {
-    render(<Schedule />)
-    const taskBlock = screen.getByLabelText(/Task: Buy groceries/)
-    expect(taskBlock).toBeInTheDocument()
-    expect(taskBlock).toHaveClass('block', 'task', 'not-urgent-important')
-    expect(screen.getByText('16:00–16:30')).toBeInTheDocument()
-  })
-
-  test('renders current time indicator during business hours', () => {
-    render(<Schedule />)
-    const timeIndicator = screen.getByLabelText('Current time')
-    expect(timeIndicator).toBeInTheDocument()
-    expect(screen.getByText('Now')).toBeInTheDocument()
-  })
-
-  test('hides current time indicator outside business hours', () => {
-    // Set time to 23:00 (11 PM - outside schedule range)
-    jest.setSystemTime(new Date('2025-09-16T23:00:00'))
-    render(<Schedule />)
-    expect(screen.queryByLabelText('Current time')).not.toBeInTheDocument()
-  })
-
-  test('renders time period backgrounds', () => {
+  test('renders calendar container', async () => {
     const { container } = render(<Schedule />)
-    const morningPeriod = container.querySelector('.time-period-morning')
-    const afternoonPeriod = container.querySelector('.time-period-afternoon')
-    const eveningPeriod = container.querySelector('.time-period-evening')
 
-    expect(morningPeriod).toBeInTheDocument()
-    expect(afternoonPeriod).toBeInTheDocument()
-    expect(eveningPeriod).toBeInTheDocument()
+    await waitFor(() => {
+      expect(container.querySelector('.schedule-container')).toBeInTheDocument()
+      expect(container.querySelector('.rbc-calendar')).toBeInTheDocument()
+    })
   })
 
-  test('renders time period separators', () => {
-    const { container } = render(<Schedule />)
-    const separators = container.querySelectorAll('.time-period-separator')
-    expect(separators).toHaveLength(3)
-  })
-
-  test('all schedule blocks have proper ARIA labels', () => {
+  test('renders toolbar with schedule button', async () => {
     render(<Schedule />)
-    expect(
-      screen.getByLabelText('Routine: Morning Launch at 07:00–07:30')
-    ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText('Meeting: Team Standup at 10:00–10:30 - Next up')
-    ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText('Task: Buy groceries at 16:00–16:30')
-    ).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Schedule an event' })
+      ).toBeInTheDocument()
+    })
   })
 
-  test('schedule blocks have correct positioning styles', () => {
+  test('calls EventService.getEventsForDate on mount with day view', async () => {
     render(<Schedule />)
-    const routineBlock = screen.getByLabelText(/Routine: Morning Launch/)
-    const meetingBlock = screen.getByLabelText(/Meeting: Team Standup/)
-    const taskBlock = screen.getByLabelText(/Task: Buy groceries/)
 
-    expect(routineBlock).toHaveStyle({ top: '126px', height: '60px' })
-    expect(meetingBlock).toHaveStyle({ top: '486px', height: '60px' })
-    expect(taskBlock).toHaveStyle({ top: '1206px', height: '60px' })
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
+    })
   })
 
-  describe('Button Functionality', () => {
-    test('Day button is active by default', () => {
-      render(<Schedule />)
-      const dayButton = screen.getByRole('button', {
-        name: /View day schedule/i
-      })
-      expect(dayButton).toHaveClass('btn-active')
-    })
+  test('shows loading state initially', () => {
+    render(<Schedule />)
 
-    test('Week button is not active by default', () => {
-      render(<Schedule />)
-      const weekButton = screen.getByRole('button', {
-        name: /View week schedule/i
-      })
-      expect(weekButton).not.toHaveClass('btn-active')
-    })
+    // Loading overlay should be visible initially
+    expect(screen.getByText('Loading events...')).toBeInTheDocument()
+  })
 
-    test('Day button has correct ARIA attributes', () => {
-      render(<Schedule />)
-      const dayButton = screen.getByRole('button', {
-        name: /View day schedule/i
-      })
-      expect(dayButton).toHaveAttribute('aria-pressed', 'true')
-    })
+  test('renders without errors when events are loaded', async () => {
+    const mockEvents = [
+      {
+        id: '1',
+        title: 'Test Event',
+        day: '2025-09-16',
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'task'
+      }
+    ]
 
-    test('Week button has correct ARIA attributes when not active', () => {
-      render(<Schedule />)
-      const weekButton = screen.getByRole('button', {
-        name: /View week schedule/i
-      })
-      expect(weekButton).toHaveAttribute('aria-pressed', 'false')
-    })
+    EventService.getEventsForDate.mockResolvedValue(mockEvents)
 
-    test('Schedule dropdown button has correct ARIA attributes', () => {
-      render(<Schedule />)
-      const scheduleButton = screen.getByRole('button', {
-        name: /Schedule an event/i
-      })
-      expect(scheduleButton).toBeInTheDocument()
-      expect(scheduleButton).toHaveAttribute('aria-expanded', 'false')
-      expect(scheduleButton).toHaveAttribute('aria-haspopup', 'menu')
-    })
+    render(<Schedule />)
 
-    test('loads day events on initial render', () => {
-      render(<Schedule />)
-      expect(mockGetEventsForDay).toHaveBeenCalledWith('2025-09-16')
-      expect(mockGetEventsForWeek).not.toHaveBeenCalled()
-    })
-
-    test('clicking Week button switches view mode and loads week events', async () => {
-      render(<Schedule />)
-      const weekButton = screen.getByRole('button', {
-        name: /View week schedule/i
-      })
-
-      // Click the week button using RTL's fireEvent
-      fireEvent.click(weekButton)
-
-      // Wait for state update
-      await screen.findByRole('button', { name: /View week schedule/i })
-
-      // Check that week events were loaded
-      expect(mockGetEventsForWeek).toHaveBeenCalled()
-    })
-
-    test('clicking Day button after Week keeps day view active', () => {
-      render(<Schedule />)
-      const dayButton = screen.getByRole('button', {
-        name: /View day schedule/i
-      })
-
-      // Click day button (already active) using RTL's fireEvent
-      fireEvent.click(dayButton)
-
-      // Day button should still be active
-      expect(dayButton).toHaveClass('btn-active')
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalled()
     })
   })
 })

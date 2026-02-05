@@ -1,0 +1,269 @@
+/* ===== Habits Page ===== */
+.habits-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.habits-today-panel {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px;
+  background: linear-gradient(180deg, var(--glass-lo), rgba(18, 22, 52, 0.22));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.completion-ring-container {
+  flex-shrink: 0;
+}
+
+.today-stats h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.today-stats p {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.95rem;
+}
+
+.habits-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.habits-toolbar h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--ink);
+}
+
+.habits-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.habits-page .sort-select {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(16, 20, 44, 0.32);
+  color: var(--ink);
+  font-size: 14px;
+  min-height: 48px;
+  cursor: pointer;
+}
+
+.habits-page .sort-select:focus {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.habits-list {
+  display: grid;
+  gap: 16px;
+}
+
+.habit-card {
+  background: linear-gradient(180deg, var(--glass-lo), rgba(18, 22, 52, 0.22));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.habit-card:hover {
+  /* Note: transform disabled - conflicts with inline swipe transform in Habits.jsx */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.habit-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.habit-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.habit-info h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-actions {
+  flex-shrink: 0;
+}
+
+.today-checkbox {
+  /* 48×48px touch target for accessibility (WCAG 2.2 AA) */
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.habit-streak {
+  color: var(--dim);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+/* Scoped to habits page to avoid affecting other pages with .empty-state */
+.habits-page .empty-state {
+  text-align: center;
+  color: var(--dim);
+  padding: 40px 20px;
+  font-size: 1rem;
+}
+
+/* Habits-specific form groups for modal content - scoped to habits page */
+.habits-page .form-group {
+  margin-bottom: 16px;
+}
+
+.habits-page .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.habits-page .form-group input,
+.habits-page .form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(16, 20, 44, 0.32);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.habits-page .form-group input:focus,
+.habits-page .form-group select:focus {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+
+/* Scoped to habits page modals to avoid affecting other modals */
+.habits-page .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .habits-today-panel {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .habits-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .habits-toolbar h3 {
+    font-size: 1.1rem;
+  }
+
+  .habits-actions {
+    justify-content: space-between;
+  }
+
+  .habit-card {
+    padding: 14px;
+  }
+
+  .habit-card-header {
+    flex-wrap: wrap;
+  }
+
+  .habit-info h4 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .habits-page {
+    gap: 16px;
+  }
+
+  .habits-today-panel {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .today-stats h2 {
+    font-size: 1.25rem;
+  }
+
+  .today-stats p {
+    font-size: 0.875rem;
+  }
+
+  .habits-toolbar h3 {
+    font-size: 1rem;
+  }
+
+  .habits-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .habit-card {
+    padding: 12px;
+  }
+
+  .habit-info h4 {
+    font-size: 0.95rem;
+  }
+
+  .habit-streak {
+    font-size: 0.875rem;
+  }
+
+  .habits-page .sort-select {
+    width: 100%;
+  }
+
+  .habits-page .modal-actions {
+    flex-direction: column;
+  }
+
+  .habits-page .modal-actions button {
+    width: 100%;
+  }
+}

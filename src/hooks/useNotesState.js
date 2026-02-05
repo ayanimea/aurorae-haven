@@ -40,7 +40,7 @@ export function useNotesState() {
 
     return migratedNotes
   })
-  
+
   const [currentNoteId, setCurrentNoteId] = useState(null)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')

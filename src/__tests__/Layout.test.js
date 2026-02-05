@@ -4,7 +4,13 @@
  */
 
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within
+} from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
 
@@ -57,7 +63,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
         screen.getByRole('tab', { name: /^schedule$/i })
       ).toBeInTheDocument()
       expect(
-        screen.getByRole('tab', { name: /brain dump/i })
+        screen.getByRole('tab', { name: /brain[\s\u00A0]dump/i })
       ).toBeInTheDocument()
       expect(
         screen.getByRole('tab', { name: /^library$/i })
@@ -318,13 +324,14 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
     })
 
     test('import file input calls onImport handler', () => {
-      renderWithRouter(
+      const { container } = renderWithRouter(
         <Layout onExport={mockOnExport} onImport={mockOnImport}>
           <div>Content</div>
         </Layout>
       )
 
-      const importInput = screen.getByLabelText(/import data file/i)
+      // Find the hidden file input
+      const importInput = container.querySelector('input[type="file"]')
       const file = new File(['{}'], 'test.json', { type: 'application/json' })
 
       fireEvent.change(importInput, { target: { files: [file] } })
@@ -366,7 +373,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
       // Check mobile menu appears
       await waitFor(() => {
-        const mobileMenu = screen.getByRole('dialog', {
+        const mobileMenu = screen.getByRole('navigation', {
           name: /mobile navigation menu/i
         })
         expect(mobileMenu).toBeInTheDocument()
@@ -386,8 +393,27 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       fireEvent.click(hamburgerButton)
 
       await waitFor(() => {
-        const menuItems = screen.getAllByRole('menuitem')
-        expect(menuItems).toHaveLength(8)
+        // Get the mobile menu container
+        const mobileMenu = screen.getByRole('navigation', {
+          name: /mobile navigation menu/i
+        })
+
+        // Mobile menu items are links, not menuitems (accessibility fix)
+        const expectedNavItems = [
+          /tasks/i,
+          /routines/i,
+          /brain[\s\u00A0]dump/i, // support both regular and non-breaking space
+          /habits/i,
+          /schedule/i,
+          /library/i,
+          /stats/i,
+          /settings/i
+        ]
+
+        expectedNavItems.forEach((pattern) => {
+          const link = within(mobileMenu).getByRole('link', { name: pattern })
+          expect(link).toBeInTheDocument()
+        })
       })
     })
 
@@ -404,7 +430,8 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       fireEvent.click(hamburgerButton)
 
       await waitFor(() => {
-        const tasksMenuItem = screen.getByRole('menuitem', { name: /tasks/i })
+        // Mobile menu items are links, not menuitems (accessibility fix)
+        const tasksMenuItem = screen.getByRole('link', { name: /tasks/i })
         fireEvent.click(tasksMenuItem)
       })
 
@@ -490,7 +517,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       })
     })
 
-    test('mobile menu has aria-modal="true"', async () => {
+    test('mobile menu renders when hamburger button is clicked', async () => {
       renderWithRouter(
         <Layout onExport={mockOnExport} onImport={mockOnImport}>
           <div>Content</div>
@@ -503,8 +530,10 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       fireEvent.click(hamburgerButton)
 
       await waitFor(() => {
-        const mobileMenu = screen.getByRole('dialog')
-        expect(mobileMenu).toHaveAttribute('aria-modal', 'true')
+        const mobileMenu = screen.getByRole('navigation', {
+          name: /mobile navigation menu/i
+        })
+        expect(mobileMenu).toBeInTheDocument()
       })
     })
   })
@@ -533,6 +562,238 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
       const planet = container.querySelector('.planet')
       expect(planet).toBeInTheDocument()
+    })
+  })
+
+  describe('MoreMenu component tests', () => {
+    test('More button is present in the UI', () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      expect(moreButton).toBeInTheDocument()
+    })
+
+    test('More button has correct accessibility attributes', () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      expect(moreButton).toHaveAttribute('aria-expanded', 'false')
+      expect(moreButton).toHaveAttribute('aria-haspopup', 'true')
+    })
+
+    test('clicking More button opens MoreMenu', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        expect(moreButton).toHaveAttribute('aria-expanded', 'true')
+        const moreMenu = screen.getByRole('navigation', {
+          name: /additional navigation options/i
+        })
+        expect(moreMenu).toBeInTheDocument()
+      })
+    })
+
+    test('MoreMenu displays correct secondary tabs', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        const moreMenu = screen.getByRole('navigation', {
+          name: /additional navigation options/i
+        })
+
+        // MoreMenu should have Library, Stats, and Settings (secondary tabs)
+        const expectedTabs = [/library/i, /stats/i, /settings/i]
+
+        expectedTabs.forEach((pattern) => {
+          const link = within(moreMenu).getByRole('link', { name: pattern })
+          expect(link).toBeInTheDocument()
+        })
+      })
+    })
+
+    test('clicking MoreMenu item closes menu and navigates', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        expect(moreButton).toHaveAttribute('aria-expanded', 'true')
+      })
+
+      const libraryLink = screen.getByRole('link', { name: /library/i })
+      fireEvent.click(libraryLink)
+
+      await waitFor(() => {
+        expect(moreButton).toHaveAttribute('aria-expanded', 'false')
+      })
+    })
+
+    test('pressing Escape closes MoreMenu', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        expect(moreButton).toHaveAttribute('aria-expanded', 'true')
+      })
+
+      // Press Escape
+      fireEvent.keyDown(document, { key: 'Escape' })
+
+      await waitFor(() => {
+        expect(moreButton).toHaveAttribute('aria-expanded', 'false')
+      })
+    })
+
+    test('clicking outside MoreMenu closes it', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        expect(moreButton).toHaveAttribute('aria-expanded', 'true')
+      })
+
+      // Click outside the menu (on the body)
+      fireEvent.mouseDown(document.body)
+
+      await waitFor(() => {
+        expect(moreButton).toHaveAttribute('aria-expanded', 'false')
+      })
+    })
+
+    test('MoreMenu has proper ARIA attributes', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        const moreMenu = screen.getByRole('navigation', {
+          name: /additional navigation options/i
+        })
+
+        expect(moreMenu).toHaveAttribute('role', 'navigation')
+        expect(moreMenu).toHaveAttribute(
+          'aria-label',
+          'Additional navigation options'
+        )
+      })
+    })
+
+    test('opening MoreMenu adds mobile-menu-open class to body', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+
+      // Initially, body should not have the class
+      expect(document.body.classList.contains('mobile-menu-open')).toBe(false)
+
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        expect(document.body.classList.contains('mobile-menu-open')).toBe(true)
+      })
+    })
+
+    test('closing MoreMenu removes mobile-menu-open class from body', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+
+      // Open the menu
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        expect(document.body.classList.contains('mobile-menu-open')).toBe(true)
+      })
+
+      // Close the menu
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        expect(document.body.classList.contains('mobile-menu-open')).toBe(false)
+      })
+    })
+
+    test('MoreMenu items have correct to paths', async () => {
+      const { container } = renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const moreButton = container.querySelector('.more-button')
+      fireEvent.click(moreButton)
+
+      await waitFor(() => {
+        const moreMenu = screen.getByRole('navigation', {
+          name: /additional navigation options/i
+        })
+        // Verify all secondary tabs exist with correct paths
+        const libraryLink = within(moreMenu).getByRole('link', {
+          name: /library/i
+        })
+        expect(libraryLink).toBeInTheDocument()
+        expect(libraryLink).toHaveAttribute('href', '/library')
+
+        const statsLink = within(moreMenu).getByRole('link', { name: /stats/i })
+        expect(statsLink).toHaveAttribute('href', '/stats')
+
+        const settingsLink = within(moreMenu).getByRole('link', {
+          name: /settings/i
+        })
+        expect(settingsLink).toHaveAttribute('href', '/settings')
+      })
     })
   })
 })

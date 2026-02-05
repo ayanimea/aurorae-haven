@@ -134,12 +134,14 @@ export function calculateDuration(startTime, endTime) {
     return 0
   }
 
-  // Create Day.js objects for comparison
-  const start = dayjs()
+  // Create Day.js objects for comparison using a fixed base date
+  // This ensures both times are on the same day and avoids DST/timing issues
+  const baseDate = dayjs().startOf('day')
+  const start = baseDate
     .hour(startParsed.hours)
     .minute(startParsed.minutes)
     .second(0)
-  const end = dayjs().hour(endParsed.hours).minute(endParsed.minutes).second(0)
+  const end = baseDate.hour(endParsed.hours).minute(endParsed.minutes).second(0)
 
   // Return difference in minutes
   return end.diff(start, 'minute')

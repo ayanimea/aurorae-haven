@@ -4,8 +4,8 @@ import Modal from '../common/Modal'
 import Icon from '../common/Icon'
 import SearchableEventSelector from './SearchableEventSelector'
 import { getCurrentDateISO } from '../../utils/timeUtils'
-import { 
-  EVENT_TYPES, 
+import {
+  EVENT_TYPES,
   VALID_EVENT_TYPES,
   MAX_TRAVEL_TIME_MINUTES,
   MAX_PREPARATION_TIME_MINUTES
@@ -37,14 +37,14 @@ const handleTimeInputChange = (inputValue, maxValue, onChange) => {
     onChange(0)
     return
   }
-  
+
   const parsedValue = parseInt(inputValue, 10)
-  
+
   // Preserve previous value if input is invalid (NaN)
   if (Number.isNaN(parsedValue)) {
     return
   }
-  
+
   const clampedValue = clampTimeValue(parsedValue, maxValue)
   onChange(clampedValue)
 }
@@ -157,7 +157,7 @@ function EventModal({
       )
       return false
     }
-    
+
     // Validate travel time
     if (typeof formData.travelTime === 'number') {
       // Explicitly check for NaN
@@ -174,7 +174,7 @@ function EventModal({
         return false
       }
     }
-    
+
     // Validate preparation time
     if (typeof formData.preparationTime === 'number') {
       // Explicitly check for NaN
@@ -187,11 +187,13 @@ function EventModal({
         return false
       }
       if (formData.preparationTime > MAX_PREPARATION_TIME_MINUTES) {
-        setError(`Preparation time cannot exceed ${MAX_PREPARATION_TIME_MINUTES} minutes`)
+        setError(
+          `Preparation time cannot exceed ${MAX_PREPARATION_TIME_MINUTES} minutes`
+        )
         return false
       }
     }
-    
+
     return true
   }
 
@@ -366,25 +368,26 @@ function EventModal({
 
           <div className='form-row'>
             <div className='form-group'>
-              <label htmlFor='event-travel-time'>
-                Travel Time (minutes)
-              </label>
+              <label htmlFor='event-travel-time'>Travel Time (minutes)</label>
               <input
                 id='event-travel-time'
                 type='number'
                 min='0'
                 max={MAX_TRAVEL_TIME_MINUTES}
                 value={formData.travelTime}
-                onChange={(e) => handleTimeInputChange(
-                  e.target.value,
-                  MAX_TRAVEL_TIME_MINUTES,
-                  (value) => handleChange('travelTime', value)
-                )}
+                onChange={(e) =>
+                  handleTimeInputChange(
+                    e.target.value,
+                    MAX_TRAVEL_TIME_MINUTES,
+                    (value) => handleChange('travelTime', value)
+                  )
+                }
                 disabled={isSubmitting}
                 aria-describedby='travel-time-help'
               />
               <small id='travel-time-help' className='form-help'>
-                Optional time needed to travel to this event (max {MAX_TRAVEL_TIME_MINUTES} minutes)
+                Optional time needed to travel to this event (max{' '}
+                {MAX_TRAVEL_TIME_MINUTES} minutes)
               </small>
             </div>
 
@@ -398,16 +401,19 @@ function EventModal({
                 min='0'
                 max={MAX_PREPARATION_TIME_MINUTES}
                 value={formData.preparationTime}
-                onChange={(e) => handleTimeInputChange(
-                  e.target.value,
-                  MAX_PREPARATION_TIME_MINUTES,
-                  (value) => handleChange('preparationTime', value)
-                )}
+                onChange={(e) =>
+                  handleTimeInputChange(
+                    e.target.value,
+                    MAX_PREPARATION_TIME_MINUTES,
+                    (value) => handleChange('preparationTime', value)
+                  )
+                }
                 disabled={isSubmitting}
                 aria-describedby='preparation-time-help'
               />
               <small id='preparation-time-help' className='form-help'>
-                Optional time needed to prepare for this event (max {MAX_PREPARATION_TIME_MINUTES} minutes)
+                Optional time needed to prepare for this event (max{' '}
+                {MAX_PREPARATION_TIME_MINUTES} minutes)
               </small>
             </div>
           </div>

@@ -528,8 +528,6 @@ function Habits() {
                       className='today-checkbox'
                       aria-label={`Mark ${habit.name} as ${isCompletedToday ? 'incomplete' : 'complete'} today`}
                       style={{
-                        width: '32px',
-                        height: '32px',
                         cursor: habit.paused ? 'not-allowed' : 'pointer'
                       }}
                       onClick={(e) => e.stopPropagation()}

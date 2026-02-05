@@ -152,7 +152,7 @@ async function searchRoutineTemplates(query) {
     // Search custom templates
     const customTemplates = await getAllTemplates()
     const routineTemplates = customTemplates.filter((t) => t.type === 'routine')
-    
+
     routineTemplates.forEach((template) => {
       const title = (template.title || '').toLowerCase()
       if (title.includes(normalizedQuery)) {
@@ -173,8 +173,10 @@ async function searchRoutineTemplates(query) {
 
     // Search predefined templates
     const predefinedTemplates = getPredefinedTemplates()
-    const predefinedRoutines = predefinedTemplates.filter((t) => t.type === 'routine')
-    
+    const predefinedRoutines = predefinedTemplates.filter(
+      (t) => t.type === 'routine'
+    )
+
     predefinedRoutines.forEach((template) => {
       const title = (template.title || '').toLowerCase()
       if (title.includes(normalizedQuery)) {
@@ -213,11 +215,17 @@ export async function instantiateRoutineFromTemplate(template) {
     if (!template || typeof template !== 'object') {
       throw new Error('Invalid template: template must be an object')
     }
-    
-    if (!template.title || typeof template.title !== 'string' || template.title.trim() === '') {
-      throw new Error('Invalid template: title is required and must be a non-empty string')
+
+    if (
+      !template.title ||
+      typeof template.title !== 'string' ||
+      template.title.trim() === ''
+    ) {
+      throw new Error(
+        'Invalid template: title is required and must be a non-empty string'
+      )
     }
-    
+
     // Create the routine from the template
     const routineData = {
       title: template.title.trim(),
@@ -384,8 +392,10 @@ export async function getAllRoutinesAndTasks(eventType = null) {
       if (items.length === 0) {
         // Get custom templates
         const customTemplates = await getAllTemplates()
-        const routineTemplates = customTemplates.filter((t) => t.type === 'routine')
-        
+        const routineTemplates = customTemplates.filter(
+          (t) => t.type === 'routine'
+        )
+
         routineTemplates.forEach((template) => {
           items.push({
             id: template.id,
@@ -403,8 +413,10 @@ export async function getAllRoutinesAndTasks(eventType = null) {
 
         // Get predefined templates
         const predefinedTemplates = getPredefinedTemplates()
-        const predefinedRoutines = predefinedTemplates.filter((t) => t.type === 'routine')
-        
+        const predefinedRoutines = predefinedTemplates.filter(
+          (t) => t.type === 'routine'
+        )
+
         predefinedRoutines.forEach((template) => {
           items.push({
             id: template.id,

@@ -1,0 +1,197 @@
+/* Item Action Modal - Reusable across all tabs */
+
+.item-action-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+/* Context Menu (Desktop Right-Click) */
+.item-action-context-menu {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 180px;
+  padding: 8px 0;
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.context-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.context-menu-item-danger {
+  color: var(--danger);
+}
+
+.context-menu-item-danger:hover {
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.context-menu-icon {
+  font-size: 1.1rem;
+  width: 20px;
+  text-align: center;
+}
+
+/* Full Details Modal (Mobile Click) */
+.item-action-modal {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideIn 0.25s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.item-action-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.item-action-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.item-action-close {
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.item-action-close:hover {
+  color: var(--text);
+}
+
+.item-action-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.item-action-content p {
+  margin: 8px 0;
+}
+
+.item-action-content strong {
+  color: var(--text-bright);
+}
+
+.item-action-buttons {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.item-action-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.item-action-btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+.item-action-btn-secondary:hover {
+  background: var(--bg-hover);
+}
+
+.item-action-btn-danger {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--danger);
+}
+
+.item-action-btn-danger:hover {
+  background: rgba(255, 59, 48, 0.2);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .item-action-modal {
+    max-width: 95%;
+    max-height: 90vh;
+  }
+  
+  .item-action-buttons {
+    flex-direction: column;
+  }
+  
+  .item-action-btn {
+    width: 100%;
+  }
+}

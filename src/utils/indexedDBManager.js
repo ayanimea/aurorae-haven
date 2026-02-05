@@ -127,11 +127,16 @@ export function openDB() {
 
       // Calendar subscriptions storage
       if (!db.objectStoreNames.contains(STORES.CALENDAR_SUBSCRIPTIONS)) {
-        const calendarStore = db.createObjectStore(STORES.CALENDAR_SUBSCRIPTIONS, {
-          keyPath: 'id'
-        })
+        const calendarStore = db.createObjectStore(
+          STORES.CALENDAR_SUBSCRIPTIONS,
+          {
+            keyPath: 'id'
+          }
+        )
         calendarStore.createIndex('enabled', 'enabled', { unique: false })
-        calendarStore.createIndex('lastSyncedAt', 'lastSyncedAt', { unique: false })
+        calendarStore.createIndex('lastSyncedAt', 'lastSyncedAt', {
+          unique: false
+        })
       }
     }
   })

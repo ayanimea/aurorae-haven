@@ -89,19 +89,22 @@ function Routines() {
     setShowCancelConfirm(true)
   }, [])
 
-  const confirmCancel = React.useCallback((keepProgress) => {
-    if (keepProgress) {
-      // Keep partial progress - logs and XP are preserved in runner state
-      logger.log('Routine cancelled - progress preserved')
-    } else {
-      // Discard progress
-      if (runner.reset) runner.reset()
-      logger.log('Routine cancelled - progress discarded')
-    }
-    if (runner.cancel) runner.cancel()
-    setSelectedRoutine(null)
-    setShowCancelConfirm(false)
-  }, [runner])
+  const confirmCancel = React.useCallback(
+    (keepProgress) => {
+      if (keepProgress) {
+        // Keep partial progress - logs and XP are preserved in runner state
+        logger.log('Routine cancelled - progress preserved')
+      } else {
+        // Discard progress
+        if (runner.reset) runner.reset()
+        logger.log('Routine cancelled - progress discarded')
+      }
+      if (runner.cancel) runner.cancel()
+      setSelectedRoutine(null)
+      setShowCancelConfirm(false)
+    },
+    [runner]
+  )
 
   // TAB-RTN-44: Keyboard shortcuts
   useEffect(() => {

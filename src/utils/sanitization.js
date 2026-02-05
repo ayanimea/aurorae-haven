@@ -187,7 +187,7 @@ export function sanitizeText(text) {
   if (!text || typeof text !== 'string') {
     return ''
   }
-  
+
   // Escape HTML special characters
   return text
     .replace(/&/g, '&amp;')

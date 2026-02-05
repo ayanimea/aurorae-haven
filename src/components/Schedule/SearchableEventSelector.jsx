@@ -156,7 +156,10 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
   const shouldShowSearch = eventType === 'routine' || eventType === 'task'
 
   // Memoize result count for better performance
-  const resultCount = useMemo(() => searchResults.length, [searchResults.length])
+  const resultCount = useMemo(
+    () => searchResults.length,
+    [searchResults.length]
+  )
 
   // Memoize result count text for UX feedback
   const resultCountText = useMemo(() => {
@@ -225,7 +228,9 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
               <div className='search-dropdown-header'>
                 <span>Select an existing {eventType}</span>
                 {resultCountText && (
-                  <span className='search-dropdown-count'>{resultCountText}</span>
+                  <span className='search-dropdown-count'>
+                    {resultCountText}
+                  </span>
                 )}
                 {eventType === 'task' && (
                   <span className='search-dropdown-hint'>

@@ -56,32 +56,36 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
   describe('Modal Rendering', () => {
     it('should not render when isOpen is false', () => {
       calendarManager.getCalendarSubscriptions.mockResolvedValue([])
-      render(
-        <CalendarSubscriptionModal isOpen={false} onClose={mockOnClose} />
-      )
+      render(<CalendarSubscriptionModal isOpen={false} onClose={mockOnClose} />)
       expect(screen.queryByTestId('modal')).not.toBeInTheDocument()
     })
 
     it('should render when isOpen is true', async () => {
       calendarManager.getCalendarSubscriptions.mockResolvedValue([])
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('modal')).toBeInTheDocument()
-        expect(screen.getByText('Manage Calendar Subscriptions')).toBeInTheDocument()
+        expect(
+          screen.getByText('Manage Calendar Subscriptions')
+        ).toBeInTheDocument()
       })
     })
 
     it('should display add calendar button when no form is shown', async () => {
       calendarManager.getCalendarSubscriptions.mockResolvedValue([])
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       // Wait for loading to finish
       await waitFor(() => {
-        expect(screen.queryByText(/loading subscriptions/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/loading subscriptions/i)
+        ).not.toBeInTheDocument()
       })
-      
-      expect(screen.getByRole('button', { name: /add new calendar subscription/i })).toBeInTheDocument()
+
+      expect(
+        screen.getByRole('button', { name: /add new calendar subscription/i })
+      ).toBeInTheDocument()
     })
   })
 
@@ -104,11 +108,13 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
           enabled: false
         }
       ]
-      
-      calendarManager.getCalendarSubscriptions.mockResolvedValue(mockSubscriptions)
-      
+
+      calendarManager.getCalendarSubscriptions.mockResolvedValue(
+        mockSubscriptions
+      )
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Work Calendar')).toBeInTheDocument()
         expect(screen.getByText('Personal Calendar')).toBeInTheDocument()
@@ -119,11 +125,13 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
       calendarManager.getCalendarSubscriptions.mockRejectedValue(
         new Error('Network error')
       )
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/failed to load calendar subscriptions/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/failed to load calendar subscriptions/i)
+        ).toBeInTheDocument()
       })
     })
 
@@ -131,13 +139,15 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
       calendarManager.getCalendarSubscriptions.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([]), 100))
       )
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       expect(screen.getByText(/loading subscriptions/i)).toBeInTheDocument()
-      
+
       await waitFor(() => {
-        expect(screen.queryByText(/loading subscriptions/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/loading subscriptions/i)
+        ).not.toBeInTheDocument()
       })
     })
   })
@@ -150,15 +160,19 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
 
     it('should show add form when add calendar button is clicked', async () => {
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       // Wait for loading to finish
       await waitFor(() => {
-        expect(screen.queryByText(/loading subscriptions/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/loading subscriptions/i)
+        ).not.toBeInTheDocument()
       })
-      
-      const addButton = screen.getByRole('button', { name: /add new calendar subscription/i })
+
+      const addButton = screen.getByRole('button', {
+        name: /add new calendar subscription/i
+      })
       fireEvent.click(addButton)
-      
+
       await waitFor(() => {
         expect(screen.getByLabelText(/calendar name/i)).toBeInTheDocument()
         expect(screen.getByLabelText(/ics url/i)).toBeInTheDocument()
@@ -167,55 +181,71 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
     })
 
     it('should validate required fields before submission', async () => {
-      const { container } = render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+      const { container } = render(
+        <CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />
+      )
+
       // Wait for loading to finish and click add button
       await waitFor(() => {
-        expect(screen.queryByText(/loading subscriptions/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/loading subscriptions/i)
+        ).not.toBeInTheDocument()
       })
-      
-      fireEvent.click(screen.getByRole('button', { name: /add new calendar subscription/i }))
-      
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /add new calendar subscription/i })
+      )
+
       await waitFor(() => {
         expect(screen.getByLabelText(/calendar name/i)).toBeInTheDocument()
       })
-      
+
       // Submit the form
       const form = container.querySelector('form')
       fireEvent.submit(form)
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/Name and URL are required/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/Name and URL are required/i)
+        ).toBeInTheDocument()
       })
-      
+
       expect(calendarManager.addCalendarSubscription).not.toHaveBeenCalled()
     })
 
     it('should successfully add a new subscription with valid data', async () => {
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       // Wait for loading to finish
       await waitFor(() => {
-        expect(screen.queryByText(/loading subscriptions/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/loading subscriptions/i)
+        ).not.toBeInTheDocument()
       })
-      
-      fireEvent.click(screen.getByRole('button', { name: /add new calendar subscription/i }))
-      
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /add new calendar subscription/i })
+      )
+
       await waitFor(() => {
         expect(screen.getByLabelText(/calendar name/i)).toBeInTheDocument()
       })
-      
+
       // Fill in the form
       const nameInput = screen.getByLabelText(/calendar name/i)
       const urlInput = screen.getByLabelText(/ics url/i)
-      
+
       fireEvent.change(nameInput, { target: { value: 'Test Calendar' } })
-      fireEvent.change(urlInput, { target: { value: 'https://example.com/test.ics' } })
-      
+      fireEvent.change(urlInput, {
+        target: { value: 'https://example.com/test.ics' }
+      })
+
       // Submit the form
-      const submitButton = screen.getByRole('button', { name: /add calendar$/i })
+      const submitButton = screen.getByRole('button', {
+        name: /add calendar$/i
+      })
       fireEvent.click(submitButton)
-      
+
       await waitFor(() => {
         expect(calendarManager.addCalendarSubscription).toHaveBeenCalledWith({
           name: 'Test Calendar',
@@ -230,32 +260,42 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
       calendarManager.addCalendarSubscription.mockRejectedValue(
         new Error('Invalid URL')
       )
-      
-      const { container } = render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
+      const { container } = render(
+        <CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />
+      )
+
       // Wait for loading to finish
       await waitFor(() => {
-        expect(screen.queryByText(/loading subscriptions/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/loading subscriptions/i)
+        ).not.toBeInTheDocument()
       })
-      
-      fireEvent.click(screen.getByRole('button', { name: /add new calendar subscription/i }))
-      
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /add new calendar subscription/i })
+      )
+
       await waitFor(() => {
         expect(screen.getByLabelText(/calendar name/i)).toBeInTheDocument()
       })
-      
+
       const nameInput = screen.getByLabelText(/calendar name/i)
       const urlInput = screen.getByLabelText(/ics url/i)
-      
+
       fireEvent.change(nameInput, { target: { value: 'Test' } })
-      fireEvent.change(urlInput, { target: { value: 'https://example.com/invalid.ics' } })
-      
+      fireEvent.change(urlInput, {
+        target: { value: 'https://example.com/invalid.ics' }
+      })
+
       // Submit the form
       const form = container.querySelector('form')
       fireEvent.submit(form)
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/failed to add calendar subscription/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/failed to add calendar subscription/i)
+        ).toBeInTheDocument()
       })
     })
 
@@ -266,37 +306,43 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
         url: 'https://example.com/new.ics',
         enabled: true
       }
-      
+
       calendarManager.addCalendarSubscription.mockResolvedValue('new-sub')
       calendarManager.getCalendarSubscriptions
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([newSubscription])
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       // Wait for loading to finish
       await waitFor(() => {
-        expect(screen.queryByText(/loading subscriptions/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/loading subscriptions/i)
+        ).not.toBeInTheDocument()
       })
-      
-      fireEvent.click(screen.getByRole('button', { name: /add new calendar subscription/i }))
-      
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /add new calendar subscription/i })
+      )
+
       await waitFor(() => {
         expect(screen.getByLabelText(/calendar name/i)).toBeInTheDocument()
       })
-      
+
       fireEvent.change(screen.getByLabelText(/calendar name/i), {
         target: { value: 'New Calendar' }
       })
       fireEvent.change(screen.getByLabelText(/ics url/i), {
         target: { value: 'https://example.com/new.ics' }
       })
-      
+
       fireEvent.click(screen.getByRole('button', { name: /add calendar$/i }))
-      
+
       await waitFor(() => {
         expect(screen.getByText('New Calendar')).toBeInTheDocument()
-        expect(screen.queryByLabelText(/calendar name/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByLabelText(/calendar name/i)
+        ).not.toBeInTheDocument()
       })
     })
   })
@@ -316,61 +362,80 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
           enabled: true
         }
       ]
-      
-      calendarManager.getCalendarSubscriptions.mockResolvedValue(mockSubscriptions)
-      
+
+      calendarManager.getCalendarSubscriptions.mockResolvedValue(
+        mockSubscriptions
+      )
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Work Calendar')).toBeInTheDocument()
       })
-      
-      const deleteButton = screen.getByLabelText(/delete calendar subscription/i)
+
+      const deleteButton = screen.getByLabelText(
+        /delete calendar subscription/i
+      )
       fireEvent.click(deleteButton)
-      
+
       // Confirmation dialog should appear
       await waitFor(() => {
-        expect(screen.getByText('Delete Calendar Subscription')).toBeInTheDocument()
-        expect(screen.getByText(/Are you sure you want to delete "Work Calendar"/)).toBeInTheDocument()
+        expect(
+          screen.getByText('Delete Calendar Subscription')
+        ).toBeInTheDocument()
+        expect(
+          screen.getByText(/Are you sure you want to delete "Work Calendar"/)
+        ).toBeInTheDocument()
       })
-      
+
       // Click Cancel button
       const cancelButton = screen.getByLabelText('Cancel')
       fireEvent.click(cancelButton)
-      
+
       // Delete should not be called
       expect(calendarManager.deleteCalendarSubscription).not.toHaveBeenCalled()
     })
 
     it('should delete subscription when confirmed', async () => {
       const mockSubscriptions = [
-        { id: 'sub-1', name: 'Work Calendar', url: 'https://example.com/work.ics', enabled: true }
+        {
+          id: 'sub-1',
+          name: 'Work Calendar',
+          url: 'https://example.com/work.ics',
+          enabled: true
+        }
       ]
-      
+
       calendarManager.getCalendarSubscriptions
         .mockResolvedValueOnce(mockSubscriptions)
         .mockResolvedValueOnce([])
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Work Calendar')).toBeInTheDocument()
       })
-      
-      const deleteButton = screen.getByLabelText(/delete calendar subscription/i)
+
+      const deleteButton = screen.getByLabelText(
+        /delete calendar subscription/i
+      )
       fireEvent.click(deleteButton)
-      
+
       // Confirmation dialog should appear
       await waitFor(() => {
-        expect(screen.getByText('Delete Calendar Subscription')).toBeInTheDocument()
+        expect(
+          screen.getByText('Delete Calendar Subscription')
+        ).toBeInTheDocument()
       })
-      
+
       // Click Delete button in confirmation dialog
       const confirmDeleteButton = screen.getByLabelText('Delete')
       fireEvent.click(confirmDeleteButton)
-      
+
       await waitFor(() => {
-        expect(calendarManager.deleteCalendarSubscription).toHaveBeenCalledWith('sub-1')
+        expect(calendarManager.deleteCalendarSubscription).toHaveBeenCalledWith(
+          'sub-1'
+        )
       })
     })
 
@@ -384,32 +449,40 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
           enabled: true
         }
       ]
-      
-      calendarManager.getCalendarSubscriptions.mockResolvedValue(mockSubscriptions)
+
+      calendarManager.getCalendarSubscriptions.mockResolvedValue(
+        mockSubscriptions
+      )
       calendarManager.deleteCalendarSubscription.mockRejectedValue(
         new Error('Database error')
       )
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Work Calendar')).toBeInTheDocument()
       })
-      
-      const deleteButton = screen.getByLabelText(/delete calendar subscription/i)
+
+      const deleteButton = screen.getByLabelText(
+        /delete calendar subscription/i
+      )
       fireEvent.click(deleteButton)
-      
+
       // Confirmation dialog should appear
       await waitFor(() => {
-        expect(screen.getByText('Delete Calendar Subscription')).toBeInTheDocument()
+        expect(
+          screen.getByText('Delete Calendar Subscription')
+        ).toBeInTheDocument()
       })
-      
+
       // Click Delete button in confirmation dialog
       const confirmDeleteButton = screen.getByLabelText('Delete')
       fireEvent.click(confirmDeleteButton)
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/failed to delete calendar subscription/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/failed to delete calendar subscription/i)
+        ).toBeInTheDocument()
       })
     })
   })
@@ -422,29 +495,31 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
         url: 'https://example.com/work.ics',
         enabled: true
       }
-      
+
       calendarManager.getCalendarSubscriptions
         .mockResolvedValueOnce([mockSubscription])
         .mockResolvedValueOnce([{ ...mockSubscription, enabled: false }])
-      
+
       calendarManager.updateCalendarSubscription.mockResolvedValue()
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Work Calendar')).toBeInTheDocument()
       })
-      
+
       const toggleButton = screen.getByLabelText(/disable calendar/i)
       fireEvent.click(toggleButton)
-      
+
       await waitFor(() => {
-        expect(calendarManager.updateCalendarSubscription).toHaveBeenCalledWith({
-          id: 'sub-1',
-          name: 'Work Calendar',
-          url: 'https://example.com/work.ics',
-          enabled: false
-        })
+        expect(calendarManager.updateCalendarSubscription).toHaveBeenCalledWith(
+          {
+            id: 'sub-1',
+            name: 'Work Calendar',
+            url: 'https://example.com/work.ics',
+            enabled: false
+          }
+        )
       })
     })
 
@@ -455,21 +530,27 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
         url: 'https://example.com/work.ics',
         enabled: true
       }
-      
-      calendarManager.getCalendarSubscriptions.mockResolvedValue([mockSubscription])
-      calendarManager.updateCalendarSubscription.mockRejectedValue(new Error('Update failed'))
-      
+
+      calendarManager.getCalendarSubscriptions.mockResolvedValue([
+        mockSubscription
+      ])
+      calendarManager.updateCalendarSubscription.mockRejectedValue(
+        new Error('Update failed')
+      )
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Work Calendar')).toBeInTheDocument()
       })
-      
+
       const toggleButton = screen.getByLabelText(/disable calendar/i)
       fireEvent.click(toggleButton)
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/failed to update calendar subscription/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/failed to update calendar subscription/i)
+        ).toBeInTheDocument()
       })
     })
   })
@@ -482,21 +563,21 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
         url: 'https://example.com/work.ics',
         enabled: true
       }
-      
+
       calendarManager.getCalendarSubscriptions
         .mockResolvedValueOnce([mockSubscription])
         .mockResolvedValueOnce([mockSubscription])
       calendarManager.syncCalendar.mockResolvedValue()
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Work Calendar')).toBeInTheDocument()
       })
-      
+
       const syncButton = screen.getByLabelText(/sync calendar now/i)
       fireEvent.click(syncButton)
-      
+
       await waitFor(() => {
         expect(calendarManager.syncCalendar).toHaveBeenCalledWith('sub-1')
       })
@@ -509,19 +590,21 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
         url: 'https://example.com/work.ics',
         enabled: true
       }
-      
-      calendarManager.getCalendarSubscriptions.mockResolvedValue([mockSubscription])
+
+      calendarManager.getCalendarSubscriptions.mockResolvedValue([
+        mockSubscription
+      ])
       calendarManager.syncCalendar.mockRejectedValue(new Error('Network error'))
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Work Calendar')).toBeInTheDocument()
       })
-      
+
       const syncButton = screen.getByLabelText(/sync calendar now/i)
       fireEvent.click(syncButton)
-      
+
       await waitFor(() => {
         expect(screen.getByText(/failed to sync calendar/i)).toBeInTheDocument()
       })
@@ -536,11 +619,13 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
         url: 'https://example.com/work.ics',
         enabled: true
       }
-      
-      calendarManager.getCalendarSubscriptions.mockResolvedValue([mockSubscription])
-      
+
+      calendarManager.getCalendarSubscriptions.mockResolvedValue([
+        mockSubscription
+      ])
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByLabelText(/status: enabled/i)).toBeInTheDocument()
       })
@@ -554,11 +639,13 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
         enabled: true,
         lastSyncedAt: '2025-01-19T10:30:00Z'
       }
-      
-      calendarManager.getCalendarSubscriptions.mockResolvedValue([mockSubscription])
-      
+
+      calendarManager.getCalendarSubscriptions.mockResolvedValue([
+        mockSubscription
+      ])
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText(/last synced:/i)).toBeInTheDocument()
       })
@@ -573,13 +660,17 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
         syncStatus: 'error',
         lastSyncError: 'Invalid URL format'
       }
-      
-      calendarManager.getCalendarSubscriptions.mockResolvedValue([mockSubscription])
-      
+
+      calendarManager.getCalendarSubscriptions.mockResolvedValue([
+        mockSubscription
+      ])
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/error: invalid url format/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/error: invalid url format/i)
+        ).toBeInTheDocument()
       })
     })
   })
@@ -587,12 +678,16 @@ describe('CalendarSubscriptionModal Integration Tests', () => {
   describe('Empty State', () => {
     it('should display empty state message when no subscriptions exist', async () => {
       calendarManager.getCalendarSubscriptions.mockResolvedValue([])
-      
+
       render(<CalendarSubscriptionModal isOpen={true} onClose={mockOnClose} />)
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/no calendar subscriptions yet/i)).toBeInTheDocument()
-        expect(screen.getByText(/add a calendar to sync external events/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/no calendar subscriptions yet/i)
+        ).toBeInTheDocument()
+        expect(
+          screen.getByText(/add a calendar to sync external events/i)
+        ).toBeInTheDocument()
       })
     })
   })

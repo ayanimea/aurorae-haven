@@ -60,6 +60,8 @@ export default [
         prompt: 'readonly',
         MutationObserver: 'readonly',
         process: 'readonly',
+        Element: 'readonly',
+        CustomEvent: 'readonly',
         // remove these if you now import them as modules:
         DOMPurify: 'readonly',
         marked: 'readonly',

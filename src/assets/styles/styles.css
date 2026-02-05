@@ -2,6 +2,9 @@
  * Refactored for maintainability - each module < 400 lines (target) / 700 lines (max)
  */
 
+/* Design tokens: CSS custom properties for consistent sizing/spacing */
+@import './tokens.css';
+
 /* Base styles: variables, reset, body, backgrounds */
 @import './base.css';
 
@@ -16,6 +19,7 @@
 @import './routines.css';
 @import './notes.css';
 @import './tasks.css';
+@import './habits.css';
 @import './library.css';
 
 /* Common UI components */

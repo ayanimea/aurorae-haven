@@ -455,7 +455,10 @@ TemplateEditor.propTypes = {
     dueOffset: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     steps: PropTypes.arrayOf(PropTypes.object),
     energyTag: PropTypes.string,
-    estimatedDuration: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    estimatedDuration: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]),
     duration: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     description: PropTypes.string
   }),

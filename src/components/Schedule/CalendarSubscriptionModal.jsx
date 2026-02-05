@@ -73,7 +73,9 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
       logger.log('Calendar subscription added successfully')
     } catch (err) {
       logger.error('Failed to add subscription:', err)
-      setError('Failed to add calendar subscription. Please check the URL and try again.')
+      setError(
+        'Failed to add calendar subscription. Please check the URL and try again.'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -111,7 +113,9 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
         enabled: !subscription.enabled
       })
       await loadSubscriptions()
-      logger.log(`Calendar subscription ${subscription.enabled ? 'disabled' : 'enabled'}`)
+      logger.log(
+        `Calendar subscription ${subscription.enabled ? 'disabled' : 'enabled'}`
+      )
     } catch (err) {
       logger.error('Failed to toggle subscription:', err)
       setError('Failed to update calendar subscription')
@@ -136,7 +140,11 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title='Manage Calendar Subscriptions'>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title='Manage Calendar Subscriptions'
+    >
       <div className='calendar-subscriptions'>
         {error && (
           <div className='error-message' role='alert' aria-live='assertive'>
@@ -161,7 +169,10 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
         )}
 
         {showAddForm && (
-          <form onSubmit={handleAddSubscription} className='calendar-subscription-form'>
+          <form
+            onSubmit={handleAddSubscription}
+            className='calendar-subscription-form'
+          >
             <div className='form-group'>
               <label htmlFor='calendar-name'>
                 Calendar Name <span className='required'>*</span>
@@ -170,7 +181,9 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
                 id='calendar-name'
                 type='text'
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder='e.g., Work Calendar'
                 disabled={isLoading}
                 required
@@ -186,7 +199,9 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
                 id='calendar-url'
                 type='url'
                 value={formData.url}
-                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, url: e.target.value })
+                }
                 placeholder='https://example.com/calendar.ics'
                 disabled={isLoading}
                 required
@@ -231,7 +246,11 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
               >
                 Cancel
               </button>
-              <button type='submit' className='btn btn-primary' disabled={isLoading}>
+              <button
+                type='submit'
+                className='btn btn-primary'
+                disabled={isLoading}
+              >
                 <Icon name='check' />
                 Add Calendar
               </button>
@@ -292,7 +311,9 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
                     className='btn btn-sm'
                     onClick={() => handleToggleSubscription(sub)}
                     disabled={isLoading}
-                    aria-label={sub.enabled ? 'Disable calendar' : 'Enable calendar'}
+                    aria-label={
+                      sub.enabled ? 'Disable calendar' : 'Enable calendar'
+                    }
                   >
                     <Icon name={sub.enabled ? 'eyeOff' : 'eye'} />
                   </button>
@@ -320,16 +341,20 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
           </div>
         )}
       </div>
-      
+
       {/* Confirmation Dialog */}
       <ConfirmDialog
         isOpen={!!confirmDelete}
-        title="Delete Calendar Subscription"
-        message={confirmDelete ? `Are you sure you want to delete "${confirmDelete.name}"? This will remove all synced events from this calendar.` : ''}
+        title='Delete Calendar Subscription'
+        message={
+          confirmDelete
+            ? `Are you sure you want to delete "${confirmDelete.name}"? This will remove all synced events from this calendar.`
+            : ''
+        }
         onConfirm={confirmDeleteSubscription}
         onCancel={() => setConfirmDelete(null)}
-        confirmText="Delete"
-        cancelText="Cancel"
+        confirmText='Delete'
+        cancelText='Cancel'
         confirmDanger={true}
       />
     </Modal>

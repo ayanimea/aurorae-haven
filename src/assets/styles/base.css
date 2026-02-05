@@ -4,9 +4,9 @@
   --dim: #a9b1e0;
   --mint: #86f5e0;
   --error: #ff6b6b;
-  --line: rgba(200, 210, 255, 0.16);
-  --glass-hi: rgba(18, 22, 52, 0.38);
-  --glass-lo: rgba(18, 22, 52, 0.26);
+  --line: rgba(200, 210, 255, 0.2);
+  --glass-hi: rgba(18, 22, 52, 0.65);
+  --glass-lo: rgba(18, 22, 52, 0.5);
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   --blur: saturate(135%) blur(10px);
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);

@@ -1,830 +1,460 @@
-import React, { useState, useEffect, useRef } from 'react'
-import PropTypes from 'prop-types'
-import Icon from '../components/common/Icon'
+/**
+REFERENCE: See /docs/schedule-ui-spec.md and /docs/schedule-after-mockup.png
+Any deviation from those visuals is a regression.
+*/
+
+/**
+COPILOT / LLM INSTRUCTIONS — SCHEDULE UI (DO NOT SIMPLIFY)
+
+This Schedule UI is intentionally subtle and layered.
+Do NOT approximate, simplify, or “clean up” the visuals.
+
+Key constraints (NON-NEGOTIABLE):
+
+1. Time-of-day styling is NOT row coloring.
+   - Do NOT apply background colors to hour rows.
+   - Do NOT use a single global background gradient.
+   - Time-of-day bands MUST be implemented as a separate,
+     absolutely-positioned background layer.
+
+2. The schedule has FOUR visual layers, in this order:
+   1) Event cards (primary focus)
+   2) Current-time indicator (if present)
+   3) Hour grid lines (structural only)
+   4) Time-of-day bands (semantic orientation)
+   Decorative backgrounds are below all of the above.
+
+3. Time-of-day bands are SEMANTIC, not decorative.
+   - Morning / Afternoon / Evening / Night MUST be perceptible
+     without reading hour labels.
+   - Bands must be visually distinct from each other,
+     but remain low-contrast and calm.
+   - If converting the UI to grayscale makes all hours look identical,
+     the implementation is WRONG.
+
+4. Bands must be DISCRETE ZONES, not a continuous gradient.
+   - Each band covers a defined time range.
+   - Each band has its own soft internal gradient.
+   - Adjacent bands may overlap softly, but must differ in hue or luminance.
+
+5. Event cards must visually dominate.
+   - Cards float above bands (z-index, elevation).
+   - Cards NEVER inherit band colors.
+   - If background draws attention before events, FAIL.
+
+6. Time scaling MUST be proportional and non-hardcoded.
+   - All vertical sizing derives from a minute-based unit.
+   - Do NOT hardcode pixel heights for hours or events.
+   - Use CSS variables and calculations only.
+
+7. This UI prioritises ORIENTATION over decoration.
+   - Calm but legible.
+   - Structured but non-mechanical.
+   - If it looks “efficient” but feels disorienting, it is WRONG.
+
+If unsure: DO NOT GUESS.
+Ask for clarification or preserve the existing structure.
+*/
+
+/**
+ * Schedule Page - Calendar view for events using React Big Calendar
+ * Manages routines, tasks, meetings, and habits with a clean, accessible interface
+ */
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
+import { format, parse, startOfWeek, getDay, addDays } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
-import CalendarSubscriptionModal from '../components/Schedule/CalendarSubscriptionModal'
-import {
-  createEvent,
-  getEventsForDay,
-  getEventsForWeek
-} from '../utils/scheduleManager'
-import { createLogger } from '../utils/logger'
-import { getCurrentDateISO, subtractDuration } from '../utils/timeUtils'
-import dayjs from 'dayjs'
-import {
-  EVENT_TYPES,
-  SCHEDULE_START_HOUR,
-  SCHEDULE_END_HOUR,
-  PIXELS_PER_HOUR,
-  SCHEDULE_VERTICAL_OFFSET,
-  MINUTES_PER_HOUR
-} from '../utils/scheduleConstants'
+import ItemActionModal from '../components/ItemActionModal'
+import CustomToolbar from '../components/Schedule/CustomToolbar'
+import SolidEventCard from '../components/Schedule/SolidEventCard'
+import TimeBands from '../components/Schedule/TimeBands'
+import ErrorBoundary from '../components/ErrorBoundary'
+import EventService from '../services/EventService'
+import { toRBCEvents, createEventFromSlot } from '../utils/eventAdapter'
+import { EVENT_TYPES } from '../utils/scheduleConstants'
+import { getSettings } from '../utils/settingsManager'
+import 'react-big-calendar/lib/css/react-big-calendar.css'
+import '../assets/styles/schedule-rbc.css'
+import '../components/ErrorBoundary.css'
 
-const logger = createLogger('Schedule')
+/* eslint-disable no-console */
+// Console statements are intentionally used throughout this file for production debugging
+// and error handling. They replaced a custom logger utility that was causing issues in
+// production builds where Vite's minification was removing the logger module entirely,
+// resulting in "logger is not defined" runtime errors. Direct console usage is immune
+// to tree-shaking and ensures reliable error reporting in production environments.
+// See commit 511b225 for the migration from custom logger to console methods.
 
-// Reusable ScheduleBlock component
-function ScheduleBlock({
-  type,
-  className = '',
-  title,
-  time,
-  top,
-  height,
-  isNext = false,
-  onClick
-}) {
-  const blockClasses = `block ${type} ${className}`.trim()
-  const ariaLabel = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${title} at ${time}${isNext ? ' - Next up' : ''}`
-
-  return (
-    <div
-      className={blockClasses}
-      style={{ top: `${top}px`, height: `${height}px` }}
-      aria-label={ariaLabel}
-      onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={
-        onClick
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onClick(e)
-              }
-            }
-          : undefined
-      }
-    >
-      {isNext && <div className='next-badge'>Next</div>}
-      <div className='title'>{title}</div>
-      <div className='meta'>{time}</div>
-    </div>
-  )
+// Format helper functions (module level to avoid recreation on each render)
+const createTimeFormatter = (use24HourFormat) => {
+  const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
+  return ({ start, end }) =>
+    `${format(start, timeFormat)} - ${format(end, timeFormat)}`
 }
 
-ScheduleBlock.propTypes = {
-  type: PropTypes.string.isRequired,
-  className: PropTypes.string,
-  title: PropTypes.string.isRequired,
-  time: PropTypes.string.isRequired,
-  top: PropTypes.number.isRequired,
-  height: PropTypes.number.isRequired,
-  isNext: PropTypes.bool,
-  onClick: PropTypes.func
-}
-
-// Reusable component for travel/preparation time blocks
-function TimePreparationBlock({ type, top, height, time }) {
-  const blockClasses = `block block-preparation ${type}`
-  const label = type === 'travel' ? 'Travel' : 'Prep'
-  const ariaLabel = `${label} time: ${time}`
-
-  return (
-    <div
-      className={blockClasses}
-      style={{ top: `${top}px`, height: `${height}px` }}
-      aria-label={ariaLabel}
-      role="note"
-    >
-      <div className='title preparation-label'>{label}</div>
-      <div className='meta'>{time}</div>
-    </div>
-  )
-}
-
-TimePreparationBlock.propTypes = {
-  type: PropTypes.oneOf(['travel', 'preparation']).isRequired,
-  top: PropTypes.number.isRequired,
-  height: PropTypes.number.isRequired,
-  time: PropTypes.string.isRequired
-}
-
-// Static configuration data - defined outside component to prevent recreation on every render
-const SCHEDULE_BLOCKS = [
-  {
-    type: EVENT_TYPES.ROUTINE,
-    title: 'Morning Launch',
-    time: '07:00–07:30',
-    top: 126,
-    height: 60
-  },
-  {
-    type: EVENT_TYPES.MEETING,
-    title: 'Team Standup',
-    time: '10:00–10:30',
-    top: 486,
-    height: 60,
-    className: 'next-up',
-    isNext: true
-  },
-  {
-    type: EVENT_TYPES.TASK,
-    className: 'not-urgent-important',
-    title: 'Buy groceries',
-    time: '16:00–16:30',
-    top: 1206,
-    height: 60
-  }
-]
-
-const TIME_PERIODS = [
-  { className: 'time-period-morning', top: 0, height: 720 },
-  { className: 'time-period-afternoon', top: 720, height: 720 },
-  { className: 'time-period-evening', top: 1440, height: 480 }
-]
-
-const SEPARATOR_POSITIONS = [126, 726, 1446]
-
-// TODO: Extract timeToPosition and durationToHeight to a testable utility module
-// These functions contain complex logic for time-to-pixel conversion and boundary clamping
-// that should be thoroughly unit tested with various edge cases
-
-// Convert time string (HH:MM) to pixel position
-// Schedule starts at 06:00 (SCHEDULE_START_HOUR), each hour is 120px (PIXELS_PER_HOUR)
-// Returns -1 if time is invalid or outside schedule range
-const timeToPosition = (timeString) => {
-  // Input validation: check for null, type, and format
-  if (
-    !timeString ||
-    typeof timeString !== 'string' ||
-    !timeString.includes(':')
-  ) {
-    return -1
-  }
-  const parts = timeString.split(':')
-  if (parts.length !== 2) return -1
-
-  const hours = Number(parts[0])
-  const minutes = Number(parts[1])
-
-  // Validate numeric conversion
-  if (isNaN(hours) || isNaN(minutes)) return -1
-  // Check if time falls within schedule window (06:00-22:00)
-  if (hours < SCHEDULE_START_HOUR || hours >= SCHEDULE_END_HOUR) return -1
-
-  // Calculate pixel position from schedule start time
-  return (
-    (hours - SCHEDULE_START_HOUR) * PIXELS_PER_HOUR +
-    (minutes / MINUTES_PER_HOUR) * PIXELS_PER_HOUR +
-    SCHEDULE_VERTICAL_OFFSET
-  )
-}
-
-// Convert duration in minutes to pixel height
-// Clamps event times to visible schedule window (06:00-22:00) to prevent overflow
-const durationToHeight = (startTime, endTime) => {
-  // Input validation: check for null, type, and format
-  if (
-    !startTime ||
-    !endTime ||
-    typeof startTime !== 'string' ||
-    typeof endTime !== 'string'
-  ) {
-    return 0
-  }
-  if (!startTime.includes(':') || !endTime.includes(':')) {
-    return 0
-  }
-
-  const startParts = startTime.split(':')
-  const endParts = endTime.split(':')
-
-  if (startParts.length !== 2 || endParts.length !== 2) return 0
-
-  const startHours = Number(startParts[0])
-  const startMinutes = Number(startParts[1])
-  const endHours = Number(endParts[0])
-  const endMinutes = Number(endParts[1])
-
-  // Validate numeric conversion
-  if (
-    isNaN(startHours) ||
-    isNaN(startMinutes) ||
-    isNaN(endHours) ||
-    isNaN(endMinutes)
-  ) {
-    return 0
-  }
-
-  // Convert schedule hours to minutes for easier calculation
-  const scheduleStartMinutes = SCHEDULE_START_HOUR * MINUTES_PER_HOUR // 360 minutes (06:00)
-  const scheduleEndMinutes = SCHEDULE_END_HOUR * MINUTES_PER_HOUR // 1320 minutes (22:00)
-
-  let startTotalMinutes = startHours * MINUTES_PER_HOUR + startMinutes
-  let endTotalMinutes = endHours * MINUTES_PER_HOUR + endMinutes
-
-  // If the event is completely outside the visible schedule, height is zero
-  if (
-    endTotalMinutes <= scheduleStartMinutes ||
-    startTotalMinutes >= scheduleEndMinutes
-  ) {
-    return 0
-  }
-
-  // Clamp event times to the visible schedule window to prevent overflow rendering
-  // This handles events that start before 06:00 or end after 22:00
-  if (startTotalMinutes < scheduleStartMinutes) {
-    startTotalMinutes = scheduleStartMinutes
-  }
-  if (endTotalMinutes > scheduleEndMinutes) {
-    endTotalMinutes = scheduleEndMinutes
-  }
-
-  // Calculate the visible duration and convert to pixels
-  const visibleDurationMinutes = Math.max(
-    0,
-    endTotalMinutes - startTotalMinutes
-  )
-  return (visibleDurationMinutes / MINUTES_PER_HOUR) * PIXELS_PER_HOUR
-}
+// Configure date-fns localizer for React Big Calendar with European settings
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: (date) => startOfWeek(date, { weekStartsOn: 1 }), // Monday start (European)
+  getDay,
+  locales: {}
+})
 
 function Schedule() {
-  // View mode state - 'day' or 'week'
-  const [viewMode, setViewMode] = useState('day')
-
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedEventType, setSelectedEventType] = useState(null)
-  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
-
-  // Events state
+  // State management
+  const [view, setView] = useState('day')
+  const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Dropdown state for event type selector
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedEventType, setSelectedEventType] = useState(null)
+  const [selectedEvent, setSelectedEvent] = useState(null)
+  const [eventToDelete, setEventToDelete] = useState(null)
+  const [showActionModal, setShowActionModal] = useState(false)
 
-  // Refs for timeout cleanup and menu items caching
-  const tabTimeoutRef = useRef(null)
-  const autoFocusTimeoutRef = useRef(null)
-  const menuItemsRef = useRef(null)
+  // Get time format preference from settings (default to 24-hour)
+  // Reactive settings: useState + storage listener for cross-tab updates
+  // Settings changes in Settings page or other tabs now reflect immediately
+  const [use24HourFormat, setUse24HourFormat] = useState(
+    () => getSettings().schedule?.use24HourFormat ?? true
+  )
 
-  // Calculate current time position for time indicator
-  const [currentTimePosition, setCurrentTimePosition] = useState(0)
-
-  // Load events based on view mode
   useEffect(() => {
-    const loadEvents = async () => {
-      setIsLoading(true)
-      setError('')
+    // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
+    const handleStorage = () => {
       try {
-        const loadedEvents =
-          viewMode === 'day'
-            ? await getEventsForDay(getCurrentDateISO())
-            : await getEventsForWeek()
-        // Ensure loadedEvents is always an array
-        setEvents(Array.isArray(loadedEvents) ? loadedEvents : [])
+        const updatedValue = getSettings().schedule?.use24HourFormat
+        if (typeof updatedValue === 'boolean') {
+          setUse24HourFormat(updatedValue)
+        }
       } catch (err) {
-        logger.error('Failed to load events:', err)
-        setEvents([])
-        setError('Failed to load schedule events')
-      } finally {
-        setIsLoading(false)
+        console.error('Failed to sync 24-hour format from settings (storage):', err)
       }
     }
 
-    loadEvents()
-  }, [viewMode])
-
-  useEffect(() => {
-    const updateCurrentTime = () => {
-      const now = new Date()
-      const hours = now.getHours()
-      const minutes = now.getMinutes()
-
-      // Position = (hours - SCHEDULE_START_HOUR) * PIXELS_PER_HOUR + (minutes / MINUTES_PER_HOUR) * PIXELS_PER_HOUR + SCHEDULE_VERTICAL_OFFSET
-      if (hours >= SCHEDULE_START_HOUR && hours < SCHEDULE_END_HOUR) {
-        const position =
-          (hours - SCHEDULE_START_HOUR) * PIXELS_PER_HOUR +
-          (minutes / MINUTES_PER_HOUR) * PIXELS_PER_HOUR +
-          SCHEDULE_VERTICAL_OFFSET
-        setCurrentTimePosition(position)
-      } else {
-        setCurrentTimePosition(-1) // Hide if outside schedule range
+    // Handle same-tab updates via custom 'settingsUpdated' event
+    // Settings page should dispatch: window.dispatchEvent(new CustomEvent('settingsUpdated'))
+    const handleSettingsUpdated = () => {
+      try {
+        const updatedValue = getSettings().schedule?.use24HourFormat
+        if (typeof updatedValue === 'boolean') {
+          setUse24HourFormat(updatedValue)
+        }
+      } catch (err) {
+        console.error('Failed to sync 24-hour format from settings (custom event):', err)
       }
     }
 
-    updateCurrentTime()
-    const interval = setInterval(updateCurrentTime, 60000) // Update every minute
-
-    return () => clearInterval(interval)
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('settingsUpdated', handleSettingsUpdated)
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('settingsUpdated', handleSettingsUpdated)
+    }
   }, [])
 
-  // Handle opening modal for adding events
-  const handleAddEvent = (eventType) => {
-    setSelectedEventType(eventType)
-    setIsModalOpen(true)
-    setIsDropdownOpen(false) // Close dropdown when opening modal
-  }
+  // Convert events to RBC format
+  const rbcEvents = useMemo(() => toRBCEvents(events), [events])
 
-  // Toggle dropdown menu with keyboard support
-  const toggleDropdown = (event) => {
-    // Prevent default for Space key to avoid page scrolling
-    if (event?.key === ' ') {
-      event.preventDefault()
-    }
+  // Load events based on current view and date
+  const loadEvents = useCallback(async () => {
+    setIsLoading(true)
+    setError('')
+    try {
+      let loadedEvents = []
+      const dateStr = format(date, 'yyyy-MM-dd')
 
-    const wasClosedBefore = !isDropdownOpen
-    setIsDropdownOpen(!isDropdownOpen)
-
-    // When dropdown opens (via keyboard or mouse), cache menu items for performance
-    if (wasClosedBefore) {
-      // Use setTimeout to ensure the menu is rendered before querying/focusing, store ref for cleanup
-      autoFocusTimeoutRef.current = setTimeout(() => {
-        const menuButtons = document.querySelectorAll(
-          '.schedule-dropdown-menu button'
+      if (view === 'day') {
+        loadedEvents = await EventService.getEventsForDate(dateStr)
+      } else if (view === 'week') {
+        loadedEvents = await EventService.getEventsForWeek(dateStr)
+      } else if (view === 'month') {
+        const startOfMonth = startOfWeek(
+          new Date(date.getFullYear(), date.getMonth(), 1)
         )
-        // Cache menu items in ref for performance (avoid repeated DOM queries in arrow key nav)
-        menuItemsRef.current = Array.from(menuButtons)
+        const endOfMonth = addDays(startOfMonth, 41) // 6 weeks
+        loadedEvents = await EventService.getEventsForRange(
+          format(startOfMonth, 'yyyy-MM-dd'),
+          format(endOfMonth, 'yyyy-MM-dd')
+        )
+      }
 
-        // Only auto-focus first menu item when opened via keyboard (Space or Enter) to preserve UX
-        if (event?.key === 'Enter' || event?.key === ' ') {
-          menuItemsRef.current[0]?.focus()
-        }
-      }, 0)
-    } else {
-      // Clear cached menu items when dropdown closes
-      menuItemsRef.current = null
+      setEvents(loadedEvents)
+    } catch (err) {
+      console.error('Failed to load events:', err)
+      setError('Failed to load events. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
-  }
+  }, [view, date])
 
-  // Close dropdown when clicking outside or using keyboard navigation
+  // Load events when view or date changes
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isDropdownOpen && !event.target.closest('.schedule-dropdown')) {
-        setIsDropdownOpen(false)
+    loadEvents()
+  }, [loadEvents])
+
+  // Event handlers
+  const handleSelectSlot = useCallback((slotInfo) => {
+    try {
+      console.log('Slot selected:', slotInfo)
+      const eventData = createEventFromSlot(slotInfo)
+      if (eventData) {
+        setSelectedEvent(eventData)
+        setSelectedEventType(EVENT_TYPES.TASK)
+        setIsModalOpen(true)
+      } else {
+        console.warn('Failed to create event data from slot')
       }
+    } catch (err) {
+      console.error('[Schedule] Error handling slot selection:', err)
+      setError('Failed to create event. Please try again.')
     }
+  }, [])
 
-    const handleKeyDown = (event) => {
-      if (!isDropdownOpen) {
-        return
+  const handleSelectEvent = useCallback((event) => {
+    try {
+      console.log('Event selected:', event)
+      const originalEvent = event.resource?.originalEvent
+      if (originalEvent) {
+        const isContextMenu =
+          event.resource?.isContextMenu ?? event.isContextMenu ?? false
+        setEventToDelete({ ...originalEvent, isContextMenu })
+        setShowActionModal(true)
+      } else {
+        console.warn('Event selected but no originalEvent found in resource')
       }
-
-      // Allow users to close the dropdown with Escape
-      if (event.key === 'Escape') {
-        setIsDropdownOpen(false)
-        // Return focus to the dropdown button
-        const dropdownButton = document.querySelector(
-          '.schedule-dropdown button[aria-haspopup="menu"]'
-        )
-        if (dropdownButton) {
-          dropdownButton.focus()
-        }
-        return
-      }
-
-      // When tabbing, close the dropdown once focus leaves it
-      if (event.key === 'Tab') {
-        // Clear any existing timeout
-        if (tabTimeoutRef.current) {
-          clearTimeout(tabTimeoutRef.current)
-        }
-
-        // Wait for focus to move before checking the active element
-        tabTimeoutRef.current = window.setTimeout(() => {
-          const activeElement = document.activeElement
-          const isInsideDropdown =
-            activeElement &&
-            activeElement.closest &&
-            activeElement.closest('.schedule-dropdown')
-
-          if (!isInsideDropdown) {
-            setIsDropdownOpen(false)
-          }
-          tabTimeoutRef.current = null
-        }, 0)
-      }
-
-      // Arrow key navigation within menu - use cached menu items if available
-      if (
-        event.key === 'ArrowDown' ||
-        event.key === 'ArrowUp' ||
-        event.key === 'Home' ||
-        event.key === 'End'
-      ) {
-        // Use cached menu items or query DOM if not cached
-        const menuItems =
-          menuItemsRef.current ||
-          Array.from(
-            document.querySelectorAll('.schedule-dropdown-menu button')
-          )
-
-        if (!menuItems.length) {
-          return
-        }
-
-        const currentIndex = menuItems.indexOf(document.activeElement)
-
-        if (event.key === 'ArrowDown') {
-          event.preventDefault()
-          const nextIndex =
-            currentIndex < menuItems.length - 1 ? currentIndex + 1 : 0
-          menuItems[nextIndex]?.focus()
-        } else if (event.key === 'ArrowUp') {
-          event.preventDefault()
-          const prevIndex =
-            currentIndex > 0 ? currentIndex - 1 : menuItems.length - 1
-          menuItems[prevIndex]?.focus()
-        } else if (event.key === 'Home') {
-          event.preventDefault()
-          menuItems[0]?.focus()
-        } else if (event.key === 'End') {
-          event.preventDefault()
-          menuItems[menuItems.length - 1]?.focus()
-        }
-      }
+    } catch (err) {
+      console.error('[Schedule] Error handling event selection:', err)
+      setError('Failed to open event. Please try again.')
     }
+  }, [])
 
-    document.addEventListener('click', handleClickOutside)
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside)
-      document.removeEventListener('keydown', handleKeyDown)
-      // Cleanup any pending dropdown-related timeouts
-      if (tabTimeoutRef.current) {
-        clearTimeout(tabTimeoutRef.current)
+  const handleEventContextMenu = useCallback((event) => {
+    try {
+      console.log('Event context menu:', event)
+      const originalEvent = event.resource?.originalEvent
+      if (originalEvent) {
+        setEventToDelete({ ...originalEvent, isContextMenu: true })
+        setShowActionModal(true)
+      } else {
+        console.warn('Context menu triggered but no originalEvent found')
       }
-      if (autoFocusTimeoutRef.current) {
-        clearTimeout(autoFocusTimeoutRef.current)
-      }
+    } catch (err) {
+      console.error('[Schedule] Error handling context menu:', err)
     }
-  }, [isDropdownOpen])
+  }, [])
 
-  // Handle saving event
   const handleSaveEvent = async (eventData) => {
     try {
-      await createEvent(eventData)
-      // Reload events after creating new one, keeping the current view/date
-      const loadedEvents =
-        viewMode === 'day'
-          ? await getEventsForDay(getCurrentDateISO())
-          : await getEventsForWeek()
-      // Ensure loadedEvents is always an array
-      setEvents(Array.isArray(loadedEvents) ? loadedEvents : [])
-      logger.log(`${eventData.type} event created successfully`)
+      // Ensure we have a valid event object
+      if (!eventData) {
+        throw new Error('No event data provided')
+      }
+
+      // Check if this is an update or create
+      // For updates, we need both an ID and it must be a string/number
+      const isUpdate =
+        eventData.id &&
+        (typeof eventData.id === 'string' || typeof eventData.id === 'number')
+
+      if (isUpdate) {
+        console.log('Updating event:', eventData.id)
+        await EventService.updateEvent(eventData.id, eventData)
+      } else {
+        console.log('Creating new event')
+        await EventService.createEvent(eventData)
+      }
+
+      await loadEvents()
+      setIsModalOpen(false)
+      setSelectedEvent(null)
     } catch (err) {
-      logger.error('Failed to save event:', err)
-      // Provide specific error message if available
-      const reason = err && err.message ? err.message : 'Unknown error'
-      throw new Error(`Failed to save event: ${reason}. Please try again.`)
+      console.error('[Schedule] Failed to save event:', err)
+      setError('Failed to save event. Please try again.')
     }
   }
 
-  // Handle closing modal
-  const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setSelectedEventType(null)
+  const handleDeleteEvent = async () => {
+    if (!eventToDelete) {
+      console.warn('handleDeleteEvent called with no eventToDelete')
+      return
+    }
+
+    try {
+      if (!eventToDelete.id) {
+        throw new Error('Event ID is required for deletion')
+      }
+
+      console.log('Deleting event:', eventToDelete.id)
+      await EventService.deleteEvent(eventToDelete.id)
+      await loadEvents()
+      setShowActionModal(false)
+      setEventToDelete(null)
+    } catch (err) {
+      console.error('[Schedule] Failed to delete event:', err)
+      setError('Failed to delete event. Please try again.')
+    }
   }
 
-  // Handle view mode change
-  const handleViewModeChange = (mode) => {
-    setViewMode(mode)
+  const handleEditEvent = () => {
+    try {
+      if (eventToDelete) {
+        console.log('Editing event:', eventToDelete.id)
+        setSelectedEvent(eventToDelete)
+        setSelectedEventType(eventToDelete.type)
+        setShowActionModal(false)
+        setIsModalOpen(true)
+      } else {
+        console.warn('handleEditEvent called with no eventToDelete')
+      }
+    } catch (err) {
+      console.error('[Schedule] Error handling edit event:', err)
+      setError('Failed to edit event. Please try again.')
+    }
   }
+
+  const handleCloseModal = () => {
+    try {
+      setIsModalOpen(false)
+      setSelectedEvent(null)
+      setSelectedEventType(null)
+      // Clear any errors when closing modal
+      setError('')
+    } catch (err) {
+      console.error('[Schedule] Error closing modal:', err)
+    }
+  }
+
+  const handleScheduleEvent = (eventType) => {
+    try {
+      console.log('Schedule event button clicked:', eventType)
+      setSelectedEventType(eventType)
+      setSelectedEvent(null)
+      setIsModalOpen(true)
+    } catch (err) {
+      console.error('[Schedule] Error handling schedule event:', err)
+      setError('Failed to open event creation. Please try again.')
+    }
+  }
+
+  // Calendar configuration
+  const views = useMemo(
+    () => ({
+      day: true,
+      week: true,
+      month: true
+    }),
+    []
+  )
+
+  const formats = useMemo(() => {
+    const gutterFormat = use24HourFormat ? 'HH:mm' : 'h a'
+    const timeFormatter = createTimeFormatter(use24HourFormat)
+
+    return {
+      timeGutterFormat: gutterFormat,
+      eventTimeRangeFormat: timeFormatter,
+      agendaTimeRangeFormat: timeFormatter,
+      dayFormat: 'EEE dd',
+      dayHeaderFormat: 'EEEE, MMMM d',
+      monthHeaderFormat: 'MMMM yyyy'
+    }
+  }, [use24HourFormat])
 
   return (
-    <>
-      {/* Event Modal */}
-      <EventModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveEvent}
-        eventType={selectedEventType}
-      />
-
-      {/* Calendar Subscription Modal */}
-      <CalendarSubscriptionModal
-        isOpen={isCalendarModalOpen}
-        onClose={() => setIsCalendarModalOpen(false)}
-      />
-
-      {/* Error notification */}
-      {error && (
-        <div className='error-notification' role='alert' aria-live='assertive'>
-          <Icon name='alertCircle' />
-          <span>{error}</span>
-          <button
-            type='button'
-            className='error-notification__close'
-            onClick={() => setError('')}
-            aria-label='Dismiss error notification'
-          >
-            <Icon name='x' />
-          </button>
-        </div>
-      )}
-
-      <div className='card'>
-        <div className='card-h'>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <strong>Schedule</strong>
-            <span className='small'>
-              Today · {dayjs().format('ddd DD/MM/YYYY')}
-            </span>
+    <ErrorBoundary>
+      <div className='page page-schedule'>
+        <div className='schedule-container'>
+          <div className='schedule-wrapper'>
+            <TimeBands />
+            <Calendar
+              localizer={localizer}
+              events={rbcEvents}
+              view={view}
+              views={views}
+              date={date}
+              onNavigate={setDate}
+              onView={setView}
+              onSelectSlot={handleSelectSlot}
+              onSelectEvent={handleSelectEvent}
+              selectable
+              popup
+              step={15}
+              timeslots={4}
+              min={new Date(2000, 0, 1, 7, 0)}
+              max={new Date(2000, 0, 2, 0, 0)}
+              formats={formats}
+              aria-label='Event calendar'
+              components={{
+                toolbar: (props) => (
+                  <CustomToolbar
+                    {...props}
+                    views={['day', 'week', 'month']}
+                    onScheduleEvent={handleScheduleEvent}
+                    EVENT_TYPES={EVENT_TYPES}
+                  />
+                ),
+                event: (props) => (
+                  <SolidEventCard
+                    {...props}
+                    onContextMenu={handleEventContextMenu}
+                  />
+                )
+              }}
+              eventPropGetter={(event) => ({
+                className: `event-${event.resource?.type || 'task'}`
+              })}
+            />
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button
-              className='btn'
-              onClick={() => setIsCalendarModalOpen(true)}
-              aria-label='Manage calendar subscriptions'
-            >
-              <Icon name='calendar' /> Calendars
-            </button>
-            <button
-              className={`btn ${viewMode === 'day' ? 'btn-active' : ''}`}
-              onClick={() => handleViewModeChange('day')}
-              aria-label='View day schedule'
-              aria-pressed={viewMode === 'day'}
-            >
-              Day
-            </button>
-            <button
-              className={`btn ${viewMode === 'week' ? 'btn-active' : ''}`}
-              onClick={() => handleViewModeChange('week')}
-              aria-label='View week schedule'
-              aria-pressed={viewMode === 'week'}
-            >
-              Week
-            </button>
-            {/* Unified dropdown for scheduling all event types */}
-            <div className='schedule-dropdown'>
-              <button
-                className='btn'
-                onClick={(e) => {
-                  // Handle both mouse and keyboard activation
-                  // Keyboard (Space/Enter) activation is handled in onKeyDown to enable preventDefault
-                  // This onClick filters out keyboard-initiated clicks (detail === 0) to prevent double-triggering
-                  if (e.detail !== 0) {
-                    // detail is 0 for keyboard-initiated clicks
-                    toggleDropdown(e)
-                  }
-                }}
-                onKeyDown={(e) => {
-                  // Only respond to Enter and Space keys for dropdown toggle
-                  const key = e.key
-                  if (key === 'Enter' || key === ' ') {
-                    e.preventDefault() // Prevent default to avoid double-triggering onClick
-                    toggleDropdown(e)
-                  }
-                }}
-                aria-label='Schedule an event'
-                aria-expanded={isDropdownOpen}
-                aria-haspopup='menu'
-              >
-                <Icon name='plus' /> Schedule <Icon name='chevronDown' />
-              </button>
-              {isDropdownOpen && (
-                <div className='schedule-dropdown-menu' role='menu'>
-                  <button
-                    className='schedule-dropdown-item'
-                    role='menuitem'
-                    onClick={() => handleAddEvent(EVENT_TYPES.ROUTINE)}
-                    aria-label='Schedule a routine'
-                  >
-                    <Icon name='repeat' /> Routine
-                  </button>
-                  <button
-                    className='schedule-dropdown-item'
-                    role='menuitem'
-                    onClick={() => handleAddEvent(EVENT_TYPES.TASK)}
-                    aria-label='Schedule a task'
-                  >
-                    <Icon name='checkCircle' /> Task
-                  </button>
-                  <button
-                    className='schedule-dropdown-item'
-                    role='menuitem'
-                    onClick={() => handleAddEvent(EVENT_TYPES.MEETING)}
-                    aria-label='Schedule a meeting'
-                  >
-                    <Icon name='users' /> Meeting
-                  </button>
-                  <button
-                    className='schedule-dropdown-item'
-                    role='menuitem'
-                    onClick={() => handleAddEvent(EVENT_TYPES.HABIT)}
-                    aria-label='Schedule a habit'
-                  >
-                    <Icon name='target' /> Habit
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className='card-b layout-schedule'>
+
           {isLoading && (
-            <div className='loading-indicator' role='status' aria-live='polite'>
-              <span>Loading schedule...</span>
+            <div className='loading-overlay'>
+              <p>Loading events...</p>
             </div>
           )}
-          <aside className='sidebar'>
-            <div className='card'>
-              <div className='card-h'>
-                <strong>Today&apos;s queue</strong>
-              </div>
-              <div className='card-b'>
-                <div className='list'>
-                  <div className='list-row'>
-                    <span>Deep Work Warmup</span>
-                  </div>
-                </div>
-              </div>
+
+          {error && (
+            <div className='error-message' role='alert'>
+              {error}
+              <button
+                onClick={() => setError('')}
+                className='error-dismiss'
+                aria-label='Dismiss error'
+              >
+                ×
+              </button>
             </div>
-            <div className='card' style={{ marginTop: '12px' }}>
-              <div className='card-h'>
-                <strong>Tasks</strong>
-              </div>
-              <div className='card-b'>
-                <div className='list'>
-                  <div className='list-row'>
-                    <span>Buy groceries</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-          <section>
-            <div className='calendar'>
-              <div className='hours'>
-                <div className='hour-col'>
-                  <div className='h'>06:00</div>
-                  <div className='h time-period-label'>Morning</div>
-                  <div className='h'>08:00</div>
-                  <div className='h'>09:00</div>
-                  <div className='h'>10:00</div>
-                  <div className='h'>11:00</div>
-                  <div className='h time-period-label'>Afternoon</div>
-                  <div className='h'>13:00</div>
-                  <div className='h'>14:00</div>
-                  <div className='h'>15:00</div>
-                  <div className='h'>16:00</div>
-                  <div className='h'>17:00</div>
-                  <div className='h time-period-label'>Evening</div>
-                  <div className='h'>19:00</div>
-                  <div className='h'>20:00</div>
-                  <div className='h'>21:00</div>
-                </div>
-                <div className='slots' style={{ height: '1920px' }}>
-                  {/* Time period backgrounds */}
-                  {TIME_PERIODS.map((period) => (
-                    <div
-                      key={period.className}
-                      className={period.className}
-                      style={{
-                        position: 'absolute',
-                        top: `${period.top}px`,
-                        left: '0',
-                        right: '0',
-                        height: `${period.height}px`
-                      }}
-                      aria-hidden='true'
-                    />
-                  ))}
-
-                  {/* Time period separators */}
-                  {SEPARATOR_POSITIONS.map((position) => (
-                    <div
-                      key={`separator-${position}`}
-                      className='time-period-separator'
-                      style={{ top: `${position}px` }}
-                      aria-hidden='true'
-                    />
-                  ))}
-
-                  {/* Current time indicator */}
-                  {currentTimePosition > 0 && (
-                    <div
-                      className='current-time-indicator'
-                      style={{ top: `${currentTimePosition}px` }}
-                      aria-label='Current time'
-                    >
-                      <span className='current-time-label'>Now</span>
-                    </div>
-                  )}
-
-                  {/* Schedule blocks - combine static demo blocks with dynamic events */}
-                  {SCHEDULE_BLOCKS.map((block) => (
-                    <ScheduleBlock
-                      key={`${block.type}-${block.title}-${block.time}-${block.top}`}
-                      {...block}
-                    />
-                  ))}
-
-                  {/* Dynamic events from database */}
-                  {/* Note: User event interactions are logged (event ID only) for debugging purposes.
-                       See PRIVACY.md for detailed information about our logging practices and data handling. */}
-                  {events.reduce((acc, event) => {
-                    // Filter out invalid events with proper ID validation
-                    // Allow ID >= 0 (0 can be valid in some database systems)
-                    const hasValidId =
-                      typeof event?.id === 'number' &&
-                      Number.isFinite(event.id) &&
-                      event.id >= 0
-
-                    if (
-                      !event ||
-                      !event.startTime ||
-                      !event.endTime ||
-                      !event.title ||
-                      !hasValidId
-                    ) {
-                      return acc
-                    }
-
-                    // Compute layout metrics once per event (performance optimization)
-                    const top = timeToPosition(event.startTime)
-                    const height = durationToHeight(
-                      event.startTime,
-                      event.endTime
-                    )
-
-                    // Filter out events completely outside schedule range
-                    if (top < 0 || height <= 0) {
-                      return acc
-                    }
-
-                    // Calculate start time for all pre-event activities (travel + preparation)
-                    // This represents when the user needs to start preparing/traveling for the event
-                    const prepStartTime = subtractDuration(
-                      event.startTime,
-                      event.preparationTime || 0
-                    )
-
-                    // Render preparation time block if present
-                    if (event.preparationTime && event.preparationTime > 0) {
-                      const prepTop = timeToPosition(prepStartTime)
-                      const prepHeight = durationToHeight(
-                        prepStartTime,
-                        event.startTime
-                      )
-
-                      if (prepTop >= 0 && prepHeight > 0) {
-                        acc.push(
-                          <TimePreparationBlock
-                            key={`prep-${event.id}`}
-                            type='preparation'
-                            top={prepTop}
-                            height={prepHeight}
-                            time={`${event.preparationTime}m`}
-                          />
-                        )
-                      }
-                    }
-
-                    // Render travel time block if present
-                    if (event.travelTime && event.travelTime > 0) {
-                      const travelStartTime = subtractDuration(
-                        prepStartTime,
-                        event.travelTime
-                      )
-                      const travelTop = timeToPosition(travelStartTime)
-                      const travelHeight = durationToHeight(
-                        travelStartTime,
-                        prepStartTime
-                      )
-
-                      if (travelTop >= 0 && travelHeight > 0) {
-                        acc.push(
-                          <TimePreparationBlock
-                            key={`travel-${event.id}`}
-                            type='travel'
-                            top={travelTop}
-                            height={travelHeight}
-                            time={`${event.travelTime}m`}
-                          />
-                        )
-                      }
-                    }
-
-                    // Render main event block
-                    acc.push(
-                      <ScheduleBlock
-                        key={`dynamic-event-${event.id}`}
-                        type={event.type || EVENT_TYPES.TASK}
-                        title={event.title}
-                        time={`${event.startTime}–${event.endTime}`}
-                        top={top}
-                        height={height}
-                        onClick={() =>
-                          // Log interaction for debugging (event ID only, no PII)
-                          logger.info('User interacted with schedule event', {
-                            id: event.id
-                          })
-                        }
-                      />
-                    )
-                    return acc
-                  }, [])}
-                </div>
-              </div>
-            </div>
-          </section>
+          )}
         </div>
+
+        {/* Event Modal */}
+        <EventModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSaveEvent}
+          eventType={selectedEventType}
+          initialData={selectedEvent}
+        />
+
+        {/* Action Modal for Edit/Delete */}
+        {showActionModal && eventToDelete && (
+          <ItemActionModal
+            item={eventToDelete}
+            onClose={() => {
+              setShowActionModal(false)
+              setEventToDelete(null)
+            }}
+            onEdit={handleEditEvent}
+            onDelete={handleDeleteEvent}
+          />
+        )}
       </div>
-    </>
+    </ErrorBoundary>
   )
 }
 

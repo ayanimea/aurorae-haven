@@ -1,4 +1,4 @@
-name: Build, Test & Deploy to GitHub Pages
+name: CI/CD - Build, Test, Security & Deploy to GitHub Pages
 
 on:
   push:
@@ -6,6 +6,14 @@ on:
       - main
       - 'feature-*'
       - 'hotfix-*'
+      - 'copilot/**'
+  pull_request:
+    branches:
+      - main
+      - 'feature-*'
+      - 'hotfix-*'
+      - 'copilot/**'
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -14,12 +22,96 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: 'pages-${{ github.ref }}'
   cancel-in-progress: true
 
 jobs:
-  # Job 1: Test the code
+  # Job 1: Meta checks (required files exist)
+  meta-checks:
+    name: Meta required files exist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure copilot instructions present
+        run: |
+          test -f ".github/copilot-instructions.md" || (echo "Missing .github/copilot-instructions.md" && exit 1)
+      - name: Ensure README guidelines present
+        run: |
+          test -f "README.md" || (echo "Missing README.md" && exit 1)
+      - name: Ensure CONTRIBUTING present
+        run: |
+          test -f "CONTRIBUTING.md" || (echo "Missing CONTRIBUTING.md" && exit 1)
+
+  # Job 2: Markdown link validation
+  markdown-links:
+    name: Docs validate links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache markdown-link-check
+        uses: actions/cache@v4
+        id: markdown-link-check-cache
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-markdown-link-check-3.14.2-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-markdown-link-check-
+
+      - name: Install markdown-link-check
+        run: npm install -g markdown-link-check@3.14.2
+        env:
+          npm_config_prefer_offline: false
+
+      - name: Check Markdown links
+        run: |
+          git ls-files -z '*.md' | xargs -0 -n 1 markdown-link-check -c .markdown-link-check.json -q
+
+  # Job 3: Secrets scanning
+  gitleaks:
+    name: Secrets scan (CLI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache gitleaks binary
+        uses: actions/cache@v4
+        id: gitleaks-cache
+        with:
+          path: ~/.local/bin/gitleaks
+          key: ${{ runner.os }}-gitleaks-8.18.4
+
+      - name: Install gitleaks
+        if: steps.gitleaks-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          GITLEAKS_VERSION="8.18.4"
+          mkdir -p ~/.local/bin
+          curl -sSL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+          mv gitleaks ~/.local/bin/gitleaks
+          chmod +x ~/.local/bin/gitleaks
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Run gitleaks
+        run: |
+          gitleaks detect --source . --no-banner --redact
+
+  # Job 4: Test the code
   test:
+    needs: [meta-checks, markdown-links, gitleaks]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,21 +124,27 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          # Ensure all dependencies are fetched during setup
+          npm_config_prefer_offline: false
+          npm_config_audit: false
 
-      # Linting temporarily disabled - will be re-enabled later
-      # - name: Run linter
-      #   run: |
-      #     echo "Running linter on source files..."
-      #     # Run lint but don't fail on legacy files
-      #     npm run lint -- --max-warnings=20 || echo "⚠️ Linting issues found in legacy code (acceptable)"
-      #
-      #     # Check new/modified files for errors
-      #     echo "Checking critical files for errors..."
-      #     npx eslint src/pages/ src/utils/ src/__tests__/ --max-warnings=0 || {
-      #       echo "❌ Linting errors in new code - must be fixed!"
-      #       exit 1
-      #     }
-      #     echo "✓ New code passes linting checks"
+      - name: Run linter
+        run: |
+          echo "Running linter on source files..."
+          npm run lint
+          echo "✓ All code passes linting checks with zero warnings"
+
+      - name: Remove Jest cache directories
+        run: |
+          echo "🧹 Removing Jest cache for fresh CI run..."
+          # Remove common Jest cache locations
+          rm -rf /tmp/jest_* || true
+          rm -rf .jest-cache || true
+          rm -rf node_modules/.cache/jest || true
+          # Clear Jest's cache via CLI
+          npm test -- --clearCache || true
+          echo "✓ Jest cache cleared"
 
       - name: Run tests
         run: npm test -- --coverage --watchAll=false
@@ -84,7 +182,7 @@ jobs:
             echo "✓ No vulnerabilities found"
           fi
 
-  # Job 2: Build the application
+  # Job 5: Build the application
   build:
     needs: test
     runs-on: ubuntu-latest
@@ -99,6 +197,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          # Ensure all dependencies are fetched during setup
+          npm_config_prefer_offline: false
+          npm_config_audit: false
 
       - name: Build React PWA with Vite
         run: npm run build
@@ -145,6 +247,8 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload offline package to repository branch
+        # Only upload on push events, not on pull requests
+        if: github.event_name == 'push'
         run: |
           echo "📦 Uploading offline package to offline-releases branch..."
 
@@ -307,10 +411,12 @@ jobs:
         with:
           path: dist
 
-  # Job 3: Deploy to GitHub Pages
+  # Job 6: Deploy to GitHub Pages
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # Only deploy on push events, not on pull requests
+    if: github.event_name == 'push'
     environment:
       name: github-pages # must be exactly this name for Pages
       url: ${{ steps.deployment.outputs.page_url }}

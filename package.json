@@ -1,6 +1,6 @@
 {
   "name": "aurorae-haven",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "> **A calm, astro-themed productivity app designed for neurodivergent users.**   > Manage routines, tasks, habits, notes, and stats with Markdown import/export, reminders, gamification, and secure local/mobile use.",
   "homepage": "/aurorae-haven",
@@ -34,6 +34,7 @@
     "@fullcalendar/daygrid": "^6.1.15",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",
     "dompurify": "^3.2.7",
     "express": "^4.18.2",
@@ -43,6 +44,7 @@
     "marked-katex-extension": "^5.1.5",
     "node-ical": "^0.23.1",
     "react": "^18.2.0",
+    "react-big-calendar": "^1.19.4",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.9.3",
     "uuid": "^9.0.1",

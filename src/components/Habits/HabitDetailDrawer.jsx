@@ -19,7 +19,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
   const [vacationStart, setVacationStart] = useState('')
   const [vacationEnd, setVacationEnd] = useState('')
   const [historyFilter, setHistoryFilter] = useState('30') // 7, 30, 90 days
-  
+
   if (!habit) return null
 
   const categoryColor = getCategoryColor(habit.category)

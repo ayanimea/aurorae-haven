@@ -7,7 +7,16 @@
 import React, { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 
-function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel, confirmText = 'Confirm', cancelText = 'Cancel', confirmDanger = false }) {
+function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  confirmDanger = false
+}) {
   const confirmButtonRef = useRef(null)
   const cancelButtonRef = useRef(null)
 
@@ -41,32 +50,35 @@ function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel, confirmTex
 
   return (
     // Backdrop is presentational only; interaction handled via Escape key and dialog buttons
-    <div 
-      className="modal-overlay" 
+    <div
+      className='modal-overlay'
       onClick={handleBackdropClick}
-      role="presentation"
+      role='presentation'
     >
-      <div 
-        className="modal-container" 
+      <div
+        className='modal-container'
         style={{ maxWidth: '400px' }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-message"
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby='confirm-dialog-title'
+        aria-describedby='confirm-dialog-message'
       >
-        <div className="modal-header">
-          <h2 id="confirm-dialog-title">{title}</h2>
+        <div className='modal-header'>
+          <h2 id='confirm-dialog-title'>{title}</h2>
         </div>
-        
-        <div className="modal-body">
-          <p id="confirm-dialog-message">{message}</p>
+
+        <div className='modal-body'>
+          <p id='confirm-dialog-message'>{message}</p>
         </div>
-        
-        <div className="modal-footer" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+
+        <div
+          className='modal-footer'
+          style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}
+        >
           <button
             ref={cancelButtonRef}
-            type="button"
-            className="button button-outline"
+            type='button'
+            className='button button-outline'
             onClick={onCancel}
             aria-label={cancelText}
           >
@@ -74,8 +86,10 @@ function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel, confirmTex
           </button>
           <button
             ref={confirmButtonRef}
-            type="button"
-            className={confirmDanger ? 'button button-danger' : 'button button-primary'}
+            type='button'
+            className={
+              confirmDanger ? 'button button-danger' : 'button button-primary'
+            }
             onClick={onConfirm}
             aria-label={confirmText}
           >

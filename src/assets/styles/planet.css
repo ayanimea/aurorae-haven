@@ -9,6 +9,13 @@
   pointer-events: none;
 }
 
+/* Hide planet on mobile devices */
+@media (max-width: 968px) {
+  .planet-wrap {
+    display: none;
+  }
+}
+
 .planet {
   position: absolute;
   right: 0;

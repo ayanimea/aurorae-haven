@@ -172,11 +172,15 @@ END:VCALENDAR`
 
       const events = parseICS(icsData)
       expect(events).toHaveLength(1)
-      
+
       // With node-ical, line folding is properly handled per RFC 5545:
       // Leading spaces are removed and lines are concatenated (no extra spaces added)
-      expect(events[0].summary).toBe('This is a very long summary that would normally be foldedacross multiple lines with leading spaces')
-      expect(events[0].description).toBe('This description also has line foldingwith a continuation line hereand another one here')
+      expect(events[0].summary).toBe(
+        'This is a very long summary that would normally be foldedacross multiple lines with leading spaces'
+      )
+      expect(events[0].description).toBe(
+        'This description also has line foldingwith a continuation line hereand another one here'
+      )
     })
 
     test('should parse multiple events', () => {
@@ -263,7 +267,7 @@ END:VCALENDAR`
 
     test('should reject 10.x.x.x private IP range', async () => {
       const testAddresses = ['10.0.0.1', '10.255.255.255', '10.128.0.1']
-      
+
       for (const address of testAddresses) {
         const subscription = {
           name: 'Private Calendar',
@@ -315,7 +319,7 @@ END:VCALENDAR`
 
     test('should reject private IPv6 addresses', async () => {
       const testAddresses = ['fc00::1', 'fd00::1', 'fe80::1']
-      
+
       for (const address of testAddresses) {
         const subscription = {
           name: 'Private IPv6 Calendar',
@@ -355,7 +359,7 @@ END:VCALENDAR`
 
     test('should reject loopback range (127.x.x.x)', async () => {
       const testAddresses = ['127.0.0.1', '127.1.1.1', '127.255.255.255']
-      
+
       for (const address of testAddresses) {
         const subscription = {
           name: 'Loopback Calendar',
@@ -371,7 +375,7 @@ END:VCALENDAR`
 
     test('should reject carrier-grade NAT range (100.64.x.x - 100.127.x.x)', async () => {
       const testAddresses = ['100.64.0.1', '100.100.100.100', '100.127.255.255']
-      
+
       for (const address of testAddresses) {
         const subscription = {
           name: 'CGN Calendar',
