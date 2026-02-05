@@ -372,6 +372,18 @@ function Schedule() {
     }
   }, [use24HourFormat])
 
+  // Compute min/max times for the schedule view
+  // RBC requires min/max to have the same date as the 'date' prop for correct rendering
+  const { minTime, maxTime } = useMemo(() => {
+    const min = new Date(date)
+    min.setHours(7, 0, 0, 0) // 7:00 AM
+    
+    const max = new Date(date)
+    max.setHours(24, 0, 0, 0) // Midnight (next day)
+    
+    return { minTime: min, maxTime: max }
+  }, [date])
+
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
@@ -392,8 +404,9 @@ function Schedule() {
               popup
               step={15}
               timeslots={4}
-              min={new Date(2000, 0, 1, 7, 0)}
-              max={new Date(2000, 0, 2, 0, 0)}
+              min={minTime}
+              max={maxTime}
+              style={{ height: 2000 }}
               formats={formats}
               aria-label='Event calendar'
               components={{

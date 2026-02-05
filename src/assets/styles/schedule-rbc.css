@@ -96,8 +96,6 @@ Ask for clarification or preserve the existing structure.
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  /* Allow page to grow beyond viewport */
-  height: auto;
 }
 
 .schedule-container {
@@ -105,19 +103,17 @@ Ask for clarification or preserve the existing structure.
   display: flex;
   flex-direction: column;
   padding: var(--rbc-padding-base);
-  /* Allow natural content height for full day rendering */
+  overflow: auto;
 }
 
 .schedule-wrapper {
-  flex: 1;
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Allow natural content height */
+  /* Don't use flex:1 - let content determine height */
 }
 
 .rbc-calendar {
-  flex: 1;
   background: var(--schedule-bg);
   backdrop-filter: blur(12px) saturate(120%);
   -webkit-backdrop-filter: blur(12px) saturate(120%);
@@ -128,27 +124,25 @@ Ask for clarification or preserve the existing structure.
   flex-direction: column;
   position: relative;
   z-index: 2;
-  /* Force enough height for full day - RBC will render based on available space */
-  min-height: 1400px;
+  /* Height is set via inline style prop in Schedule.jsx */
 }
 
 .rbc-time-view {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   border: 1px solid var(--grid-hour);
   border-radius: var(--rbc-radius-medium);
   background: transparent;
-  /* Give RBC enough vertical space to render all hours - 17 hours * 60px/hour */
-  min-height: 1020px;
-  /* Don't use flex:1 which would constrain to parent */
 }
 
 .rbc-time-content {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
   position: relative;
   z-index: 2;
-  /* RBC calculates timeslots based on available height */
 }
 
 .calendar-toolbar {
