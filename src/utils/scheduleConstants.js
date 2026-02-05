@@ -20,12 +20,10 @@ export const VALID_EVENT_TYPES = Object.values(EVENT_TYPES)
 export const SCHEDULE_START_HOUR = 7
 export const SCHEDULE_END_HOUR = 24 // Exclusive end of day: 24:00 == 00:00 next day. Using 24 (not 0) keeps midnight events at the end of the day's schedule for simpler boundary checks.
 
-// Display constants - each hour occupies 80 pixels in the UI (reduced for better overview)
-// NOTE: This hardcoded value conflicts with schedule-ui-spec.md §6 which states
-// "Do NOT hardcode pixel heights". This should be refactored to use CSS variables
-// and minute-based calculations. Current implementation is a temporary measure
-// pending full compliance with the spec's proportional scaling requirements.
-export const PIXELS_PER_HOUR = 80
+// Display constants
+// NOTE: Hour heights are now calculated dynamically using CSS variables per schedule-ui-spec.md §6.
+// The spec requires "proportional and non-hardcoded" time scaling using minute-based units.
+// See schedule.css :root section for --minute-unit and --hour-height calculations.
 export const SCHEDULE_VERTICAL_OFFSET = 6
 
 // Default event duration (in minutes)

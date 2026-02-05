@@ -58,9 +58,13 @@ Ask for clarification or preserve the existing structure.
 
 /* ===== Schedule ===== */
 :root {
-  /* Dynamic hour height - calculated by JavaScript based on available viewport space */
-  /* Default fallback if JavaScript hasn't set it yet */
-  --hour-height: 60px;
+  /* Minute-based scaling unit per schedule-ui-spec.md §4 */
+  /* All vertical sizing derives from this proportional unit */
+  --minute-unit: clamp(1px, 0.15vh, 1.6px);
+  
+  /* Hour height calculated dynamically from minute unit (60 minutes per hour) */
+  /* This ensures proportional, non-hardcoded time scaling per spec §6 */
+  --hour-height: calc(var(--minute-unit) * 60);
 }
 
 .layout-schedule {
@@ -1516,10 +1520,14 @@ Ask for clarification or preserve the existing structure.
   z-index: 0; /* Below headers (z-index: 100) - ensure hours don't show through */
 }
 
-/* Desktop: Reduce week hour height to 50px max for better overview */
+/* Desktop: Proportional hour height reduction for better overview */
 @media (min-width: 1024px) {
+  /* Reduce minute unit for more compact desktop view */
+  :root {
+    --minute-unit: clamp(0.8px, 0.12vh, 1.4px);
+  }
+  
   .week-hour {
-    height: 50px;
     padding: 4px 6px;
     font-size: 0.75rem;
   }
@@ -1657,7 +1665,8 @@ Ask for clarification or preserve the existing structure.
   .week-hour {
     font-size: 0.65rem;
     padding: 3px 2px;
-    height: 100px; /* Reduce hour height for more compact view */
+    /* Increased minute unit for more vertical space on mobile */
+    /* Height calculated from --minute-unit * 60 */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2044,8 +2053,8 @@ Ask for clarification or preserve the existing structure.
     gap: 4px !important;
   }
 
-  /* Fixed 60px hour height on mobile week view to show more hours at once */
-  .week-hour {
-    height: 60px !important; /* Mobile-specific height for better overview */
+  /* Compact mobile view: reduce minute unit for smaller hour heights */
+  :root {
+    --minute-unit: clamp(0.9px, 0.13vh, 1.2px);
   }
 }
