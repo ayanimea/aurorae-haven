@@ -13,15 +13,18 @@
  */
 
 :root {
-  /* Time-of-day atmospheres - EXACT canonical values */
-  --morning-top: rgba(245, 192, 111, 0.1);
-  --morning-bottom: rgba(245, 192, 111, 0.03);
+  /* Time-of-day atmospheres - EXACT canonical values per spec */
+  --morning-top: rgba(245, 192, 111, 0.14);
+  --morning-mid: rgba(245, 192, 111, 0.06);
+  --morning-bottom: rgba(245, 192, 111, 0.02);
 
-  --afternoon-top: rgba(147, 197, 253, 0.08);
-  --afternoon-bottom: rgba(147, 197, 253, 0.03);
+  --afternoon-top: rgba(147, 197, 253, 0.12);
+  --afternoon-mid: rgba(147, 197, 253, 0.05);
+  --afternoon-bottom: rgba(147, 197, 253, 0.02);
 
-  --evening-top: rgba(167, 139, 250, 0.1);
-  --evening-bottom: rgba(167, 139, 250, 0.04);
+  --evening-top: rgba(167, 139, 250, 0.14);
+  --evening-mid: rgba(167, 139, 250, 0.06);
+  --evening-bottom: rgba(167, 139, 250, 0.02);
 
   --night-top: rgba(15, 23, 42, 0.55);
   --night-bottom: rgba(15, 23, 42, 0.35);
@@ -29,6 +32,7 @@
 
 .schedule-bands-container {
   position: absolute;
+  /* Position relative to .rbc-calendar which is inside .schedule-wrapper */
   top: 0;
   left: 0;
   right: 0;
@@ -36,6 +40,9 @@
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
+  /* Ensure bands don't interfere with toolbar - they should only overlay the time grid */
+  /* The toolbar is ~100px, so offset the bands */
+  padding-top: 100px;
 }
 
 .schedule-band {
@@ -50,6 +57,7 @@
   background: linear-gradient(
     to bottom,
     var(--morning-top),
+    var(--morning-mid),
     var(--morning-bottom)
   );
 }
@@ -59,6 +67,7 @@
   background: linear-gradient(
     to bottom,
     var(--afternoon-top),
+    var(--afternoon-mid),
     var(--afternoon-bottom)
   );
 }
@@ -68,11 +77,12 @@
   background: linear-gradient(
     to bottom,
     var(--evening-top),
+    var(--evening-mid),
     var(--evening-bottom)
   );
 }
 
-/* Night: 23:00–07:00 - Low stimulation rest */
+/* Night: 23:00–24:00 - Low stimulation rest */
 .schedule-band.night {
   background: linear-gradient(to bottom, var(--night-top), var(--night-bottom));
 }
