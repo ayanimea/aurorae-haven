@@ -96,6 +96,8 @@ Ask for clarification or preserve the existing structure.
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  /* Allow page to grow beyond viewport */
+  height: auto;
 }
 
 .schedule-container {
@@ -103,8 +105,7 @@ Ask for clarification or preserve the existing structure.
   display: flex;
   flex-direction: column;
   padding: var(--rbc-padding-base);
-  /* Remove min-height: 0 to allow natural content height */
-  overflow: auto;
+  /* Allow natural content height for full day rendering */
 }
 
 .schedule-wrapper {
@@ -112,7 +113,7 @@ Ask for clarification or preserve the existing structure.
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Remove min-height: 0 to allow natural content height */
+  /* Allow natural content height */
 }
 
 .rbc-calendar {
@@ -127,32 +128,27 @@ Ask for clarification or preserve the existing structure.
   flex-direction: column;
   position: relative;
   z-index: 2;
-  /* Ensure minimum height for full day view (7am-midnight = 17 hours) */
-  /* At ~40px per hour, we need at least 680px for content */
-  min-height: 800px;
+  /* Force enough height for full day - RBC will render based on available space */
+  min-height: 1400px;
 }
 
 .rbc-time-view {
-  /* Don't use flex:1 which constrains to parent height */
   display: flex;
   flex-direction: column;
   border: 1px solid var(--grid-hour);
   border-radius: var(--rbc-radius-medium);
   background: transparent;
-  /* Ensure full day renders - 17 hours from 7am to midnight */
-  /* Need enough height for RBC to render all timeslots */
-  min-height: 1200px;
-  height: auto;
+  /* Give RBC enough vertical space to render all hours - 17 hours * 60px/hour */
+  min-height: 1020px;
+  /* Don't use flex:1 which would constrain to parent */
 }
 
 .rbc-time-content {
-  /* Allow content to grow naturally */
-  overflow-y: visible;
+  flex: 1;
+  overflow-y: auto;
   position: relative;
   z-index: 2;
-  /* Force minimum height for all timeslots to render */
-  /* 17 hours * 4 timeslots per hour * 24px min height = 1632px */
-  min-height: 1632px;
+  /* RBC calculates timeslots based on available height */
 }
 
 .calendar-toolbar {
@@ -237,8 +233,6 @@ Ask for clarification or preserve the existing structure.
   background: rgba(16, 20, 44, 0.35);
   color: var(--dim);
   z-index: 2;
-  /* Match the day slot height to show all time labels */
-  min-height: 1632px;
 }
 
 .rbc-timeslot-group {
@@ -261,9 +255,6 @@ Ask for clarification or preserve the existing structure.
 
 .rbc-day-slot {
   position: relative;
-  /* Force full day rendering by setting min-height */
-  /* 17 hours * 4 timeslots/hour * ~24px/timeslot */
-  min-height: 1632px;
 }
 
 .rbc-day-slot .rbc-timeslot-group {
