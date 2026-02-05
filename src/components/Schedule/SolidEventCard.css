@@ -76,8 +76,12 @@
   display: block;
   font-weight: 600;
   font-size: 0.95rem;
+  line-height: 1.4; /* Explicit line-height to ensure height > 0 */
   margin-bottom: 0.25rem;
   color: var(--event-text);
+  flex-shrink: 0; /* Prevent flex container from collapsing */
+  min-height: 1.4em; /* Ensure minimum visible height */
+  overflow: visible; /* Don't collapse with overflow */
 }
 
 /* Pre-activities (prep/travel) - subtle context */
@@ -134,6 +138,7 @@
 
   .event-title {
     font-size: 0.9rem;
+    min-height: 1.3em; /* Slightly smaller for mobile */
   }
 
   .event-pre-activities {
