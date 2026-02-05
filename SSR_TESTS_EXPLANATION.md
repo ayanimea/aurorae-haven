@@ -7,6 +7,7 @@
 ## Why Test for SSR?
 
 When code runs on the server during SSR, certain browser-specific globals don't exist:
+
 - `window` is undefined
 - `document` is undefined
 - `localStorage` / `sessionStorage` don't exist
@@ -15,6 +16,7 @@ When code runs on the server during SSR, certain browser-specific globals don't 
 ## What Are SSR Tests?
 
 **SSR tests** verify that your code handles these missing browser APIs gracefully, ensuring the application:
+
 1. **Doesn't crash** when browser globals are undefined
 2. **Provides fallback behavior** (e.g., returning default values)
 3. **Can render** initial HTML on the server without errors
@@ -24,11 +26,12 @@ When code runs on the server during SSR, certain browser-specific globals don't 
 In this project, we had SSR tests like:
 
 ### useIsMobile Hook
+
 ```javascript
 // The hook checks if window exists before using it
 function useIsMobile() {
   if (typeof window === 'undefined') {
-    return false  // SSR-safe: returns default when window is undefined
+    return false // SSR-safe: returns default when window is undefined
   }
   // Browser code that uses window.innerWidth...
 }
@@ -41,10 +44,11 @@ test('returns false when window is undefined (SSR)', () => {
 ```
 
 ### autoSaveFS Utility
+
 ```javascript
 function isFileSystemAccessSupported() {
   if (typeof window === 'undefined') {
-    return false  // SSR-safe: no File System API on server
+    return false // SSR-safe: no File System API on server
   }
   // Check for File System Access API...
 }
@@ -53,6 +57,7 @@ function isFileSystemAccessSupported() {
 ## Why We Skipped SSR Tests in jsdom v28
 
 In **jsdom v28**, the test environment made `window` and `document` **read-only** and **non-configurable**. This means:
+
 - We cannot delete or set them to `undefined` in tests
 - We cannot mock them as missing for SSR simulation
 
@@ -61,6 +66,7 @@ In **jsdom v28**, the test environment made `window` and `document` **read-only*
 ### Skipped Tests in This PR
 
 We skipped 3 SSR-specific tests that couldn't be executed in jsdom v28:
+
 1. `useIsMobile.test.js` - "returns false when window is undefined"
 2. `autoSaveFS.test.js` - "returns false when window is undefined"
 3. `errorHandler.test.js` - "works without window object"
@@ -68,6 +74,7 @@ We skipped 3 SSR-specific tests that couldn't be executed in jsdom v28:
 ## Real-World SSR Testing
 
 To properly test SSR behavior with jsdom v28, you would need to:
+
 1. Use a real SSR framework test environment (Next.js, Remix, etc.)
 2. Use a different test runner that allows true SSR simulation
 3. Test manually in actual SSR environments
