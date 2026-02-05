@@ -26,6 +26,7 @@ function SolidEventCard({ event, onContextMenu }) {
   
   // Log warning for invalid event types to detect data corruption or injection attempts
   if (rawEventType && !VALID_EVENT_TYPES.includes(rawEventType)) {
+    // eslint-disable-next-line no-console
     console.warn(
       `[SolidEventCard] Invalid event type "${rawEventType}" encountered for event "${title}". ` +
       `Falling back to "task". Valid types: ${VALID_EVENT_TYPES.join(', ')}`
