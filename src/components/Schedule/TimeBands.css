@@ -32,7 +32,7 @@
 
 .schedule-bands-container {
   position: absolute;
-  /* Position relative to .rbc-calendar which is inside .schedule-wrapper */
+  /* Position relative to .fc (FullCalendar container) which is inside .schedule-wrapper */
   top: 0;
   left: 0;
   right: 0;
@@ -41,8 +41,8 @@
   pointer-events: none;
   overflow: hidden;
   /* Ensure bands don't interfere with toolbar - they should only overlay the time grid */
-  /* The toolbar is ~100px, so offset the bands */
-  padding-top: 100px;
+  /* The toolbar is ~150px, so offset the bands */
+  padding-top: 150px;
 }
 
 .schedule-band {

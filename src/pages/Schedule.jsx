@@ -57,7 +57,7 @@ Ask for clarification or preserve the existing structure.
 */
 
 /**
- * Schedule Page - Calendar view for events using React Big Calendar
+ * Schedule Page - Calendar view for events using FullCalendar
  * Manages routines, tasks, meetings, and habits with a clean, accessible interface
  */
 
@@ -93,7 +93,7 @@ function Schedule() {
   const calendarRef = useRef(null)
   
   // State management
-  const [view, setView] = useState('timeGridDay') // FullCalendar view names
+  const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
   const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -306,13 +306,19 @@ function Schedule() {
   const slotMinTime = '07:00:00'
   const slotMaxTime = '24:00:00'
 
+  // Map normalized view names to FullCalendar view names
+  const getFullCalendarView = useCallback((normalizedView) => {
+    const viewMap = {
+      day: 'timeGridDay',
+      week: 'timeGridWeek',
+      month: 'dayGridMonth'
+    }
+    return viewMap[normalizedView] || 'timeGridDay'
+  }, [])
+
   // Handle view change for FullCalendar
   const handleViewChange = useCallback((newView) => {
     setView(newView)
-    if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi()
-      calendarApi.changeView(newView)
-    }
   }, [])
 
   // Handle event click (FullCalendar)
@@ -342,16 +348,34 @@ function Schedule() {
   }, [])
 
   // Handle event context menu (right-click)
-  const handleEventMouseEnter = useCallback((mouseEnterInfo) => {
-    // Store event for potential context menu
-    mouseEnterInfo.el.addEventListener('contextmenu', (e) => {
-      e.preventDefault()
-      const originalEvent = mouseEnterInfo.event.extendedProps?.originalEvent
-      if (originalEvent) {
-        handleEventContextMenu(originalEvent)
+  const handleEventMouseEnter = useCallback(
+    (mouseEnterInfo) => {
+      const el = mouseEnterInfo.el
+
+      if (!el) {
+        return
       }
-    })
-  }, [handleEventContextMenu])
+
+      // Remove any existing contextmenu handler attached by this logic
+      const previousHandler = el.__auroraeContextMenuHandler
+      if (typeof previousHandler === 'function') {
+        el.removeEventListener('contextmenu', previousHandler)
+      }
+
+      const contextMenuHandler = (e) => {
+        e.preventDefault()
+        const originalEvent = mouseEnterInfo.event.extendedProps?.originalEvent
+        if (originalEvent) {
+          handleEventContextMenu(originalEvent)
+        }
+      }
+
+      // Store the handler on the element so we can clean it up on subsequent mouseenter events
+      el.__auroraeContextMenuHandler = contextMenuHandler
+      el.addEventListener('contextmenu', contextMenuHandler)
+    },
+    [handleEventContextMenu]
+  )
 
   return (
     <ErrorBoundary>
@@ -395,7 +419,7 @@ function Schedule() {
             <FullCalendar
               ref={calendarRef}
               plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-              initialView={view}
+              initialView={getFullCalendarView(view)}
               initialDate={date}
               events={fullCalendarEvents}
               slotMinTime={slotMinTime}
@@ -419,7 +443,8 @@ function Schedule() {
               firstDay={1}
               selectable={true}
               selectMirror={true}
-              editable={true}
+              editable={false}
+              aria-label="Event calendar"
               eventClick={handleEventClick}
               select={handleDateSelect}
               eventMouseEnter={handleEventMouseEnter}

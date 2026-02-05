@@ -1,7 +1,13 @@
 /**
  * Event Adapter - Transform EventService data to calendar format
- * Converts between our event data model and calendar libraries' expected formats
- * Supports both React Big Calendar (RBC) and FullCalendar
+ * Converts between our event data model and calendar libraries' expected formats.
+ *
+ * Calendar library strategy:
+ * - Supports both React Big Calendar (RBC) and FullCalendar.
+ * - FullCalendar is the primary target for new development and features.
+ * - RBC support is maintained for existing/legacy views that still depend on it.
+ *   Once all consumers are migrated to FullCalendar, RBC-specific adapters
+ *   (toRBCEvent, toRBCEvents) are candidates for deprecation and eventual removal.
  */
 
 import { parseISO, parse, format, addDays } from 'date-fns'

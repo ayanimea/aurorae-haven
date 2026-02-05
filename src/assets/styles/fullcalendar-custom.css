@@ -119,6 +119,13 @@
 
 /* ===== Events ===== */
 
+/* Ensure event cards respect documented z-index hierarchy and sit above time bands */
+.fc-event,
+.fc-event-main {
+  position: relative;
+  z-index: 2;
+}
+
 .fc-event {
   border: none;
   background: none;
