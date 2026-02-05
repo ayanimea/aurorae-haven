@@ -66,7 +66,7 @@ import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { format, parse, startOfWeek, getDay, addDays } from 'date-fns'
+import { format, startOfWeek, addDays } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
 import CustomToolbar from '../components/Schedule/CustomToolbar'
@@ -87,13 +87,6 @@ import '../components/ErrorBoundary.css'
 // resulting in "logger is not defined" runtime errors. Direct console usage is immune
 // to tree-shaking and ensures reliable error reporting in production environments.
 // See commit 511b225 for the migration from custom logger to console methods.
-
-// Format helper functions (module level to avoid recreation on each render)
-const createTimeFormatter = (use24HourFormat) => {
-  const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
-  return ({ start, end }) =>
-    `${format(start, timeFormat)} - ${format(end, timeFormat)}`
-}
 
 function Schedule() {
   // FullCalendar ref for API access
@@ -201,45 +194,10 @@ function Schedule() {
   }, [loadEvents])
 
   // Event handlers
-  const handleSelectSlot = useCallback((slotInfo) => {
-    try {
-      console.log('Slot selected:', slotInfo)
-      const eventData = createEventFromSlot(slotInfo)
-      if (eventData) {
-        setSelectedEvent(eventData)
-        setSelectedEventType(EVENT_TYPES.TASK)
-        setIsModalOpen(true)
-      } else {
-        console.warn('Failed to create event data from slot')
-      }
-    } catch (err) {
-      console.error('[Schedule] Error handling slot selection:', err)
-      setError('Failed to create event. Please try again.')
-    }
-  }, [])
-
-  const handleSelectEvent = useCallback((event) => {
-    try {
-      console.log('Event selected:', event)
-      const originalEvent = event.resource?.originalEvent
-      if (originalEvent) {
-        const isContextMenu =
-          event.resource?.isContextMenu ?? event.isContextMenu ?? false
-        setEventToDelete({ ...originalEvent, isContextMenu })
-        setShowActionModal(true)
-      } else {
-        console.warn('Event selected but no originalEvent found in resource')
-      }
-    } catch (err) {
-      console.error('[Schedule] Error handling event selection:', err)
-      setError('Failed to open event. Please try again.')
-    }
-  }, [])
-
   const handleEventContextMenu = useCallback((event) => {
     try {
       console.log('Event context menu:', event)
-      const originalEvent = event.resource?.originalEvent
+      const originalEvent = event.resource?.originalEvent || event
       if (originalEvent) {
         setEventToDelete({ ...originalEvent, isContextMenu: true })
         setShowActionModal(true)
@@ -344,30 +302,6 @@ function Schedule() {
     }
   }
 
-  // Calendar configuration
-  const views = useMemo(
-    () => ({
-      day: true,
-      week: true,
-      month: true
-    }),
-    []
-  )
-
-  const formats = useMemo(() => {
-    const gutterFormat = use24HourFormat ? 'HH:mm' : 'h a'
-    const timeFormatter = createTimeFormatter(use24HourFormat)
-
-    return {
-      timeGutterFormat: gutterFormat,
-      eventTimeRangeFormat: timeFormatter,
-      agendaTimeRangeFormat: timeFormatter,
-      dayFormat: 'EEE dd',
-      dayHeaderFormat: 'EEEE, MMMM d',
-      monthHeaderFormat: 'MMMM yyyy'
-    }
-  }, [use24HourFormat])
-
   // Compute min/max times for the schedule view (07:00 to 24:00)
   const slotMinTime = '07:00:00'
   const slotMaxTime = '24:00:00'
@@ -378,15 +312,6 @@ function Schedule() {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi()
       calendarApi.changeView(newView)
-    }
-  }, [])
-
-  // Handle date navigation for FullCalendar
-  const handleDateChange = useCallback((newDate) => {
-    setDate(newDate)
-    if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi()
-      calendarApi.gotoDate(newDate)
     }
   }, [])
 
@@ -426,7 +351,7 @@ function Schedule() {
         handleEventContextMenu(originalEvent)
       }
     })
-  }, [])
+  }, [handleEventContextMenu])
 
   return (
     <ErrorBoundary>
