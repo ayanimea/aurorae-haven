@@ -13,9 +13,9 @@ import { error as logError } from './logger'
  */
 export async function generateTestData() {
   // Generating test data for schedule
-  
+
   const today = dayjs()
-  
+
   // Get Monday of the current week (Item 19: ISO 8601 week calculation)
   // ISO 8601: Weeks start on Monday. dayjs weeks start on Sunday (day 0), Monday is day 1.
   // If today is Sunday (day 0), subtract 6 days to get this week's Monday.
@@ -28,17 +28,18 @@ export async function generateTestData() {
     // Otherwise, get the Monday of this week
     startOfWeek = today.startOf('week').add(1, 'day')
   }
-  
+
   const testEvents = []
-  
+
   // Generate events for each day of the week
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
     const currentDay = startOfWeek.add(dayOffset, 'day')
     const dayStr = currentDay.format('YYYY-MM-DD')
     const dayName = currentDay.format('dddd')
-    
+
     // Morning routine (every weekday)
-    if (dayOffset < 5) { // Monday-Friday
+    if (dayOffset < 5) {
+      // Monday-Friday
       testEvents.push({
         title: 'Morning Routine',
         type: 'routine',
@@ -49,7 +50,7 @@ export async function generateTestData() {
         preparationTime: 0,
         isTestData: true
       })
-      
+
       testEvents.push({
         title: `${dayName} Planning`,
         type: 'task',
@@ -61,7 +62,7 @@ export async function generateTestData() {
         isTestData: true
       })
     }
-    
+
     // Specific events by day
     switch (dayOffset) {
       case 0: // Monday
@@ -116,7 +117,7 @@ export async function generateTestData() {
           isTestData: true
         })
         break
-        
+
       case 1: // Tuesday
         testEvents.push({
           title: 'Client Meeting',
@@ -169,7 +170,7 @@ export async function generateTestData() {
           isTestData: true
         })
         break
-        
+
       case 2: // Wednesday
         testEvents.push({
           title: 'Deep Work Session',
@@ -222,7 +223,7 @@ export async function generateTestData() {
           isTestData: true
         })
         break
-        
+
       case 3: // Thursday
         testEvents.push({
           title: 'Coffee & Emails',
@@ -275,7 +276,7 @@ export async function generateTestData() {
           isTestData: true
         })
         break
-        
+
       case 4: // Friday
         testEvents.push({
           title: 'Demo Preparation',
@@ -338,7 +339,7 @@ export async function generateTestData() {
           isTestData: true
         })
         break
-        
+
       case 5: // Saturday
         testEvents.push({
           title: 'Morning Workout',
@@ -391,7 +392,7 @@ export async function generateTestData() {
           isTestData: true
         })
         break
-        
+
       case 6: // Sunday
         testEvents.push({
           title: 'Meditation',
@@ -446,7 +447,7 @@ export async function generateTestData() {
         break
     }
   }
-  
+
   // Create all test events
   let createdCount = 0
   for (const event of testEvents) {
@@ -458,7 +459,7 @@ export async function generateTestData() {
       logError('Failed to create test event:', error)
     }
   }
-  
+
   // Created test events successfully
   return createdCount
 }

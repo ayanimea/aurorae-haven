@@ -472,7 +472,7 @@ function Settings() {
         {/* Schedule Settings */}
         <div className='settings-divider'>
           <h3 className='settings-section-title'>Schedule</h3>
-          
+
           {/* 24-Hour Format Toggle */}
           <div className='settings-field'>
             <label className='settings-checkbox-label'>
@@ -500,10 +500,7 @@ function Settings() {
               />
               <strong>Use 24-Hour Time Format</strong>
             </label>
-            <small
-              id='24hour-format-hint'
-              className='settings-checkbox-hint'
-            >
+            <small id='24hour-format-hint' className='settings-checkbox-hint'>
               Display times in 24-hour format (e.g., 14:00 instead of 2:00 PM)
             </small>
           </div>

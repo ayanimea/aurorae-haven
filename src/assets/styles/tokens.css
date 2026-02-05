@@ -8,34 +8,34 @@
 :root {
   /* ===== SPACING SCALE ===== */
   /* Used for margins, padding, gaps */
-  --space-2xs: 0.25rem;   /* 4px */
-  --space-xs: 0.5rem;      /* 8px */
-  --space-sm: 0.75rem;     /* 12px */
-  --space-md: 1rem;        /* 16px */
-  --space-lg: 1.5rem;      /* 24px */
-  --space-xl: 2rem;        /* 32px */
-  --space-2xl: 3rem;       /* 48px */
-  
+  --space-2xs: 0.25rem; /* 4px */
+  --space-xs: 0.5rem; /* 8px */
+  --space-sm: 0.75rem; /* 12px */
+  --space-md: 1rem; /* 16px */
+  --space-lg: 1.5rem; /* 24px */
+  --space-xl: 2rem; /* 32px */
+  --space-2xl: 3rem; /* 48px */
+
   /* ===== TOUCH TARGETS ===== */
   /* Minimum interactive element sizes for accessibility */
-  --touch-min: 44px;        /* WCAG minimum (iOS guideline) */
+  --touch-min: 44px; /* WCAG minimum (iOS guideline) */
   --touch-comfortable: 48px; /* WCAG AA comfortable size */
-  
+
   /* ===== ICON SIZES ===== */
   --icon-xs: 16px;
   --icon-sm: 20px;
   --icon-md: 24px;
   --icon-lg: 32px;
   --icon-xl: 48px;
-  
+
   /* ===== FONT SIZES ===== */
-  --font-2xs: 0.625rem;  /* 10px */
-  --font-xs: 0.65rem;    /* 10.4px - compact UI */
-  --font-sm: 0.7rem;     /* 11.2px - compact labels */
-  --font-md: 0.875rem;   /* 14px - body text */
-  --font-lg: 1rem;       /* 16px - headings */
-  --font-xl: 1.25rem;    /* 20px - large headings */
-  
+  --font-2xs: 0.625rem; /* 10px */
+  --font-xs: 0.65rem; /* 10.4px - compact UI */
+  --font-sm: 0.7rem; /* 11.2px - compact labels */
+  --font-md: 0.875rem; /* 14px - body text */
+  --font-lg: 1rem; /* 16px - headings */
+  --font-xl: 1.25rem; /* 20px - large headings */
+
   /* ===== Z-INDEX LAYERS ===== */
   /* Stacking order for overlays and modals */
   --z-base: 1;
@@ -46,19 +46,19 @@
   --z-dropdown: 102;
   --z-modal: 200;
   --z-toast: 300;
-  
+
   /* ===== NAVIGATION DIMENSIONS ===== */
   /* Shell padding values for different viewport sizes */
-  --shell-padding-narrow: 90px;      /* 769-968px */
-  --shell-padding-compact: 85px;     /* 969-1280px */
+  --shell-padding-narrow: 90px; /* 769-968px */
+  --shell-padding-compact: 85px; /* 969-1280px */
   --shell-padding-comfortable: 78px; /* >1280px */
-  
+
   /* Navigation item sizing */
-  --nav-gap-compact: 0.25rem;        /* Small viewports */
-  --nav-gap-comfortable: 0.5rem;     /* Large viewports */
-  --nav-padding-compact: 0.5rem;     /* Small viewports */
+  --nav-gap-compact: 0.25rem; /* Small viewports */
+  --nav-gap-comfortable: 0.5rem; /* Large viewports */
+  --nav-padding-compact: 0.5rem; /* Small viewports */
   --nav-padding-comfortable: 0.75rem; /* Large viewports */
-  
+
   /* ===== BREAKPOINTS (for reference in media queries) ===== */
   /* These are comments since CSS custom properties can't be used in @media */
   /* --breakpoint-mobile: 480px; */
@@ -67,19 +67,19 @@
   /* --breakpoint-compact-nav: 969px; */
   /* --breakpoint-comfortable: 1280px; */
   /* --breakpoint-wide: 1440px; */
-  
+
   /* ===== LAYOUT ===== */
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 64px;
   --appbar-height: 64px;
   --mobile-bottom-bar-height: 60px;
-  
+
   /* ===== BORDERS & RADIUS ===== */
-  --radius-sm: 0.25rem;   /* 4px */
-  --radius-md: 0.5rem;    /* 8px */
-  --radius-lg: 0.75rem;   /* 12px */
-  --radius-xl: 1rem;      /* 16px */
-  
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 1rem; /* 16px */
+
   /* ===== TRANSITIONS ===== */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;

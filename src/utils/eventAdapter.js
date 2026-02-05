@@ -22,21 +22,21 @@ export const toRBCEvent = (event) => {
 
     // Parse the day (YYYY-MM-DD format)
     const dayDate = parseISO(event.day)
-    
+
     // Validate the parsed date
     if (Number.isNaN(dayDate.getTime())) {
       return null
     }
-    
+
     // Parse start and end times (HH:mm format)
     const startTime = parse(event.startTime, 'HH:mm', dayDate)
     let endTime = parse(event.endTime, 'HH:mm', dayDate)
-    
+
     // Validate parsed times
     if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
       return null
     }
-    
+
     // Handle events that span midnight (endTime < startTime)
     // Use strict less-than to only handle true midnight-spanning events
     // Zero-duration events (start === end) are valid (e.g., reminders, bookmarks)
@@ -73,9 +73,7 @@ export const toRBCEvents = (events) => {
     return []
   }
 
-  return events
-    .map(toRBCEvent)
-    .filter(Boolean) // Remove any null results from conversion errors
+  return events.map(toRBCEvent).filter(Boolean) // Remove any null results from conversion errors
 }
 
 /**

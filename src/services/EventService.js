@@ -88,17 +88,20 @@ class EventService {
       // Prevent unreasonably large values that could cause performance issues
       const MAX_DAYS = 3650 // ~10 years, reasonable upper bound
       if (days > MAX_DAYS) {
-        logger.error('EventService.getEventsForDays: days parameter exceeds maximum', {
-          days,
-          maxDays: MAX_DAYS
-        })
+        logger.error(
+          'EventService.getEventsForDays: days parameter exceeds maximum',
+          {
+            days,
+            maxDays: MAX_DAYS
+          }
+        )
         return []
       }
 
       // Use UTC to avoid timezone issues (Item 13: fix timezone handling)
       const startStr = this._normalizeDateString(startDate)
       const parts = startStr.split('-')
-      
+
       // Validate date format (Item 7: handle malformed dates)
       if (parts.length !== 3) {
         logger.error('EventService.getEventsForDays: malformed date string', {
@@ -107,9 +110,9 @@ class EventService {
         })
         return []
       }
-      
+
       const [year, month, day] = parts.map(Number)
-      
+
       // Validate parsed numbers
       if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
         logger.error('EventService.getEventsForDays: invalid date components', {
@@ -119,11 +122,11 @@ class EventService {
         })
         return []
       }
-      
+
       const start = new Date(Date.UTC(year, month - 1, day))
       const end = new Date(start)
       end.setUTCDate(start.getUTCDate() + days - 1)
-      
+
       return await this.getEventsForRange(start, end)
     } catch (error) {
       logger.error('EventService.getEventsForDays error:', error)
@@ -179,17 +182,21 @@ class EventService {
     try {
       const allEvents = await getAll(STORES.SCHEDULE)
       const safeEvents = Array.isArray(allEvents) ? allEvents : []
-      const testEvents = safeEvents.filter(event => event && event.isTestData === true)
-      
+      const testEvents = safeEvents.filter(
+        (event) => event && event.isTestData === true
+      )
+
       // Delete in parallel for better performance, track success/failure
       const results = await Promise.allSettled(
         testEvents
-          .filter(event => event && typeof event.id !== 'undefined')
-          .map(event => deleteById(STORES.SCHEDULE, event.id))
+          .filter((event) => event && typeof event.id !== 'undefined')
+          .map((event) => deleteById(STORES.SCHEDULE, event.id))
       )
-      
+
       // Return count of successful deletions
-      const successCount = results.filter(r => r.status === 'fulfilled').length
+      const successCount = results.filter(
+        (r) => r.status === 'fulfilled'
+      ).length
       return successCount
     } catch (error) {
       logger.error('EventService.clearTestData error:', error)
@@ -223,7 +230,7 @@ class EventService {
       }
       return date
     }
-    
+
     // Convert Date object to string
     const d = date instanceof Date ? date : new Date(date)
     return d.toISOString().split('T')[0]
@@ -238,21 +245,21 @@ class EventService {
    */
   _getWeekRange(referenceDate) {
     const date = new Date(referenceDate)
-    
+
     // Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
     const dayOfWeek = date.getDay()
-    
+
     // Convert to ISO 8601 (Monday = 0, Sunday = 6)
     const isoDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-    
+
     // Get start of week (Monday)
     const startOfWeek = new Date(date)
     startOfWeek.setDate(date.getDate() - isoDay)
-    
+
     // Get end of week (Sunday)
     const endOfWeek = new Date(startOfWeek)
     endOfWeek.setDate(startOfWeek.getDate() + 6)
-    
+
     return {
       startDate: this._normalizeDateString(startOfWeek),
       endDate: this._normalizeDateString(endOfWeek)

@@ -14,13 +14,13 @@
 
 :root {
   /* Time-of-day atmospheres - EXACT canonical values */
-  --morning-top: rgba(245, 192, 111, 0.10);
+  --morning-top: rgba(245, 192, 111, 0.1);
   --morning-bottom: rgba(245, 192, 111, 0.03);
 
   --afternoon-top: rgba(147, 197, 253, 0.08);
   --afternoon-bottom: rgba(147, 197, 253, 0.03);
 
-  --evening-top: rgba(167, 139, 250, 0.10);
+  --evening-top: rgba(167, 139, 250, 0.1);
   --evening-bottom: rgba(167, 139, 250, 0.04);
 
   --night-top: rgba(15, 23, 42, 0.55);
@@ -74,9 +74,5 @@
 
 /* Night: 23:00–07:00 - Low stimulation rest */
 .schedule-band.night {
-  background: linear-gradient(
-    to bottom,
-    var(--night-top),
-    var(--night-bottom)
-  );
+  background: linear-gradient(to bottom, var(--night-top), var(--night-bottom));
 }

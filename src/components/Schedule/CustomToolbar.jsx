@@ -49,50 +49,50 @@ function CustomToolbar({
   }
 
   return (
-    <div className="calendar-toolbar">
-      <div className="toolbar-left">
+    <div className='calendar-toolbar'>
+      <div className='toolbar-left'>
         <h2>Schedule</h2>
-        <p className="date-display">{getTodayLabel()}</p>
+        <p className='date-display'>{getTodayLabel()}</p>
       </div>
 
-      <div className="toolbar-right">
+      <div className='toolbar-right'>
         {/* Navigation buttons */}
-        <div className="nav-buttons">
+        <div className='nav-buttons'>
           <button
-            type="button"
+            type='button'
             onClick={handlePrev}
-            className="btn-icon"
-            aria-label="Previous period"
+            className='btn-icon'
+            aria-label='Previous period'
           >
-            <Icon name="chevronLeft" />
+            <Icon name='chevronLeft' />
           </button>
           <button
-            type="button"
+            type='button'
             onClick={handleToday}
-            className="btn-secondary"
-            aria-label="Go to today"
+            className='btn-secondary'
+            aria-label='Go to today'
           >
             Today
           </button>
           <button
-            type="button"
+            type='button'
             onClick={handleNext}
-            className="btn-icon"
-            aria-label="Next period"
+            className='btn-icon'
+            aria-label='Next period'
           >
-            <Icon name="chevronRight" />
+            <Icon name='chevronRight' />
           </button>
         </div>
 
         {/* View mode selector */}
-        <div className="view-selector">
-          <label htmlFor="view-mode">View:</label>
+        <div className='view-selector'>
+          <label htmlFor='view-mode'>View:</label>
           <select
-            id="view-mode"
+            id='view-mode'
             value={view}
             onChange={(e) => onView(e.target.value)}
-            className="view-dropdown"
-            aria-label="Change view mode"
+            className='view-dropdown'
+            aria-label='Change view mode'
           >
             {views.map((v) => (
               <option key={v} value={v}>
@@ -104,12 +104,12 @@ function CustomToolbar({
 
         {/* Schedule event button */}
         <button
-          type="button"
-          className="btn-primary"
-          aria-label="Schedule an event"
+          type='button'
+          className='btn-primary'
+          aria-label='Schedule an event'
           onClick={() => onScheduleEvent(EVENT_TYPES.TASK)}
         >
-          <Icon name="plus" />
+          <Icon name='plus' />
           Schedule
         </button>
       </div>

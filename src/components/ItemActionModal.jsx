@@ -6,7 +6,7 @@ import './ItemActionModal.css'
 /**
  * Reusable modal for displaying item details with edit/delete actions
  * Used across Schedule, Tasks, Habits, Brain Dump, etc.
- * 
+ *
  * Mobile: Shows on click with full details
  * Desktop: Shows on right-click as context menu
  */
@@ -31,7 +31,10 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
         previouslyFocusedElement.current = document.activeElement
       }
 
-      if (firstButtonRef.current && typeof firstButtonRef.current.focus === 'function') {
+      if (
+        firstButtonRef.current &&
+        typeof firstButtonRef.current.focus === 'function'
+      ) {
         firstButtonRef.current.focus()
       }
     }
@@ -58,12 +61,14 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
     let focusableElements = []
     let firstElement = null
     let lastElement = null
-    
+
     if (!isContextMenu && modalRef.current) {
-      focusableElements = Array.from(modalRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      ))
-      
+      focusableElements = Array.from(
+        modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      )
+
       if (focusableElements.length > 0) {
         firstElement = focusableElements[0]
         lastElement = focusableElements[focusableElements.length - 1]
@@ -132,36 +137,40 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
     )
 
     return (
-      <div 
-        className="item-action-backdrop"
-        role="presentation"
+      <div
+        className='item-action-backdrop'
+        role='presentation'
         onClick={handleBackdropClick}
       >
-        <div 
-          className="item-action-context-menu"
-          role="menu"
-          aria-label="Item actions"
+        <div
+          className='item-action-context-menu'
+          role='menu'
+          aria-label='Item actions'
           style={{
             position: 'fixed',
             left: `${x}px`,
             top: `${y}px`
           }}
         >
-          <button 
+          <button
             ref={firstButtonRef}
-            className="context-menu-item" 
+            className='context-menu-item'
             onClick={handleEdit}
-            role="menuitem"
+            role='menuitem'
           >
-            <span className="context-menu-icon" aria-hidden="true">✏️</span>
+            <span className='context-menu-icon' aria-hidden='true'>
+              ✏️
+            </span>
             Edit
           </button>
-          <button 
-            className="context-menu-item context-menu-item-danger" 
+          <button
+            className='context-menu-item context-menu-item-danger'
             onClick={handleDelete}
-            role="menuitem"
+            role='menuitem'
           >
-            <span className="context-menu-icon" aria-hidden="true">🗑️</span>
+            <span className='context-menu-icon' aria-hidden='true'>
+              🗑️
+            </span>
             Delete
           </button>
         </div>
@@ -173,44 +182,44 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
   const content = formatContent ? formatContent(item) : null
 
   return (
-    <div 
-      className="item-action-backdrop"
-      role="presentation"
+    <div
+      className='item-action-backdrop'
+      role='presentation'
       onClick={handleBackdropClick}
     >
-      <div 
+      <div
         ref={modalRef}
-        className="item-action-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
+        className='item-action-modal'
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby='modal-title'
       >
-        <div className="item-action-header">
-          <h3 id="modal-title">{item.title || 'Item Details'}</h3>
-          <button className="item-action-close" onClick={onClose} aria-label="Close">
+        <div className='item-action-header'>
+          <h3 id='modal-title'>{item.title || 'Item Details'}</h3>
+          <button
+            className='item-action-close'
+            onClick={onClose}
+            aria-label='Close'
+          >
             ✕
           </button>
         </div>
-        
-        {content && (
-          <div className="item-action-content">
-            {content}
-          </div>
-        )}
-        
-        <div className="item-action-buttons">
-          <button 
+
+        {content && <div className='item-action-content'>{content}</div>}
+
+        <div className='item-action-buttons'>
+          <button
             ref={firstButtonRef}
-            className="item-action-btn item-action-btn-secondary" 
+            className='item-action-btn item-action-btn-secondary'
             onClick={handleEdit}
           >
-            <span aria-hidden="true">✏️</span> Edit
+            <span aria-hidden='true'>✏️</span> Edit
           </button>
-          <button 
-            className="item-action-btn item-action-btn-danger" 
+          <button
+            className='item-action-btn item-action-btn-danger'
             onClick={handleDelete}
           >
-            <span aria-hidden="true">🗑️</span> Delete
+            <span aria-hidden='true'>🗑️</span> Delete
           </button>
         </div>
       </div>
