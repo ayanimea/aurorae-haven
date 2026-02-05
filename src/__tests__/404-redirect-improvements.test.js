@@ -6,12 +6,11 @@ import { DEFAULT_GITHUB_PAGES_BASE_PATH } from '../utils/configConstants'
  */
 
 describe('404.html Redirect Improvements', () => {
-  let originalSessionStorage
+  let sessionStorageSpy
 
   beforeEach(() => {
-    // Mock sessionStorage
-    originalSessionStorage = global.sessionStorage
-    global.sessionStorage = {
+    // Mock sessionStorage using jest.spyOn for jsdom v28 compatibility
+    const mockSessionStorage = {
       data: {},
       setItem(key, value) {
         this.data[key] = value
@@ -19,14 +18,21 @@ describe('404.html Redirect Improvements', () => {
       getItem(key) {
         return this.data[key] || null
       },
+      removeItem(key) {
+        delete this.data[key]
+      },
       clear() {
         this.data = {}
       }
     }
+    
+    sessionStorageSpy = jest.spyOn(global, 'sessionStorage', 'get').mockReturnValue(mockSessionStorage)
   })
 
   afterEach(() => {
-    global.sessionStorage = originalSessionStorage
+    if (sessionStorageSpy) {
+      sessionStorageSpy.mockRestore()
+    }
   })
 
   describe('Bug Fix: Meta Refresh Tag Removed', () => {
