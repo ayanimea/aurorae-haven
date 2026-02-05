@@ -140,11 +140,12 @@ let lastPrefixTimestamp = 0
  * Generate a timestamp-based ID with collision prevention
  * Ensures uniqueness even for same-millisecond operations by using counters
  * @param {string} prefix - Optional prefix for the ID
+ * @param {number} providedTimestamp - Optional timestamp to use (for consistency with metadata)
  * @returns {string|number} Unique timestamp ID (prefixed string or numeric)
  * @private
  */
-function generateTimestampIdWithCollisionPrevention(prefix = '') {
-  const timestamp = Date.now()
+function generateTimestampIdWithCollisionPrevention(prefix = '', providedTimestamp = null) {
+  const timestamp = providedTimestamp !== null ? providedTimestamp : Date.now()
 
   if (prefix) {
     // Handle prefixed IDs with per-prefix counter
@@ -164,7 +165,12 @@ function generateTimestampIdWithCollisionPrevention(prefix = '') {
     // Handle numeric IDs with global counter
     if (timestamp === lastTimestamp) {
       idCounter++
-      return timestamp + idCounter
+      // When multiple IDs are generated in the same millisecond, use a string format
+      // with zero-padded counter to ensure uniqueness without numeric collisions.
+      // Format: "timestamp.001", "timestamp.002", "timestamp.003", etc.
+      // This prevents collisions with the next millisecond's timestamp and maintains
+      // clear distinction between base timestamp IDs and collision-prevented IDs.
+      return `${timestamp}.${String(idCounter).padStart(3, '0')}`
     } else {
       idCounter = 0
       lastTimestamp = timestamp
@@ -188,11 +194,13 @@ export function normalizeEntity(entity, options = {}) {
   const metadata = generateMetadata()
 
   // Generate unique ID - add counter to handle same-millisecond creates
+  // Pass metadata.timestamp to ensure ID generation uses the same timestamp value
+  // This prevents timing issues where Date.now() is called multiple times
   let id
   if (entity.id) {
     id = entity.id
   } else {
-    id = generateTimestampIdWithCollisionPrevention(options.idPrefix)
+    id = generateTimestampIdWithCollisionPrevention(options.idPrefix, metadata.timestamp)
   }
 
   return {

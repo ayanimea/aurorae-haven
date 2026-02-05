@@ -5,6 +5,15 @@
   gap: 14px;
 }
 
+/* Responsive grid for smaller desktop windows */
+@media (max-width: 1200px) {
+  .layout-dump {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+/* Removed - merged into overlay breakpoint below */
+
 /* Brain Dump multi-note layout */
 .brain-dump-container {
   display: flex;
@@ -30,7 +39,67 @@
   transition:
     width var(--dur) var(--ease),
     min-width var(--dur) var(--ease),
-    opacity var(--dur) var(--ease);
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+/* Small desktop and mobile - sidebar becomes overlay to prevent content hiding */
+@media (max-width: 900px) {
+  .layout-dump {
+    grid-template-columns: 1fr;
+  }
+
+  .brain-dump-container {
+    position: relative; /* Anchor sidebar positioning */
+    gap: 0;
+    min-height: 350px;
+  }
+
+  .note-list-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    min-width: 280px;
+    z-index: var(--z-editor); /* Sidebar above main content so buttons remain clickable */
+    background: rgba(16, 20, 44, 0.98);
+    backdrop-filter: var(--blur);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+    /* Note: Sidebar visibility controlled by React (mount/unmount), not CSS transform */
+  }
+
+  .brain-dump-main {
+    width: 100%;
+    position: relative;
+    z-index: var(--z-sidebar); /* Below sidebar so + button remains clickable */
+  }
+
+  /* Ensure toolbar stays above sidebar overlay on mobile */
+  .brain-dump-main .card-h {
+    position: relative;
+    z-index: calc(var(--z-editor) + 1); /* Above sidebar (101) to keep buttons clickable */
+  }
+
+  /* Ensure card body (editor/preview) stays below sidebar on mobile
+   * This prevents the editor content from being accessible when sidebar is open,
+   * forcing users to close the sidebar to edit notes - clearer UX on small screens */
+  .brain-dump-main .card-b {
+    position: relative;
+    z-index: var(--z-base); /* Below sidebar (z-index 1 vs 101) so sidebar fully overlays when open */
+  }
+}
+
+/* Small mobile - further adjustments */
+@media (max-width: 480px) {
+  .note-list-sidebar {
+    width: 260px;
+    min-width: 260px;
+  }
+
+  .brain-dump-container {
+    min-height: 300px;
+  }
 }
 
 .note-list-sidebar.hidden {
@@ -403,6 +472,45 @@ textarea {
   .resizable-textarea {
     resize: vertical;
     max-width: 100%;
+  }
+
+  /* Stack editor and preview vertically on mobile portrait */
+  .note-editor-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto 1fr;
+    gap: 0;
+  }
+
+  /* Make resize handle horizontal on mobile */
+  .resize-handle {
+    width: 100%;
+    height: 4px;
+    min-width: 0;
+    min-height: 4px;
+    cursor: row-resize;
+  }
+
+  /* Ensure editor and preview have minimum height on mobile */
+  .editor-pane,
+  .preview-pane {
+    min-height: 200px;
+  }
+
+  /* Improve note list header layout on mobile */
+  .note-list-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Make title and category inputs stack on very small screens */
+  .title-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .note-category-input {
+    max-width: 100%;
+    width: 100%;
   }
 }
 textarea:disabled {

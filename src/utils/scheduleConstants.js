@@ -9,18 +9,23 @@ export const EVENT_TYPES = {
   ROUTINE: 'routine',
   TASK: 'task',
   MEETING: 'meeting',
-  HABIT: 'habit'
+  HABIT: 'habit',
+  BREAK: 'break'
 }
 
 // Array of valid event types for validation
 export const VALID_EVENT_TYPES = Object.values(EVENT_TYPES)
 
 // Schedule time range constants (in hours, 24-hour format)
-export const SCHEDULE_START_HOUR = 6
-export const SCHEDULE_END_HOUR = 22
+export const SCHEDULE_START_HOUR = 7
+export const SCHEDULE_END_HOUR = 24 // Exclusive end marker: 24:00 represents midnight/end of day. This is an internal
+// representation for range calculations (e.g., hour < SCHEDULE_END_HOUR). Events at midnight (00:00) are
+// stored/displayed as 0, but this constant helps boundary checks treat them as "end of previous day".
 
-// Display constants - each hour occupies 120 pixels in the UI
-export const PIXELS_PER_HOUR = 120
+// Display constants
+// NOTE: Hour heights are now calculated dynamically using CSS variables per schedule-ui-spec.md §6.
+// The spec requires "proportional and non-hardcoded" time scaling using minute-based units.
+// See schedule.css :root section for --minute-unit and --hour-height calculations.
 export const SCHEDULE_VERTICAL_OFFSET = 6
 
 // Default event duration (in minutes)

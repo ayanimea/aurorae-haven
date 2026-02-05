@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "exportedAt": "2026-01-26T08:00:00.000Z",
+  "tasks": [],
+  "routines": [
+    {
+      "id": "routine-morning-2024",
+      "name": "Morning Routine",
+      "steps": [
+        {
+          "id": "step-1",
+          "name": "Wake up & Stretch",
+          "duration": 5,
+          "completed": false
+        },
+        {
+          "id": "step-2",
+          "name": "Shower",
+          "duration": 10,
+          "completed": false
+        },
+        {
+          "id": "step-3",
+          "name": "Breakfast",
+          "duration": 15,
+          "completed": false
+        },
+        {
+          "id": "step-4",
+          "name": "Review daily goals",
+          "duration": 5,
+          "completed": false
+        }
+      ],
+      "createdAt": "2026-01-20T07:00:00.000Z",
+      "updatedAt": "2026-01-20T07:00:00.000Z"
+    },
+    {
+      "id": "routine-evening-2024",
+      "name": "Evening Wind-Down",
+      "steps": [
+        {
+          "id": "step-1",
+          "name": "Review accomplishments",
+          "duration": 5,
+          "completed": false
+        },
+        {
+          "id": "step-2",
+          "name": "Plan tomorrow",
+          "duration": 10,
+          "completed": false
+        },
+        {
+          "id": "step-3",
+          "name": "Reading time",
+          "duration": 20,
+          "completed": false
+        },
+        {
+          "id": "step-4",
+          "name": "Sleep preparation",
+          "duration": 10,
+          "completed": false
+        }
+      ],
+      "createdAt": "2026-01-20T20:00:00.000Z",
+      "updatedAt": "2026-01-20T20:00:00.000Z"
+    }
+  ],
+  "habits": [],
+  "dumps": [
+    {
+      "id": "dump-001",
+      "title": "Project Ideas",
+      "content": "- Build a weather app\n- Create a recipe manager\n- Develop a habit tracker\n- Design a minimalist portfolio",
+      "tags": ["ideas", "projects"],
+      "createdAt": "2026-01-22T10:30:00.000Z",
+      "updatedAt": "2026-01-22T10:30:00.000Z"
+    },
+    {
+      "id": "dump-002",
+      "title": "Meeting Notes - Team Sync",
+      "content": "Discussed Q1 goals:\n- Improve UX\n- Add dark mode\n- Optimize performance\n- Write documentation",
+      "tags": ["meetings", "work"],
+      "createdAt": "2026-01-23T14:00:00.000Z",
+      "updatedAt": "2026-01-23T14:00:00.000Z"
+    },
+    {
+      "id": "dump-003",
+      "title": "Learning Resources",
+      "content": "CSS Grid tutorial: grid.malven.co\nReact hooks guide: react.dev/hooks\nAccessibility checklist: webaim.org\nPerformance tips: web.dev",
+      "tags": ["learning", "resources"],
+      "createdAt": "2026-01-24T09:15:00.000Z",
+      "updatedAt": "2026-01-24T09:15:00.000Z"
+    },
+    {
+      "id": "dump-004",
+      "title": "Books to Read",
+      "content": "📚 Fiction:\n- The Midnight Library\n- Project Hail Mary\n\n📖 Non-fiction:\n- Atomic Habits\n- Deep Work\n- Make Time",
+      "tags": ["books", "reading-list"],
+      "createdAt": "2026-01-25T16:00:00.000Z",
+      "updatedAt": "2026-01-25T16:00:00.000Z"
+    },
+    {
+      "id": "dump-005",
+      "title": "Weekend Plans",
+      "content": "Saturday:\n- Morning hike 🥾\n- Farmers market 🥕\n- Work on side project 💻\n\nSunday:\n- Meal prep 🍳\n- Catch up on reading 📖\n- Family video call 📞",
+      "tags": ["personal", "plans"],
+      "createdAt": "2026-01-26T08:00:00.000Z",
+      "updatedAt": "2026-01-26T08:00:00.000Z"
+    }
+  ],
+  "schedule": [
+    {
+      "id": "schedule-001",
+      "title": "Morning Routine",
+      "type": "routine",
+      "startTime": "07:00",
+      "endTime": "07:35",
+      "date": "2026-01-26",
+      "color": "#74ffe1",
+      "completed": false
+    },
+    {
+      "id": "schedule-002",
+      "title": "Deep Work Session",
+      "type": "task",
+      "startTime": "09:00",
+      "endTime": "11:00",
+      "date": "2026-01-26",
+      "color": "#7ea6ff",
+      "completed": false
+    },
+    {
+      "id": "schedule-003",
+      "title": "Lunch Break",
+      "type": "break",
+      "startTime": "12:00",
+      "endTime": "13:00",
+      "date": "2026-01-26",
+      "color": "#a78bfa",
+      "completed": false
+    },
+    {
+      "id": "schedule-004",
+      "title": "Team Meeting",
+      "type": "meeting",
+      "startTime": "14:00",
+      "endTime": "15:00",
+      "date": "2026-01-26",
+      "color": "#f472b6",
+      "completed": false
+    },
+    {
+      "id": "schedule-005",
+      "title": "Evening Wind-Down",
+      "type": "routine",
+      "startTime": "20:00",
+      "endTime": "20:45",
+      "date": "2026-01-26",
+      "color": "#74ffe1",
+      "completed": false
+    }
+  ],
+  "brainDump": {
+    "content": "",
+    "tags": "",
+    "entries": [],
+    "versions": []
+  }
+}

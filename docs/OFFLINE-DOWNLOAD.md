@@ -20,7 +20,7 @@ This is ideal for:
 
 The latest offline package is always available on the `offline-releases` branch:
 
-1. Visit the [offline-releases branch](https://github.com/aurorae-haven/aurorae-haven/tree/offline-releases)
+1. Visit the [offline-releases branch](https://github.com/ayanimea/aurorae-haven/tree/offline-releases)
 2. Download the `.tar.gz` file (e.g., `aurorae-haven-offline-v1.0.0.tar.gz`)
 3. Click on the file to view it, then click the "Download" button
 
@@ -30,7 +30,7 @@ The latest offline package is always available on the `offline-releases` branch:
 
 For stable, tagged releases:
 
-1. Visit the [Releases page](https://github.com/aurorae-haven/aurorae-haven/releases)
+1. Visit the [Releases page](https://github.com/ayanimea/aurorae-haven/releases)
 2. Find the latest release (or the version you want)
 3. Download the `.tar.gz` file under "Assets" (e.g., `aurorae-haven-offline-v1.0.0.tar.gz`)
 4. Tagged releases are versioned and include changelogs
@@ -39,7 +39,7 @@ For stable, tagged releases:
 
 For the absolute latest build from CI/CD:
 
-1. Visit the [GitHub Actions workflows page](https://github.com/aurorae-haven/aurorae-haven/actions/workflows/upload-pages-artifact.yml)
+1. Visit the [GitHub Actions workflows page](https://github.com/ayanimea/aurorae-haven/actions/workflows/upload-pages-artifact.yml)
 2. Click on the most recent successful workflow run (look for a green checkmark ✓)
 3. Scroll down to the **Artifacts** section at the bottom of the page
 4. Click on `AuroraeHaven` to download the automatically-generated `.zip` file
@@ -266,7 +266,7 @@ A: Export your data (Settings → Export), transfer the JSON file, and import on
 
 For issues or questions:
 
-- Open an issue on [GitHub](https://github.com/aurorae-haven/aurorae-haven/issues)
+- Open an issue on [GitHub](https://github.com/ayanimea/aurorae-haven/issues)
 - Check existing [documentation](../docs/)
 - Review the [README](../README.md)
 

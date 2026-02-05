@@ -187,6 +187,14 @@
   padding: 20px;
 }
 
+/* Mobile - reduce padding for more modal space */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+}
+
 /* Modal Content */
 .modal-content {
   background: var(--dark);
@@ -198,6 +206,33 @@
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Mobile - full width and slide up animation */
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+    animation: modalSlideUp 0.3s ease-out;
+  }
+
+  @keyframes modalSlideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-content {
+    animation: none;
+  }
 }
 
 /* Modal Header */
@@ -344,9 +379,8 @@
     gap: 12px;
   }
 
-  .modal-content {
-    max-width: calc(100% - 40px);
-  }
+  /* Removed: .modal-content max-width override - conflicts with bottom-sheet design at 768px */
+  /* Bottom sheet uses max-width: 100% for full-width mobile experience */
 
   .note-category-input {
     min-width: 120px;

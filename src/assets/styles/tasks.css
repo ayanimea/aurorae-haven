@@ -2,11 +2,13 @@
 .tasks-container {
   display: grid;
   gap: 16px;
+  position: relative;
+  z-index: 1;
 }
 
 .add-task-form {
   display: grid;
-  grid-template-columns: 200px 1fr auto;
+  grid-template-columns: 1fr 200px auto;
   gap: 10px;
   align-items: center;
 }
@@ -324,5 +326,78 @@
 
   .matrix-quadrant {
     min-height: 250px;
+  }
+
+  .add-task-form {
+    grid-template-columns: 1fr 180px auto;
+    gap: 8px;
+  }
+}
+
+/* Mobile portrait - stack form vertically and adjust matrix */
+@media (max-width: 768px) {
+  /* Ensure task form and content are above mobile menu overlay for clickability */
+  .tasks-container {
+    position: relative;
+    z-index: var(--z-editor);
+  }
+
+  .add-task-form {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Card header layout - ensure proper wrapping */
+  .tasks-container .card-h {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .eisenhower-matrix {
+    gap: 10px;
+  }
+
+  .matrix-quadrant {
+    min-height: 200px;
+    padding: 12px;
+  }
+
+  .quadrant-header h3 {
+    font-size: 14px;
+  }
+
+  .quadrant-header .subtitle {
+    font-size: 12px;
+  }
+
+  .task-item {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+}
+
+/* Small mobile - further reduce spacing and sizes */
+@media (max-width: 480px) {
+  .tasks-container {
+    gap: 12px;
+  }
+
+  .eisenhower-matrix {
+    gap: 8px;
+  }
+
+  .matrix-quadrant {
+    min-height: 180px;
+    padding: 10px;
+  }
+
+  .add-task-form {
+    gap: 10px;
+  }
+
+  .task-input,
+  .quadrant-select {
+    font-size: 14px;
+    padding: 8px 10px;
   }
 }

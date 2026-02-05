@@ -256,22 +256,37 @@ describe('idGenerator', () => {
       // This prevents contamination from previous tests' module-level counters
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      // Create multiple entities synchronously (within same millisecond)
-      const entities = []
-      for (let i = 0; i < 5; i++) {
-        entities.push(normalizeEntity({ name: `Entity ${i}` }))
+      // Mock Date.now() to return a fixed timestamp for all entity creations
+      // This ensures all entities are created "within the same millisecond" for testing collision prevention
+      // Note: The spy is set up before creating entities to ensure normalizeEntity uses the mocked time
+      const fixedTimestamp = 1234567890000
+      const dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(fixedTimestamp)
+
+      try {
+        // Create multiple entities synchronously (within same millisecond)
+        const entities = []
+        for (let i = 0; i < 5; i++) {
+          entities.push(normalizeEntity({ name: `Entity ${i}` }))
+        }
+
+        // Verify all IDs are unique
+        const ids = entities.map((e) => e.id)
+        const uniqueIds = new Set(ids)
+        expect(uniqueIds.size).toBe(ids.length)
+
+        // First ID should be numeric timestamp
+        expect(typeof ids[0]).toBe('number')
+        expect(ids[0]).toBe(fixedTimestamp)
+
+        // Subsequent IDs should be strings with counter suffix (since created in same ms)
+        for (let i = 1; i < ids.length; i++) {
+          expect(typeof ids[i]).toBe('string')
+          expect(ids[i]).toMatch(/^\d+\.\d{3}$/)
+        }
+      } finally {
+        // Restore original Date.now() using Jest's built-in cleanup
+        dateNowSpy.mockRestore()
       }
-
-      // Verify all IDs are unique
-      const ids = entities.map((e) => e.id)
-      const uniqueIds = new Set(ids)
-      expect(uniqueIds.size).toBe(ids.length)
-
-      // Verify IDs are numeric
-      ids.forEach((id) => {
-        expect(typeof id).toBe('number')
-        expect(id).toBeGreaterThan(0)
-      })
     })
 
     test('generates unique IDs for same-millisecond creates with prefix', () => {
@@ -307,6 +322,58 @@ describe('idGenerator', () => {
 
       expect(entity1.id).not.toBe(entity2.id)
       expect(entity2.timestamp).toBeGreaterThan(entity1.timestamp)
+    })
+
+    test('handles multiple same-millisecond creates with sequential counters', async () => {
+      // Add delay to ensure clean timestamp for test isolation
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      // Create many entities synchronously (within same millisecond)
+      const count = 100 // Reduced count to ensure they're created in same ms
+      const entities = []
+      for (let i = 0; i < count; i++) {
+        entities.push(normalizeEntity({ name: `Entity ${i}` }))
+      }
+
+      // Verify all IDs are unique
+      const ids = entities.map((e) => e.id)
+      const uniqueIds = new Set(ids)
+      expect(uniqueIds.size).toBe(ids.length)
+
+      // First ID should be numeric timestamp
+      expect(typeof ids[0]).toBe('number')
+
+      // Count how many IDs were created in the same millisecond (have string format)
+      const stringIds = ids.filter((id) => typeof id === 'string')
+
+      // If we created multiple IDs in same millisecond, verify format
+      if (stringIds.length > 0) {
+        stringIds.forEach((id) => {
+          expect(id).toMatch(/^\d+\.\d{3}$/)
+        })
+
+        // Group string IDs by their millisecond timestamp and verify
+        // that counters within each group are sequential starting from 1.
+        const countersByTimestamp = {}
+        stringIds.forEach((id) => {
+          const [timestampPart, counterPart] = id.split('.')
+          const counterValue = parseInt(counterPart, 10)
+
+          if (!countersByTimestamp[timestampPart]) {
+            countersByTimestamp[timestampPart] = []
+          }
+          countersByTimestamp[timestampPart].push(counterValue)
+        })
+
+        Object.values(countersByTimestamp).forEach((counters) => {
+          const sortedCounters = counters.slice().sort((a, b) => a - b)
+
+          sortedCounters.forEach((value, index) => {
+            // For each millisecond, counters should be 1, 2, 3, ...
+            expect(value).toBe(index + 1)
+          })
+        })
+      }
     })
   })
 

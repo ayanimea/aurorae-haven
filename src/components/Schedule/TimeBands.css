@@ -1,0 +1,82 @@
+/**
+ * TimeBands Styling - Canonical Visual Specification
+ * Soft gradients that provide temporal context without visual dominance
+ * 
+ * Rules:
+ * - Bands provide context, not emphasis
+ * - z-index: 1 (below grid and events)
+ * - pointer-events: none (don't interfere with interactions)
+ * - Full-width horizontal bands
+ * - Soft gradients (no sharp edges)
+ * - No borders
+ * - Low opacity (≤10%)
+ */
+
+:root {
+  /* Time-of-day atmospheres - EXACT canonical values */
+  --morning-top: rgba(245, 192, 111, 0.10);
+  --morning-bottom: rgba(245, 192, 111, 0.03);
+
+  --afternoon-top: rgba(147, 197, 253, 0.08);
+  --afternoon-bottom: rgba(147, 197, 253, 0.03);
+
+  --evening-top: rgba(167, 139, 250, 0.10);
+  --evening-bottom: rgba(167, 139, 250, 0.04);
+
+  --night-top: rgba(15, 23, 42, 0.55);
+  --night-bottom: rgba(15, 23, 42, 0.35);
+}
+
+.schedule-bands-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.schedule-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+/* Morning: 07:00–12:00 - Warm, gentle activation */
+.schedule-band.morning {
+  background: linear-gradient(
+    to bottom,
+    var(--morning-top),
+    var(--morning-bottom)
+  );
+}
+
+/* Afternoon: 12:00–18:00 - Neutral, focused daylight */
+.schedule-band.afternoon {
+  background: linear-gradient(
+    to bottom,
+    var(--afternoon-top),
+    var(--afternoon-bottom)
+  );
+}
+
+/* Evening: 18:00–23:00 - Calm wind-down */
+.schedule-band.evening {
+  background: linear-gradient(
+    to bottom,
+    var(--evening-top),
+    var(--evening-bottom)
+  );
+}
+
+/* Night: 23:00–07:00 - Low stimulation rest */
+.schedule-band.night {
+  background: linear-gradient(
+    to bottom,
+    var(--night-top),
+    var(--night-bottom)
+  );
+}
