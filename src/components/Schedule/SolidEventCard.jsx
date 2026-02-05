@@ -22,17 +22,19 @@ function SolidEventCard({ event, onContextMenu }) {
   const { title, resource } = event
   // Validate event type to prevent injection attacks - provides defense-in-depth
   const rawEventType = resource?.type || 'task'
-  const eventType = VALID_EVENT_TYPES.includes(rawEventType) ? rawEventType : 'task'
-  
+  const eventType = VALID_EVENT_TYPES.includes(rawEventType)
+    ? rawEventType
+    : 'task'
+
   // Log warning for invalid event types to detect data corruption or injection attempts
   if (rawEventType && !VALID_EVENT_TYPES.includes(rawEventType)) {
     // eslint-disable-next-line no-console
     console.warn(
       `[SolidEventCard] Invalid event type "${rawEventType}" encountered for event "${title}". ` +
-      `Falling back to "task". Valid types: ${VALID_EVENT_TYPES.join(', ')}`
+        `Falling back to "task". Valid types: ${VALID_EVENT_TYPES.join(', ')}`
     )
   }
-  
+
   const prepTime = resource?.preparationTime || 0
   const travelTime = resource?.travelTime || 0
 
@@ -66,7 +68,9 @@ function SolidEventCard({ event, onContextMenu }) {
           
           Type validation: title is coerced to string, empty string for null/undefined
           to avoid displaying "null"/"undefined" text. */}
-      <strong className='event-title'>{title != null ? String(title) : ''}</strong>
+      <strong className='event-title'>
+        {title != null ? String(title) : ''}
+      </strong>
       {hasPreActivities && (
         <div className='event-pre-activities'>
           {prepTime > 0 && (

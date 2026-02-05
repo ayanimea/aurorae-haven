@@ -144,7 +144,10 @@ let lastPrefixTimestamp = 0
  * @returns {string|number} Unique timestamp ID (prefixed string or numeric)
  * @private
  */
-function generateTimestampIdWithCollisionPrevention(prefix = '', providedTimestamp = null) {
+function generateTimestampIdWithCollisionPrevention(
+  prefix = '',
+  providedTimestamp = null
+) {
   const timestamp = providedTimestamp !== null ? providedTimestamp : Date.now()
 
   if (prefix) {
@@ -200,7 +203,10 @@ export function normalizeEntity(entity, options = {}) {
   if (entity.id) {
     id = entity.id
   } else {
-    id = generateTimestampIdWithCollisionPrevention(options.idPrefix, metadata.timestamp)
+    id = generateTimestampIdWithCollisionPrevention(
+      options.idPrefix,
+      metadata.timestamp
+    )
   }
 
   return {

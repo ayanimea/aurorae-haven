@@ -20,7 +20,11 @@ describe('HeatmapStrip Component', () => {
     const cells = container.querySelectorAll('[aria-label]')
     const todayCell = cells[cells.length - 1]
 
-    expect(todayCell).toHaveStyle({ border: '1px solid #86f5e0' })
+    // In jsdom v28, hex colors are converted to rgb()
+    // Check the actual style attribute - border should contain the mint color
+    const styleAttr = todayCell.getAttribute('style')
+    expect(styleAttr).toContain('border')
+    expect(styleAttr).toMatch(/border:.*rgb\(134, 245, 224\)|border:.*#86f5e0/)
   })
 
   test('shows completed days in mint color', () => {

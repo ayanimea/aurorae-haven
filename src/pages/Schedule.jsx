@@ -133,7 +133,10 @@ function Schedule() {
           setUse24HourFormat(updatedValue)
         }
       } catch (err) {
-        console.error('Failed to sync 24-hour format from settings (storage):', err)
+        console.error(
+          'Failed to sync 24-hour format from settings (storage):',
+          err
+        )
       }
     }
 
@@ -146,7 +149,10 @@ function Schedule() {
           setUse24HourFormat(updatedValue)
         }
       } catch (err) {
-        console.error('Failed to sync 24-hour format from settings (custom event):', err)
+        console.error(
+          'Failed to sync 24-hour format from settings (custom event):',
+          err
+        )
       }
     }
 

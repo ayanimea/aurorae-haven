@@ -186,11 +186,11 @@
     max-width: 95%;
     max-height: 90vh;
   }
-  
+
   .item-action-buttons {
     flex-direction: column;
   }
-  
+
   .item-action-btn {
     width: 100%;
   }
