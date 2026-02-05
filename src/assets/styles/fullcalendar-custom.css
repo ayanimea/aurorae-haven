@@ -126,26 +126,37 @@
   z-index: 2;
 }
 
+/* FullCalendar's positioned event container - must fill the time slot */
+.fc-timegrid-event {
+  border: none;
+  background: none;
+  padding: 2px; /* Small padding for visual separation */
+}
+
+/* Inner wrappers - let SolidEventCard handle all styling */
 .fc-event {
   border: none;
   background: none;
   padding: 0;
   margin: 0;
+  height: 100%;
+  width: 100%;
 }
 
 .fc-event-main {
   padding: 0;
   background: none;
   color: inherit;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.fc-event-title {
-  font-weight: 600;
-}
-
+/* Hide default FC event title/time since SolidEventCard renders them */
+.fc-event-title,
 .fc-event-time {
-  font-size: 0.75rem;
-  opacity: 0.8;
+  display: none;
 }
 
 /* Event type classes - match RBC styling */
