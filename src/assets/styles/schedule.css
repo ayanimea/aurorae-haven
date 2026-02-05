@@ -2044,8 +2044,8 @@ Ask for clarification or preserve the existing structure.
     gap: 4px !important;
   }
 
-  /* Smaller hour height for mobile week view */
+  /* Fixed 60px hour height on mobile week view to show more hours at once */
   .week-hour {
-    height: 60px !important; /* Even smaller on mobile for better overview */
+    height: 60px !important; /* Mobile-specific height for better overview */
   }
 }
