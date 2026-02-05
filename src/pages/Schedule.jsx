@@ -77,9 +77,6 @@ import EventService from '../services/EventService'
 import { toFullCalendarEvents, createEventFromSlot } from '../utils/eventAdapter'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
-import '@fullcalendar/core/index.css'
-import '@fullcalendar/daygrid/index.css'
-import '@fullcalendar/timegrid/index.css'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -469,26 +466,20 @@ function Schedule() {
               EVENT_TYPES={EVENT_TYPES}
             />
 
-            {/* FullCalendar */}
+            {/* FullCalendar - Full day view 07:00 to 24:00 */}
             <FullCalendar
               ref={calendarRef}
               plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
               initialView={view}
               initialDate={date}
               events={fullCalendarEvents}
-              
-              {/* Time settings - 07:00 to 24:00 */}
               slotMinTime={slotMinTime}
               slotMaxTime={slotMaxTime}
               slotDuration="00:15:00"
               slotLabelInterval="01:00:00"
-              
-              {/* Display settings */}
-              headerToolbar={false} // We use CustomToolbar instead
+              headerToolbar={false}
               height="auto"
               expandRows={true}
-              
-              {/* Time format */}
               slotLabelFormat={{
                 hour: use24HourFormat ? '2-digit' : 'numeric',
                 minute: '2-digit',
@@ -500,21 +491,13 @@ function Schedule() {
                 minute: '2-digit',
                 hour12: !use24HourFormat
               }}
-              
-              {/* Week settings (Monday start for European) */}
               firstDay={1}
-              
-              {/* Interaction */}
               selectable={true}
               selectMirror={true}
               editable={true}
-              
-              {/* Event handlers */}
               eventClick={handleEventClick}
               select={handleDateSelect}
               eventMouseEnter={handleEventMouseEnter}
-              
-              {/* Event rendering */}
               eventContent={(eventInfo) => (
                 <SolidEventCard
                   event={{
