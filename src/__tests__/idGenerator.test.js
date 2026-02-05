@@ -258,6 +258,7 @@ describe('idGenerator', () => {
 
       // Mock Date.now() to return a fixed timestamp for all entity creations
       // This ensures all entities are created "within the same millisecond" for testing collision prevention
+      // Note: The spy is set up before creating entities to ensure normalizeEntity uses the mocked time
       const fixedTimestamp = 1234567890000
       const dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(fixedTimestamp)
 

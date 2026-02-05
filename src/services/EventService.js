@@ -85,6 +85,16 @@ class EventService {
         return []
       }
 
+      // Prevent unreasonably large values that could cause performance issues
+      const MAX_DAYS = 3650 // ~10 years, reasonable upper bound
+      if (days > MAX_DAYS) {
+        logger.error('EventService.getEventsForDays: days parameter exceeds maximum', {
+          days,
+          maxDays: MAX_DAYS
+        })
+        return []
+      }
+
       // Use UTC to avoid timezone issues (Item 13: fix timezone handling)
       const startStr = this._normalizeDateString(startDate)
       const parts = startStr.split('-')

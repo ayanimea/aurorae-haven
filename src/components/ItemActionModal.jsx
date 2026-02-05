@@ -120,6 +120,8 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
 
   // Context menu style (desktop right-click)
   if (isContextMenu) {
+    // Note: These dimensions are estimates. The actual menu size may vary based on content.
+    // The adjustMenuPosition function will constrain oversized menus to viewport dimensions.
     const menuWidth = 200
     const menuHeight = 100
     const { x, y } = adjustMenuPosition(
