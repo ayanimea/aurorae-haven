@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1181 KB compressed
+- ✅ Total size: 1187 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-05 09:57:32 UTC
+**Last Updated**: 2026-02-05 10:31:22 UTC
 **Source Branch**: fix-ui-display-issues
-**Source Commit**: 63c02be
+**Source Commit**: 71c9fcc
 
 ---
 
