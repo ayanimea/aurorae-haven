@@ -154,9 +154,12 @@
 }
 
 /* Hide default FC event title/time since SolidEventCard renders them */
-.fc-event-title,
-.fc-event-time {
-  display: none;
+/* Use specific selectors to avoid hiding our custom .event-title class */
+.fc-event-main > .fc-event-title,
+.fc-event-main > .fc-event-time,
+.fc-event-main-frame > .fc-event-title,
+.fc-event-main-frame > .fc-event-time {
+  display: none !important;
 }
 
 /* Event type classes - match RBC styling */
