@@ -15,7 +15,10 @@ function CustomToolbar({
   onNavigate,
   onView,
   onScheduleEvent,
-  EVENT_TYPES
+  EVENT_TYPES,
+  onPopulateFakeData,
+  onClearAllEvents,
+  isLoading
 }) {
   const viewLabels = {
     day: 'Day',
@@ -106,6 +109,34 @@ function CustomToolbar({
           </select>
         </div>
 
+        {/* Development-only fake data buttons */}
+        {import.meta.env.DEV && (
+          <div className='dev-buttons' style={{ display: 'flex', gap: '0.5rem', marginLeft: '0.5rem' }}>
+            <button
+              type='button'
+              className='btn-secondary'
+              aria-label='Populate fake data'
+              onClick={onPopulateFakeData}
+              disabled={isLoading}
+              title='Add fake events for testing (dev only)'
+              style={{ fontSize: '0.875rem', padding: '0.5rem 0.75rem' }}
+            >
+              🎲 Fake Data
+            </button>
+            <button
+              type='button'
+              className='btn-secondary'
+              aria-label='Clear all events'
+              onClick={onClearAllEvents}
+              disabled={isLoading}
+              title='Remove all events (dev only)'
+              style={{ fontSize: '0.875rem', padding: '0.5rem 0.75rem' }}
+            >
+              🗑️ Clear
+            </button>
+          </div>
+        )}
+
         {/* Schedule event button */}
         <button
           type='button'
@@ -128,7 +159,10 @@ CustomToolbar.propTypes = {
   onNavigate: PropTypes.func.isRequired,
   onView: PropTypes.func.isRequired,
   onScheduleEvent: PropTypes.func.isRequired,
-  EVENT_TYPES: PropTypes.object.isRequired
+  EVENT_TYPES: PropTypes.object.isRequired,
+  onPopulateFakeData: PropTypes.func,
+  onClearAllEvents: PropTypes.func,
+  isLoading: PropTypes.bool
 }
 
 export default CustomToolbar

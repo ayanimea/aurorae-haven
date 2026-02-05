@@ -77,6 +77,7 @@ import EventService from '../services/EventService'
 import { toFullCalendarEvents, createEventFromSlot } from '../utils/eventAdapter'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
+import { generateFakeEvents } from '../utils/fakeDataGenerator'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -305,6 +306,112 @@ function Schedule() {
     }
   }
 
+  /**
+   * Development-only: Populate calendar with fake events
+   */
+  const handlePopulateFakeData = async () => {
+    if (!import.meta.env.DEV) {
+      console.warn('Fake data population only available in development mode')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      setError('')
+      
+      console.log('Generating fake events...')
+      const fakeEvents = generateFakeEvents(new Date(), 14) // 2 weeks of data
+      
+      console.log(`Creating ${fakeEvents.length} fake events...`)
+      let successCount = 0
+      let errorCount = 0
+      
+      for (const eventData of fakeEvents) {
+        try {
+          await EventService.createEvent(eventData)
+          successCount++
+        } catch (err) {
+          console.error('Failed to create fake event:', err)
+          errorCount++
+        }
+      }
+      
+      console.log(`Created ${successCount} events (${errorCount} errors)`)
+      await loadEvents()
+      
+      if (successCount > 0) {
+        setError(`✅ Created ${successCount} fake events successfully!`)
+        setTimeout(() => setError(''), 3000)
+      } else {
+        setError('❌ Failed to create fake events')
+      }
+    } catch (err) {
+      console.error('[Schedule] Error populating fake data:', err)
+      setError('Failed to populate fake data. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  /**
+   * Development-only: Clear all events from calendar
+   */
+  const handleClearAllEvents = async () => {
+    if (!import.meta.env.DEV) {
+      console.warn('Clear all events only available in development mode')
+      return
+    }
+
+    // Confirm before clearing
+    const confirmed = window.confirm(
+      '⚠️ Are you sure you want to delete ALL events?\n\n' +
+      'This action cannot be undone and will remove all events from the calendar.'
+    )
+    
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      setError('')
+      
+      console.log('Clearing all events...')
+      
+      // Get all events first
+      const allEvents = await EventService.getAllEvents()
+      console.log(`Found ${allEvents.length} events to delete`)
+      
+      let successCount = 0
+      let errorCount = 0
+      
+      for (const event of allEvents) {
+        try {
+          await EventService.deleteEvent(event.id)
+          successCount++
+        } catch (err) {
+          console.error('Failed to delete event:', err)
+          errorCount++
+        }
+      }
+      
+      console.log(`Deleted ${successCount} events (${errorCount} errors)`)
+      await loadEvents()
+      
+      if (successCount > 0) {
+        setError(`✅ Cleared ${successCount} events successfully!`)
+        setTimeout(() => setError(''), 3000)
+      } else {
+        setError('❌ No events to clear')
+      }
+    } catch (err) {
+      console.error('[Schedule] Error clearing all events:', err)
+      setError('Failed to clear events. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // Compute min/max times for the schedule view (07:00 to 24:00)
   const slotMinTime = '07:00:00'
   const slotMaxTime = '24:00:00'
@@ -446,6 +553,9 @@ function Schedule() {
               }}
               onView={handleViewChange}
               onScheduleEvent={handleScheduleEvent}
+              onPopulateFakeData={handlePopulateFakeData}
+              onClearAllEvents={handleClearAllEvents}
+              isLoading={isLoading}
               EVENT_TYPES={EVENT_TYPES}
             />
 
