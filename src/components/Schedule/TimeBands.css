@@ -13,7 +13,23 @@
  */
 
 :root {
-  /* Toolbar height - used for consistent positioning across components */
+  /**
+   * IMPORTANT: Toolbar Height Contract
+   * 
+   * This value defines the vertical offset for aligning time-of-day bands
+   * with the FullCalendar time grid. For correct alignment:
+   * 
+   * - This value MUST match the actual rendered toolbar height
+   * - If the toolbar height changes (responsive layouts, content changes,
+   *   user preferences), this value must be updated OR overridden dynamically
+   * - For dynamic height, override from the schedule container via JS/React:
+   *     style={{ '--toolbar-height': `${toolbarRef.current?.offsetHeight}px` }}
+   * - When modifying toolbar layout/design, update this value to maintain
+   *   alignment with the calendar grid
+   * 
+   * Current value: 150px (desktop default)
+   * Mobile override: 200px (see @media query below)
+   */
   --toolbar-height: 150px;
   
   /* Time-of-day atmospheres - Optimized for dark backgrounds */

@@ -7,6 +7,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../../components/common/Icon'
 import { format, isSameDay } from 'date-fns'
+import './CustomToolbar.css'
 
 function CustomToolbar({
   date,
@@ -111,7 +112,7 @@ function CustomToolbar({
 
         {/* Development-only fake data buttons */}
         {import.meta.env.DEV && (
-          <div className='dev-buttons' style={{ display: 'flex', gap: '0.5rem', marginLeft: '0.5rem' }}>
+          <div className='dev-buttons'>
             <button
               type='button'
               className='btn-secondary'
@@ -119,7 +120,6 @@ function CustomToolbar({
               onClick={onPopulateFakeData}
               disabled={isLoading}
               title='Add fake events for testing (dev only)'
-              style={{ fontSize: '0.875rem', padding: '0.5rem 0.75rem' }}
             >
               🎲 Fake Data
             </button>
@@ -130,7 +130,6 @@ function CustomToolbar({
               onClick={onClearAllEvents}
               disabled={isLoading}
               title='Remove all events (dev only)'
-              style={{ fontSize: '0.875rem', padding: '0.5rem 0.75rem' }}
             >
               🗑️ Clear
             </button>

@@ -153,9 +153,8 @@ function generateEvent(baseDate, hour, minute = 0) {
   return {
     title: title + suffix,
     type,
-    startDate: format(startTime, 'yyyy-MM-dd'),
+    day: format(startTime, 'yyyy-MM-dd'), // Single day field as per data model
     startTime: format(startTime, 'HH:mm'),
-    endDate: format(endTime, 'yyyy-MM-dd'),
     endTime: format(endTime, 'HH:mm'),
     description: `Auto-generated ${type} for testing`,
     travelTime: type === EVENT_TYPES.MEETING ? randomInt(0, 15) : 0,

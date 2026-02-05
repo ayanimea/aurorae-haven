@@ -102,6 +102,7 @@ function Schedule() {
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -207,7 +208,7 @@ function Schedule() {
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [events.length, isLoading])
+  }, [events.length, isLoading, handlePopulateFakeData])
 
   // Event handlers
   const handleEventContextMenu = useCallback((event) => {
@@ -321,7 +322,7 @@ function Schedule() {
   /**
    * Development-only: Populate calendar with fake events
    */
-  const handlePopulateFakeData = async () => {
+  const handlePopulateFakeData = useCallback(async () => {
     if (!import.meta.env.DEV) {
       console.warn('Fake data population only available in development mode')
       return
@@ -330,6 +331,7 @@ function Schedule() {
     try {
       setIsLoading(true)
       setError('')
+      setSuccessMessage('')
       
       console.log('Generating fake events...')
       const fakeEvents = generateFakeEvents(new Date(), 14) // 2 weeks of data
@@ -351,11 +353,13 @@ function Schedule() {
       console.log(`Created ${successCount} events (${errorCount} errors)`)
       await loadEvents()
       
-      if (successCount > 0) {
-        setError(`✅ Created ${successCount} fake events successfully!`)
-        setTimeout(() => setError(''), 3000)
-      } else {
+      if (successCount === 0) {
         setError('❌ Failed to create fake events')
+      } else if (errorCount > 0) {
+        setError(`⚠️ Created ${successCount} fake events, but ${errorCount} failed.`)
+      } else {
+        setSuccessMessage(`✅ Created ${successCount} fake events successfully!`)
+        setTimeout(() => setSuccessMessage(''), 3000)
       }
     } catch (err) {
       console.error('[Schedule] Error populating fake data:', err)
@@ -363,7 +367,7 @@ function Schedule() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [loadEvents])
 
   /**
    * Development-only: Clear all events from calendar
@@ -500,6 +504,19 @@ function Schedule() {
     selectInfo.view.calendar.unselect()
   }, [])
 
+  // Handle event unmount for cleanup
+  const handleEventWillUnmount = useCallback((unmountInfo) => {
+    const el = unmountInfo.el
+    if (!el) return
+    
+    // Remove event listener when event is unmounted
+    const handler = contextMenuHandlersRef.current.get(el)
+    if (typeof handler === 'function') {
+      el.removeEventListener('contextmenu', handler)
+      contextMenuHandlersRef.current.delete(el)
+    }
+  }, [])
+
   // Handle event context menu (right-click) using WeakMap for better memory management
   const handleEventMouseEnter = useCallback(
     (mouseEnterInfo) => {
@@ -604,6 +621,7 @@ function Schedule() {
                 eventClick={handleEventClick}
                 select={handleDateSelect}
                 eventMouseEnter={handleEventMouseEnter}
+                eventWillUnmount={handleEventWillUnmount}
                 eventContent={(eventInfo) => (
                   <SolidEventCard
                     event={{
@@ -633,6 +651,19 @@ function Schedule() {
                 onClick={() => setError('')}
                 className='error-dismiss'
                 aria-label='Dismiss error'
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className='success-message' role='status'>
+              {successMessage}
+              <button
+                onClick={() => setSuccessMessage('')}
+                className='success-dismiss'
+                aria-label='Dismiss message'
               >
                 ×
               </button>

@@ -390,7 +390,9 @@
   }
 
   .schedule-bands-container {
-    padding-top: 200px; /* Adjust for taller toolbar on mobile */
+    /* Mobile toolbar is taller - use CSS variable with mobile-specific value */
+    --toolbar-height: 200px;
+    padding-top: var(--toolbar-height);
   }
 }
 
