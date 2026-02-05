@@ -37,6 +37,9 @@ body.density-cozy {
   border-bottom: 1px solid var(--line);
   box-shadow: var(--shadow);
   max-width: 100vw;
+  /* Overflow hidden prevents horizontal scrollbar on narrow viewports.
+     Compact navigation activates at 769px to ensure all items remain accessible
+     without scrolling. Hamburger menu provides full navigation below 768px. */
   overflow: hidden;
 }
 
