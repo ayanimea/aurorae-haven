@@ -9,7 +9,8 @@ export const EVENT_TYPES = {
   ROUTINE: 'routine',
   TASK: 'task',
   MEETING: 'meeting',
-  HABIT: 'habit'
+  HABIT: 'habit',
+  BREAK: 'break'
 }
 
 // Array of valid event types for validation

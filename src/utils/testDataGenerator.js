@@ -452,8 +452,9 @@ export async function generateTestData() {
     try {
       await createEvent(event)
       createdCount++
-    } catch {
-      // Error creating test event - silently skip
+    } catch (error) {
+      // Log error for debugging - test data generation is not critical
+      logError('Failed to create test event:', error)
     }
   }
   
