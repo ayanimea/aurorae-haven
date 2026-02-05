@@ -723,8 +723,8 @@ describe('ItemActionModal Component', () => {
 
     test('handles SSR environment gracefully', () => {
       // In jsdom v28, we can't mock document as undefined
-      // But we can test that the component handles the absence of certain document methods
-      const { rerender } = render(
+      // But we can test that the component handles rendering without errors
+      const { rerender, container } = render(
         <ItemActionModal
           item={null}
           onClose={mockOnClose}
@@ -732,6 +732,9 @@ describe('ItemActionModal Component', () => {
           onDelete={mockOnDelete}
         />
       )
+
+      // Component should render nothing when item is null
+      expect(container.firstChild).toBeNull()
 
       // Component should not crash when item is provided
       rerender(
@@ -743,8 +746,8 @@ describe('ItemActionModal Component', () => {
         />
       )
 
-      // If we get here without errors, the test passes
-      expect(true).toBe(true)
+      // Component should render the modal
+      expect(container.firstChild).not.toBeNull()
     })
   })
 })
