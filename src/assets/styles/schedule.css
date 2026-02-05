@@ -60,7 +60,8 @@ Ask for clarification or preserve the existing structure.
 :root {
   /* Minute-based scaling unit per schedule-ui-spec.md §4 */
   /* All vertical sizing derives from this proportional unit */
-  --minute-unit: clamp(1px, 0.15vh, 1.6px);
+  /* Using svh (small viewport height) for stable sizing on mobile when keyboard/browser UI appears */
+  --minute-unit: clamp(1px, 0.15svh, 1.6px);
   
   /* Hour height calculated dynamically from minute unit (60 minutes per hour) */
   /* This ensures proportional, non-hardcoded time scaling per spec §6 */
@@ -1523,8 +1524,9 @@ Ask for clarification or preserve the existing structure.
 /* Desktop: Proportional hour height reduction for better overview */
 @media (min-width: 1024px) {
   /* Reduce minute unit for more compact desktop view */
+  /* Using dvh (dynamic viewport height) for responsive sizing with browser chrome changes */
   :root {
-    --minute-unit: clamp(0.8px, 0.12vh, 1.4px);
+    --minute-unit: clamp(0.8px, 0.12dvh, 1.4px);
   }
   
   .week-hour {
@@ -2054,7 +2056,8 @@ Ask for clarification or preserve the existing structure.
   }
 
   /* Compact mobile view: reduce minute unit for smaller hour heights */
+  /* Using svh (small viewport height) for consistent sizing when address bar hides/shows */
   :root {
-    --minute-unit: clamp(0.9px, 0.13vh, 1.2px);
+    --minute-unit: clamp(0.9px, 0.13svh, 1.2px);
   }
 }
