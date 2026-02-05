@@ -24,7 +24,7 @@ export const toRBCEvent = (event) => {
     const dayDate = parseISO(event.day)
     
     // Validate the parsed date
-    if (isNaN(dayDate.getTime())) {
+    if (Number.isNaN(dayDate.getTime())) {
       return null
     }
     
@@ -33,7 +33,7 @@ export const toRBCEvent = (event) => {
     let endTime = parse(event.endTime, 'HH:mm', dayDate)
     
     // Validate parsed times
-    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
       return null
     }
     

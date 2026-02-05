@@ -832,7 +832,7 @@ body.density-cozy {
 
 /* Shell & glass cards - adjusted for fixed navbar */
 .shell {
-  max-width: 100%;
+  max-width: min(100%, 1920px);
   width: 100%;
   min-height: calc(100vh - 70px * var(--density-multiplier));
   margin: 0 auto;
