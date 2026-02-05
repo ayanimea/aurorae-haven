@@ -129,6 +129,11 @@ Bands:
 }
 ```
 
+**Clamp Function Rationale:**
+- **Minimum (1px)**: Ensures events remain visible even on very small screens; prevents collapsing to zero height
+- **Scaling Factor (0.15vh)**: Provides responsive sizing where 1 minute ≈ 0.15% of viewport height, allowing the 24-hour day (1440 minutes) to fit comfortably within typical screen heights
+- **Maximum (1.6px)**: Caps the minute unit on very large displays to prevent excessive vertical spacing and maintain comfortable scrolling distances
+
 All vertical positioning and sizing derives from this unit.
 
 ---
