@@ -78,6 +78,7 @@ import { toFullCalendarEvents, createEventFromSlot } from '../utils/eventAdapter
 import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import { generateFakeEvents } from '../utils/fakeDataGenerator'
+import { isDevelopment } from '../utils/environment'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -311,7 +312,7 @@ function Schedule() {
    * Development-only: Populate calendar with fake events
    */
   const handlePopulateFakeData = useCallback(async () => {
-    if (!import.meta.env.DEV) {
+    if (!isDevelopment()) {
       console.warn('Fake data population only available in development mode')
       return
     }
@@ -359,7 +360,7 @@ function Schedule() {
 
   // Auto-populate fake data on first load (dev mode only)
   useEffect(() => {
-    if (import.meta.env.DEV && events.length === 0 && !isLoading) {
+    if (isDevelopment() && events.length === 0 && !isLoading) {
       console.log('[Schedule] Auto-populating fake data for development...')
       // Small delay to ensure component is fully mounted
       const timer = setTimeout(() => {
@@ -373,7 +374,7 @@ function Schedule() {
    * Development-only: Clear all events from calendar
    */
   const handleClearAllEvents = async () => {
-    if (!import.meta.env.DEV) {
+    if (!isDevelopment()) {
       console.warn('Clear all events only available in development mode')
       return
     }

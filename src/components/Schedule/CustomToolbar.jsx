@@ -7,6 +7,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../../components/common/Icon'
 import { format, isSameDay } from 'date-fns'
+import { isDevelopment } from '../../utils/environment'
 import './CustomToolbar.css'
 
 function CustomToolbar({
@@ -111,7 +112,7 @@ function CustomToolbar({
         </div>
 
         {/* Development-only fake data buttons */}
-        {import.meta.env.DEV && (
+        {isDevelopment() && (
           <div className='dev-buttons'>
             <button
               type='button'
