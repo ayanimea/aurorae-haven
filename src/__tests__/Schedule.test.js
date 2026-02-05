@@ -53,7 +53,10 @@ jest.mock('../components/Schedule/CustomToolbar', () => {
           </select>
         </div>
         <div className='toolbar-right'>
-          <button onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}>
+          <button 
+            onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}
+            aria-label="Schedule an event"
+          >
             + Schedule
           </button>
         </div>
@@ -175,7 +178,7 @@ describe('Schedule Component with React Big Calendar', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Schedule' })
+        screen.getByRole('button', { name: 'Schedule an event' })
       ).toBeInTheDocument()
     })
   })
