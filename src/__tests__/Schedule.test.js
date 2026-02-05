@@ -53,9 +53,9 @@ jest.mock('../components/Schedule/CustomToolbar', () => {
           </select>
         </div>
         <div className='toolbar-right'>
-          <button 
+          <button
             onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}
-            aria-label="Schedule an event"
+            aria-label='Schedule an event'
           >
             + Schedule
           </button>

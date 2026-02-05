@@ -65,7 +65,7 @@ Ask for clarification or preserve the existing structure.
   /* Using svh (small viewport height) for stable sizing on mobile when keyboard/browser UI appears */
   /* This prevents layout shifts when mobile keyboard opens or address bar hides/shows */
   --minute-unit: clamp(1px, 0.15svh, 1.6px);
-  
+
   /* Hour height calculated dynamically from minute unit (60 minutes per hour) */
   /* This ensures proportional, non-hardcoded time scaling per spec §6 */
   --hour-height: calc(var(--minute-unit) * 60);
@@ -101,7 +101,9 @@ Ask for clarification or preserve the existing structure.
 }
 
 .calendar > * {
-  transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+  transition:
+    opacity 0.15s ease-in-out,
+    transform 0.15s ease-in-out;
 }
 .hours {
   display: grid;
@@ -115,7 +117,9 @@ Ask for clarification or preserve the existing structure.
   grid-template-rows: repeat(var(--num-visual-rows, 18), var(--hour-height));
 }
 .hour-col .h {
-  height: var(--hour-height); /* Match grid row height for proper event alignment */
+  height: var(
+    --hour-height
+  ); /* Match grid row height for proper event alignment */
   box-sizing: border-box; /* Include border in height calculation */
   border-bottom: 1px dashed var(--line);
   padding: 6px 8px;
@@ -467,12 +471,20 @@ Ask for clarification or preserve the existing structure.
   }
 
   /* Previous arrow button appears second */
-  .layout-schedule .card .card-h > div:first-child button:first-child:not(.btn-today) {
+  .layout-schedule
+    .card
+    .card-h
+    > div:first-child
+    button:first-child:not(.btn-today) {
     order: 0 !important;
   }
 
   /* Next arrow button appears third */
-  .layout-schedule .card .card-h > div:first-child button:last-child:not(.btn-today) {
+  .layout-schedule
+    .card
+    .card-h
+    > div:first-child
+    button:last-child:not(.btn-today) {
     order: 1 !important;
   }
 
@@ -534,7 +546,7 @@ Ask for clarification or preserve the existing structure.
   }
 
   /* Create segmented control for view modes (Day/Week/Month) */
-  .layout-schedule .card .card-h button[aria-label*="View"] {
+  .layout-schedule .card .card-h button[aria-label*='View'] {
     flex: 1 !important;
     padding: 8px 4px !important;
     font-size: 13px !important;
@@ -542,13 +554,16 @@ Ask for clarification or preserve the existing structure.
     border-radius: 8px !important;
   }
 
-  .layout-schedule .card .card-h button[aria-label*="View"].btn-active {
+  .layout-schedule .card .card-h button[aria-label*='View'].btn-active {
     background: var(--mint) !important;
     color: var(--paper) !important;
   }
 
   /* Hide Calendars button on mobile - less critical */
-  .layout-schedule .card .card-h button[aria-label="Manage calendar subscriptions"] {
+  .layout-schedule
+    .card
+    .card-h
+    button[aria-label='Manage calendar subscriptions'] {
     display: none !important;
   }
 
@@ -1462,7 +1477,9 @@ Ask for clarification or preserve the existing structure.
 
 .week-header-spacer {
   /* Empty spacer cell that aligns with hour column below */
-  background: var(--bg-primary); /* Match header background to prevent hours showing through */
+  background: var(
+    --bg-primary
+  ); /* Match header background to prevent hours showing through */
   border-right: 1px solid var(--line);
 }
 
@@ -1529,16 +1546,16 @@ Ask for clarification or preserve the existing structure.
   /* Reduce minute unit for more compact desktop view */
   :root {
     /* Fallback for browsers that don't support dvh */
-    --minute-unit: 1.0px;
+    --minute-unit: 1px;
     /* Using dvh (dynamic viewport height) for responsive sizing with browser chrome changes */
     --minute-unit: clamp(0.8px, 0.12dvh, 1.4px);
   }
-  
+
   .week-hour {
     padding: 4px 6px;
     font-size: 0.75rem;
   }
-  
+
   /* No scaling needed - hour heights are calculated dynamically to fit viewport */
   .week-view {
     overflow: hidden; /* Contain content */
@@ -1576,23 +1593,23 @@ Ask for clarification or preserve the existing structure.
   .week-view {
     overflow-x: auto;
   }
-  
+
   .week-grid {
     min-width: 600px;
   }
-  
+
   .week-header {
     grid-template-columns: 50px repeat(7, minmax(80px, 1fr));
   }
-  
+
   .week-body {
     grid-template-columns: 50px repeat(7, minmax(80px, 1fr));
   }
-  
+
   .week-day-name {
     font-size: 0.75rem;
   }
-  
+
   .week-day-date {
     font-size: 1rem;
   }
@@ -1602,29 +1619,29 @@ Ask for clarification or preserve the existing structure.
   .week-grid {
     min-width: 500px;
   }
-  
+
   .week-header {
     grid-template-columns: 40px repeat(7, minmax(65px, 1fr));
   }
-  
+
   .week-body {
     grid-template-columns: 40px repeat(7, minmax(65px, 1fr));
   }
-  
+
   .week-hour {
     font-size: 0.7rem;
     padding: 4px 4px;
   }
-  
+
   .week-slots .block {
     margin: 1px 2px;
     padding: 4px;
   }
-  
+
   .week-slots .block .title {
     font-size: 0.65rem;
   }
-  
+
   .week-slots .block .meta {
     font-size: 0.6rem;
   }
@@ -1638,37 +1655,37 @@ Ask for clarification or preserve the existing structure.
     overflow-y: auto;
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   }
-  
+
   .week-grid {
     /* Ensure minimum width shows all 7 days: 30px hour + 7*50px days = 380px */
     /* Increased to 450px to ensure no cropping on any mobile device */
     min-width: 450px;
     width: max-content;
   }
-  
+
   .week-header {
     /* Reduced hour column to 30px, 50px minimum per day for better fit */
     grid-template-columns: 30px repeat(7, minmax(50px, 1fr));
     gap: 0; /* Remove gap to save space */
   }
-  
+
   .week-body {
     /* Match header: 30px hour + 50px minimum per day */
     grid-template-columns: 30px repeat(7, minmax(50px, 1fr));
   }
-  
+
   .week-day-header {
     padding: 8px 4px;
   }
-  
+
   .week-day-name {
     font-size: 0.65rem;
   }
-  
+
   .week-day-date {
     font-size: 0.9rem;
   }
-  
+
   .week-hour {
     font-size: 0.65rem;
     padding: 3px 2px;
@@ -1678,20 +1695,20 @@ Ask for clarification or preserve the existing structure.
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  
+
   .week-slots .block {
     margin: 1px;
     padding: 2px 3px;
     font-size: 0.6rem;
   }
-  
+
   .week-slots .block .title {
     font-size: 0.6rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  
+
   .week-slots .block .meta {
     display: none; /* Hide metadata on very small screens */
   }
@@ -1795,7 +1812,11 @@ Ask for clarification or preserve the existing structure.
 }
 
 .month-cell.today {
-  background: color-mix(in srgb, var(--mint) 12%, var(--glass-md)); /* Glass-ui with mint accent */
+  background: color-mix(
+    in srgb,
+    var(--mint) 12%,
+    var(--glass-md)
+  ); /* Glass-ui with mint accent */
   border: 2px solid var(--mint);
 }
 
@@ -2027,7 +2048,7 @@ Ask for clarification or preserve the existing structure.
   .btn-settings {
     display: flex !important;
   }
-  
+
   /* Show Calendars button on desktop */
   .btn-calendars {
     display: flex !important;

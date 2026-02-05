@@ -62,7 +62,9 @@
     bottom: 0;
     width: 280px;
     min-width: 280px;
-    z-index: var(--z-editor); /* Sidebar above main content so buttons remain clickable */
+    z-index: var(
+      --z-editor
+    ); /* Sidebar above main content so buttons remain clickable */
     background: rgba(16, 20, 44, 0.98);
     backdrop-filter: var(--blur);
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
@@ -78,7 +80,9 @@
   /* Ensure toolbar stays above sidebar overlay on mobile */
   .brain-dump-main .card-h {
     position: relative;
-    z-index: calc(var(--z-editor) + 1); /* Above sidebar (101) to keep buttons clickable */
+    z-index: calc(
+      var(--z-editor) + 1
+    ); /* Above sidebar (101) to keep buttons clickable */
   }
 
   /* Ensure card body (editor/preview) stays below sidebar on mobile
@@ -86,7 +90,9 @@
    * forcing users to close the sidebar to edit notes - clearer UX on small screens */
   .brain-dump-main .card-b {
     position: relative;
-    z-index: var(--z-base); /* Below sidebar (z-index 1 vs 101) so sidebar fully overlays when open */
+    z-index: var(
+      --z-base
+    ); /* Below sidebar (z-index 1 vs 101) so sidebar fully overlays when open */
   }
 }
 

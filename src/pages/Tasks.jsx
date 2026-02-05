@@ -5,14 +5,8 @@ import TaskForm from '../components/Tasks/TaskForm'
 import TaskQuadrant from '../components/Tasks/TaskQuadrant'
 
 function Tasks() {
-  const {
-    tasks,
-    addTask,
-    toggleTask,
-    deleteTask,
-    editTask,
-    moveTask
-  } = useTasksState()
+  const { tasks, addTask, toggleTask, deleteTask, editTask, moveTask } =
+    useTasksState()
 
   // Form state
   const [newTask, setNewTask] = useState('')
