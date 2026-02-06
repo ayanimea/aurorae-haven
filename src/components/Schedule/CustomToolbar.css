@@ -1,0 +1,14 @@
+/* CustomToolbar Styles */
+
+/* Development-only buttons container */
+.dev-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+}
+
+/* Development button styles */
+.dev-buttons .btn-secondary {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}

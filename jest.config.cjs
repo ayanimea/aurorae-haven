@@ -4,7 +4,8 @@ module.exports = {
     '^.+\\.(js|jsx)$': 'babel-jest'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(marked|dompurify|react-router|react-router-dom|uuid)/)'
+    // Transform ES modules that Jest can't handle by default
+    'node_modules/(?!(marked|dompurify|react-router|react-router-dom|uuid|@fullcalendar)/)'
   ],
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy'

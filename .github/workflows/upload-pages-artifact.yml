@@ -207,6 +207,13 @@ jobs:
         env:
           CI: true
           VITE_BASE_URL: '/aurorae-haven/'
+          # Branch-conditional dev mode: copilot/ and hotfix branches build with dev features
+          # IMPORTANT: This enables dev-only controls (fake data button) in the build artifacts.
+          # Dev builds from these branches are intended for testing on GitHub Pages only.
+          # These branches should NEVER be deployed to production URLs.
+          # Security note: Dev features are baked into the build, not runtime-detected.
+          # Deployment safety: Ensure branch-protection rules prevent accidental prod deploys.
+          NODE_ENV: ${{ (startsWith(github.ref, 'refs/heads/copilot/') || startsWith(github.ref, 'refs/heads/hotfix-')) && 'development' || 'production' }}
 
       - name: Verify build output
         run: |

@@ -13,22 +13,58 @@
  */
 
 :root {
-  /* Time-of-day atmospheres - EXACT canonical values */
-  --morning-top: rgba(245, 192, 111, 0.1);
-  --morning-bottom: rgba(245, 192, 111, 0.03);
+  /**
+   * IMPORTANT: Toolbar Height Contract - Dynamic Value
+   * 
+   * This CSS variable is now set dynamically by JavaScript in Schedule.jsx
+   * via a useRef + useEffect that measures the actual rendered toolbar height.
+   * 
+   * Benefits of dynamic measurement:
+   * - Self-correcting: Automatically adapts to toolbar content changes
+   * - No manual sync: Eliminates maintenance burden when toolbar design changes
+   * - Responsive: Works for any screen size without media queries
+   * - Future-proof: New toolbar buttons won't break time-of-day band alignment
+   * 
+   * Implementation (Schedule.jsx):
+   *   const toolbarRef = useRef(null)
+   *   useEffect(() => {
+   *     if (toolbarRef.current) {
+   *       document.documentElement.style.setProperty(
+   *         '--toolbar-height',
+   *         `${toolbarRef.current.offsetHeight}px`
+   *       )
+   *     }
+   *   }, [view])
+   * 
+   * Fallback value: 150px (for SSR or first paint before measurement)
+   */
+  --toolbar-height: 150px;
+  
+  /* Time-of-day atmospheres - Canonical values from specification */
+  /* Perceptible but subtle gradients for temporal orientation */
+  /* Morning: warm orange/amber tones for gentle activation */
+  --morning-top: rgba(245, 192, 111, 0.14);
+  --morning-mid: rgba(245, 192, 111, 0.06);
+  --morning-bottom: rgba(245, 192, 111, 0.02);
 
-  --afternoon-top: rgba(147, 197, 253, 0.08);
-  --afternoon-bottom: rgba(147, 197, 253, 0.03);
+  /* Afternoon: cool blue tones for focused daylight */
+  --afternoon-top: rgba(147, 197, 253, 0.12);
+  --afternoon-mid: rgba(147, 197, 253, 0.05);
+  --afternoon-bottom: rgba(147, 197, 253, 0.02);
 
-  --evening-top: rgba(167, 139, 250, 0.1);
-  --evening-bottom: rgba(167, 139, 250, 0.04);
+  /* Evening: purple/violet tones for calm wind-down */
+  --evening-top: rgba(167, 139, 250, 0.14);
+  --evening-mid: rgba(167, 139, 250, 0.06);
+  --evening-bottom: rgba(167, 139, 250, 0.02);
 
+  /* Night: deep navy for low stimulation rest */
   --night-top: rgba(15, 23, 42, 0.55);
   --night-bottom: rgba(15, 23, 42, 0.35);
 }
 
 .schedule-bands-container {
   position: absolute;
+  /* Position relative to .fc (FullCalendar container) which is inside .schedule-wrapper */
   top: 0;
   left: 0;
   right: 0;
@@ -36,6 +72,10 @@
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
+  /* Ensure bands don't interfere with toolbar - they should only overlay the time grid */
+  /* Use CSS custom property for consistent toolbar height with safe fallback */
+  /* Fallback ensures bands are never positioned incorrectly if JS measurement fails */
+  padding-top: var(--toolbar-height, 150px);
 }
 
 .schedule-band {
@@ -50,6 +90,7 @@
   background: linear-gradient(
     to bottom,
     var(--morning-top),
+    var(--morning-mid),
     var(--morning-bottom)
   );
 }
@@ -59,6 +100,7 @@
   background: linear-gradient(
     to bottom,
     var(--afternoon-top),
+    var(--afternoon-mid),
     var(--afternoon-bottom)
   );
 }
@@ -68,11 +110,12 @@
   background: linear-gradient(
     to bottom,
     var(--evening-top),
+    var(--evening-mid),
     var(--evening-bottom)
   );
 }
 
-/* Night: 23:00–07:00 - Low stimulation rest */
+/* Night: 23:00–24:00 - Low stimulation rest */
 .schedule-band.night {
   background: linear-gradient(to bottom, var(--night-top), var(--night-bottom));
 }

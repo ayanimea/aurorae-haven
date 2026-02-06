@@ -1,0 +1,435 @@
+/**
+ * FullCalendar Custom Styles
+ * Integrates FullCalendar with Aurorae Haven design system
+ * Supports time-of-day semantic banding and maintains visual hierarchy
+ */
+
+:root {
+  --fc-border-color: rgba(255, 255, 255, 0.08);
+  --fc-today-bg-color: rgba(147, 197, 253, 0.05);
+  --fc-event-bg-color: transparent;
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: var(--text);
+}
+
+/* ===== Container & Layout ===== */
+
+.page-schedule {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  overflow: auto;
+}
+
+.schedule-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ===== FullCalendar Base Overrides ===== */
+
+.fc {
+  background: rgba(16, 20, 44, 0.25);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid var(--fc-border-color);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text);
+}
+
+.fc .fc-scrollgrid {
+  border-color: var(--fc-border-color);
+}
+
+.fc .fc-scrollgrid-section > * {
+  border-color: var(--fc-border-color);
+}
+
+/* ===== Time Grid View ===== */
+
+.fc-timegrid {
+  border-color: var(--fc-border-color);
+}
+
+.fc-timegrid-axis {
+  background: rgba(16, 20, 44, 0.35);
+  border-color: var(--fc-border-color);
+}
+
+.fc-timegrid-slot {
+  height: 1.5rem;
+  border-color: var(--fc-border-color);
+}
+
+/* Hour lines - more prominent */
+.fc-timegrid-slot-lane[data-time$=":00:00"] {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Half-hour and quarter-hour lines - subtle */
+.fc-timegrid-slot-lane {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.fc-timegrid-slot-label {
+  color: var(--dim);
+  font-size: 0.7rem;
+  padding: 4px;
+  border-color: var(--fc-border-color);
+}
+
+.fc-timegrid-col {
+  background: transparent;
+}
+
+/* Day header */
+.fc-col-header-cell {
+  background: rgba(16, 20, 44, 0.35);
+  border-color: var(--fc-border-color);
+  padding: 8px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ===== Day Grid View (Month) ===== */
+
+.fc-daygrid-day {
+  background: transparent;
+  border-color: var(--fc-border-color);
+}
+
+.fc-daygrid-day-number {
+  color: var(--text);
+  padding: 4px;
+}
+
+.fc-daygrid-day.fc-day-today {
+  background-color: var(--fc-today-bg-color);
+}
+
+/* ===== Events ===== */
+
+/* Ensure event cards respect documented z-index hierarchy and sit above time bands */
+.fc-event,
+.fc-event-main {
+  position: relative;
+  z-index: 2;
+}
+
+/* FullCalendar's positioned event container - must fill the time slot */
+.fc-timegrid-event {
+  border: none;
+  background: none;
+  padding: 2px; /* Small padding for visual separation */
+}
+
+/* Inner wrappers - let SolidEventCard handle all styling */
+.fc-event {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.fc-event-main {
+  padding: 0;
+  background: none;
+  color: inherit;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide default FC event title/time since SolidEventCard renders them */
+/* Use specific selectors to avoid hiding our custom .event-title class */
+.fc-event-main > .fc-event-title,
+.fc-event-main > .fc-event-time,
+.fc-event-main-frame > .fc-event-title,
+.fc-event-main-frame > .fc-event-time {
+  display: none !important;
+}
+
+/* Event type classes - match RBC styling */
+.fc-event.event-task {
+  /* Handled by SolidEventCard component */
+}
+
+.fc-event.event-routine {
+  /* Handled by SolidEventCard component */
+}
+
+.fc-event.event-meeting {
+  /* Handled by SolidEventCard component */
+}
+
+.fc-event.event-habit {
+  /* Handled by SolidEventCard component */
+}
+
+/* ===== Current Time Indicator ===== */
+
+.fc-timegrid-now-indicator-line {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.fc-timegrid-now-indicator-arrow {
+  border-top-color: var(--accent);
+}
+
+/* ===== Selection & Interaction ===== */
+
+.fc-highlight {
+  background: rgba(147, 197, 253, 0.1);
+}
+
+.fc-timegrid-event-harness:hover {
+  z-index: 3;
+}
+
+/* ===== Scrollbars ===== */
+
+.fc-scroller {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.fc-scroller::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fc-scroller::-webkit-scrollbar-track {
+  background: rgba(16, 20, 44, 0.25);
+  border-radius: 4px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ===== Loading & Error States ===== */
+
+.loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(16, 20, 44, 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  z-index: 1000;
+}
+
+.loading-overlay p {
+  color: var(--text);
+  margin: 0;
+}
+
+.error-message {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.error-dismiss {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Success message styles */
+.success-message {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: rgba(34, 197, 94, 0.9); /* Green for success */
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+.success-dismiss {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.success-dismiss:hover {
+  opacity: 1;
+}
+
+/* ===== TimeBands Integration ===== */
+
+/* Ensure TimeBands sit below the calendar grid but above decorative background */
+.schedule-bands-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  /* Use CSS custom property for consistent toolbar height */
+  padding-top: var(--toolbar-height);
+}
+
+/* Z-index hierarchy (from top to bottom):
+ * 1000: Modals and overlays
+ * 10: Toolbar
+ * 3: Event cards (on hover)
+ * 2: Event cards (normal)
+ * 2: Current-time indicator
+ * 2: Grid lines
+ * 1: Time-of-day bands
+ * 0: Decorative background
+ */
+
+/* ===== Toolbar Styling ===== */
+
+.calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(16, 20, 44, 0.35);
+  border: 1px solid var(--fc-border-color);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  gap: 16px;
+  z-index: 10;
+  position: relative;
+}
+
+.toolbar-left h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.toolbar-left .date-display {
+  margin: 4px 0 0 0;
+  color: var(--dim);
+  font-size: 0.875rem;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.view-selector {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.view-selector label {
+  color: var(--dim);
+  font-size: 0.875rem;
+}
+
+.view-dropdown {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(16, 20, 44, 0.25);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.view-dropdown:hover {
+  border-color: var(--accent);
+  background: rgba(16, 20, 44, 0.35);
+}
+
+.view-dropdown:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ===== Responsive Design ===== */
+
+@media (max-width: 768px) {
+  .calendar-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-right {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .schedule-container {
+    padding: 0.75rem;
+  }
+
+  .fc-timegrid-slot {
+    height: 1.25rem;
+  }
+
+  .schedule-bands-container {
+    /* Use dynamic toolbar height provided via CSS variable (set by JavaScript) */
+    padding-top: var(--toolbar-height);
+  }
+}
+
+@media (min-height: 900px) {
+  .fc-timegrid-slot {
+    height: 1.5rem;
+  }
+}

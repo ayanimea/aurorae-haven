@@ -46,20 +46,28 @@ const DEFAULT_SETTINGS = {
  */
 export function getSettings() {
   // TODO: Implement settings validation
-  return tryCatch(
+  const result = tryCatch(
     () => {
       const stored = localStorage.getItem(SETTINGS_KEY)
       if (!stored) {
         return { ...DEFAULT_SETTINGS }
       }
       const parsed = JSON.parse(stored)
-      return { ...DEFAULT_SETTINGS, ...parsed }
+      // Deep merge to preserve nested objects from DEFAULT_SETTINGS
+      // Uses deepMerge utility (defined at top of this file) which:
+      // - Handles nested objects recursively
+      // - Prevents prototype pollution
+      // - Replaces arrays (doesn't merge them)
+      return deepMerge(DEFAULT_SETTINGS, parsed)
     },
     'Loading settings from localStorage',
     {
       showToast: false
     }
   )
+  
+  // If tryCatch returned undefined (error occurred), return defaults
+  return result || { ...DEFAULT_SETTINGS }
 }
 
 /**
@@ -180,11 +188,21 @@ export function importSettings(json) {
   // TODO: Implement validation and version checking
   const data = tryCatch(
     () => {
-      const parsed = JSON.parse(json)
-      if (!parsed.settings) {
+      // Handle both JSON string and object inputs
+      const parsed = typeof json === 'string' ? JSON.parse(json) : json
+      
+      // Check if it's wrapped format { settings: {...} } or direct settings object
+      // Allow empty settings object as valid reset operation
+      // Empty object = user wants to reset all settings to defaults
+      if (parsed.settings) {
+        return parsed
+      } else if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        // Direct settings object, wrap it for consistency
+        // Note: Array.isArray check prevents arrays from being treated as objects
+        return { settings: parsed }
+      } else {
         throw new Error('Invalid settings format')
       }
-      return parsed
     },
     'Parsing imported settings',
     {

@@ -21,6 +21,11 @@
 .solid-event-card {
   position: relative;
   z-index: 3; /* Above bands (1) and grid (2) */
+  
+  /* Fill parent container */
+  height: 100%;
+  width: 100%;
+  min-height: 30px; /* Reduced from 40px to avoid conflicts with short (15-min) events */
 
   /* Solid background - no glass effect */
   background: var(--event-bg);
@@ -28,6 +33,11 @@
   border-radius: var(--event-radius);
 
   padding: var(--event-padding-v) var(--event-padding-h);
+  
+  /* Use flexbox for content layout */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 
   /* Dual-layer shadow for soft elevation */
   box-shadow:
@@ -66,8 +76,12 @@
   display: block;
   font-weight: 600;
   font-size: 0.95rem;
+  line-height: 1.4; /* Explicit line-height to ensure height > 0 */
   margin-bottom: 0.25rem;
   color: var(--event-text);
+  flex-shrink: 0; /* Prevent flex container from collapsing */
+  min-height: 1.4em; /* Ensure minimum visible height */
+  overflow: visible; /* Don't collapse with overflow */
 }
 
 /* Pre-activities (prep/travel) - subtle context */
@@ -124,6 +138,7 @@
 
   .event-title {
     font-size: 0.9rem;
+    min-height: 1.3em; /* Slightly smaller for mobile */
   }
 
   .event-pre-activities {
