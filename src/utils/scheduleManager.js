@@ -53,8 +53,13 @@ export async function createEvent(event) {
  * @returns {Promise<Array>} Array of events
  */
 export async function getEventsForDay(day) {
-  // TODO: Implement sorting by start time
-  return await getByIndex(STORES.SCHEDULE, 'day', day)
+  const events = await getByIndex(STORES.SCHEDULE, 'day', day)
+  // Sort events by start time chronologically (handle missing startTime)
+  return events.sort((a, b) => {
+    if (!a.startTime) return 1
+    if (!b.startTime) return -1
+    return a.startTime.localeCompare(b.startTime)
+  })
 }
 
 /**
