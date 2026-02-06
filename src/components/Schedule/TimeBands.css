@@ -40,26 +40,26 @@
    */
   --toolbar-height: 150px;
   
-  /* Time-of-day atmospheres - Optimized for dark backgrounds */
-  /* Enhanced opacity to ensure visible hue shifts match mockup perceptibility */
+  /* Time-of-day atmospheres - Canonical values from specification */
+  /* Perceptible but subtle gradients for temporal orientation */
   /* Morning: warm orange/amber tones for gentle activation */
-  --morning-top: rgba(245, 192, 111, 0.28);
-  --morning-mid: rgba(245, 192, 111, 0.14);
-  --morning-bottom: rgba(245, 192, 111, 0.04);
+  --morning-top: rgba(245, 192, 111, 0.14);
+  --morning-mid: rgba(245, 192, 111, 0.06);
+  --morning-bottom: rgba(245, 192, 111, 0.02);
 
   /* Afternoon: cool blue tones for focused daylight */
-  --afternoon-top: rgba(147, 197, 253, 0.25);
-  --afternoon-mid: rgba(147, 197, 253, 0.12);
-  --afternoon-bottom: rgba(147, 197, 253, 0.04);
+  --afternoon-top: rgba(147, 197, 253, 0.12);
+  --afternoon-mid: rgba(147, 197, 253, 0.05);
+  --afternoon-bottom: rgba(147, 197, 253, 0.02);
 
   /* Evening: purple/violet tones for calm wind-down */
-  --evening-top: rgba(167, 139, 250, 0.28);
-  --evening-mid: rgba(167, 139, 250, 0.14);
-  --evening-bottom: rgba(167, 139, 250, 0.04);
+  --evening-top: rgba(167, 139, 250, 0.14);
+  --evening-mid: rgba(167, 139, 250, 0.06);
+  --evening-bottom: rgba(167, 139, 250, 0.02);
 
   /* Night: deep navy for low stimulation rest */
-  --night-top: rgba(15, 23, 42, 0.60);
-  --night-bottom: rgba(15, 23, 42, 0.40);
+  --night-top: rgba(15, 23, 42, 0.55);
+  --night-bottom: rgba(15, 23, 42, 0.35);
 }
 
 .schedule-bands-container {

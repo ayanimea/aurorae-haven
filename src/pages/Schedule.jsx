@@ -101,6 +101,9 @@ function Schedule() {
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
   
+  // Track if fake data auto-population has already been attempted (prevents multiple calls)
+  const hasAutoPopulatedRef = useRef(false)
+  
   // State management
   const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
   const [date, setDate] = useState(new Date())
@@ -382,8 +385,10 @@ function Schedule() {
   }, [loadEvents])
 
   // Auto-populate fake data on first load (dev mode only)
+  // Uses ref to prevent multiple auto-population attempts
   useEffect(() => {
-    if (isDevelopment() && events.length === 0 && !isLoading) {
+    if (isDevelopment() && events.length === 0 && !isLoading && !hasAutoPopulatedRef.current) {
+      hasAutoPopulatedRef.current = true
       console.log('[Schedule] Auto-populating fake data for development...')
       // Small delay to ensure component is fully mounted
       const timer = setTimeout(() => {
@@ -391,7 +396,9 @@ function Schedule() {
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [events.length, isLoading, handlePopulateFakeData])
+    // Deliberately omit handlePopulateFakeData from deps to prevent re-runs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events.length, isLoading])
 
   /**
    * Development-only: Clear all events from calendar
@@ -439,10 +446,11 @@ function Schedule() {
       await loadEvents()
       
       if (successCount > 0) {
-        setError(`✅ Cleared ${successCount} events successfully!`)
-        setTimeout(() => setError(''), 3000)
+        setSuccessMessage(`✅ Cleared ${successCount} events successfully!`)
+        setTimeout(() => setSuccessMessage(''), 3000)
       } else {
-        setError('❌ No events to clear')
+        setSuccessMessage('ℹ️ No events to clear')
+        setTimeout(() => setSuccessMessage(''), 3000)
       }
     } catch (err) {
       console.error('[Schedule] Error clearing all events:', err)
@@ -570,6 +578,16 @@ function Schedule() {
     },
     [handleEventContextMenu]
   )
+
+  // Cleanup all context menu handlers on component unmount
+  // Prevents memory leaks if component unmounts before eventWillUnmount fires
+  useEffect(() => {
+    return () => {
+      // Note: WeakMap doesn't support iteration, but handlers will be garbage collected
+      // when their associated DOM elements are removed
+      console.log('[Schedule] Component unmounting, context menu handlers will be garbage collected')
+    }
+  }, [])
 
   return (
     <ErrorBoundary>

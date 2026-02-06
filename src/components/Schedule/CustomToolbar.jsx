@@ -16,8 +16,7 @@ function CustomToolbar({
   onNavigate,
   onView,
   onScheduleEvent,
-  EVENT_TYPES,
-  isLoading
+  EVENT_TYPES
 }) {
   const viewLabels = {
     day: 'Day',

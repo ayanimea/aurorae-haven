@@ -282,7 +282,10 @@ describe('Settings Manager', () => {
 
     test('should reject invalid format', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
-      expect(() => importSettings('{}')).toThrow('Invalid settings format')
+      // Empty object is now valid (reset operation), so test with invalid types
+      expect(() => importSettings('"string"')).toThrow() // String is invalid
+      expect(() => importSettings('123')).toThrow() // Number is invalid
+      expect(() => importSettings('[]')).toThrow() // Array is invalid
       consoleErrorSpy.mockRestore()
     })
 

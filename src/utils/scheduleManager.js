@@ -54,10 +54,13 @@ export async function createEvent(event) {
  */
 export async function getEventsForDay(day) {
   const events = await getByIndex(STORES.SCHEDULE, 'day', day)
-  // Sort events by start time chronologically (handle missing startTime)
+  // Sort events chronologically by start time
+  // Business logic: Events without startTime are sorted to the end
+  // (these might be all-day events or data issues; showing them last keeps
+  // the main schedule chronological while still displaying potentially incomplete data)
   return events.sort((a, b) => {
-    if (!a.startTime) return 1
-    if (!b.startTime) return -1
+    if (!a.startTime) return 1  // No startTime → end of list
+    if (!b.startTime) return -1 // No startTime → end of list
     return a.startTime.localeCompare(b.startTime)
   })
 }

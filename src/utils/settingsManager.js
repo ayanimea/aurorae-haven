@@ -54,6 +54,10 @@ export function getSettings() {
       }
       const parsed = JSON.parse(stored)
       // Deep merge to preserve nested objects from DEFAULT_SETTINGS
+      // Uses deepMerge utility (defined at top of this file) which:
+      // - Handles nested objects recursively
+      // - Prevents prototype pollution
+      // - Replaces arrays (doesn't merge them)
       return deepMerge(DEFAULT_SETTINGS, parsed)
     },
     'Loading settings from localStorage',
@@ -189,17 +193,13 @@ export function importSettings(json) {
       
       // Check if it's wrapped format { settings: {...} } or direct settings object
       if (parsed.settings) {
-        // Validate that settings object is not empty
-        if (Object.keys(parsed.settings).length === 0) {
-          throw new Error('Invalid settings format')
-        }
+        // Allow empty settings object as valid reset operation
+        // Empty object = user wants to reset all settings to defaults
         return parsed
-      } else if (typeof parsed === 'object' && parsed !== null) {
-        // Validate that direct settings object is not empty
-        if (Object.keys(parsed).length === 0) {
-          throw new Error('Invalid settings format')
-        }
-        // Assume it's a direct settings object
+      } else if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        // Allow empty settings object as valid reset operation
+        // Direct settings object, wrap it for consistency
+        // Note: Array.isArray check prevents arrays from being treated as objects
         return { settings: parsed }
       } else {
         throw new Error('Invalid settings format')
