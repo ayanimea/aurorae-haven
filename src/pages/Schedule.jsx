@@ -94,6 +94,9 @@ function Schedule() {
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
   
+  // Toolbar ref for dynamic height measurement (aligns time-of-day bands)
+  const toolbarRef = useRef(null)
+  
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
   
@@ -198,6 +201,25 @@ function Schedule() {
   useEffect(() => {
     loadEvents()
   }, [loadEvents])
+
+  // Dynamically measure and sync toolbar height with TimeBands CSS variable
+  // This ensures time-of-day bands always align perfectly with the time grid,
+  // regardless of toolbar content changes (new buttons, text wrapping, responsive layouts)
+  useEffect(() => {
+    const updateToolbarHeight = () => {
+      if (toolbarRef.current) {
+        const height = toolbarRef.current.offsetHeight
+        document.documentElement.style.setProperty('--toolbar-height', `${height}px`)
+      }
+    }
+    
+    // Measure on mount and view changes (toolbar may resize)
+    updateToolbarHeight()
+    
+    // Re-measure on window resize (responsive toolbar height)
+    window.addEventListener('resize', updateToolbarHeight)
+    return () => window.removeEventListener('resize', updateToolbarHeight)
+  }, [view]) // Re-run when view changes as toolbar buttons may affect height
 
   // Event handlers
   const handleEventContextMenu = useCallback((event) => {
@@ -555,39 +577,41 @@ function Schedule() {
           <div className='schedule-wrapper'>
             <TimeBands />
             
-            {/* Custom Toolbar */}
-            <CustomToolbar
-              date={date}
-              view={getFullCalendarView(view)}
-              views={['timeGridDay', 'timeGridWeek', 'dayGridMonth']}
-              onNavigate={(action) => {
-                const calendarApi = calendarRef.current?.getApi()
-                if (!calendarApi) return
-                
-                switch (action) {
-                  case 'PREV':
-                    calendarApi.prev()
-                    setDate(calendarApi.getDate())
-                    break
-                  case 'NEXT':
-                    calendarApi.next()
-                    setDate(calendarApi.getDate())
-                    break
-                  case 'TODAY':
-                    calendarApi.today()
-                    setDate(calendarApi.getDate())
-                    break
-                  default:
-                    break
-                }
-              }}
-              onView={handleViewChange}
-              onScheduleEvent={handleScheduleEvent}
-              onPopulateFakeData={handlePopulateFakeData}
-              onClearAllEvents={handleClearAllEvents}
-              isLoading={isLoading}
-              EVENT_TYPES={EVENT_TYPES}
-            />
+            {/* Custom Toolbar - Wrapped for dynamic height measurement */}
+            <div ref={toolbarRef}>
+              <CustomToolbar
+                date={date}
+                view={getFullCalendarView(view)}
+                views={['timeGridDay', 'timeGridWeek', 'dayGridMonth']}
+                onNavigate={(action) => {
+                  const calendarApi = calendarRef.current?.getApi()
+                  if (!calendarApi) return
+                  
+                  switch (action) {
+                    case 'PREV':
+                      calendarApi.prev()
+                      setDate(calendarApi.getDate())
+                      break
+                    case 'NEXT':
+                      calendarApi.next()
+                      setDate(calendarApi.getDate())
+                      break
+                    case 'TODAY':
+                      calendarApi.today()
+                      setDate(calendarApi.getDate())
+                      break
+                    default:
+                      break
+                  }
+                }}
+                onView={handleViewChange}
+                onScheduleEvent={handleScheduleEvent}
+                onPopulateFakeData={handlePopulateFakeData}
+                onClearAllEvents={handleClearAllEvents}
+                isLoading={isLoading}
+                EVENT_TYPES={EVENT_TYPES}
+              />
+            </div>
 
             {/* FullCalendar - Wrapped for aria-label support */}
             <div role="region" aria-label="Event calendar">

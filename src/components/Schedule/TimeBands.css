@@ -14,21 +14,29 @@
 
 :root {
   /**
-   * IMPORTANT: Toolbar Height Contract
+   * IMPORTANT: Toolbar Height Contract - Dynamic Value
    * 
-   * This value defines the vertical offset for aligning time-of-day bands
-   * with the FullCalendar time grid. For correct alignment:
+   * This CSS variable is now set dynamically by JavaScript in Schedule.jsx
+   * via a useRef + useEffect that measures the actual rendered toolbar height.
    * 
-   * - This value MUST match the actual rendered toolbar height
-   * - If the toolbar height changes (responsive layouts, content changes,
-   *   user preferences), this value must be updated OR overridden dynamically
-   * - For dynamic height, override from the schedule container via JS/React:
-   *     style={{ '--toolbar-height': `${toolbarRef.current?.offsetHeight}px` }}
-   * - When modifying toolbar layout/design, update this value to maintain
-   *   alignment with the calendar grid
+   * Benefits of dynamic measurement:
+   * - Self-correcting: Automatically adapts to toolbar content changes
+   * - No manual sync: Eliminates maintenance burden when toolbar design changes
+   * - Responsive: Works for any screen size without media queries
+   * - Future-proof: New toolbar buttons won't break time-of-day band alignment
    * 
-   * Current value: 150px (desktop default)
-   * Mobile override: 200px (see @media query below)
+   * Implementation (Schedule.jsx):
+   *   const toolbarRef = useRef(null)
+   *   useEffect(() => {
+   *     if (toolbarRef.current) {
+   *       document.documentElement.style.setProperty(
+   *         '--toolbar-height',
+   *         `${toolbarRef.current.offsetHeight}px`
+   *       )
+   *     }
+   *   }, [view])
+   * 
+   * Fallback value: 150px (for SSR or first paint before measurement)
    */
   --toolbar-height: 150px;
   
