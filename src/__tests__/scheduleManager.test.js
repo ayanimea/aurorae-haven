@@ -104,10 +104,12 @@ describe('Schedule Manager', () => {
       })
 
       // Check for conflict with overlapping event
-      const conflicts = await checkConflicts({
-        day: '2025-01-15',
-        startTime: '09:30',
-        endTime: '10:30'
+      // Function signature: checkConflicts(day, startTime, endTime, excludeEventId)
+      const conflicts = await checkConflicts(
+        '2025-01-15',
+        '09:30',
+        '10:30'
+      )
       })
       
       expect(conflicts).toBeDefined()

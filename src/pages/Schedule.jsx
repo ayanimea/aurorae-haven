@@ -396,7 +396,8 @@ function Schedule() {
       }, 500)
       return () => clearTimeout(timer)
     }
-    // Deliberately omit handlePopulateFakeData from deps to prevent re-runs
+    // Deliberately omit handlePopulateFakeData from deps - adding it would cause re-runs
+    // The ref tracking (hasAutoPopulatedRef) ensures single execution, making this safe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events.length, isLoading])
 

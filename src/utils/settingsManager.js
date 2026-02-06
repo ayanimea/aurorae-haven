@@ -192,12 +192,11 @@ export function importSettings(json) {
       const parsed = typeof json === 'string' ? JSON.parse(json) : json
       
       // Check if it's wrapped format { settings: {...} } or direct settings object
+      // Allow empty settings object as valid reset operation
+      // Empty object = user wants to reset all settings to defaults
       if (parsed.settings) {
-        // Allow empty settings object as valid reset operation
-        // Empty object = user wants to reset all settings to defaults
         return parsed
       } else if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-        // Allow empty settings object as valid reset operation
         // Direct settings object, wrap it for consistency
         // Note: Array.isArray check prevents arrays from being treated as objects
         return { settings: parsed }
