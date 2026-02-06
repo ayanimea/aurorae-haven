@@ -72,6 +72,7 @@ import ItemActionModal from '../components/ItemActionModal'
 import CustomToolbar from '../components/Schedule/CustomToolbar'
 import SolidEventCard from '../components/Schedule/SolidEventCard'
 import TimeBands from '../components/Schedule/TimeBands'
+import FloatingDevButtons from '../components/Schedule/FloatingDevButtons'
 import ErrorBoundary from '../components/ErrorBoundary'
 import EventService from '../services/EventService'
 import { toFullCalendarEvents, createEventFromSlot } from '../utils/eventAdapter'
@@ -606,8 +607,6 @@ function Schedule() {
                 }}
                 onView={handleViewChange}
                 onScheduleEvent={handleScheduleEvent}
-                onPopulateFakeData={handlePopulateFakeData}
-                onClearAllEvents={handleClearAllEvents}
                 isLoading={isLoading}
                 EVENT_TYPES={EVENT_TYPES}
               />
@@ -718,6 +717,14 @@ function Schedule() {
             }}
             onEdit={handleEditEvent}
             onDelete={handleDeleteEvent}
+          />
+        )}
+
+        {/* Floating Dev Buttons - Only visible in development mode */}
+        {isDevelopment() && (
+          <FloatingDevButtons
+            onPopulateData={handlePopulateFakeData}
+            onClearData={handleClearAllEvents}
           />
         )}
       </div>

@@ -7,7 +7,6 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../../components/common/Icon'
 import { format, isSameDay } from 'date-fns'
-import { isDevelopment } from '../../utils/environment'
 import './CustomToolbar.css'
 
 function CustomToolbar({
@@ -18,8 +17,6 @@ function CustomToolbar({
   onView,
   onScheduleEvent,
   EVENT_TYPES,
-  onPopulateFakeData,
-  onClearAllEvents,
   isLoading
 }) {
   const viewLabels = {
@@ -111,32 +108,6 @@ function CustomToolbar({
           </select>
         </div>
 
-        {/* Development-only fake data buttons */}
-        {isDevelopment() && (
-          <div className='dev-buttons'>
-            <button
-              type='button'
-              className='btn-secondary'
-              aria-label='Populate fake data'
-              onClick={onPopulateFakeData}
-              disabled={isLoading}
-              title='Add fake events for testing (dev only)'
-            >
-              🎲 Fake Data
-            </button>
-            <button
-              type='button'
-              className='btn-secondary'
-              aria-label='Clear all events'
-              onClick={onClearAllEvents}
-              disabled={isLoading}
-              title='Remove all events (dev only)'
-            >
-              🗑️ Clear
-            </button>
-          </div>
-        )}
-
         {/* Schedule event button */}
         <button
           type='button'
@@ -160,8 +131,6 @@ CustomToolbar.propTypes = {
   onView: PropTypes.func.isRequired,
   onScheduleEvent: PropTypes.func.isRequired,
   EVENT_TYPES: PropTypes.object.isRequired,
-  onPopulateFakeData: PropTypes.func,
-  onClearAllEvents: PropTypes.func,
   isLoading: PropTypes.bool
 }
 
