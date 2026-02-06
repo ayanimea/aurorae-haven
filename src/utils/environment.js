@@ -34,7 +34,6 @@ export const isDevelopment = () => {
   // Try Vite environment first (production/dev builds)
   try {
     // Use indirect eval to prevent Jest from trying to parse import.meta
-    // eslint-disable-next-line no-eval
     const importMeta = (0, eval)('import.meta')
     if (importMeta && importMeta.env) {
       return importMeta.env.DEV
