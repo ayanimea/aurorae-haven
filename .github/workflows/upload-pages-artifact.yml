@@ -207,6 +207,8 @@ jobs:
         env:
           CI: true
           VITE_BASE_URL: '/aurorae-haven/'
+          # Enable dev mode for copilot/ and hotfix branches (shows fake data button)
+          NODE_ENV: ${{ (startsWith(github.ref, 'refs/heads/copilot/') || startsWith(github.ref, 'refs/heads/hotfix-')) && 'development' || 'production' }}
 
       - name: Verify build output
         run: |
