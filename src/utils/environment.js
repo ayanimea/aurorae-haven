@@ -5,6 +5,9 @@
  * and Jest (process.env) environments.
  */
 
+/* global __DEV__ */
+// __DEV__ is injected by Vite's define config at build time
+
 /**
  * Check if running in development mode
  * 
