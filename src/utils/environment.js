@@ -10,9 +10,16 @@
  * @returns {boolean} True if in development mode
  */
 export const isDevelopment = () => {
-  // Vite environment (production/dev builds)
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    return import.meta.env.DEV
+  // Try Vite environment first (production/dev builds)
+  try {
+    // Use indirect eval to prevent Jest from trying to parse import.meta
+    // eslint-disable-next-line no-eval
+    const importMeta = (0, eval)('import.meta')
+    if (importMeta && importMeta.env) {
+      return importMeta.env.DEV
+    }
+  } catch (e) {
+    // Fall through to Node/Jest environment
   }
   
   // Jest/Node environment  
