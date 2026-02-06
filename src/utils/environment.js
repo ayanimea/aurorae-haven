@@ -39,7 +39,7 @@ export const isDevelopment = () => {
     if (importMeta && importMeta.env) {
       return importMeta.env.DEV
     }
-  } catch (e) {
+  } catch {
     // Fall through to Node/Jest environment
   }
   
