@@ -25,7 +25,7 @@
   /* Fill parent container */
   height: 100%;
   width: 100%;
-  min-height: 40px; /* Ensure minimum readable height */
+  min-height: 30px; /* Reduced from 40px to avoid conflicts with short (15-min) events */
 
   /* Solid background - no glass effect */
   background: var(--event-bg);
