@@ -627,9 +627,12 @@ function Schedule() {
                   <SolidEventCard
                     event={{
                       ...eventInfo.event,
+                      title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
                       resource: {
                         type: eventInfo.event.extendedProps?.type,
-                        originalEvent: eventInfo.event.extendedProps?.originalEvent
+                        originalEvent: eventInfo.event.extendedProps?.originalEvent,
+                        preparationTime: eventInfo.event.extendedProps?.preparationTime,
+                        travelTime: eventInfo.event.extendedProps?.travelTime
                       }
                     }}
                   />
