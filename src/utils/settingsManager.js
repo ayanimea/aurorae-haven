@@ -56,8 +56,8 @@ export function getSettings() {
       // Deep merge to preserve nested objects from DEFAULT_SETTINGS
       // Uses deepMerge utility (defined at top of this file) which:
       // - Handles nested objects recursively
-      // - Prevents prototype pollution
       // - Replaces arrays (doesn't merge them)
+      // Note: Assumes localStorage data is trusted; validate/sanitize before use
       return deepMerge(DEFAULT_SETTINGS, parsed)
     },
     'Loading settings from localStorage',

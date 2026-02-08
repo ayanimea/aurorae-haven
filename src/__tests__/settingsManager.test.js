@@ -106,20 +106,18 @@ describe('Settings Manager', () => {
       }
       localStorage.setItem('aurorae_settings', JSON.stringify(settingsWithArray))
 
-      // Access array element with dot notation
+      // Access array element with dot notation - deterministic test
       const firstFile = getSetting('recentFiles.0')
       const secondFile = getSetting('recentFiles.1')
       
-      // May or may not be implemented - test gracefully
-      if (firstFile !== undefined) {
-        expect(firstFile).toBe('file1.json')
-        expect(secondFile).toBe('file2.json')
-      } else {
-        // If not implemented, should at least get the array
-        const files = getSetting('recentFiles')
-        expect(Array.isArray(files)).toBe(true)
-        expect(files[0]).toBe('file1.json')
-      }
+      // getSetting supports numeric keys in arrays via 'k in value' check
+      expect(firstFile).toBe('file1.json')
+      expect(secondFile).toBe('file2.json')
+      
+      // Also verify array access works
+      const files = getSetting('recentFiles')
+      expect(Array.isArray(files)).toBe(true)
+      expect(files).toHaveLength(3)
     })
   })
 

@@ -595,7 +595,8 @@ function Schedule() {
       <div className='page page-schedule'>
         <div className='schedule-container'>
           <div className='schedule-wrapper'>
-            <TimeBands />
+            {/* Only render time-of-day bands for time grid views (not month view) */}
+            {(view === 'day' || view === 'week') && <TimeBands />}
             
             {/* Custom Toolbar - Wrapped for dynamic height measurement */}
             <div ref={toolbarRef}>
@@ -643,6 +644,7 @@ function Schedule() {
                 slotMaxTime={slotMaxTime}
                 slotDuration="00:15:00"
                 slotLabelInterval="01:00:00"
+                allDaySlot={false}
                 headerToolbar={false}
                 height="auto"
                 expandRows={true}

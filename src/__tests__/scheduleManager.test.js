@@ -110,7 +110,6 @@ describe('Schedule Manager', () => {
         '09:30',
         '10:30'
       )
-      })
       
       expect(conflicts).toBeDefined()
       expect(Array.isArray(conflicts)).toBe(true)
@@ -119,11 +118,11 @@ describe('Schedule Manager', () => {
       }
 
       // Check for no conflict with non-overlapping event
-      const noConflicts = await checkConflicts({
-        day: '2025-01-15',
-        startTime: '11:00',
-        endTime: '12:00'
-      })
+      const noConflicts = await checkConflicts(
+        '2025-01-15',
+        '11:00',
+        '12:00'
+      )
       
       expect(noConflicts).toBeDefined()
       expect(Array.isArray(noConflicts)).toBe(true)
@@ -372,11 +371,11 @@ describe('Schedule Manager', () => {
       })
 
       // Check for conflicts at target location
-      const conflicts = await checkConflicts({
-        day: '2025-01-16',
-        startTime: '14:30',
-        endTime: '15:30'
-      })
+      const conflicts = await checkConflicts(
+        '2025-01-16',
+        '14:30',
+        '15:30'
+      )
 
       expect(conflicts).toBeDefined()
       expect(Array.isArray(conflicts)).toBe(true)
@@ -433,12 +432,12 @@ describe('Schedule Manager', () => {
       })
 
       // Check conflicts when updating the first event (should exclude itself)
-      const conflicts = await checkConflicts({
-        id: id, // Should exclude this event
-        day: '2025-01-15',
-        startTime: '09:30', // Overlaps with itself but not others
-        endTime: '10:30'
-      })
+      const conflicts = await checkConflicts(
+        '2025-01-15',
+        '09:30', // Overlaps with itself but not others
+        '10:30',
+        id // Exclude this event from conflict check
+      )
 
       expect(conflicts).toBeDefined()
       expect(Array.isArray(conflicts)).toBe(true)
