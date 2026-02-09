@@ -103,6 +103,9 @@ export const toFullCalendarEvent = (event) => {
     if (endTime < startTime) {
       endTime = addDays(endTime, 1)
     }
+    
+    // Default type to 'task' if missing/invalid to prevent 'event-undefined' classes
+    const eventType = event.type || 'task'
 
     // FullCalendar event format
     return {
@@ -110,9 +113,9 @@ export const toFullCalendarEvent = (event) => {
       title: event.title,
       start: startTime,
       end: endTime,
-      classNames: [`event-${event.type}`],
+      classNames: [`event-${eventType}`],
       extendedProps: {
-        type: event.type,
+        type: eventType,
         travelTime: event.travelTime || 0,
         preparationTime: event.preparationTime || 0,
         originalEvent: event

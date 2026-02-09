@@ -137,14 +137,12 @@ describe('Schedule Manager', () => {
         startTime: '09:00',
         endTime: '10:00'
       })
-      await new Promise((resolve) => setTimeout(resolve, 10))
       await createEvent({
         title: 'Event 2',
         day: '2025-01-15',
         startTime: '14:00',
         endTime: '15:00'
       })
-      await new Promise((resolve) => setTimeout(resolve, 10))
       await createEvent({
         title: 'Event 3',
         day: '2025-01-16',
@@ -157,21 +155,19 @@ describe('Schedule Manager', () => {
     })
 
     test('should return events sorted by time', async () => {
-      // Create events in non-chronological order
+      // Create events in non-chronological order (IDs are collision-safe)
       await createEvent({
         title: 'Event 3',
         day: '2025-01-15',
         startTime: '14:00',
         endTime: '15:00'
       })
-      await new Promise((resolve) => setTimeout(resolve, 10))
       await createEvent({
         title: 'Event 1',
         day: '2025-01-15',
         startTime: '09:00',
         endTime: '10:00'
       })
-      await new Promise((resolve) => setTimeout(resolve, 10))
       await createEvent({
         title: 'Event 2',
         day: '2025-01-15',

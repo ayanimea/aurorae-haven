@@ -54,10 +54,10 @@ export function getSettings() {
       }
       const parsed = JSON.parse(stored)
       // Deep merge to preserve nested objects from DEFAULT_SETTINGS
-      // Uses deepMerge utility (defined at top of this file) which:
+      // Uses deepMerge utility (defined at bottom of this file) which:
       // - Handles nested objects recursively
       // - Replaces arrays (doesn't merge them)
-      // Note: Assumes localStorage data is trusted; validate/sanitize before use
+      // - Blocks prototype pollution keys (__proto__, constructor, prototype)
       return deepMerge(DEFAULT_SETTINGS, parsed)
     },
     'Loading settings from localStorage',
@@ -191,18 +191,34 @@ export function importSettings(json) {
       // Handle both JSON string and object inputs
       const parsed = typeof json === 'string' ? JSON.parse(json) : json
       
-      // Check if it's wrapped format { settings: {...} } or direct settings object
-      // Allow empty settings object as valid reset operation
-      // Empty object = user wants to reset all settings to defaults
-      if (parsed.settings) {
-        return parsed
-      } else if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-        // Direct settings object, wrap it for consistency
-        // Note: Array.isArray check prevents arrays from being treated as objects
-        return { settings: parsed }
-      } else {
+      // Ensure we are working with a non-null, non-array object
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
         throw new Error('Invalid settings format')
       }
+      
+      const hasSettingsProp = Object.prototype.hasOwnProperty.call(parsed, 'settings')
+      
+      // Wrapped format: { settings: { ... } }
+      if (hasSettingsProp) {
+        const wrappedSettings = parsed.settings
+        
+        // Validate that wrapped settings is a non-null, non-array object
+        // Allow empty settings object as valid reset operation
+        if (
+          typeof wrappedSettings !== 'object' ||
+          wrappedSettings === null ||
+          Array.isArray(wrappedSettings)
+        ) {
+          throw new Error("Invalid settings format: 'settings' must be an object")
+        }
+        
+        // Empty object = user wants to reset all settings to defaults
+        return parsed
+      }
+      
+      // Direct settings object, wrap it for consistency
+      // Note: Array.isArray check already done above
+      return { settings: parsed }
     },
     'Parsing imported settings',
     {
@@ -217,15 +233,23 @@ export function importSettings(json) {
 }
 
 /**
- * Deep merge two objects
+ * Deep merge two objects (with prototype pollution protection)
  * @param {object} target - Target object
  * @param {object} source - Source object
  * @returns {object} Merged object
  */
 function deepMerge(target, source) {
   const result = { ...target }
+  
+  // Dangerous keys that can cause prototype pollution
+  const dangerousKeys = new Set(['__proto__', 'constructor', 'prototype'])
 
   for (const key in source) {
+    // Skip dangerous keys to prevent prototype pollution
+    if (dangerousKeys.has(key)) {
+      continue
+    }
+    
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       if (
         typeof source[key] === 'object' &&

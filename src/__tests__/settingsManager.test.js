@@ -162,13 +162,11 @@ describe('Settings Manager', () => {
 
     // Test for handling storage errors
     test('should handle storage errors gracefully', () => {
-      // Fill localStorage to cause quota exceeded error
+      // Mock setItem to throw on first aurorae_settings write
       const originalSetItem = Storage.prototype.setItem
-      let callCount = 0
       
       Storage.prototype.setItem = function(key, value) {
-        callCount++
-        if (callCount > 1 && key === 'aurorae_settings') {
+        if (key === 'aurorae_settings') {
           throw new Error('QuotaExceededError')
         }
         return originalSetItem.call(this, key, value)
@@ -178,7 +176,7 @@ describe('Settings Manager', () => {
         const updates = { theme: 'dark' }
         const result = updateSettings(updates)
         
-        // Should handle error gracefully
+        // Should handle error gracefully (returns current settings on failure)
         expect(result).toBeDefined()
       } finally {
         // Restore original

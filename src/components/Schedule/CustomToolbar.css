@@ -1,13 +1,18 @@
-/* CustomToolbar Styles */
+/* CustomToolbar Styles
+ * 
+ * Note: Development-only .dev-buttons controls were moved to FloatingDevButtons.
+ * These styles are preserved for backward compatibility but may be removed in future.
+ * Current CustomToolbar is minimal and primarily uses inherited global styles.
+ */
 
-/* Development-only buttons container */
+/* Legacy development-only buttons container (unused - see FloatingDevButtons) */
 .dev-buttons {
   display: flex;
   gap: 0.5rem;
   margin-left: 0.5rem;
 }
 
-/* Development button styles */
+/* Legacy development button styles (unused - see FloatingDevButtons) */
 .dev-buttons .btn-secondary {
   font-size: 0.875rem;
   padding: 0.5rem 0.75rem;

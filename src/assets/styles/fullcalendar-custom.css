@@ -66,6 +66,11 @@
   border-color: var(--fc-border-color);
 }
 
+/* Time slot sizing
+ * Note: Hardcoded 1.5rem provides consistent visual rhythm across viewports.
+ * For 15-min slots (slotDuration), this gives 6rem per hour (4 slots × 1.5rem).
+ * Future enhancement: derive from CSS variable (--minute-unit) for proportional scaling.
+ */
 .fc-timegrid-slot {
   height: 1.5rem;
   border-color: var(--fc-border-color);

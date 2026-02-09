@@ -37,11 +37,13 @@ export default defineConfig(({ mode }) => {
   return {
     base,
     // Define compile-time constants for secure environment detection
-    // Reads NODE_ENV to allow GitHub Actions workflow to control dev features
-    // For copilot/ and hotfix branches, workflow sets NODE_ENV=development
+    // Uses Vite's mode parameter (reliable in all build contexts):
+    // - dev server: mode='development'
+    // - production build: mode='production' 
+    // GitHub Actions workflow sets NODE_ENV which Vite respects
     // Replaces __DEV__ with true/false during build (no runtime eval needed)
     define: {
-      __DEV__: process.env.NODE_ENV !== 'production'
+      __DEV__: mode === 'development'
     },
     plugins: [
       react(),
