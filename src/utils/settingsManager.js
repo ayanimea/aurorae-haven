@@ -182,7 +182,7 @@ export function exportSettings() {
 /**
  * Import settings from JSON
  * @param {string|object} json - JSON string or settings object to import
- * @returns {Promise<object>} Result from updateSettings (includes success status)
+ * @returns {object} Result from updateSettings after applying imported settings
  */
 export function importSettings(json) {
   // TODO: Implement validation and version checking

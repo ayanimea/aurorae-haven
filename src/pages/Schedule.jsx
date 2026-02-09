@@ -207,8 +207,10 @@ function Schedule() {
   }, [loadEvents])
 
   // Dynamically measure and sync toolbar height with TimeBands CSS variable
-  // This ensures time-of-day bands always align perfectly with the time grid,
-  // regardless of toolbar content changes (new buttons, text wrapping, responsive layouts)
+  // This ensures time-of-day bands align with the time grid after layout changes
+  // Currently measures on mount, view changes, and window resize
+  // TODO: Consider ResizeObserver for more robust detection of toolbar height changes
+  // (e.g., when date label length changes, isLoading state changes, or fonts load)
   useEffect(() => {
     const updateToolbarHeight = () => {
       if (toolbarRef.current) {

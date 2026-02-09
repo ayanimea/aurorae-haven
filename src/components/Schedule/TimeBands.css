@@ -16,25 +16,34 @@
   /**
    * IMPORTANT: Toolbar Height Contract - Dynamic Value
    * 
-   * This CSS variable is now set dynamically by JavaScript in Schedule.jsx
-   * via a useRef + useEffect that measures the actual rendered toolbar height.
+   * This CSS variable is set at runtime by JavaScript in Schedule.jsx
+   * via a useRef + useEffect that measures the rendered toolbar height.
    * 
-   * Benefits of dynamic measurement:
-   * - Self-correcting: Automatically adapts to toolbar content changes
-   * - No manual sync: Eliminates maintenance burden when toolbar design changes
-   * - Responsive: Works for any screen size without media queries
-   * - Future-proof: New toolbar buttons won't break time-of-day band alignment
+   * Characteristics of the current measurement strategy:
+   * - Reduces manual sync: Minimizes maintenance when toolbar design changes
+   * - Responsive to layout changes: Re-measured on mount, view changes, and window resize
+   * - Safer alignment: Helps keep time-of-day bands aligned with the time grid toolbar
+   * - Uses a CSS fallback so bands remain usable if JS measurement is unavailable
    * 
    * Implementation (Schedule.jsx):
    *   const toolbarRef = useRef(null)
    *   useEffect(() => {
-   *     if (toolbarRef.current) {
-   *       document.documentElement.style.setProperty(
-   *         '--toolbar-height',
-   *         `${toolbarRef.current.offsetHeight}px`
-   *       )
+   *     function updateToolbarHeight() {
+   *       if (toolbarRef.current) {
+   *         document.documentElement.style.setProperty(
+   *           '--toolbar-height',
+   *           `${toolbarRef.current.offsetHeight}px`
+   *         )
+   *       }
    *     }
+   * 
+   *     updateToolbarHeight()            // on mount and when `view` changes
+   *     window.addEventListener('resize', updateToolbarHeight)
+   *     return () => window.removeEventListener('resize', updateToolbarHeight)
    *   }, [view])
+   * 
+   * Note: Structural toolbar changes that do not involve a view change or resize
+   * may require a re-render to update this measurement.
    * 
    * Fallback value: 150px (for SSR or first paint before measurement)
    */
