@@ -33,14 +33,27 @@ Thank you for your interest in contributing to Aurorae Haven! This document prov
    git checkout -b feature/your-feature-name
    ```
 
-3. **Make Changes**
+3. **Install Pre-commit Hook (Recommended)**
+
+   To automatically enforce Schedule UI guardrails and prevent regressions:
+
+   ```bash
+   cp scripts/pre-commit-schedule-guardrails.sh .git/hooks/pre-commit
+   chmod +x .git/hooks/pre-commit
+   ```
+
+   This hook blocks commits that violate Schedule UI design rules. See:
+   - `docs/schedule-ui-spec.md` - Schedule UI specification
+   - `COPILOT_SCHEDULE_ONLY.md` - AI/Copilot guidelines for Schedule UI
+
+4. **Make Changes**
    - Follow the coding standards in `.github/copilot-instructions.md`
    - Keep changes focused and minimal
    - Run linters before committing: `npm run lint && npm run format`
    - Fix ALL linting errors and format issues
    - Test thoroughly in multiple browsers
 
-4. **Commit**
+5. **Commit**
 
    ```bash
    git commit -m "✨ Add feature description"
@@ -54,7 +67,7 @@ Thank you for your interest in contributing to Aurorae Haven! This document prov
    - ✅ `test:` - Adding tests
    - 🔒 `security:` - Security improvements
 
-5. **Push and Create PR**
+6. **Push and Create PR**
 
    ```bash
    git push origin feature/your-feature-name
