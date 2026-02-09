@@ -95,13 +95,15 @@ export function getSetting(key) {
 /**
  * Update settings
  * @param {object} updates - Settings updates (partial or full)
- * @returns {object} Updated settings
+ * @returns {object} Updated settings (from memory, even if localStorage write fails)
  */
 export function updateSettings(updates) {
   // TODO: Implement validation and merge strategy
   const current = getSettings()
   const updated = deepMerge(current, updates)
 
+  // Try to persist to localStorage, but don't throw if it fails
+  // User still gets updated settings in memory for current session
   tryCatch(
     () => {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated))
@@ -109,7 +111,7 @@ export function updateSettings(updates) {
     'Saving settings to localStorage',
     {
       showToast: false,
-      rethrow: true
+      rethrow: false // Handle storage errors gracefully
     }
   )
 

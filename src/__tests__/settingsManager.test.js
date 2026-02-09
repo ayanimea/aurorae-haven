@@ -157,28 +157,31 @@ describe('Settings Manager', () => {
     // Test for validation before updating
     test.todo('should validate settings before updating - currently accepts any values')
 
-    // Test for handling storage errors
-    // TODO: Fix test isolation issue with Storage mock
-    test.skip('should handle storage errors gracefully', () => {
-      // Mock setItem to always throw for aurorae_settings to simulate quota exceeded
-      Storage.prototype.setItem = function(key, value) {
-        if (key === 'aurorae_settings') {
-          throw new Error('QuotaExceededError')
-        }
-        // Allow other keys (like toasts) to write normally
-        return originalSetItem.call(this, key, value)
-      }
+    // Test for handling storage errors  
+    test('should handle storage errors gracefully', () => {
+      // Use jest.spyOn for proper mock cleanup (fixes test isolation issue)
+      const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
+        .mockImplementation((key, value) => {
+          if (key === 'aurorae_settings') {
+            throw new Error('QuotaExceededError')
+          }
+        })
 
       const updates = { theme: 'dark' }
       
-      // updateSettings should catch the error and return current settings
-      // Since it can't write, it should return what it tried to update
+      // updateSettings should catch the error and return settings from memory
+      // Even though localStorage write fails, user gets updated settings for current session
       const result = updateSettings(updates, { showToast: false })
       
-      // Should handle error gracefully
+      // Should handle error gracefully - return updated settings even if write fails
       expect(result).toBeDefined()
-      // Settings should still be defined even if write failed
-      expect(result.theme).toBeDefined()
+      expect(result.theme).toBe('dark') // Update applied in memory
+      
+      // Verify setItem was called and threw
+      expect(setItemSpy).toHaveBeenCalled()
+      
+      // Cleanup
+      setItemSpy.mockRestore()
     })
   })
 
