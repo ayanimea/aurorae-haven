@@ -69,7 +69,8 @@
 /* Time slot sizing
  * Note: Hardcoded 1.5rem provides consistent visual rhythm across viewports.
  * For 15-min slots (slotDuration), this gives 6rem per hour (4 slots × 1.5rem).
- * Future enhancement: derive from CSS variable (--minute-unit) for proportional scaling.
+ * Future enhancement: derive from --minute-unit in schedule.css (lines 60-71)
+ * for dynamic scaling based on slotDuration configuration.
  */
 .fc-timegrid-slot {
   height: 1.5rem;

@@ -104,8 +104,10 @@ export const toFullCalendarEvent = (event) => {
       endTime = addDays(endTime, 1)
     }
     
-    // Default type to 'task' if missing/invalid to prevent 'event-undefined' classes
-    const eventType = event.type || 'task'
+    // Whitelist valid event types to prevent CSS class injection
+    // Only allow known types; fallback to 'task' for safety
+    const validTypes = ['task', 'appointment', 'reminder', 'event']
+    const eventType = validTypes.includes(event.type) ? event.type : 'task'
 
     // FullCalendar event format
     return {

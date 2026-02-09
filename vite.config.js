@@ -36,11 +36,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
-    // Define compile-time constants for secure environment detection
-    // Uses Vite's mode parameter (reliable in all build contexts):
-    // - dev server: mode='development'
-    // - production build: mode='production' 
-    // GitHub Actions workflow sets NODE_ENV which Vite respects
+    // Define compile-time constants for environment detection.
+    // __DEV__ is derived from Vite's `mode` parameter:
+    // - dev server / development builds: mode === 'development'
+    // - production builds: mode === 'production'
+    // CI workflows must pass `vite build --mode development` explicitly
+    // if they need a non-default (development) value for __DEV__.
     // Replaces __DEV__ with true/false during build (no runtime eval needed)
     define: {
       __DEV__: mode === 'development'
