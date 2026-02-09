@@ -36,6 +36,16 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
+    // Define compile-time constants for environment detection.
+    // __DEV__ is derived from Vite's `mode` parameter:
+    // - dev server / development builds: mode === 'development'
+    // - production builds: mode === 'production'
+    // CI workflows must pass `vite build --mode development` explicitly
+    // if they need a non-default (development) value for __DEV__.
+    // Replaces __DEV__ with true/false during build (no runtime eval needed)
+    define: {
+      __DEV__: mode === 'development'
+    },
     plugins: [
       react(),
       VitePWA({

@@ -3,6 +3,21 @@ import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 
+// Mock FullCalendar to avoid ESM parsing issues
+jest.mock('@fullcalendar/react', () => {
+  return function FullCalendar(props) {
+    return (
+      <div className='fc' data-testid='fullcalendar'>
+        <div className='fc-view'>{props.initialView}</div>
+      </div>
+    )
+  }
+})
+
+jest.mock('@fullcalendar/timegrid', () => ({}))
+jest.mock('@fullcalendar/daygrid', () => ({}))
+jest.mock('@fullcalendar/interaction', () => ({}))
+
 // Mock Icon component
 jest.mock('../components/common/Icon', () => {
   return function Icon({ name }) {
@@ -104,35 +119,7 @@ jest.mock('../utils/logger', () => ({
   }))
 }))
 
-// Mock react-big-calendar to avoid rendering issues in tests
-jest.mock('react-big-calendar', () => {
-  const React = require('react')
-  return {
-    Calendar: ({ components, date }) => {
-      const Toolbar = components?.toolbar
-      return (
-        <div className='rbc-calendar'>
-          {Toolbar && (
-            <Toolbar
-              date={date}
-              view='day'
-              views={['day', 'week', 'month']}
-              onNavigate={() => {}}
-              onView={() => {}}
-            />
-          )}
-          <div className='rbc-time-view' />
-        </div>
-      )
-    },
-    dateFnsLocalizer: () => ({}),
-    Views: {
-      Day: () => null
-    }
-  }
-})
-
-describe('Schedule Component with React Big Calendar', () => {
+describe('Schedule Component with FullCalendar', () => {
   const EventService = require('../services/EventService').default
 
   beforeEach(() => {
@@ -169,7 +156,7 @@ describe('Schedule Component with React Big Calendar', () => {
 
     await waitFor(() => {
       expect(container.querySelector('.schedule-container')).toBeInTheDocument()
-      expect(container.querySelector('.rbc-calendar')).toBeInTheDocument()
+      expect(container.querySelector('.fc')).toBeInTheDocument()
     })
   })
 

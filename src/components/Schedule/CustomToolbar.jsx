@@ -7,6 +7,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../../components/common/Icon'
 import { format, isSameDay } from 'date-fns'
+import './CustomToolbar.css'
 
 function CustomToolbar({
   date,
@@ -20,7 +21,11 @@ function CustomToolbar({
   const viewLabels = {
     day: 'Day',
     week: 'Week',
-    month: 'Month'
+    month: 'Month',
+    // FullCalendar view names
+    timeGridDay: 'Day',
+    timeGridWeek: 'Week',
+    dayGridMonth: 'Month'
   }
 
   const handleToday = () => {
@@ -124,7 +129,8 @@ CustomToolbar.propTypes = {
   onNavigate: PropTypes.func.isRequired,
   onView: PropTypes.func.isRequired,
   onScheduleEvent: PropTypes.func.isRequired,
-  EVENT_TYPES: PropTypes.object.isRequired
+  EVENT_TYPES: PropTypes.object.isRequired,
+  isLoading: PropTypes.bool
 }
 
 export default CustomToolbar
