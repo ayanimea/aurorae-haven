@@ -8,6 +8,16 @@ This directory contains utility scripts for development, building, and testing.
 
 A pre-commit hook that enforces Schedule UI design rules and prevents known regressions.
 
+**Runtime requirements:**
+
+- POSIX-like environment with `bash` available (the hook is a Bash script)
+- Standard command-line tools including `grep` on the `PATH`
+
+**Windows notes:**
+
+- Run Git and these hooks from **Git Bash** or a **WSL** (Windows Subsystem for Linux) shell.
+- Running Git from plain `cmd.exe` or PowerShell without a POSIX layer may cause the hook to be skipped or fail.
+
 **Installation:**
 
 ```bash

@@ -42,6 +42,9 @@ Thank you for your interest in contributing to Aurorae Haven! This document prov
    chmod +x .git/hooks/pre-commit
    ```
 
+   > **Note:** The pre-commit hook is a Bash script and requires a POSIX-like shell environment with `bash` and `grep`.
+   > On Windows, run these commands from **Git Bash** or **WSL** (Windows Subsystem for Linux). If you cannot use such an environment, you may skip installing the hook, but you are still expected to follow the Schedule UI specification and guardrails manually.
+
    This hook blocks commits that violate Schedule UI design rules. See:
    - `docs/schedule-ui-spec.md` - Schedule UI specification
    - `COPILOT_SCHEDULE_ONLY.md` - AI/Copilot guidelines for Schedule UI
