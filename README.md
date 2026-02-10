@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-09 14:42:16 UTC
-**Source Branch**: fix-schedule-view-issues
-**Source Commit**: a4ea26a
+**Last Updated**: 2026-02-10 08:10:37 UTC
+**Source Branch**: reinstate-pre-commit-guardrails
+**Source Commit**: b118fc4
 
 ---
 
