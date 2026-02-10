@@ -51,16 +51,18 @@ if git diff --cached --name-only | grep -E "src/pages/Schedule\.jsx|src/componen
 fi
 
 # 3. Single global gradient misuse (only in schedule-related files)
-# Note: This check is intentionally disabled because it's difficult to distinguish between
-# allowed per-band gradients (e.g., .time-period-morning) and forbidden global gradients
-# without more sophisticated parsing. Manual code review should catch global gradient violations.
-# if git diff --cached --name-only | grep -E "schedule\.css|Schedule\.jsx" > /dev/null; then
-#   if git diff --cached -- src/pages/Schedule.jsx src/assets/styles/schedule.css | grep -E "^\+" | grep -v "^+++" | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
-#     echo "❌ Forbidden pattern in staged changes: global background: linear-gradient in schedule files"
-#     echo "   Note: Per-band gradients are allowed, but not a single global schedule gradient"
-#     FAIL=1
-#   fi
-# fi
+# Note: This check may flag legitimate per-band gradients (e.g., .time-period-morning).
+# If you're adding per-band gradients, verify they follow the spec and use --no-verify if needed.
+if git diff --cached --name-only | grep -E "schedule\.css|Schedule\.jsx" > /dev/null; then
+  if git diff --cached -- src/pages/Schedule.jsx src/assets/styles/schedule.css | grep -E "^\+" | grep -v "^+++" | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
+    echo "⚠️  Warning: linear-gradient detected in schedule files"
+    echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."
+    echo "   Verify your changes follow the spec (see docs/schedule-ui-spec.md)"
+    echo "   If this is a legitimate per-band gradient, you may proceed."
+    echo "   To bypass: git commit --no-verify"
+    FAIL=1
+  fi
+fi
 
 # 4. Missing minute-based scaling when touching schedule UI implementation files
 if git diff --cached --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css" > /dev/null; then

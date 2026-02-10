@@ -29,8 +29,8 @@ chmod +x .git/hooks/pre-commit
 
 - Blocks commits that apply background colors to hour rows
 - Blocks hardcoded pixel heights in Schedule UI files (e.g., `height: 64px`) using portable POSIX regex
+- Warns about linear-gradient usage in schedule files (may have false positives with per-band gradients; use `--no-verify` if legitimate)
 - Ensures minute-based scaling (`--minute-unit`, `--hour-height`, or derived variables) is used when modifying schedule UI implementation files with positioning/sizing changes
-- Note: Global gradient checks are disabled to avoid false positives with per-band gradients
 
 **References:**
 
