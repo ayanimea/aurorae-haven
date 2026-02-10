@@ -1025,7 +1025,7 @@ Ask for clarification or preserve the existing structure.
   border-radius: 12px;
   box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 20%, transparent);
   z-index: 1000;
-  max-height: 400px;
+  max-height: 600px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1090,7 +1090,7 @@ Ask for clarification or preserve the existing structure.
 
 .search-dropdown-list {
   overflow-y: auto;
-  max-height: 280px;
+  max-height: 480px;
   padding: 4px;
 }
 

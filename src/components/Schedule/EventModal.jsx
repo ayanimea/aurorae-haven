@@ -92,7 +92,13 @@ function EventModal({
           travelTime: initialData.travelTime || 0,
           preparationTime: initialData.preparationTime || 0
         })
-        setShowManualForm(true) // Show form directly if editing
+        // Show search selector if title is empty (from slot drag) and event type supports it
+        // Show form directly if editing existing event with title
+        const hasTitle = initialData.title && initialData.title.trim() !== ''
+        const isSearchableType = 
+          validatedEventType === EVENT_TYPES.ROUTINE ||
+          validatedEventType === EVENT_TYPES.TASK
+        setShowManualForm(hasTitle || !isSearchableType)
       } else {
         setFormData({
           title: '',
@@ -233,16 +239,12 @@ function EventModal({
       try {
         logger.log('Instantiating routine from template:', item.title)
         const instantiatedRoutine = await instantiateRoutineFromTemplate(item)
-        // Use the new routine
-        setFormData({
+        // Use the new routine and preserve slot timing if available
+        setFormData((prev) => ({
+          ...prev,
           title: instantiatedRoutine.title,
-          day: getCurrentDateISO(),
-          startTime: '09:00',
-          endTime: '10:00',
-          type: validatedEventType,
-          travelTime: 0,
-          preparationTime: 0
-        })
+          type: validatedEventType
+        }))
       } catch (err) {
         logger.error('Failed to instantiate routine from template:', err)
         setError('Failed to create routine from template. Please try again.')
@@ -260,15 +262,12 @@ function EventModal({
         return
       }
     } else {
-      setFormData({
+      // Preserve slot timing (day, startTime, endTime) if available from drag
+      setFormData((prev) => ({
+        ...prev,
         title: item.title,
-        day: getCurrentDateISO(),
-        startTime: '09:00',
-        endTime: '10:00',
-        type: validatedEventType,
-        travelTime: 0,
-        preparationTime: 0
-      })
+        type: validatedEventType
+      }))
     }
     setShowManualForm(true)
   }
