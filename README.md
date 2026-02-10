@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-10 15:25:50 UTC
+**Last Updated**: 2026-02-10 18:57:15 UTC
 **Source Branch**: reinstate-pre-commit-guardrails
-**Source Commit**: 02685c7
+**Source Commit**: 54c1711
 
 ---
 
