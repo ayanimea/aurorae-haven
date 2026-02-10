@@ -59,11 +59,11 @@ fi
 # If you're adding per-band gradients, verify they follow the spec and use --no-verify if needed.
 if git diff --cached --no-color --name-only | grep -E "schedule\.css|Schedule\.jsx" > /dev/null; then
   if git diff --cached --no-color -- src/pages/Schedule.jsx src/assets/styles/schedule.css | grep -E "^\+" | grep -v "^+++" | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
-    echo "⚠️  Warning: linear-gradient detected in schedule files"
+    echo "⚠️  Gradient guardrail triggered: linear-gradient detected in schedule files."
+    echo "   This pre-commit hook will block the commit when a gradient is detected."
     echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."
-    echo "   Verify your changes follow the spec (see docs/schedule-ui-spec.md)"
-    echo "   If this is a legitimate per-band gradient, you may proceed."
-    echo "   To bypass: git commit --no-verify"
+    echo "   If this is a legitimate per-band gradient that follows the spec, re-run your commit with:"
+    echo "     git commit --no-verify   # temporarily bypasses this guardrail"
     FAIL=1
   fi
 fi

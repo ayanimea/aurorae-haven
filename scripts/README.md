@@ -40,27 +40,33 @@ chmod +x .git/hooks/pre-commit
 **Testing the hook:**
 
 ```bash
+# Run tests on a temporary branch so you don't pollute your main history.
+git checkout -b pre-commit-hook-test
+
 # Note: The hook scopes checks to specific Schedule UI paths.
 # Use an actual schedule file for testing:
 
 # Test that it blocks hardcoded pixel heights in schedule files
 echo ".schedule-event { height: 64px; }" >> src/assets/styles/schedule.css
 git add src/assets/styles/schedule.css
-git commit -m "test"  # Should be blocked
-git restore --staged src/assets/styles/schedule.css
-git restore src/assets/styles/schedule.css
+git commit -m "test (should be blocked)"  # Should be blocked
+git restore --staged src/assets/styles/schedule.css || true
+git restore src/assets/styles/schedule.css || true
 
 # Test that it allows valid changes with minute-based scaling
 echo ".schedule-event { height: calc(var(--minute-unit) * 60); }" >> src/assets/styles/schedule.css
 git add src/assets/styles/schedule.css
-git commit -m "test"  # Should succeed
-git restore src/assets/styles/schedule.css
+git commit -m "test (minute-based scaling)"  # Should succeed
+git restore src/assets/styles/schedule.css || true
 
 # Non-schedule files are not affected by pixel height checks
 echo ".other-component { height: 64px; }" > src/assets/styles/other.css
 git add src/assets/styles/other.css
-git commit -m "test"  # Should succeed (not a schedule file)
-git reset HEAD src/assets/styles/other.css && rm src/assets/styles/other.css
+git commit -m "test (non-schedule file)"  # Should succeed (not a schedule file)
+
+# Clean up: switch back and delete the temporary branch (and its test commits)
+git checkout -
+git branch -D pre-commit-hook-test
 ```
 
 ## Other Scripts
