@@ -18,9 +18,9 @@ chmod +x .git/hooks/pre-commit
 **What it does:**
 
 - Blocks commits that apply background colors to hour rows
-- Blocks hardcoded pixel heights (e.g., `height: 64px`)
-- Blocks single global gradients (e.g., `background: linear-gradient(...)`)
-- Ensures `--minute-unit` CSS variable is used when modifying schedule files
+- Blocks hardcoded pixel heights (e.g., `height: 64px`) using portable POSIX regex
+- Blocks single global gradients in schedule-specific files (per-band gradients are allowed)
+- Ensures `--minute-unit` CSS variable is used when modifying schedule UI implementation files with positioning/sizing changes
 
 **References:**
 
@@ -44,7 +44,7 @@ git commit -m "test"  # Should succeed
 
 ## Other Scripts
 
-- `build-constants.js` - Build-time constants
+- `buildConstants.js` - Build-time constants
 - `create-offline-package.js` - Creates offline distribution package
 - `embedded-server.js` / `embedded-server.py` - Local server implementations
 - `prepare-dist.sh` - Prepares distribution files
