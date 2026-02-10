@@ -29,7 +29,7 @@ chmod +x .git/hooks/pre-commit
 
 - Blocks commits that apply background colors to hour rows
 - Blocks hardcoded pixel heights in Schedule UI files (e.g., `height: 64px`) using portable POSIX regex
-- Warns about linear-gradient usage in schedule files (may have false positives with per-band gradients; use `--no-verify` if legitimate)
+- Blocks commits that introduce `background: linear-gradient` in guarded schedule files (emits a warning-style message; may have false positives with per-band gradients—use `--no-verify` if the gradient is legitimate)
 - Ensures minute-based scaling (`--minute-unit`, `--hour-height`, or derived variables) is used when modifying schedule UI implementation files with positioning/sizing changes
 
 **References:**
@@ -47,13 +47,14 @@ chmod +x .git/hooks/pre-commit
 echo ".schedule-event { height: 64px; }" >> src/assets/styles/schedule.css
 git add src/assets/styles/schedule.css
 git commit -m "test"  # Should be blocked
-git checkout -- src/assets/styles/schedule.css
+git restore --staged src/assets/styles/schedule.css
+git restore src/assets/styles/schedule.css
 
 # Test that it allows valid changes with minute-based scaling
 echo ".schedule-event { height: calc(var(--minute-unit) * 60); }" >> src/assets/styles/schedule.css
 git add src/assets/styles/schedule.css
 git commit -m "test"  # Should succeed
-git checkout -- src/assets/styles/schedule.css
+git restore src/assets/styles/schedule.css
 
 # Non-schedule files are not affected by pixel height checks
 echo ".other-component { height: 64px; }" > src/assets/styles/other.css
