@@ -51,15 +51,15 @@ check "background-color.*hour"
 
 # 2. Hardcoded pixel heights (time scaling violation) — scoped to Schedule UI files
 if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
-  check_in_files "(^|[^-])(min-height|max-height|height):[[:space:]]*[0-9]+px" "${SCHEDULE_PATHS[@]}"
-  check_in_files "(^|[^-])top:[[:space:]]*[0-9]+px" "${SCHEDULE_PATHS[@]}"
+  check_in_files "(^|[^-])(min-height|max-height|height)[[:space:]]*:[[:space:]]*[0-9]+px" "${SCHEDULE_PATHS[@]}"
+  check_in_files "(^|[^-])top[[:space:]]*:[[:space:]]*[0-9]+px" "${SCHEDULE_PATHS[@]}"
 fi
 
 # 3. Single global gradient misuse (only in schedule-related files)
 # Note: This check may flag legitimate per-band gradients (e.g., .time-period-morning).
 # If you're adding per-band gradients, verify they follow the spec and use --no-verify if needed.
-if git diff --cached --no-color --name-only | grep -E "schedule\.css|fullcalendar-custom\.css|Schedule\.jsx" > /dev/null; then
-  if git diff --cached --no-color -- src/pages/Schedule.jsx src/assets/styles/schedule.css src/assets/styles/fullcalendar-custom.css | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
+if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
+  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
     echo "⚠️  Gradient guardrail triggered: linear-gradient detected in schedule files."
     echo "   This pre-commit hook will block the commit when a gradient is detected."
     echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."
