@@ -71,9 +71,10 @@ fi
 
 # 4. Missing minute-based scaling when touching schedule UI implementation files
 if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
-  # Only check if CSS-related changes are made in schedule files that affect vertical sizing/offsets (height, top, bottom)
-  # Exclude line-height by requiring it not to be preceded by "line-"; require at least one numeric value
-  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "(^|[^-])(height|top|bottom)[[:space:]]*:[[:space:]]*.*[0-9]" > /dev/null; then
+  # Only check if CSS-related changes are made in schedule files that affect vertical sizing/offsets
+  # Include height, min-height, max-height, top, bottom; exclude line-height
+  # Require at least one non-zero numeric value (exempt 0, auto, etc.)
+  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "(^|[^-])(min-height|max-height|height|top|bottom)[[:space:]]*:[[:space:]]*.*[1-9][0-9]*" > /dev/null; then
     # Require minute-based scaling via --minute-unit or derived variables like --hour-height
     # (direct use or via var(--minute-unit) / var(--hour-height))
     if ! git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "(\-\-minute-unit|\-\-hour-height|var\(\-\-hour-height\)|var\(\-\-minute-unit\))" > /dev/null; then
