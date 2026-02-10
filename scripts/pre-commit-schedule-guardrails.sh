@@ -24,6 +24,7 @@ SCHEDULE_PATHS=(
   "src/pages/Schedule.jsx"
   "src/components/Schedule/"
   "src/assets/styles/schedule.css"
+  "src/assets/styles/fullcalendar-custom.css"
 )
 
 # Helper to check patterns in added lines only (not removed lines or diff headers)
@@ -49,7 +50,7 @@ check "hour[-_ ]row.*background"
 check "background-color.*hour"
 
 # 2. Hardcoded pixel heights (time scaling violation) — scoped to Schedule UI files
-if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css" > /dev/null; then
+if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
   check_in_files "(^|[^-])(min-height|max-height|height):[[:space:]]*[0-9]+px" "${SCHEDULE_PATHS[@]}"
   check_in_files "(^|[^-])top:[[:space:]]*[0-9]+px" "${SCHEDULE_PATHS[@]}"
 fi
@@ -57,8 +58,8 @@ fi
 # 3. Single global gradient misuse (only in schedule-related files)
 # Note: This check may flag legitimate per-band gradients (e.g., .time-period-morning).
 # If you're adding per-band gradients, verify they follow the spec and use --no-verify if needed.
-if git diff --cached --no-color --name-only | grep -E "schedule\.css|Schedule\.jsx" > /dev/null; then
-  if git diff --cached --no-color -- src/pages/Schedule.jsx src/assets/styles/schedule.css | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
+if git diff --cached --no-color --name-only | grep -E "schedule\.css|fullcalendar-custom\.css|Schedule\.jsx" > /dev/null; then
+  if git diff --cached --no-color -- src/pages/Schedule.jsx src/assets/styles/schedule.css src/assets/styles/fullcalendar-custom.css | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
     echo "⚠️  Gradient guardrail triggered: linear-gradient detected in schedule files."
     echo "   This pre-commit hook will block the commit when a gradient is detected."
     echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."
@@ -69,10 +70,10 @@ if git diff --cached --no-color --name-only | grep -E "schedule\.css|Schedule\.j
 fi
 
 # 4. Missing minute-based scaling when touching schedule UI implementation files
-if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css" > /dev/null; then
+if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
   # Only check if CSS-related changes are made in schedule files that affect vertical sizing/offsets (height, top, bottom)
   # Exclude line-height by requiring it not to be preceded by "line-"; require at least one numeric value
-  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "(^|[^-])(height|top|bottom):[[:space:]]*.*[0-9]" > /dev/null; then
+  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "(^|[^-])(height|top|bottom)[[:space:]]*:[[:space:]]*.*[0-9]" > /dev/null; then
     # Require minute-based scaling via --minute-unit or derived variables like --hour-height
     # (direct use or via var(--minute-unit) / var(--hour-height))
     if ! git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "(\-\-minute-unit|\-\-hour-height|var\(\-\-hour-height\)|var\(\-\-minute-unit\))" > /dev/null; then
