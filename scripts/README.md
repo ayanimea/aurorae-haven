@@ -28,9 +28,9 @@ chmod +x .git/hooks/pre-commit
 **What it does:**
 
 - Blocks commits that apply background colors to hour rows
-- Blocks hardcoded pixel heights (e.g., `height: 64px`) using portable POSIX regex
-- Blocks single global gradients in schedule-specific files (per-band gradients are allowed)
-- Ensures `--minute-unit` CSS variable is used when modifying schedule UI implementation files with positioning/sizing changes
+- Blocks hardcoded pixel heights in Schedule UI files (e.g., `height: 64px`) using portable POSIX regex
+- Ensures minute-based scaling (`--minute-unit`, `--hour-height`, or derived variables) is used when modifying schedule UI implementation files with positioning/sizing changes
+- Note: Global gradient checks are disabled to avoid false positives with per-band gradients
 
 **References:**
 
@@ -40,16 +40,26 @@ chmod +x .git/hooks/pre-commit
 **Testing the hook:**
 
 ```bash
-# Test that it blocks violations
-echo ".event { height: 64px; }" > test.css
-git add test.css
-git commit -m "test"  # Should be blocked
-git reset HEAD test.css && rm test.css
+# Note: The hook scopes checks to specific Schedule UI paths.
+# Use an actual schedule file for testing:
 
-# Test that it allows valid changes
-echo ".event { height: calc(var(--minute-unit) * 60); }" > test.css
-git add test.css
+# Test that it blocks hardcoded pixel heights in schedule files
+echo ".schedule-event { height: 64px; }" >> src/assets/styles/schedule.css
+git add src/assets/styles/schedule.css
+git commit -m "test"  # Should be blocked
+git checkout -- src/assets/styles/schedule.css
+
+# Test that it allows valid changes with minute-based scaling
+echo ".schedule-event { height: calc(var(--minute-unit) * 60); }" >> src/assets/styles/schedule.css
+git add src/assets/styles/schedule.css
 git commit -m "test"  # Should succeed
+git checkout -- src/assets/styles/schedule.css
+
+# Non-schedule files are not affected by pixel height checks
+echo ".other-component { height: 64px; }" > src/assets/styles/other.css
+git add src/assets/styles/other.css
+git commit -m "test"  # Should succeed (not a schedule file)
+git reset HEAD src/assets/styles/other.css && rm src/assets/styles/other.css
 ```
 
 ## Other Scripts
