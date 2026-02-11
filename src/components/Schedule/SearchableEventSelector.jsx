@@ -316,13 +316,9 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 }
 
 SearchableEventSelector.propTypes = {
-  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]),
+  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]).isRequired,
   onSelect: PropTypes.func.isRequired,
   onCreateNew: PropTypes.func.isRequired
-}
-
-SearchableEventSelector.defaultProps = {
-  eventType: null
 }
 
 export default SearchableEventSelector
