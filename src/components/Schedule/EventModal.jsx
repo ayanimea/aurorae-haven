@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
 import SearchableEventSelector from './SearchableEventSelector'
-import { getCurrentDateISO } from '../../utils/timeUtils'
+import { getCurrentDateISO, getCurrentTimeHHMM, getCurrentTimePlusMinutes } from '../../utils/timeUtils'
 import {
   EVENT_TYPES,
   VALID_EVENT_TYPES,
@@ -69,8 +69,8 @@ function EventModal({
   const [formData, setFormData] = useState({
     title: '',
     day: getCurrentDateISO(),
-    startTime: '09:00',
-    endTime: '10:00',
+    startTime: getCurrentTimeHHMM(),
+    endTime: getCurrentTimePlusMinutes(60),
     type: validatedEventType,
     travelTime: 0,
     preparationTime: 0
@@ -95,8 +95,8 @@ function EventModal({
         setFormData({
           title: initialData.title || '',
           day: initialData.day || getCurrentDateISO(),
-          startTime: initialData.startTime || '09:00',
-          endTime: initialData.endTime || '10:00',
+          startTime: initialData.startTime || getCurrentTimeHHMM(),
+          endTime: initialData.endTime || getCurrentTimePlusMinutes(60),
           type: initialData.type || validatedEventType,
           travelTime: initialData.travelTime || 0,
           preparationTime: initialData.preparationTime || 0
@@ -114,8 +114,8 @@ function EventModal({
         setFormData({
           title: '',
           day: getCurrentDateISO(),
-          startTime: '09:00',
-          endTime: '10:00',
+          startTime: getCurrentTimeHHMM(),
+          endTime: getCurrentTimePlusMinutes(60),
           type: validatedEventType,
           travelTime: 0,
           preparationTime: 0

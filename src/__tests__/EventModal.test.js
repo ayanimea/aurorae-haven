@@ -26,7 +26,9 @@ jest.mock('../components/common/Modal', () => {
 
 // Mock getCurrentDateISO to return consistent date for testing
 jest.mock('../utils/timeUtils', () => ({
-  getCurrentDateISO: jest.fn(() => '2025-09-16')
+  getCurrentDateISO: jest.fn(() => '2025-09-16'),
+  getCurrentTimeHHMM: jest.fn(() => '09:00'),
+  getCurrentTimePlusMinutes: jest.fn(() => '10:00')
 }))
 
 // Mock SearchableEventSelector to automatically trigger create new

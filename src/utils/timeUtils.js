@@ -31,6 +31,26 @@ export function getCurrentDateISO() {
 }
 
 /**
+ * Get current time in HH:MM format
+ *
+ * @returns {string} Current time in HH:MM format
+ */
+export function getCurrentTimeHHMM() {
+  return dayjs().format('HH:mm')
+}
+
+/**
+ * Get current time plus specified minutes in HH:MM format
+ * Useful for setting default end times
+ *
+ * @param {number} minutesToAdd - Minutes to add to current time (default: 60)
+ * @returns {string} Time in HH:MM format
+ */
+export function getCurrentTimePlusMinutes(minutesToAdd = 60) {
+  return dayjs().add(minutesToAdd, 'minute').format('HH:mm')
+}
+
+/**
  * Parse time string in HH:MM format to hours and minutes
  * Validates that hours are in range 0-23 and minutes are in range 0-59
  * Returns null for invalid inputs to distinguish from valid '00:00'
