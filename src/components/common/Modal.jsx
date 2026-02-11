@@ -25,28 +25,18 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
   if (!isOpen) return null
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
     <div
       className='modal-overlay'
       onClick={closeOnOverlayClick ? onClose : undefined}
-      onKeyDown={(e) => {
-        // Handle Enter/Space keys for activating the overlay (separate from Escape functionality)
-        if (e.key === 'Enter' || e.key === ' ') {
-          if (closeOnOverlayClick) {
-            e.preventDefault() // Prevent default scrolling behavior on Space
-            onClose()
-          }
-        }
-      }}
       role='dialog'
       aria-modal='true'
       aria-labelledby={title ? 'modal-title' : undefined}
     >
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div
         className={clsx('modal-content', className)}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
         role='document'
       >
         {title && (
