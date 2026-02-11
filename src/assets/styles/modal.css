@@ -201,9 +201,9 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 0;
-  max-width: 500px;
+  max-width: 700px;
   width: 100%;
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
