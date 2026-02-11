@@ -291,7 +291,7 @@ function EventModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={getModalTitle()}>
+    <Modal isOpen={isOpen} onClose={onClose} title={getModalTitle()} closeOnOverlayClick={false}>
       {/* Show search selector for routines/tasks when not in manual form mode */}
       {!showManualForm &&
         (isDragToSchedule ||

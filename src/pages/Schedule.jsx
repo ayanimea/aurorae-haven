@@ -258,7 +258,7 @@ function Schedule() {
 
       if (isUpdate) {
         console.log('Updating event:', eventData.id)
-        await EventService.updateEvent(eventData.id, eventData)
+        await EventService.updateEvent(eventData)
       } else {
         console.log('Creating new event')
         await EventService.createEvent(eventData)

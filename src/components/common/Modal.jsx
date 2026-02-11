@@ -7,14 +7,14 @@ import Icon from './Icon'
  * Reusable modal wrapper component
  * Provides consistent modal overlay and content structure
  */
-function Modal({ isOpen, onClose, title, children, className = '' }) {
+function Modal({ isOpen, onClose, title, children, className = '', closeOnOverlayClick = true }) {
   if (!isOpen) return null
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       className='modal-overlay'
-      onClick={onClose}
+      onClick={closeOnOverlayClick ? onClose : undefined}
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
       }}
@@ -52,7 +52,8 @@ Modal.propTypes = {
   onClose: PropTypes.func.isRequired,
   title: PropTypes.string,
   children: PropTypes.node.isRequired,
-  className: PropTypes.string
+  className: PropTypes.string,
+  closeOnOverlayClick: PropTypes.bool
 }
 
 export default Modal
