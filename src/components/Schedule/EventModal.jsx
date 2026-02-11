@@ -263,7 +263,7 @@ function EventModal({
   // Handle selecting an existing routine/task
   const handleItemSelect = async (item) => {
     // If item is a template, instantiate it as a routine first
-    if (item.isTemplate && item.type === 'routine') {
+    if (item.isTemplate && item.type === EVENT_TYPES.ROUTINE) {
       try {
         logger.log('Instantiating routine from template:', item.title)
         const instantiatedRoutine = await instantiateRoutineFromTemplate(item)
@@ -272,7 +272,7 @@ function EventModal({
         setFormData((prev) => ({
           ...prev,
           title: instantiatedRoutine.title,
-          type: isDragToSchedule ? 'routine' : validatedEventType
+          type: isDragToSchedule ? EVENT_TYPES.ROUTINE : validatedEventType
         }))
       } catch (err) {
         logger.error('Failed to instantiate routine from template:', err)

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import Icon from './Icon'
@@ -8,19 +8,27 @@ import Icon from './Icon'
  * Provides consistent modal overlay and content structure
  */
 function Modal({ isOpen, onClose, title, children, className = '', closeOnOverlayClick = true }) {
+  // Store onClose in a ref to avoid re-registering the keydown listener on every render
+  const onCloseRef = useRef(onClose)
+  
+  // Keep ref up to date
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+  
   // Handle Escape key at document level to ensure it always works
   useEffect(() => {
     if (!isOpen) return
 
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
       }
     }
 
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   if (!isOpen) return null
 
