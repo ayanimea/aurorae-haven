@@ -30,9 +30,12 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
       className='modal-overlay'
       onClick={closeOnOverlayClick ? onClose : undefined}
       onKeyDown={(e) => {
-        // Keyboard interaction for clicking overlay (optional since Escape is handled at document level)
+        // Handle Enter/Space keys for activating the overlay (separate from Escape functionality)
         if (e.key === 'Enter' || e.key === ' ') {
-          if (closeOnOverlayClick) onClose()
+          if (closeOnOverlayClick) {
+            e.preventDefault() // Prevent default scrolling behavior on Space
+            onClose()
+          }
         }
       }}
       role='dialog'
