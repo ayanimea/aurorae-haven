@@ -125,8 +125,8 @@ describe('Modal Component', () => {
         </Modal>
       )
 
-      const overlay = screen.getByRole('dialog')
-      fireEvent.keyDown(overlay, { key: 'Escape' })
+      // Escape is now handled at document level, so fire on document
+      fireEvent.keyDown(document, { key: 'Escape' })
 
       expect(mockOnClose).toHaveBeenCalledTimes(1)
     })
@@ -138,9 +138,9 @@ describe('Modal Component', () => {
         </Modal>
       )
 
-      const overlay = screen.getByRole('dialog')
-      fireEvent.keyDown(overlay, { key: 'Enter' })
-      fireEvent.keyDown(overlay, { key: 'Space' })
+      fireEvent.keyDown(document, { key: 'Enter' })
+      fireEvent.keyDown(document, { key: 'Space' })
+      fireEvent.keyDown(document, { key: 'Tab' })
 
       expect(mockOnClose).not.toHaveBeenCalled()
     })
@@ -156,6 +156,80 @@ describe('Modal Component', () => {
       fireEvent.click(closeButton)
 
       expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    test('does not call onClose when clicking overlay and closeOnOverlayClick is false', () => {
+      render(
+        <Modal isOpen={true} onClose={mockOnClose} closeOnOverlayClick={false}>
+          <div>Content</div>
+        </Modal>
+      )
+
+      const overlay = screen.getByRole('dialog')
+      fireEvent.click(overlay)
+
+      expect(mockOnClose).not.toHaveBeenCalled()
+    })
+
+    test('still calls onClose on Escape even when closeOnOverlayClick is false', () => {
+      render(
+        <Modal isOpen={true} onClose={mockOnClose} closeOnOverlayClick={false}>
+          <div>Content</div>
+        </Modal>
+      )
+
+      fireEvent.keyDown(document, { key: 'Escape' })
+
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    test('still calls onClose on close button even when closeOnOverlayClick is false', () => {
+      render(
+        <Modal
+          isOpen={true}
+          onClose={mockOnClose}
+          title='Test'
+          closeOnOverlayClick={false}
+        >
+          <div>Content</div>
+        </Modal>
+      )
+
+      const closeButton = screen.getByRole('button', { name: /close/i })
+      fireEvent.click(closeButton)
+
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    test('respects closeOnOverlayClick default value of true', () => {
+      render(
+        <Modal isOpen={true} onClose={mockOnClose}>
+          <div>Content</div>
+        </Modal>
+      )
+
+      const overlay = screen.getByRole('dialog')
+      fireEvent.click(overlay)
+
+      // Default behavior should close on overlay click
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    test('cleans up document keydown listener on unmount', () => {
+      const { unmount } = render(
+        <Modal isOpen={true} onClose={mockOnClose}>
+          <div>Content</div>
+        </Modal>
+      )
+
+      // Unmount the modal
+      unmount()
+
+      // Try to trigger Escape after unmount
+      fireEvent.keyDown(document, { key: 'Escape' })
+
+      // Should not call onClose after unmount
+      expect(mockOnClose).not.toHaveBeenCalled()
     })
   })
 

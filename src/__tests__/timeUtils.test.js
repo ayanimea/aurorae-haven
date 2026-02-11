@@ -12,7 +12,9 @@ import {
   addDuration,
   subtractDuration,
   formatDurationDisplay,
-  formatDurationVerbose
+  formatDurationVerbose,
+  getCurrentTimeHHMM,
+  getCurrentTimePlusMinutes
 } from '../utils/timeUtils'
 
 describe('timeUtils', () => {
@@ -283,6 +285,130 @@ describe('timeUtils', () => {
       expect(formatDurationVerbose(1800)).toBe('30m') // 30 minutes
       expect(formatDurationVerbose(3600)).toBe('1h') // 1 hour
       expect(formatDurationVerbose(5400)).toBe('1h 30m') // 1.5 hours
+    })
+  })
+
+  describe('getCurrentTimeHHMM', () => {
+    test('should return current time in HH:MM format', () => {
+      const result = getCurrentTimeHHMM()
+      
+      // Validate format
+      expect(result).toMatch(/^\d{2}:\d{2}$/)
+      
+      // Parse and validate ranges
+      const [hours, minutes] = result.split(':').map(Number)
+      expect(hours).toBeGreaterThanOrEqual(0)
+      expect(hours).toBeLessThan(24)
+      expect(minutes).toBeGreaterThanOrEqual(0)
+      expect(minutes).toBeLessThan(60)
+    })
+
+    test('should return valid time string that can be parsed', () => {
+      const result = getCurrentTimeHHMM()
+      const parsed = parseTime(result)
+      
+      expect(parsed).not.toBeNull()
+      expect(parsed.hours).toBeGreaterThanOrEqual(0)
+      expect(parsed.hours).toBeLessThan(24)
+      expect(parsed.minutes).toBeGreaterThanOrEqual(0)
+      expect(parsed.minutes).toBeLessThan(60)
+    })
+
+    test('should have proper zero padding', () => {
+      const result = getCurrentTimeHHMM()
+      const [hours, minutes] = result.split(':')
+      
+      // Both parts should be exactly 2 characters
+      expect(hours).toHaveLength(2)
+      expect(minutes).toHaveLength(2)
+    })
+  })
+
+  describe('getCurrentTimePlusMinutes', () => {
+    test('should add minutes to current time', () => {
+      const result = getCurrentTimePlusMinutes(30)
+      
+      // Validate format
+      expect(result).toMatch(/^\d{2}:\d{2}$/)
+      
+      // Parse and validate ranges
+      const parsed = parseTime(result)
+      expect(parsed).not.toBeNull()
+      expect(parsed.hours).toBeGreaterThanOrEqual(0)
+      expect(parsed.hours).toBeLessThan(24)
+      expect(parsed.minutes).toBeGreaterThanOrEqual(0)
+      expect(parsed.minutes).toBeLessThan(60)
+    })
+
+    test('should handle zero minutes', () => {
+      const now = getCurrentTimeHHMM()
+      const result = getCurrentTimePlusMinutes(0)
+      
+      // Should be approximately the same time (within a minute due to test execution time)
+      expect(result).toMatch(/^\d{2}:\d{2}$/)
+    })
+
+    test('should clamp to 23:59 when adding minutes would exceed midnight', () => {
+      // Mock Date to return 23:30
+      const mockDate = new Date()
+      mockDate.setHours(23, 30, 0, 0)
+      jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
+      
+      const result = getCurrentTimePlusMinutes(60)
+      
+      // Should be clamped to 23:59, not wrap to 00:30
+      expect(result).toBe('23:59')
+      
+      global.Date.mockRestore()
+    })
+
+    test('should handle midnight boundary correctly for smaller additions', () => {
+      // Mock Date to return 23:45
+      const mockDate = new Date()
+      mockDate.setHours(23, 45, 0, 0)
+      jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
+      
+      const result = getCurrentTimePlusMinutes(30)
+      
+      // 23:45 + 30 = 24:15, should clamp to 23:59
+      expect(result).toBe('23:59')
+      
+      global.Date.mockRestore()
+    })
+
+    test('should not clamp when staying within same day', () => {
+      // Mock Date to return 10:00
+      const mockDate = new Date()
+      mockDate.setHours(10, 0, 0, 0)
+      jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
+      
+      const result = getCurrentTimePlusMinutes(90)
+      
+      // 10:00 + 90 = 11:30, should not be clamped
+      expect(result).toBe('11:30')
+      
+      global.Date.mockRestore()
+    })
+
+    test('should handle negative minutes', () => {
+      // Mock Date to return 10:00
+      const mockDate = new Date()
+      mockDate.setHours(10, 0, 0, 0)
+      jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
+      
+      const result = getCurrentTimePlusMinutes(-30)
+      
+      // 10:00 - 30 = 09:30
+      expect(result).toBe('09:30')
+      
+      global.Date.mockRestore()
+    })
+
+    test('should produce parseable time strings', () => {
+      const result = getCurrentTimePlusMinutes(45)
+      const parsed = parseTime(result)
+      
+      expect(parsed).not.toBeNull()
     })
   })
 
