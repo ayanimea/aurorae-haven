@@ -228,12 +228,12 @@ function Schedule() {
   }, [view]) // Re-run when view changes as toolbar buttons may affect height
 
   // Event handlers
-  const handleEventContextMenu = useCallback((event) => {
+  const handleEventContextMenu = useCallback((event, x, y) => {
     try {
-      console.log('Event context menu:', event)
+      console.log('Event context menu:', event, x, y)
       const originalEvent = event.resource?.originalEvent || event
       if (originalEvent) {
-        setEventToDelete({ ...originalEvent, isContextMenu: true })
+        setEventToDelete({ ...originalEvent, isContextMenu: true, contextMenuX: x, contextMenuY: y })
         setShowActionModal(true)
       } else {
         console.warn('Context menu triggered but no originalEvent found')
@@ -292,6 +292,21 @@ function Schedule() {
     } catch (err) {
       console.error('[Schedule] Failed to delete event:', err)
       setError('Failed to delete event. Please try again.')
+    }
+  }
+
+  const handleDeleteFromModal = async (eventId) => {
+    try {
+      if (!eventId) {
+        throw new Error('Event ID is required for deletion')
+      }
+
+      console.log('Deleting event from modal:', eventId)
+      await EventService.deleteEvent(eventId)
+      await loadEvents()
+    } catch (err) {
+      console.error('[Schedule] Failed to delete event:', err)
+      throw err
     }
   }
 
@@ -571,7 +586,7 @@ function Schedule() {
         e.preventDefault()
         const originalEvent = mouseEnterInfo.event.extendedProps?.originalEvent
         if (originalEvent) {
-          handleEventContextMenu(originalEvent)
+          handleEventContextMenu(originalEvent, e.clientX, e.clientY)
         }
       }
 
@@ -726,6 +741,7 @@ function Schedule() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onSave={handleSaveEvent}
+          onDelete={handleDeleteFromModal}
           eventType={selectedEventType}
           initialData={selectedEvent}
         />

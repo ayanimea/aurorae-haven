@@ -56,6 +56,7 @@ function EventModal({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   eventType,
   initialData = null
 }) {
@@ -231,6 +232,22 @@ function EventModal({
     } catch (err) {
       setError(err.message || 'Failed to save event')
     } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!initialData?.id || !onDelete) return
+    
+    const confirmed = window.confirm('Are you sure you want to delete this event?')
+    if (!confirmed) return
+
+    setIsSubmitting(true)
+    try {
+      await onDelete(initialData.id)
+      onClose()
+    } catch (err) {
+      setError(err.message || 'Failed to delete event')
       setIsSubmitting(false)
     }
   }
@@ -432,6 +449,18 @@ function EventModal({
           </div>
 
           <div className='form-actions'>
+            {initialData?.id && onDelete && (
+              <button
+                type='button'
+                className='btn btn-danger'
+                onClick={handleDelete}
+                disabled={isSubmitting}
+                aria-label='Delete event'
+              >
+                <Icon name='trash2' />
+                Delete
+              </button>
+            )}
             <button
               type='button'
               className='btn btn-secondary'
@@ -469,6 +498,7 @@ EventModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
+  onDelete: PropTypes.func,
   eventType: PropTypes.oneOf(VALID_EVENT_TYPES),
   initialData: PropTypes.shape({
     id: PropTypes.number,
