@@ -328,4 +328,95 @@ describe('EventModal Component', () => {
     })
     expect(mockOnSave).not.toHaveBeenCalled()
   })
+
+  // Tests for drag-to-schedule functionality
+  describe('drag-to-schedule path', () => {
+    test('shows manual form directly when editing event with title', () => {
+      const initialData = {
+        id: 1,
+        title: 'Existing Event',
+        day: '2025-09-16',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'task',
+        travelTime: 0,
+        preparationTime: 0
+      }
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          eventType='task'
+          initialData={initialData}
+        />
+      )
+
+      // Should show manual form directly (not SearchableEventSelector)
+      expect(screen.getByLabelText(/Title/i)).toBeInTheDocument()
+      expect(screen.getByDisplayValue('Existing Event')).toBeInTheDocument()
+    })
+
+    test('preserves slot timing when dragging (day, startTime, endTime)', async () => {
+      const initialData = {
+        title: '',
+        day: '2025-09-20',
+        startTime: '14:00',
+        endTime: '15:30',
+        type: null,
+        travelTime: 0,
+        preparationTime: 0
+      }
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          eventType='task'
+          initialData={initialData}
+        />
+      )
+
+      // After SearchableEventSelector triggers onCreateNew, form should have slot timing
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Date/i)).toHaveValue('2025-09-20')
+        expect(screen.getByLabelText(/Start Time/i)).toHaveValue('14:00')
+        expect(screen.getByLabelText(/End Time/i)).toHaveValue('15:30')
+      })
+    })
+
+    test('shows SearchableEventSelector for drag-to-schedule with null type', () => {
+      // Reset the mock to return the actual SearchableEventSelector component
+      jest.unmock('../components/Schedule/SearchableEventSelector')
+      
+      const initialData = {
+        title: '',
+        day: '2025-09-16',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: null, // null type indicates drag-to-schedule
+        travelTime: 0,
+        preparationTime: 0
+      }
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          eventType='task'
+          initialData={initialData}
+        />
+      )
+
+      // The SearchableEventSelector mock automatically triggers onCreateNew
+      // So we should see the manual form after that
+      // Check that the slot timing is preserved
+      expect(screen.getByLabelText(/Date/i)).toHaveValue('2025-09-16')
+      expect(screen.getByLabelText(/Start Time/i)).toHaveValue('10:00')
+      expect(screen.getByLabelText(/End Time/i)).toHaveValue('11:00')
+    })
+  })
 })

@@ -173,7 +173,7 @@ export const createEventFromSlot = (slotInfo) => {
       startTime,
       endTime,
       title: '',
-      type: 'task',
+      type: null, // Let EventModal determine type based on user selection
       travelTime: 0,
       preparationTime: 0
     }

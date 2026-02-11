@@ -77,12 +77,18 @@ function EventModal({
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showManualForm, setShowManualForm] = useState(false)
+  // Track if this is a drag-to-schedule operation (show both routines and tasks)
+  const [isDragToSchedule, setIsDragToSchedule] = useState(false)
   const titleInputRef = useRef(null)
 
   // Reset form when modal opens or event type changes
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
+        const hasTitle = initialData.title && initialData.title.trim() !== ''
+        // Detect drag-to-schedule: empty title and null/undefined type from createEventFromSlot
+        const isDrag = !hasTitle && (initialData.type === null || initialData.type === undefined)
+        
         setFormData({
           title: initialData.title || '',
           day: initialData.day || getCurrentDateISO(),
@@ -92,13 +98,15 @@ function EventModal({
           travelTime: initialData.travelTime || 0,
           preparationTime: initialData.preparationTime || 0
         })
-        // Show search selector if title is empty (from slot drag) and event type supports it
+        
+        setIsDragToSchedule(isDrag)
+        
+        // Show search selector if drag-to-schedule or editing event without title
         // Show form directly if editing existing event with title
-        const hasTitle = initialData.title && initialData.title.trim() !== ''
         const isSearchableType = 
           validatedEventType === EVENT_TYPES.ROUTINE ||
           validatedEventType === EVENT_TYPES.TASK
-        setShowManualForm(hasTitle || !isSearchableType)
+        setShowManualForm(hasTitle || (!isDrag && !isSearchableType))
       } else {
         setFormData({
           title: '',
@@ -109,6 +117,7 @@ function EventModal({
           travelTime: 0,
           preparationTime: 0
         })
+        setIsDragToSchedule(false)
         // For routine/task, start with search; for meeting/habit, show form directly
         setShowManualForm(
           validatedEventType === EVENT_TYPES.MEETING ||
@@ -240,10 +249,11 @@ function EventModal({
         logger.log('Instantiating routine from template:', item.title)
         const instantiatedRoutine = await instantiateRoutineFromTemplate(item)
         // Use the new routine and preserve slot timing if available
+        // For drag-to-schedule, use the item's type; otherwise use validatedEventType
         setFormData((prev) => ({
           ...prev,
           title: instantiatedRoutine.title,
-          type: validatedEventType
+          type: isDragToSchedule ? 'routine' : validatedEventType
         }))
       } catch (err) {
         logger.error('Failed to instantiate routine from template:', err)
@@ -263,10 +273,11 @@ function EventModal({
       }
     } else {
       // Preserve slot timing (day, startTime, endTime) if available from drag
+      // For drag-to-schedule, use the item's actual type; otherwise use validatedEventType
       setFormData((prev) => ({
         ...prev,
         title: item.title,
-        type: validatedEventType
+        type: isDragToSchedule ? item.type : validatedEventType
       }))
     }
     setShowManualForm(true)
@@ -281,10 +292,11 @@ function EventModal({
     <Modal isOpen={isOpen} onClose={onClose} title={getModalTitle()}>
       {/* Show search selector for routines/tasks when not in manual form mode */}
       {!showManualForm &&
-        (validatedEventType === EVENT_TYPES.ROUTINE ||
+        (isDragToSchedule ||
+          validatedEventType === EVENT_TYPES.ROUTINE ||
           validatedEventType === EVENT_TYPES.TASK) && (
           <SearchableEventSelector
-            eventType={validatedEventType}
+            eventType={isDragToSchedule ? null : validatedEventType}
             onSelect={handleItemSelect}
             onCreateNew={handleCreateNew}
           />

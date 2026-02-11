@@ -153,7 +153,8 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
   }, [])
 
   // Only show search for routines and tasks (not meetings or habits)
-  const shouldShowSearch = eventType === 'routine' || eventType === 'task'
+  // null eventType means show both routines and tasks (drag-to-schedule)
+  const shouldShowSearch = eventType === 'routine' || eventType === 'task' || eventType === null
 
   // Memoize result count for better performance
   const resultCount = useMemo(
@@ -161,10 +162,16 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
     [searchResults.length]
   )
 
+  // Determine display text for eventType
+  const eventTypeDisplay = eventType === null ? 'routine or task' : eventType
+
   // Memoize result count text for UX feedback
   const resultCountText = useMemo(() => {
     if (isLoading) return ''
     if (resultCount === 0) return ''
+    if (eventType === null) {
+      return `${resultCount} item${resultCount === 1 ? '' : 's'} found`
+    }
     const plural = resultCount === 1 ? '' : 's'
     return `${resultCount} ${eventType}${plural} found`
   }, [isLoading, resultCount, eventType])
@@ -177,7 +184,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
     <div className='searchable-event-selector'>
       <div className='form-group'>
         <label htmlFor='event-search'>
-          Search existing {eventType}s or create new
+          Search existing {eventType === null ? 'routines or tasks' : `${eventType}s`} or create new
         </label>
         <div className='search-input-wrapper'>
           <Icon name='search' />
@@ -186,12 +193,12 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
             ref={searchInputRef}
             type='text'
             className='search-input'
-            placeholder={`Search for an existing ${eventType}...`}
+            placeholder={`Search for an existing ${eventTypeDisplay}...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={handleInputFocus}
             onKeyDown={handleKeyDown}
-            aria-label={`Search for existing ${eventType}`}
+            aria-label={`Search for existing ${eventTypeDisplay}`}
             aria-controls='search-results-dropdown'
             aria-busy={isLoading}
             aria-describedby='search-hint'
@@ -221,18 +228,18 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
               aria-live='polite'
             >
               <Icon name='loader' />
-              <span>Searching {eventType}s...</span>
+              <span>Searching {eventType === null ? 'routines and tasks' : `${eventType}s`}...</span>
             </div>
           ) : searchResults.length > 0 ? (
             <>
               <div className='search-dropdown-header'>
-                <span>Select an existing {eventType}</span>
+                <span>Select an existing {eventType === null ? 'routine or task' : eventType}</span>
                 {resultCountText && (
                   <span className='search-dropdown-count'>
                     {resultCountText}
                   </span>
                 )}
-                {eventType === 'task' && (
+                {(eventType === 'task' || eventType === null) && (
                   <span className='search-dropdown-hint'>
                     Important tasks shown first
                   </span>
@@ -284,7 +291,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
             <div className='search-dropdown-empty' role='status'>
               <Icon name='inbox' />
               <p>
-                No {eventType}s found
+                No {eventType === null ? 'routines or tasks' : `${eventType}s`} found
                 {searchQuery && ` matching "${searchQuery}"`}
               </p>
             </div>
@@ -295,10 +302,10 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
               type='button'
               className='btn btn-primary'
               onClick={handleCreateNew}
-              aria-label={`Create new ${eventType}`}
+              aria-label={`Create new ${eventTypeDisplay}`}
             >
               <Icon name='plus' />
-              Create new {eventType}
+              Create new {eventTypeDisplay}
             </button>
           </div>
         </div>
@@ -308,8 +315,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 }
 
 SearchableEventSelector.propTypes = {
-  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit'])
-    .isRequired,
+  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]),
   onSelect: PropTypes.func.isRequired,
   onCreateNew: PropTypes.func.isRequired
 }
