@@ -341,7 +341,6 @@ describe('timeUtils', () => {
     })
 
     test('should handle zero minutes', () => {
-      const now = getCurrentTimeHHMM()
       const result = getCurrentTimePlusMinutes(0)
       
       // Should be approximately the same time (within a minute due to test execution time)

@@ -277,16 +277,16 @@ function EventModal({
       } catch (err) {
         logger.error('Failed to instantiate routine from template:', err)
         setError('Failed to create routine from template. Please try again.')
-        // Reset to a safe state so user can retry
-        setFormData({
+        // Reset to a safe state so user can retry, preserving slot timing if available
+        setFormData((prev) => ({
           title: '',
-          day: getCurrentDateISO(),
-          startTime: '09:00',
-          endTime: '10:00',
+          day: prev.day || getCurrentDateISO(),
+          startTime: prev.startTime || getCurrentTimeHHMM(),
+          endTime: prev.endTime || getCurrentTimePlusMinutes(60),
           type: validatedEventType,
           travelTime: 0,
           preparationTime: 0
-        })
+        }))
         setShowManualForm(false)
         return
       }
