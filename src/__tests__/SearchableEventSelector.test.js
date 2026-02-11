@@ -535,4 +535,218 @@ describe('SearchableEventSelector Component', () => {
       })
     })
   })
+
+  describe('Null EventType (Drag-to-Schedule)', () => {
+    it('should render search input for null event type with "routine or task" text', () => {
+      render(
+        <SearchableEventSelector
+          eventType={null}
+          onSelect={mockOnSelect}
+          onCreateNew={mockOnCreateNew}
+        />
+      )
+      expect(
+        screen.getByPlaceholderText('Search for an existing routine or task...')
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText('Search existing routines or tasks or create new')
+      ).toBeInTheDocument()
+    })
+
+    it('should load both routines and tasks on mount when eventType is null', async () => {
+      const mixedItems = [
+        {
+          id: '1',
+          title: 'Morning Routine',
+          type: 'routine',
+          isImportant: false,
+          priority: 0
+        },
+        {
+          id: '2',
+          title: 'Urgent Task',
+          type: 'task',
+          isImportant: true,
+          priority: 1,
+          quadrantLabel: 'Urgent & Important'
+        },
+        {
+          id: '3',
+          title: 'Another Task',
+          type: 'task',
+          isImportant: false,
+          priority: 0
+        }
+      ]
+      scheduleHelpers.getAllRoutinesAndTasks.mockResolvedValue(mixedItems)
+
+      render(
+        <SearchableEventSelector
+          eventType={null}
+          onSelect={mockOnSelect}
+          onCreateNew={mockOnCreateNew}
+        />
+      )
+
+      // Wait for items to load
+      await waitFor(() => {
+        expect(scheduleHelpers.getAllRoutinesAndTasks).toHaveBeenCalledWith(null)
+      })
+
+      // Focus input to show dropdown
+      const input = screen.getByPlaceholderText(
+        'Search for an existing routine or task...'
+      )
+      fireEvent.focus(input)
+
+      // Verify both routines and tasks are displayed
+      await waitFor(() => {
+        expect(screen.getByText('Morning Routine')).toBeInTheDocument()
+        expect(screen.getByText('Urgent Task')).toBeInTheDocument()
+        expect(screen.getByText('Another Task')).toBeInTheDocument()
+      })
+    })
+
+    it('should show "Create new task" button when eventType is null', async () => {
+      render(
+        <SearchableEventSelector
+          eventType={null}
+          onSelect={mockOnSelect}
+          onCreateNew={mockOnCreateNew}
+        />
+      )
+
+      const input = screen.getByPlaceholderText(
+        'Search for an existing routine or task...'
+      )
+      fireEvent.focus(input)
+
+      await waitFor(() => {
+        const createButton = screen.getByRole('button', { name: /Create new task/i })
+        expect(createButton).toBeInTheDocument()
+      })
+    })
+
+    it('should show correct result count text for null eventType', async () => {
+      const mixedItems = [
+        {
+          id: '1',
+          title: 'Routine 1',
+          type: 'routine',
+          isImportant: false,
+          priority: 0
+        },
+        {
+          id: '2',
+          title: 'Task 1',
+          type: 'task',
+          isImportant: false,
+          priority: 0
+        }
+      ]
+      scheduleHelpers.getAllRoutinesAndTasks.mockResolvedValue(mixedItems)
+
+      render(
+        <SearchableEventSelector
+          eventType={null}
+          onSelect={mockOnSelect}
+          onCreateNew={mockOnCreateNew}
+        />
+      )
+
+      const input = screen.getByPlaceholderText(
+        'Search for an existing routine or task...'
+      )
+      fireEvent.focus(input)
+
+      await waitFor(() => {
+        expect(screen.getAllByText('2 items found').length).toBeGreaterThan(0)
+      })
+    })
+
+    it('should allow selecting routines when eventType is null', async () => {
+      const mixedItems = [
+        {
+          id: '1',
+          title: 'Morning Routine',
+          type: 'routine',
+          isImportant: false,
+          priority: 0
+        },
+        {
+          id: '2',
+          title: 'Task',
+          type: 'task',
+          isImportant: false,
+          priority: 0
+        }
+      ]
+      scheduleHelpers.getAllRoutinesAndTasks.mockResolvedValue(mixedItems)
+
+      render(
+        <SearchableEventSelector
+          eventType={null}
+          onSelect={mockOnSelect}
+          onCreateNew={mockOnCreateNew}
+        />
+      )
+
+      const input = screen.getByPlaceholderText(
+        'Search for an existing routine or task...'
+      )
+      fireEvent.focus(input)
+
+      await waitFor(() => {
+        expect(screen.getByText('Morning Routine')).toBeInTheDocument()
+      })
+
+      const routineOption = screen.getByText('Morning Routine').closest('button')
+      fireEvent.click(routineOption)
+
+      expect(mockOnSelect).toHaveBeenCalledWith(mixedItems[0])
+    })
+
+    it('should allow selecting tasks when eventType is null', async () => {
+      const mixedItems = [
+        {
+          id: '1',
+          title: 'Routine',
+          type: 'routine',
+          isImportant: false,
+          priority: 0
+        },
+        {
+          id: '2',
+          title: 'Urgent Task',
+          type: 'task',
+          isImportant: true,
+          priority: 1,
+          quadrantLabel: 'Urgent & Important'
+        }
+      ]
+      scheduleHelpers.getAllRoutinesAndTasks.mockResolvedValue(mixedItems)
+
+      render(
+        <SearchableEventSelector
+          eventType={null}
+          onSelect={mockOnSelect}
+          onCreateNew={mockOnCreateNew}
+        />
+      )
+
+      const input = screen.getByPlaceholderText(
+        'Search for an existing routine or task...'
+      )
+      fireEvent.focus(input)
+
+      await waitFor(() => {
+        expect(screen.getByText('Urgent Task')).toBeInTheDocument()
+      })
+
+      const taskOption = screen.getByText('Urgent Task').closest('button')
+      fireEvent.click(taskOption)
+
+      expect(mockOnSelect).toHaveBeenCalledWith(mixedItems[1])
+    })
+  })
 })

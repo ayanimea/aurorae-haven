@@ -42,7 +42,8 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
       setIsLoading(true)
       try {
         // Only show routines and tasks in search (meetings and habits are created from scratch)
-        const shouldSearch = eventType === 'routine' || eventType === 'task'
+        // null eventType means show both routines and tasks (drag-to-schedule)
+        const shouldSearch = eventType === 'routine' || eventType === 'task' || eventType === null
         if (shouldSearch) {
           const items = await getAllRoutinesAndTasks(eventType)
           setSearchResults(items)
@@ -302,10 +303,10 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
               type='button'
               className='btn btn-primary'
               onClick={handleCreateNew}
-              aria-label={`Create new ${eventTypeDisplay}`}
+              aria-label={`Create new ${eventType === null ? 'task' : eventTypeDisplay}`}
             >
               <Icon name='plus' />
-              Create new {eventTypeDisplay}
+              Create new {eventType === null ? 'task' : eventTypeDisplay}
             </button>
           </div>
         </div>
@@ -315,7 +316,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 }
 
 SearchableEventSelector.propTypes = {
-  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]),
+  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]).isRequired,
   onSelect: PropTypes.func.isRequired,
   onCreateNew: PropTypes.func.isRequired
 }

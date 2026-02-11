@@ -31,16 +31,21 @@ jest.mock('../utils/timeUtils', () => ({
 
 // Mock SearchableEventSelector to automatically trigger create new
 // This simulates the user clicking "Create New" button immediately
+// Store the last props passed to the mock for test verification
+let lastSearchableEventSelectorProps = null
 jest.mock('../components/Schedule/SearchableEventSelector', () => {
   const React = require('react')
-  return function SearchableEventSelector({ onCreateNew, onSelect }) {
+  return function SearchableEventSelector(props) {
+    // Store props for test assertions
+    lastSearchableEventSelectorProps = props
+    const { onCreateNew, onSelect, eventType } = props
     // Automatically call onCreateNew to show the form
     React.useEffect(() => {
       if (onCreateNew) {
         onCreateNew()
       }
     }, [onCreateNew])
-    return null
+    return <div data-testid='searchable-event-selector' data-event-type={eventType === null ? 'null' : eventType} />
   }
 })
 
@@ -388,8 +393,8 @@ describe('EventModal Component', () => {
     })
 
     test('shows SearchableEventSelector for drag-to-schedule with null type', () => {
-      // Note: The SearchableEventSelector is mocked at the file level to auto-trigger onCreateNew
-      // This test verifies the slot timing is preserved after the selector triggers the form
+      // Reset the last props captured
+      lastSearchableEventSelectorProps = null
       
       const initialData = {
         title: '',
@@ -411,6 +416,11 @@ describe('EventModal Component', () => {
         />
       )
 
+      // Verify SearchableEventSelector was rendered with null eventType
+      // The mock stores the props before calling onCreateNew
+      expect(lastSearchableEventSelectorProps).not.toBeNull()
+      expect(lastSearchableEventSelectorProps.eventType).toBeNull()
+      
       // The SearchableEventSelector mock automatically triggers onCreateNew
       // So we should see the manual form after that
       // Check that the slot timing is preserved
