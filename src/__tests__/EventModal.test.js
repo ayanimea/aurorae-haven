@@ -388,8 +388,8 @@ describe('EventModal Component', () => {
     })
 
     test('shows SearchableEventSelector for drag-to-schedule with null type', () => {
-      // Reset the mock to return the actual SearchableEventSelector component
-      jest.unmock('../components/Schedule/SearchableEventSelector')
+      // Note: The SearchableEventSelector is mocked at the file level to auto-trigger onCreateNew
+      // This test verifies the slot timing is preserved after the selector triggers the form
       
       const initialData = {
         title: '',

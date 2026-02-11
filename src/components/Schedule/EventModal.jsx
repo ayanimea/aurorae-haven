@@ -86,7 +86,9 @@ function EventModal({
     if (isOpen) {
       if (initialData) {
         const hasTitle = initialData.title && initialData.title.trim() !== ''
-        // Detect drag-to-schedule: empty title and null/undefined type from createEventFromSlot
+        // Detect drag-to-schedule: empty title and null type from createEventFromSlot
+        // Note: We check for null explicitly; undefined is kept for backward compatibility
+        // in case initialData comes from other sources without a type property
         const isDrag = !hasTitle && (initialData.type === null || initialData.type === undefined)
         
         setFormData({
