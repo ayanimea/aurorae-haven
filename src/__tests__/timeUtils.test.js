@@ -348,10 +348,10 @@ describe('timeUtils', () => {
     })
 
     test('should clamp to 23:59 when adding minutes would exceed midnight', () => {
-      // Mock Date to return 23:30
-      const mockDate = new Date()
-      mockDate.setHours(23, 30, 0, 0)
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
+      // Mock Date to return 23:30 - must return NEW instance each time
+      jest.spyOn(global, 'Date').mockImplementation(() => {
+        return new Date(2024, 0, 15, 23, 30, 0, 0) // Fixed date
+      })
       
       const result = getCurrentTimePlusMinutes(60)
       
@@ -362,10 +362,10 @@ describe('timeUtils', () => {
     })
 
     test('should handle midnight boundary correctly for smaller additions', () => {
-      // Mock Date to return 23:45
-      const mockDate = new Date()
-      mockDate.setHours(23, 45, 0, 0)
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
+      // Mock Date to return 23:45 - must return NEW instance each time
+      jest.spyOn(global, 'Date').mockImplementation(() => {
+        return new Date(2024, 0, 15, 23, 45, 0, 0) // Fixed date
+      })
       
       const result = getCurrentTimePlusMinutes(30)
       
@@ -376,10 +376,11 @@ describe('timeUtils', () => {
     })
 
     test('should not clamp when staying within same day', () => {
-      // Mock Date to return 10:00
-      const mockDate = new Date()
-      mockDate.setHours(10, 0, 0, 0)
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
+      // Mock Date to return 10:00 - must return NEW instance each time
+      jest.spyOn(global, 'Date').mockImplementation(() => {
+        const mockDate = new Date(2024, 0, 15, 10, 0, 0, 0) // Fixed date
+        return mockDate
+      })
       
       const result = getCurrentTimePlusMinutes(90)
       
@@ -390,10 +391,10 @@ describe('timeUtils', () => {
     })
 
     test('should handle negative minutes', () => {
-      // Mock Date to return 10:00
-      const mockDate = new Date()
-      mockDate.setHours(10, 0, 0, 0)
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate)
+      // Mock Date to return 10:00 - must return NEW instance each time
+      jest.spyOn(global, 'Date').mockImplementation(() => {
+        return new Date(2024, 0, 15, 10, 0, 0, 0) // Fixed date
+      })
       
       const result = getCurrentTimePlusMinutes(-30)
       
