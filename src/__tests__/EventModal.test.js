@@ -433,6 +433,15 @@ describe('EventModal Component', () => {
   })
 
   describe('delete functionality', () => {
+    let confirmSpy
+
+    afterEach(() => {
+      // Restore window.confirm after each test
+      if (confirmSpy) {
+        confirmSpy.mockRestore()
+      }
+    })
+
     test('shows delete button when editing existing event with id and onDelete prop', () => {
       const mockOnDelete = jest.fn()
       const initialData = {
@@ -514,8 +523,8 @@ describe('EventModal Component', () => {
         preparationTime: 0
       }
 
-      // Mock window.confirm to return true
-      global.confirm = jest.fn(() => true)
+      // Spy on window.confirm to return true
+      confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true)
 
       render(
         <EventModal
@@ -532,7 +541,7 @@ describe('EventModal Component', () => {
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
-        expect(global.confirm).toHaveBeenCalledWith('Are you sure you want to delete this event?')
+        expect(confirmSpy).toHaveBeenCalledWith('Are you sure you want to delete this event?')
         expect(mockOnDelete).toHaveBeenCalledWith(123)
         expect(mockOnClose).toHaveBeenCalled()
       })
@@ -551,8 +560,8 @@ describe('EventModal Component', () => {
         preparationTime: 0
       }
 
-      // Mock window.confirm to return false
-      global.confirm = jest.fn(() => false)
+      // Spy on window.confirm to return false
+      confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false)
 
       render(
         <EventModal
@@ -568,7 +577,7 @@ describe('EventModal Component', () => {
       const deleteButton = screen.getByRole('button', { name: /delete/i })
       fireEvent.click(deleteButton)
 
-      expect(global.confirm).toHaveBeenCalled()
+      expect(confirmSpy).toHaveBeenCalled()
       expect(mockOnDelete).not.toHaveBeenCalled()
       expect(mockOnClose).not.toHaveBeenCalled()
     })
@@ -586,8 +595,8 @@ describe('EventModal Component', () => {
         preparationTime: 0
       }
 
-      // Mock window.confirm to return true
-      global.confirm = jest.fn(() => true)
+      // Spy on window.confirm to return true
+      confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true)
 
       render(
         <EventModal

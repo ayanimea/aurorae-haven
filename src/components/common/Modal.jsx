@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import Icon from './Icon'
@@ -8,6 +8,20 @@ import Icon from './Icon'
  * Provides consistent modal overlay and content structure
  */
 function Modal({ isOpen, onClose, title, children, className = '', closeOnOverlayClick = true }) {
+  // Handle Escape key at document level to ensure it always works
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   return (
@@ -16,7 +30,10 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
       className='modal-overlay'
       onClick={closeOnOverlayClick ? onClose : undefined}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
+        // Keyboard interaction for clicking overlay (optional since Escape is handled at document level)
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (closeOnOverlayClick) onClose()
+        }
       }}
       role='dialog'
       aria-modal='true'

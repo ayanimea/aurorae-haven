@@ -47,7 +47,15 @@ export function getCurrentTimeHHMM() {
  * @returns {string} Time in HH:MM format
  */
 export function getCurrentTimePlusMinutes(minutesToAdd = 60) {
-  return dayjs().add(minutesToAdd, 'minute').format('HH:mm')
+  const now = dayjs()
+  const futureTime = now.add(minutesToAdd, 'minute')
+  
+  // If adding minutes pushes us into the next day, clamp to 23:59
+  if (futureTime.date() !== now.date()) {
+    return '23:59'
+  }
+  
+  return futureTime.format('HH:mm')
 }
 
 /**

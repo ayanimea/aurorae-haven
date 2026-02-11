@@ -506,7 +506,7 @@ EventModal.propTypes = {
     day: PropTypes.string,
     startTime: PropTypes.string,
     endTime: PropTypes.string,
-    type: PropTypes.string,
+    type: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]),
     travelTime: PropTypes.number,
     preparationTime: PropTypes.number
   })

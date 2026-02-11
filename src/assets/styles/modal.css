@@ -257,7 +257,7 @@
   padding: 20px;
   flex: 1;
   overflow-y: auto;
-  min-height: 400px;
+  min-height: min(400px, 100%);
 }
 
 .detail-row {
