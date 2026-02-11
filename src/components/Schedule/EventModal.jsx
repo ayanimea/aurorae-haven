@@ -253,9 +253,9 @@ function EventModal({
   }
 
   const getModalTitle = () => {
-    const action = initialData ? 'Save' : 'Schedule'
-    const typeLabel = eventType
-      ? eventType.charAt(0).toUpperCase() + eventType.slice(1)
+    const action = initialData?.id ? 'Save' : 'Schedule'
+    const typeLabel = formData.type
+      ? formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
       : 'Event'
     return `${action} ${typeLabel}`
   }

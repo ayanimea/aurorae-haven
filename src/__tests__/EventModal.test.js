@@ -40,7 +40,7 @@ jest.mock('../components/Schedule/SearchableEventSelector', () => {
   return function SearchableEventSelector(props) {
     // Store props for test assertions
     lastSearchableEventSelectorProps = props
-    const { onCreateNew, onSelect, eventType } = props
+    const { onCreateNew, eventType } = props
     // Automatically call onCreateNew to show the form
     React.useEffect(() => {
       if (onCreateNew) {
@@ -429,6 +429,184 @@ describe('EventModal Component', () => {
       expect(screen.getByLabelText(/Date/i)).toHaveValue('2025-09-16')
       expect(screen.getByLabelText(/Start Time/i)).toHaveValue('10:00')
       expect(screen.getByLabelText(/End Time/i)).toHaveValue('11:00')
+    })
+  })
+
+  describe('delete functionality', () => {
+    test('shows delete button when editing existing event with id and onDelete prop', () => {
+      const mockOnDelete = jest.fn()
+      const initialData = {
+        id: 123,
+        title: 'Existing Event',
+        day: '2025-09-16',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'task',
+        travelTime: 0,
+        preparationTime: 0
+      }
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          onDelete={mockOnDelete}
+          eventType='task'
+          initialData={initialData}
+        />
+      )
+
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument()
+    })
+
+    test('does not show delete button when creating new event', () => {
+      const mockOnDelete = jest.fn()
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          onDelete={mockOnDelete}
+          eventType='task'
+        />
+      )
+
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
+    })
+
+    test('does not show delete button when onDelete prop is not provided', () => {
+      const initialData = {
+        id: 123,
+        title: 'Existing Event',
+        day: '2025-09-16',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'task',
+        travelTime: 0,
+        preparationTime: 0
+      }
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          eventType='task'
+          initialData={initialData}
+        />
+      )
+
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
+    })
+
+    test('calls onDelete with event id when delete button is clicked and confirmed', async () => {
+      const mockOnDelete = jest.fn().mockResolvedValue(undefined)
+      const initialData = {
+        id: 123,
+        title: 'Event to Delete',
+        day: '2025-09-16',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'task',
+        travelTime: 0,
+        preparationTime: 0
+      }
+
+      // Mock window.confirm to return true
+      global.confirm = jest.fn(() => true)
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          onDelete={mockOnDelete}
+          eventType='task'
+          initialData={initialData}
+        />
+      )
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i })
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(global.confirm).toHaveBeenCalledWith('Are you sure you want to delete this event?')
+        expect(mockOnDelete).toHaveBeenCalledWith(123)
+        expect(mockOnClose).toHaveBeenCalled()
+      })
+    })
+
+    test('does not call onDelete when delete button is clicked but not confirmed', () => {
+      const mockOnDelete = jest.fn()
+      const initialData = {
+        id: 123,
+        title: 'Event to Delete',
+        day: '2025-09-16',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'task',
+        travelTime: 0,
+        preparationTime: 0
+      }
+
+      // Mock window.confirm to return false
+      global.confirm = jest.fn(() => false)
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          onDelete={mockOnDelete}
+          eventType='task'
+          initialData={initialData}
+        />
+      )
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i })
+      fireEvent.click(deleteButton)
+
+      expect(global.confirm).toHaveBeenCalled()
+      expect(mockOnDelete).not.toHaveBeenCalled()
+      expect(mockOnClose).not.toHaveBeenCalled()
+    })
+
+    test('displays error when delete fails', async () => {
+      const mockOnDelete = jest.fn().mockRejectedValue(new Error('Delete failed'))
+      const initialData = {
+        id: 123,
+        title: 'Event to Delete',
+        day: '2025-09-16',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'task',
+        travelTime: 0,
+        preparationTime: 0
+      }
+
+      // Mock window.confirm to return true
+      global.confirm = jest.fn(() => true)
+
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          onDelete={mockOnDelete}
+          eventType='task'
+          initialData={initialData}
+        />
+      )
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i })
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.getByText(/Delete failed/i)).toBeInTheDocument()
+        expect(mockOnClose).not.toHaveBeenCalled()
+      })
     })
   })
 })
