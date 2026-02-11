@@ -348,67 +348,55 @@ describe('timeUtils', () => {
     })
 
     test('should clamp to 23:59 when adding minutes would exceed midnight', () => {
-      // Save real Date constructor before mocking
-      const RealDate = global.Date
-      // Mock Date to return 23:30 - must return NEW instance each time
-      jest.spyOn(global, 'Date').mockImplementation(() => {
-        return new RealDate(2024, 0, 15, 23, 30, 0, 0) // Fixed date
-      })
+      // Use fake timers to set a specific time
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date(2024, 0, 15, 23, 30, 0, 0))
       
       const result = getCurrentTimePlusMinutes(60)
       
       // Should be clamped to 23:59, not wrap to 00:30
       expect(result).toBe('23:59')
       
-      global.Date.mockRestore()
+      jest.useRealTimers()
     })
 
     test('should handle midnight boundary correctly for smaller additions', () => {
-      // Save real Date constructor before mocking
-      const RealDate = global.Date
-      // Mock Date to return 23:45 - must return NEW instance each time
-      jest.spyOn(global, 'Date').mockImplementation(() => {
-        return new RealDate(2024, 0, 15, 23, 45, 0, 0) // Fixed date
-      })
+      // Use fake timers to set a specific time
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date(2024, 0, 15, 23, 45, 0, 0))
       
       const result = getCurrentTimePlusMinutes(30)
       
       // 23:45 + 30 = 24:15, should clamp to 23:59
       expect(result).toBe('23:59')
       
-      global.Date.mockRestore()
+      jest.useRealTimers()
     })
 
     test('should not clamp when staying within same day', () => {
-      // Save real Date constructor before mocking
-      const RealDate = global.Date
-      // Mock Date to return 10:00 - must return NEW instance each time
-      jest.spyOn(global, 'Date').mockImplementation(() => {
-        return new RealDate(2024, 0, 15, 10, 0, 0, 0) // Fixed date
-      })
+      // Use fake timers to set a specific time
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date(2024, 0, 15, 10, 0, 0, 0))
       
       const result = getCurrentTimePlusMinutes(90)
       
       // 10:00 + 90 = 11:30, should not be clamped
       expect(result).toBe('11:30')
       
-      global.Date.mockRestore()
+      jest.useRealTimers()
     })
 
     test('should handle negative minutes', () => {
-      // Save real Date constructor before mocking
-      const RealDate = global.Date
-      // Mock Date to return 10:00 - must return NEW instance each time
-      jest.spyOn(global, 'Date').mockImplementation(() => {
-        return new RealDate(2024, 0, 15, 10, 0, 0, 0) // Fixed date
-      })
+      // Use fake timers to set a specific time
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date(2024, 0, 15, 10, 0, 0, 0))
       
       const result = getCurrentTimePlusMinutes(-30)
       
       // 10:00 - 30 = 09:30
       expect(result).toBe('09:30')
       
-      global.Date.mockRestore()
+      jest.useRealTimers()
     })
 
     test('should produce parseable time strings', () => {
