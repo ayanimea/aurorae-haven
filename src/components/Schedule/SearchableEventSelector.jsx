@@ -185,7 +185,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
     <div className='searchable-event-selector'>
       <div className='form-group'>
         <label htmlFor='event-search'>
-          Search existing {eventType === null ? 'routines or tasks' : `${eventType}s`} or create new
+          Search existing {eventType === null ? 'routines or tasks' : `${eventType}s`}, or create a new one
         </label>
         <div className='search-input-wrapper'>
           <Icon name='search' />
@@ -316,9 +316,13 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 }
 
 SearchableEventSelector.propTypes = {
-  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]).isRequired,
+  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]),
   onSelect: PropTypes.func.isRequired,
   onCreateNew: PropTypes.func.isRequired
+}
+
+SearchableEventSelector.defaultProps = {
+  eventType: null
 }
 
 export default SearchableEventSelector

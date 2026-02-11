@@ -254,9 +254,19 @@ function EventModal({
 
   const getModalTitle = () => {
     const action = initialData?.id ? 'Save' : 'Schedule'
-    const typeLabel = formData.type
-      ? formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
-      : 'Event'
+    
+    // In drag-to-schedule with an undecided type (initialData.type === null)
+    // and before the manual form is shown, keep the title generic so it
+    // matches the selector offering both routines and tasks.
+    const isUndecidedDragToSchedule =
+      isDragToSchedule && initialData && initialData.type == null && !showManualForm
+
+    const typeLabel = isUndecidedDragToSchedule
+      ? 'Event'
+      : formData.type
+          ? formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
+          : 'Event'
+    
     return `${action} ${typeLabel}`
   }
 
