@@ -59,11 +59,11 @@
     cursor: default;
   }
 
-  /* Brain Dump responsive - mobile */
+  /* Brain Dump responsive - mobile - use flexible sizing */
   .brain-dump-container {
     flex-direction: column;
     height: auto;
-    min-height: 500px;
+    min-height: clamp(400px, 50vh, 600px);
   }
 
   .note-list-sidebar {
@@ -201,7 +201,8 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 0;
-  max-width: 700px;
+  /* Responsive: 500px min, 70% viewport, 900px max */
+  max-width: clamp(500px, 70vw, 900px);
   width: 100%;
   max-height: 90vh;
   overflow: hidden;
@@ -257,7 +258,8 @@
   padding: 20px;
   flex: 1;
   overflow-y: auto;
-  min-height: min(500px, 100%);
+  /* Responsive minimum height for searchable dropdown */
+  min-height: min(clamp(400px, 50vh, 600px), 100%);
 }
 
 .detail-row {

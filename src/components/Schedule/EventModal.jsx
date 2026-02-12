@@ -87,29 +87,29 @@ function EventModal({
     if (isOpen) {
       if (initialData) {
         const hasTitle = initialData.title && initialData.title.trim() !== ''
-        // Detect drag-to-schedule: empty title and null type from createEventFromSlot
-        // Note: We check for null explicitly; undefined is kept for backward compatibility
-        // in case initialData comes from other sources without a type property
-        const isDrag = !hasTitle && (initialData.type === null || initialData.type === undefined)
+        // Detect drag-to-schedule: must have NO id (new event) AND null type (from createEventFromSlot)
+        // This prevents misclassifying existing events with missing type as drag-to-schedule
+        const isDragToSchedule = !initialData.id && initialData.type === null && !hasTitle
         
         setFormData({
           title: initialData.title || '',
           day: initialData.day || getCurrentDateISO(),
           startTime: initialData.startTime || getCurrentTimeHHMM(),
           endTime: initialData.endTime || getCurrentTimePlusMinutes(60),
-          type: initialData.type || validatedEventType,
+          // Default missing type to validatedEventType for backward compatibility
+          type: initialData.type !== undefined ? initialData.type : validatedEventType,
           travelTime: initialData.travelTime || 0,
           preparationTime: initialData.preparationTime || 0
         })
         
-        setIsDragToSchedule(isDrag)
+        setIsDragToSchedule(isDragToSchedule)
         
         // Show search selector if drag-to-schedule or editing event without title
         // Show form directly if editing existing event with title
         const isSearchableType = 
           validatedEventType === EVENT_TYPES.ROUTINE ||
           validatedEventType === EVENT_TYPES.TASK
-        setShowManualForm(hasTitle || (!isDrag && !isSearchableType))
+        setShowManualForm(hasTitle || (!isDragToSchedule && !isSearchableType))
       } else {
         setFormData({
           title: '',
