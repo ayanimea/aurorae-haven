@@ -296,7 +296,7 @@ describe('Modal Component', () => {
       )
 
       const closeButton = screen.getByRole('button', { name: /close/i })
-      expect(closeButton).toHaveAttribute('aria-label', 'Close Test')
+      expect(closeButton).toHaveAttribute('aria-label', 'Close')
     })
 
     test('modal content has role="document"', () => {

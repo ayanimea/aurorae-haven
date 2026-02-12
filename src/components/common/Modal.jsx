@@ -86,8 +86,8 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
               <button
                 className='btn btn-icon'
                 onClick={onClose}
-                aria-label={`Close ${title || 'modal'}`}
-                title={`Close ${title || 'modal'}`}
+                aria-label='Close'
+                title='Close'
               >
                 <Icon name='x' />
               </button>

@@ -1249,8 +1249,8 @@ Ask for clarification or preserve the existing structure.
   }
 
   .search-dropdown-list {
-    /* Increase list height to match available space in modal */
-    max-height: calc(60vh - 140px);
+    /* Increase list height to match available space in modal; clamp to avoid negative values on very short viewports */
+    max-height: max(200px, calc(60vh - 140px));
   }
 }
 

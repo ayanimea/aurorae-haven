@@ -541,7 +541,9 @@ describe('EventModal Component', () => {
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
-        expect(confirmSpy).toHaveBeenCalledWith('Are you sure you want to delete this event?')
+        expect(confirmSpy).toHaveBeenCalledWith(
+          expect.stringContaining('This action cannot be undone.')
+        )
         expect(mockOnDelete).toHaveBeenCalledWith(123)
         expect(mockOnClose).toHaveBeenCalled()
       })

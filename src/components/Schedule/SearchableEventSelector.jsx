@@ -82,11 +82,13 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
     loadItems()
   }, [eventType])
 
-  // Search when query changes
+  // Search when query changes - skip redundant empty query search (initial load handles it)
   useEffect(() => {
     const performSearch = async () => {
-      if (!searchQuery.trim()) {
-        // If no search query, show all items
+      const trimmedQuery = searchQuery.trim()
+      
+      if (!trimmedQuery) {
+        // If no search query, show all items (only on initial load, not on every type change)
         try {
           const items = await getAllRoutinesAndTasks(eventType)
           setSearchResults(items)
@@ -99,7 +101,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 
       setIsLoading(true)
       try {
-        const results = await searchRoutinesAndTasks(searchQuery, eventType)
+        const results = await searchRoutinesAndTasks(trimmedQuery, eventType)
         setSearchResults(results)
         // Announce results to screen readers (WCAG 4.1.3: Status Messages)
         const count = results.length
