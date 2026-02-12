@@ -409,7 +409,7 @@ describe('eventAdapter', () => {
 
     it('should handle different event types with correct classNames', () => {
       const types = ['task', 'meeting', 'routine', 'habit']
-      
+
       types.forEach((type) => {
         const event = {
           id: `test-${type}`,
@@ -523,7 +523,7 @@ describe('eventAdapter', () => {
         }
       ]
 
-      const fcEvents = toFullCalendarEvents(events.filter(e => e !== null))
+      const fcEvents = toFullCalendarEvents(events.filter((e) => e !== null))
 
       expect(fcEvents).toHaveLength(3)
       expect(fcEvents[1].end.getDate()).toBe(fcEvents[1].start.getDate() + 1)

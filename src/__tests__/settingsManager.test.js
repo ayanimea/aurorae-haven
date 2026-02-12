@@ -16,12 +16,12 @@ describe('Settings Manager', () => {
   // Save original Storage methods at module level
   const originalSetItem = Storage.prototype.setItem
   const originalGetItem = Storage.prototype.getItem
-  
+
   beforeEach(() => {
     // Restore originals before each test
     Storage.prototype.setItem = originalSetItem
     Storage.prototype.getItem = originalGetItem
-    
+
     localStorage.clear()
     // Also clear any cached settings
     delete localStorage.aurorae_settings
@@ -31,7 +31,7 @@ describe('Settings Manager', () => {
     // Restore originals after each test
     Storage.prototype.setItem = originalSetItem
     Storage.prototype.getItem = originalGetItem
-    
+
     localStorage.clear()
   })
 
@@ -68,7 +68,7 @@ describe('Settings Manager', () => {
       localStorage.setItem('aurorae_settings', JSON.stringify(oldSettings))
 
       const settings = getSettings()
-      
+
       // Should have merged with defaults
       expect(settings.theme).toBe('dark') // Preserved
       expect(settings.backupEnabled).toBe(false) // Preserved
@@ -84,7 +84,7 @@ describe('Settings Manager', () => {
       localStorage.setItem('aurorae_settings', '{invalid json}}')
 
       const settings = getSettings()
-      
+
       // Should return default settings when corruption detected
       expect(settings).toBeDefined()
       expect(settings.theme).toBe('auto')
@@ -116,16 +116,19 @@ describe('Settings Manager', () => {
         theme: 'auto',
         recentFiles: ['file1.json', 'file2.json', 'file3.json']
       }
-      localStorage.setItem('aurorae_settings', JSON.stringify(settingsWithArray))
+      localStorage.setItem(
+        'aurorae_settings',
+        JSON.stringify(settingsWithArray)
+      )
 
       // Access array element with dot notation - deterministic test
       const firstFile = getSetting('recentFiles.0')
       const secondFile = getSetting('recentFiles.1')
-      
+
       // getSetting supports numeric keys in arrays via 'k in value' check
       expect(firstFile).toBe('file1.json')
       expect(secondFile).toBe('file2.json')
-      
+
       // Also verify array access works
       const files = getSetting('recentFiles')
       expect(Array.isArray(files)).toBe(true)
@@ -155,12 +158,15 @@ describe('Settings Manager', () => {
     })
 
     // Test for validation before updating
-    test.todo('should validate settings before updating - currently accepts any values')
+    test.todo(
+      'should validate settings before updating - currently accepts any values'
+    )
 
-    // Test for handling storage errors  
+    // Test for handling storage errors
     test('should handle storage errors gracefully', () => {
       // Use jest.spyOn for proper mock cleanup (fixes test isolation issue)
-      const setItemSpy = jest.spyOn(Storage.prototype, 'setItem')
+      const setItemSpy = jest
+        .spyOn(Storage.prototype, 'setItem')
         .mockImplementation((key, value) => {
           if (key === 'aurorae_settings') {
             throw new Error('QuotaExceededError')
@@ -168,18 +174,18 @@ describe('Settings Manager', () => {
         })
 
       const updates = { theme: 'dark' }
-      
+
       // updateSettings should catch the error and return settings from memory
       // Even though localStorage write fails, user gets updated settings for current session
       const result = updateSettings(updates)
-      
+
       // Should handle error gracefully - return updated settings even if write fails
       expect(result).toBeDefined()
       expect(result.theme).toBe('dark') // Update applied in memory
-      
+
       // Verify setItem was called and threw
       expect(setItemSpy).toHaveBeenCalled()
-      
+
       // Cleanup
       setItemSpy.mockRestore()
     })
@@ -204,7 +210,7 @@ describe('Settings Manager', () => {
 
       // Update deeply nested setting that doesn't exist
       const updated = updateSetting('advanced.experimental.newFeature', true)
-      
+
       expect(updated).toBeDefined()
       // Should either create the path or handle gracefully
       if (updated.advanced && updated.advanced.experimental) {
@@ -279,7 +285,9 @@ describe('Settings Manager', () => {
     test('should reject invalid format', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
       // Empty object is now valid (reset operation), so test with invalid types
-      expect(() => importSettings('"string"')).toThrow('Invalid settings format') // String is invalid
+      expect(() => importSettings('"string"')).toThrow(
+        'Invalid settings format'
+      ) // String is invalid
       expect(() => importSettings('123')).toThrow('Invalid settings format') // Number is invalid
       expect(() => importSettings('[]')).toThrow('Invalid settings format') // Array is invalid
       consoleErrorSpy.mockRestore()
@@ -295,7 +303,7 @@ describe('Settings Manager', () => {
       }
 
       const result = importSettings(oldExport)
-      
+
       // Should handle old versions gracefully
       expect(result).toBeDefined()
       if (typeof result === 'boolean') {
@@ -317,14 +325,14 @@ describe('Settings Manager', () => {
       }
 
       const result = importSettings(partialExport)
-      
+
       expect(result).toBeDefined()
       const settings = getSettings()
-      
+
       // Imported values should be present
       expect(settings.theme).toBe('dark')
       expect(settings.notifications.enabled).toBe(true)
-      
+
       // Non-imported values should remain at defaults
       expect(settings.backupEnabled).toBeDefined()
     })
@@ -354,7 +362,7 @@ describe('Settings Manager', () => {
     // Test for validating all setting types
     test('should validate all setting types', () => {
       const settings = getSettings()
-      
+
       // Validate expected types
       expect(typeof settings.theme).toBe('string')
       expect(typeof settings.backupEnabled).toBe('boolean')
@@ -363,20 +371,26 @@ describe('Settings Manager', () => {
       expect(typeof settings.accessibility).toBe('object')
       expect(typeof settings.privacy).toBe('object')
       expect(typeof settings.advanced).toBe('object')
-      
+
       // Call validation function if it exists
       const validation = validateSettings(settings)
       expect(validation).toBeDefined()
-      
+
       // Should either return true/false or validation object
       if (typeof validation === 'boolean') {
         expect(validation).toBe(true)
       } else if (typeof validation === 'object') {
-        expect(validation.valid === undefined || validation.valid === true || validation.errors === undefined).toBe(true)
+        expect(
+          validation.valid === undefined ||
+            validation.valid === true ||
+            validation.errors === undefined
+        ).toBe(true)
       }
     })
 
     // Test for validating nested settings
-    test.todo('should validate nested settings - currently only does shallow checks')
+    test.todo(
+      'should validate nested settings - currently only does shallow checks'
+    )
   })
 })

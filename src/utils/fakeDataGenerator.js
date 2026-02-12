@@ -121,15 +121,15 @@ function randomInt(min, max) {
  */
 function generateEvent(baseDate, hour, minute = 0) {
   const startTime = setMinutes(setHours(baseDate, hour), minute)
-  
+
   // Random duration: 30min, 1hr, 1.5hr, 2hr, or 3hr
   const durations = [30, 60, 90, 120, 180]
   const duration = randomItem(durations)
   const endTime = addMinutes(startTime, duration)
-  
+
   // Determine time period and get appropriate templates
   const period = getTimePeriod(hour)
-  
+
   // Random event type (weighted towards tasks and routines)
   const typeWeights = [
     EVENT_TYPES.ROUTINE,
@@ -142,14 +142,15 @@ function generateEvent(baseDate, hour, minute = 0) {
     EVENT_TYPES.HABIT
   ]
   const type = randomItem(typeWeights)
-  
+
   // Get title from templates
-  const templates = EVENT_TEMPLATES[period][type] || EVENT_TEMPLATES[period].task
+  const templates =
+    EVENT_TEMPLATES[period][type] || EVENT_TEMPLATES[period].task
   const title = randomItem(templates)
-  
+
   // Add some variation to repeated titles
   const suffix = Math.random() > 0.7 ? ` ${randomInt(1, 3)}` : ''
-  
+
   return {
     title: title + suffix,
     type,
@@ -174,21 +175,21 @@ function generateEvent(baseDate, hour, minute = 0) {
  */
 export function generateFakeEvents(baseDate = new Date(), daysCount = 14) {
   const events = []
-  
+
   // Generate events for each day
   for (let day = 0; day < daysCount; day++) {
     const currentDate = addDays(baseDate, day)
-    
+
     // Skip weekends (5-6, Saturday-Sunday) for some variety
     const dayOfWeek = currentDate.getDay()
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-    
+
     // Fewer events on weekends
     const eventCount = isWeekend ? randomInt(1, 3) : randomInt(3, 5)
-    
+
     // Generate random events throughout the day
     const usedHours = new Set()
-    
+
     for (let i = 0; i < eventCount; i++) {
       // Random hour between 7 AM and 8 PM
       let hour
@@ -197,18 +198,18 @@ export function generateFakeEvents(baseDate = new Date(), daysCount = 14) {
         hour = randomInt(7, 20)
         attempts++
       } while (usedHours.has(hour) && attempts < 20)
-      
+
       if (attempts >= 20) continue // Skip if can't find free slot
-      
+
       usedHours.add(hour)
-      
+
       // Random minute (0, 15, 30, or 45)
       const minute = randomItem([0, 15, 30, 45])
-      
+
       events.push(generateEvent(currentDate, hour, minute))
     }
   }
-  
+
   return events
 }
 

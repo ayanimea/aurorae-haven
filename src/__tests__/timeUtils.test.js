@@ -291,10 +291,10 @@ describe('timeUtils', () => {
   describe('getCurrentTimeHHMM', () => {
     test('should return current time in HH:MM format', () => {
       const result = getCurrentTimeHHMM()
-      
+
       // Validate format
       expect(result).toMatch(/^\d{2}:\d{2}$/)
-      
+
       // Parse and validate ranges
       const [hours, minutes] = result.split(':').map(Number)
       expect(hours).toBeGreaterThanOrEqual(0)
@@ -306,7 +306,7 @@ describe('timeUtils', () => {
     test('should return valid time string that can be parsed', () => {
       const result = getCurrentTimeHHMM()
       const parsed = parseTime(result)
-      
+
       expect(parsed).not.toBeNull()
       expect(parsed.hours).toBeGreaterThanOrEqual(0)
       expect(parsed.hours).toBeLessThan(24)
@@ -317,7 +317,7 @@ describe('timeUtils', () => {
     test('should have proper zero padding', () => {
       const result = getCurrentTimeHHMM()
       const [hours, minutes] = result.split(':')
-      
+
       // Both parts should be exactly 2 characters
       expect(hours).toHaveLength(2)
       expect(minutes).toHaveLength(2)
@@ -327,10 +327,10 @@ describe('timeUtils', () => {
   describe('getCurrentTimePlusMinutes', () => {
     test('should add minutes to current time', () => {
       const result = getCurrentTimePlusMinutes(30)
-      
+
       // Validate format
       expect(result).toMatch(/^\d{2}:\d{2}$/)
-      
+
       // Parse and validate ranges
       const parsed = parseTime(result)
       expect(parsed).not.toBeNull()
@@ -342,7 +342,7 @@ describe('timeUtils', () => {
 
     test('should handle zero minutes', () => {
       const result = getCurrentTimePlusMinutes(0)
-      
+
       // Should be approximately the same time (within a minute due to test execution time)
       expect(result).toMatch(/^\d{2}:\d{2}$/)
     })
@@ -350,12 +350,12 @@ describe('timeUtils', () => {
     test('should clamp to 23:59 when adding minutes would exceed midnight', () => {
       // Use fake timers to set a specific time
       jest.useFakeTimers()
-      
+
       try {
         jest.setSystemTime(new Date(2024, 0, 15, 23, 30, 0, 0))
-        
+
         const result = getCurrentTimePlusMinutes(60)
-        
+
         // Should be clamped to 23:59, not wrap to 00:30
         expect(result).toBe('23:59')
       } finally {
@@ -366,12 +366,12 @@ describe('timeUtils', () => {
     test('should handle midnight boundary correctly for smaller additions', () => {
       // Use fake timers to set a specific time
       jest.useFakeTimers()
-      
+
       try {
         jest.setSystemTime(new Date(2024, 0, 15, 23, 45, 0, 0))
-        
+
         const result = getCurrentTimePlusMinutes(30)
-        
+
         // 23:45 + 30 = 24:15, should clamp to 23:59
         expect(result).toBe('23:59')
       } finally {
@@ -382,12 +382,12 @@ describe('timeUtils', () => {
     test('should not clamp when staying within same day', () => {
       // Use fake timers to set a specific time
       jest.useFakeTimers()
-      
+
       try {
         jest.setSystemTime(new Date(2024, 0, 15, 10, 0, 0, 0))
-        
+
         const result = getCurrentTimePlusMinutes(90)
-        
+
         // 10:00 + 90 = 11:30, should not be clamped
         expect(result).toBe('11:30')
       } finally {
@@ -398,12 +398,12 @@ describe('timeUtils', () => {
     test('should handle negative minutes', () => {
       // Use fake timers to set a specific time
       jest.useFakeTimers()
-      
+
       try {
         jest.setSystemTime(new Date(2024, 0, 15, 10, 0, 0, 0))
-        
+
         const result = getCurrentTimePlusMinutes(-30)
-        
+
         // 10:00 - 30 = 09:30
         expect(result).toBe('09:30')
       } finally {
@@ -414,7 +414,7 @@ describe('timeUtils', () => {
     test('should produce parseable time strings', () => {
       const result = getCurrentTimePlusMinutes(45)
       const parsed = parseTime(result)
-      
+
       expect(parsed).not.toBeNull()
     })
   })

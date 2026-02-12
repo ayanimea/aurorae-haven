@@ -3,7 +3,11 @@ import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
 import SearchableEventSelector from './SearchableEventSelector'
-import { getCurrentDateISO, getCurrentTimeHHMM, getCurrentTimePlusMinutes } from '../../utils/timeUtils'
+import {
+  getCurrentDateISO,
+  getCurrentTimeHHMM,
+  getCurrentTimePlusMinutes
+} from '../../utils/timeUtils'
 import {
   EVENT_TYPES,
   VALID_EVENT_TYPES,
@@ -89,24 +93,28 @@ function EventModal({
         const hasTitle = initialData.title && initialData.title.trim() !== ''
         // Detect drag-to-schedule: must have NO id (new event) AND null type (from createEventFromSlot)
         // This prevents misclassifying existing events with missing type as drag-to-schedule
-        const isDragToSchedule = !initialData.id && initialData.type === null && !hasTitle
-        
+        const isDragToSchedule =
+          !initialData.id && initialData.type === null && !hasTitle
+
         setFormData({
           title: initialData.title || '',
           day: initialData.day || getCurrentDateISO(),
           startTime: initialData.startTime || getCurrentTimeHHMM(),
           endTime: initialData.endTime || getCurrentTimePlusMinutes(60),
           // Default missing type to validatedEventType for backward compatibility
-          type: initialData.type !== undefined ? initialData.type : validatedEventType,
+          type:
+            initialData.type !== undefined
+              ? initialData.type
+              : validatedEventType,
           travelTime: initialData.travelTime || 0,
           preparationTime: initialData.preparationTime || 0
         })
-        
+
         setIsDragToSchedule(isDragToSchedule)
-        
+
         // Show search selector if drag-to-schedule or editing event without title
         // Show form directly if editing existing event with title
-        const isSearchableType = 
+        const isSearchableType =
           validatedEventType === EVENT_TYPES.ROUTINE ||
           validatedEventType === EVENT_TYPES.TASK
         setShowManualForm(hasTitle || (!isDragToSchedule && !isSearchableType))
@@ -232,7 +240,8 @@ function EventModal({
       onClose()
     } catch (err) {
       // Provide more specific error messages for better user experience
-      const errorMessage = err.message || 'Failed to save event. Please try again.'
+      const errorMessage =
+        err.message || 'Failed to save event. Please try again.'
       logger.error('Save failed:', err)
       setError(errorMessage)
     } finally {
@@ -242,7 +251,7 @@ function EventModal({
 
   const handleDelete = async () => {
     if (!initialData?.id || !onDelete) return
-    
+
     const eventTypeLabel = formData.type || 'event'
     const confirmed = window.confirm(
       `Are you sure you want to delete this ${eventTypeLabel}? This action cannot be undone.`
@@ -256,7 +265,8 @@ function EventModal({
       onClose()
     } catch (err) {
       // Provide more specific error message
-      const errorMessage = err.message || `Failed to delete ${eventTypeLabel}. Please try again.`
+      const errorMessage =
+        err.message || `Failed to delete ${eventTypeLabel}. Please try again.`
       logger.error('Delete failed:', err)
       setError(errorMessage)
       setIsSubmitting(false)
@@ -265,19 +275,22 @@ function EventModal({
 
   const getModalTitle = () => {
     const action = initialData?.id ? 'Save' : 'Schedule'
-    
+
     // In drag-to-schedule with an undecided type (initialData.type === null)
     // and before the manual form is shown, keep the title generic so it
     // matches the selector offering both routines and tasks.
     const isUndecidedDragToSchedule =
-      isDragToSchedule && initialData && initialData.type == null && !showManualForm
+      isDragToSchedule &&
+      initialData &&
+      initialData.type == null &&
+      !showManualForm
 
     const typeLabel = isUndecidedDragToSchedule
       ? 'Event'
       : formData.type
-          ? formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
-          : 'Event'
-    
+        ? formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
+        : 'Event'
+
     return `${action} ${typeLabel}`
   }
 
@@ -328,15 +341,21 @@ function EventModal({
     // In drag-to-schedule mode, when user clicks "Create new", set concrete type
     // instead of keeping it null (which would fall back to 'task' in toFullCalendarEvent)
     // This ensures modal title and saved event are consistent
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      type: prev.type === null ? (validatedEventType || EVENT_TYPES.TASK) : prev.type
+      type:
+        prev.type === null ? validatedEventType || EVENT_TYPES.TASK : prev.type
     }))
     setShowManualForm(true)
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={getModalTitle()} closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={getModalTitle()}
+      closeOnOverlayClick={false}
+    >
       {/* Show search selector for routines/tasks when not in manual form mode */}
       {!showManualForm &&
         (isDragToSchedule ||

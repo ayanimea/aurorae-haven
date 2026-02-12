@@ -549,7 +549,9 @@ describe('SearchableEventSelector Component', () => {
         screen.getByPlaceholderText('Search for an existing routine or task...')
       ).toBeInTheDocument()
       expect(
-        screen.getByText('Search existing routines or tasks, or create a new one')
+        screen.getByText(
+          'Search existing routines or tasks, or create a new one'
+        )
       ).toBeInTheDocument()
     })
 
@@ -590,7 +592,9 @@ describe('SearchableEventSelector Component', () => {
 
       // Wait for items to load
       await waitFor(() => {
-        expect(scheduleHelpers.getAllRoutinesAndTasks).toHaveBeenCalledWith(null)
+        expect(scheduleHelpers.getAllRoutinesAndTasks).toHaveBeenCalledWith(
+          null
+        )
       })
 
       // Focus input to show dropdown
@@ -622,7 +626,9 @@ describe('SearchableEventSelector Component', () => {
       fireEvent.focus(input)
 
       await waitFor(() => {
-        const createButton = screen.getByRole('button', { name: /Create new task/i })
+        const createButton = screen.getByRole('button', {
+          name: /Create new task/i
+        })
         expect(createButton).toBeInTheDocument()
       })
     })
@@ -700,7 +706,9 @@ describe('SearchableEventSelector Component', () => {
         expect(screen.getByText('Morning Routine')).toBeInTheDocument()
       })
 
-      const routineOption = screen.getByText('Morning Routine').closest('button')
+      const routineOption = screen
+        .getByText('Morning Routine')
+        .closest('button')
       fireEvent.click(routineOption)
 
       expect(mockOnSelect).toHaveBeenCalledWith(mixedItems[0])

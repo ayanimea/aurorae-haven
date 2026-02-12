@@ -45,14 +45,37 @@ check_in_files() {
   fi
 }
 
+# Helper to check patterns while excluding certain files
+check_in_files_exclude() {
+  local pattern="$1"
+  local exclude_pattern="$2"
+  shift 2
+  # Get diff for all paths, then filter out excluded files from the file markers (+++/---)
+  if git diff --cached --no-color -- "$@" | awk -v exclude="$exclude_pattern" '
+    /^\+\+\+ / {
+      if ($0 !~ exclude) {
+        include_file = 1
+      } else {
+        include_file = 0
+      }
+    }
+    /^---/ { next }
+    include_file && /^\+/ && !/^\+\+\+/ { print }
+  ' | grep -E "$pattern" > /dev/null; then
+    echo "❌ Forbidden pattern in staged changes: $pattern"
+    FAIL=1
+  fi
+}
+
 # 1. Row background colouring (semantic violation)
 check "hour[-_ ]row.*background"
 check "background-color.*hour"
 
 # 2. Hardcoded pixel heights (time scaling violation) — scoped to Schedule UI files
+# Exclude dev tools (FloatingDevButtons) which intentionally use fixed pixel sizes
 if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
-  check_in_files "(^|[^-])(min-height|max-height|height)[[:space:]]*:[[:space:]]*[0-9]+px" "${SCHEDULE_PATHS[@]}"
-  check_in_files "(^|[^-])top[[:space:]]*:[[:space:]]*[0-9]+px" "${SCHEDULE_PATHS[@]}"
+  check_in_files_exclude "(^|[^-])(min-height|max-height|height)[[:space:]]*:[[:space:]]*[0-9]+px" "FloatingDevButtons" "${SCHEDULE_PATHS[@]}"
+  check_in_files_exclude "(^|[^-])top[[:space:]]*:[[:space:]]*[0-9]+px" "FloatingDevButtons" "${SCHEDULE_PATHS[@]}"
 fi
 
 # 3. Single global gradient misuse (only in schedule-related files)
@@ -113,14 +136,35 @@ if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|s
 fi
 
 # 4. Missing minute-based scaling when touching schedule UI implementation files
-if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
+# Exclude dev tools (FloatingDevButtons) which don't need minute-based scaling
+if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" | grep -v "FloatingDevButtons" > /dev/null; then
   # Only check if CSS-related changes are made in schedule files that affect vertical sizing/offsets
   # Include height, min-height, max-height, top, bottom; exclude line-height
   # Require at least one non-zero numeric value (exempt 0, auto, etc.)
-  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "(^|[^-])(min-height|max-height|height|top|bottom)[[:space:]]*:[[:space:]]*.*[1-9][0-9]*" > /dev/null; then
+  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk -v exclude="FloatingDevButtons" '
+    /^\+\+\+ / {
+      if ($0 !~ exclude) {
+        include_file = 1
+      } else {
+        include_file = 0
+      }
+    }
+    /^---/ { next }
+    include_file && /^\+/ && !/^\+\+\+/ { print }
+  ' | grep -E "(^|[^-])(min-height|max-height|height|top|bottom)[[:space:]]*:[[:space:]]*.*[1-9][0-9]*" > /dev/null; then
     # Require minute-based scaling via --minute-unit or derived variables like --hour-height
     # (direct use or via var(--minute-unit) / var(--hour-height))
-    if ! git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "(\-\-minute-unit|\-\-hour-height|var\(\-\-hour-height\)|var\(\-\-minute-unit\))" > /dev/null; then
+    if ! git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk -v exclude="FloatingDevButtons" '
+      /^\+\+\+ / {
+        if ($0 !~ exclude) {
+          include_file = 1
+        } else {
+          include_file = 0
+        }
+      }
+      /^---/ { next }
+      include_file && /^\+/ && !/^\+\+\+/ { print }
+    ' | grep -E "(\-\-minute-unit|\-\-hour-height|var\(\-\-hour-height\)|var\(\-\-minute-unit\))" > /dev/null; then
       echo "❌ Schedule UI implementation modified with vertical sizing/offsets but minute-based scaling not used"
       echo "   Required: --minute-unit, --hour-height, var(--hour-height), or var(--minute-unit)"
       FAIL=1
