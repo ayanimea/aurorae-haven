@@ -49,12 +49,12 @@ export function getCurrentTimeHHMM() {
 export function getCurrentTimePlusMinutes(minutesToAdd = 60) {
   const now = dayjs()
   const futureTime = now.add(minutesToAdd, 'minute')
-  
+
   // If adding positive minutes pushes us into the next day, clamp to 23:59
   if (minutesToAdd > 0 && !futureTime.isSame(now, 'day')) {
     return '23:59'
   }
-  
+
   return futureTime.format('HH:mm')
 }
 

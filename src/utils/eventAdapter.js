@@ -11,7 +11,7 @@
  *   are considered deprecated and candidates for eventual removal.
  */
 
-import { parseISO, parse, format, addDays } from 'date-fns'
+import { parse, format, addDays } from 'date-fns'
 import { createLogger } from './logger'
 
 const logger = createLogger('EventAdapter')
@@ -28,8 +28,9 @@ export const toRBCEvent = (event) => {
       return null
     }
 
-    // Parse the day (YYYY-MM-DD format)
-    const dayDate = parseISO(event.day)
+    // Parse the day (YYYY-MM-DD format) as local date to avoid UTC timezone shifts
+    // parseISO treats date-only strings as UTC, which can shift the day in non-UTC zones
+    const dayDate = parse(event.day, 'yyyy-MM-dd', new Date())
 
     // Validate the parsed date
     if (Number.isNaN(dayDate.getTime())) {
@@ -82,8 +83,9 @@ export const toFullCalendarEvent = (event) => {
       return null
     }
 
-    // Parse the day (YYYY-MM-DD format)
-    const dayDate = parseISO(event.day)
+    // Parse the day (YYYY-MM-DD format) as local date to avoid UTC timezone shifts
+    // parseISO treats date-only strings as UTC, which can shift the day in non-UTC zones
+    const dayDate = parse(event.day, 'yyyy-MM-dd', new Date())
 
     // Validate the parsed date
     if (Number.isNaN(dayDate.getTime())) {
@@ -103,10 +105,18 @@ export const toFullCalendarEvent = (event) => {
     if (endTime < startTime) {
       endTime = addDays(endTime, 1)
     }
-    
+
     // Whitelist valid event types to prevent CSS class injection
     // Only allow known types; fallback to 'task' for safety
-    const validTypes = ['task', 'appointment', 'reminder', 'event', 'routine', 'meeting', 'habit']
+    const validTypes = [
+      'task',
+      'appointment',
+      'reminder',
+      'event',
+      'routine',
+      'meeting',
+      'habit'
+    ]
     const eventType = validTypes.includes(event.type) ? event.type : 'task'
 
     // FullCalendar event format

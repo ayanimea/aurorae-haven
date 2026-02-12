@@ -75,7 +75,10 @@ import TimeBands from '../components/Schedule/TimeBands'
 import FloatingDevButtons from '../components/Schedule/FloatingDevButtons'
 import ErrorBoundary from '../components/ErrorBoundary'
 import EventService from '../services/EventService'
-import { toFullCalendarEvents, createEventFromSlot } from '../utils/eventAdapter'
+import {
+  toFullCalendarEvents,
+  createEventFromSlot
+} from '../utils/eventAdapter'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import { generateFakeEvents } from '../utils/fakeDataGenerator'
@@ -94,19 +97,19 @@ import '../components/ErrorBoundary.css'
 function Schedule() {
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
-  
+
   // Toolbar ref for dynamic height measurement (aligns time-of-day bands)
   const toolbarRef = useRef(null)
-  
+
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
-  
+
   // Track if fake data auto-population has already been attempted (prevents multiple calls)
   const hasAutoPopulatedRef = useRef(false)
-  
+
   // Success message timeout ref for cleanup on unmount
   const successMessageTimeoutRef = useRef(null)
-  
+
   // State management
   const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
   const [date, setDate] = useState(new Date())
@@ -170,7 +173,10 @@ function Schedule() {
   }, [])
 
   // Convert events to FullCalendar format
-  const fullCalendarEvents = useMemo(() => toFullCalendarEvents(events), [events])
+  const fullCalendarEvents = useMemo(
+    () => toFullCalendarEvents(events),
+    [events]
+  )
 
   // Load events based on current view and date
   const loadEvents = useCallback(async () => {
@@ -218,13 +224,16 @@ function Schedule() {
     const updateToolbarHeight = () => {
       if (toolbarRef.current) {
         const height = toolbarRef.current.offsetHeight
-        document.documentElement.style.setProperty('--toolbar-height', `${height}px`)
+        document.documentElement.style.setProperty(
+          '--toolbar-height',
+          `${height}px`
+        )
       }
     }
-    
+
     // Measure on mount and view changes (toolbar may resize)
     updateToolbarHeight()
-    
+
     // Re-measure on window resize (responsive toolbar height)
     window.addEventListener('resize', updateToolbarHeight)
     return () => window.removeEventListener('resize', updateToolbarHeight)
@@ -246,7 +255,12 @@ function Schedule() {
       console.log('Event context menu:', event, x, y)
       const originalEvent = event.resource?.originalEvent || event
       if (originalEvent) {
-        setEventToDelete({ ...originalEvent, isContextMenu: true, contextMenuX: x, contextMenuY: y })
+        setEventToDelete({
+          ...originalEvent,
+          isContextMenu: true,
+          contextMenuX: x,
+          contextMenuY: y
+        })
         setShowActionModal(true)
       } else {
         console.warn('Context menu triggered but no originalEvent found')
@@ -376,14 +390,14 @@ function Schedule() {
       setIsLoading(true)
       setError('')
       setSuccessMessage('')
-      
+
       console.log('Generating fake events...')
       const fakeEvents = generateFakeEvents(new Date(), 14) // 2 weeks of data
-      
+
       console.log(`Creating ${fakeEvents.length} fake events...`)
       let successCount = 0
       let errorCount = 0
-      
+
       for (const eventData of fakeEvents) {
         try {
           await EventService.createEvent(eventData)
@@ -393,19 +407,23 @@ function Schedule() {
           errorCount++
         }
       }
-      
+
       console.log(`Created ${successCount} events (${errorCount} errors)`)
       await loadEvents()
-      
+
       if (successCount === 0) {
         setError('❌ Failed to create fake events')
       } else if (errorCount > 0) {
-        setError(`⚠️ Created ${successCount} fake events, but ${errorCount} failed.`)
+        setError(
+          `⚠️ Created ${successCount} fake events, but ${errorCount} failed.`
+        )
       } else {
         if (successMessageTimeoutRef.current) {
           clearTimeout(successMessageTimeoutRef.current)
         }
-        setSuccessMessage(`✅ Created ${successCount} fake events successfully!`)
+        setSuccessMessage(
+          `✅ Created ${successCount} fake events successfully!`
+        )
         successMessageTimeoutRef.current = window.setTimeout(() => {
           setSuccessMessage('')
           successMessageTimeoutRef.current = null
@@ -422,7 +440,12 @@ function Schedule() {
   // Auto-populate fake data on first load (dev mode only)
   // Uses ref to prevent multiple auto-population attempts
   useEffect(() => {
-    if (isDevelopment() && events.length === 0 && !isLoading && !hasAutoPopulatedRef.current) {
+    if (
+      isDevelopment() &&
+      events.length === 0 &&
+      !isLoading &&
+      !hasAutoPopulatedRef.current
+    ) {
       hasAutoPopulatedRef.current = true
       console.log('[Schedule] Auto-populating fake data for development...')
       // Small delay to ensure component is fully mounted
@@ -448,9 +471,9 @@ function Schedule() {
     // Confirm before clearing
     const confirmed = window.confirm(
       '⚠️ Are you sure you want to delete ALL events?\n\n' +
-      'This action cannot be undone and will remove all events from the calendar.'
+        'This action cannot be undone and will remove all events from the calendar.'
     )
-    
+
     if (!confirmed) {
       return
     }
@@ -458,16 +481,16 @@ function Schedule() {
     try {
       setIsLoading(true)
       setError('')
-      
+
       console.log('Clearing all events...')
-      
+
       // Get all events first
       const allEvents = await EventService.getAllEvents()
       console.log(`Found ${allEvents.length} events to delete`)
-      
+
       let successCount = 0
       let errorCount = 0
-      
+
       for (const event of allEvents) {
         try {
           await EventService.deleteEvent(event.id)
@@ -477,10 +500,10 @@ function Schedule() {
           errorCount++
         }
       }
-      
+
       console.log(`Deleted ${successCount} events (${errorCount} errors)`)
       await loadEvents()
-      
+
       if (successCount > 0) {
         if (successMessageTimeoutRef.current) {
           clearTimeout(successMessageTimeoutRef.current)
@@ -560,7 +583,7 @@ function Schedule() {
   const handleEventClick = useCallback((clickInfo) => {
     const event = clickInfo.event
     const originalEvent = event.extendedProps?.originalEvent
-    
+
     if (originalEvent) {
       setSelectedEvent(originalEvent)
       setSelectedEventType(originalEvent.type || EVENT_TYPES.TASK)
@@ -588,7 +611,7 @@ function Schedule() {
   const handleEventWillUnmount = useCallback((unmountInfo) => {
     const el = unmountInfo.el
     if (!el) return
-    
+
     // Remove event listener when event is unmounted
     const handler = contextMenuHandlersRef.current.get(el)
     if (typeof handler === 'function') {
@@ -633,7 +656,9 @@ function Schedule() {
     return () => {
       // Note: WeakMap doesn't support iteration, but handlers will be garbage collected
       // when their associated DOM elements are removed
-      console.log('[Schedule] Component unmounting, context menu handlers will be garbage collected')
+      console.log(
+        '[Schedule] Component unmounting, context menu handlers will be garbage collected'
+      )
     }
   }, [])
 
@@ -644,7 +669,7 @@ function Schedule() {
           <div className='schedule-wrapper'>
             {/* Only render time-of-day bands for time grid views (not month view) */}
             {(view === 'day' || view === 'week') && <TimeBands />}
-            
+
             {/* Custom Toolbar - Wrapped for dynamic height measurement */}
             <div ref={toolbarRef}>
               <CustomToolbar
@@ -654,7 +679,7 @@ function Schedule() {
                 onNavigate={(action) => {
                   const calendarApi = calendarRef.current?.getApi()
                   if (!calendarApi) return
-                  
+
                   switch (action) {
                     case 'PREV':
                       calendarApi.prev()
@@ -680,7 +705,7 @@ function Schedule() {
             </div>
 
             {/* FullCalendar - Wrapped for aria-label support */}
-            <div role="region" aria-label="Event calendar">
+            <div role='region' aria-label='Event calendar'>
               <FullCalendar
                 ref={calendarRef}
                 plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
@@ -689,11 +714,11 @@ function Schedule() {
                 events={fullCalendarEvents}
                 slotMinTime={slotMinTime}
                 slotMaxTime={slotMaxTime}
-                slotDuration="00:15:00"
-                slotLabelInterval="01:00:00"
+                slotDuration='00:15:00'
+                slotLabelInterval='01:00:00'
                 allDaySlot={false}
                 headerToolbar={false}
-                height="auto"
+                height='auto'
                 expandRows={true}
                 slotLabelFormat={{
                   hour: use24HourFormat ? '2-digit' : 'numeric',
@@ -721,8 +746,10 @@ function Schedule() {
                       title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
                       resource: {
                         type: eventInfo.event.extendedProps?.type,
-                        originalEvent: eventInfo.event.extendedProps?.originalEvent,
-                        preparationTime: eventInfo.event.extendedProps?.preparationTime,
+                        originalEvent:
+                          eventInfo.event.extendedProps?.originalEvent,
+                        preparationTime:
+                          eventInfo.event.extendedProps?.preparationTime,
                         travelTime: eventInfo.event.extendedProps?.travelTime
                       }
                     }}
@@ -730,7 +757,6 @@ function Schedule() {
                 )}
               />
             </div>
-
           </div>
 
           {isLoading && (

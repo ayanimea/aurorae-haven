@@ -40,7 +40,7 @@ describe('Schedule Manager', () => {
       expect(events[0].duration).toBe(60)
     })
 
-    test('should validate event data', async () => {
+    test('should handle missing/invalid fields gracefully', async () => {
       // Test missing title
       const noTitle = {
         day: '2025-01-15',
@@ -49,7 +49,7 @@ describe('Schedule Manager', () => {
       }
       const id1 = await createEvent(noTitle)
       expect(id1).toBeDefined() // Should still create but with defaults
-      
+
       // Test missing times
       const noTimes = {
         title: 'Test Event',
@@ -57,7 +57,7 @@ describe('Schedule Manager', () => {
       }
       const id2 = await createEvent(noTimes)
       expect(id2).toBeDefined()
-      
+
       // Test invalid date format
       const invalidDate = {
         title: 'Test Event',
@@ -67,7 +67,7 @@ describe('Schedule Manager', () => {
       }
       const id3 = await createEvent(invalidDate)
       expect(id3).toBeDefined()
-      
+
       // Test invalid time format
       const invalidTime = {
         title: 'Test Event',
@@ -77,7 +77,7 @@ describe('Schedule Manager', () => {
       }
       const id4 = await createEvent(invalidTime)
       expect(id4).toBeDefined()
-      
+
       // Test end time before start time
       const reversed = {
         title: 'Test Event',
@@ -87,8 +87,8 @@ describe('Schedule Manager', () => {
       }
       const id5 = await createEvent(reversed)
       expect(id5).toBeDefined()
-      const event = await getEventsForDay('2025-01-15').then(events => 
-        events.find(e => e.id === id5)
+      const event = await getEventsForDay('2025-01-15').then((events) =>
+        events.find((e) => e.id === id5)
       )
       // Duration should be calculated correctly (negative or wrapped)
       expect(event).toBeDefined()
@@ -105,12 +105,8 @@ describe('Schedule Manager', () => {
 
       // Check for conflict with overlapping event
       // Function signature: checkConflicts(day, startTime, endTime, excludeEventId)
-      const conflicts = await checkConflicts(
-        '2025-01-15',
-        '09:30',
-        '10:30'
-      )
-      
+      const conflicts = await checkConflicts('2025-01-15', '09:30', '10:30')
+
       expect(conflicts).toBeDefined()
       expect(Array.isArray(conflicts)).toBe(true)
       if (conflicts.length > 0) {
@@ -118,12 +114,8 @@ describe('Schedule Manager', () => {
       }
 
       // Check for no conflict with non-overlapping event
-      const noConflicts = await checkConflicts(
-        '2025-01-15',
-        '11:00',
-        '12:00'
-      )
-      
+      const noConflicts = await checkConflicts('2025-01-15', '11:00', '12:00')
+
       expect(noConflicts).toBeDefined()
       expect(Array.isArray(noConflicts)).toBe(true)
     })
@@ -177,10 +169,10 @@ describe('Schedule Manager', () => {
 
       const events = await getEventsForDay('2025-01-15')
       expect(events).toHaveLength(3)
-      
+
       // Check if sorted by start time
       if (events.length >= 3) {
-        const times = events.map(e => e.startTime)
+        const times = events.map((e) => e.startTime)
         const sortedTimes = [...times].sort()
         expect(times).toEqual(sortedTimes)
       }
@@ -243,9 +235,9 @@ describe('Schedule Manager', () => {
       // Test inclusive boundaries
       const events = await getEventsForRange('2025-01-15', '2025-01-17')
       expect(events).toHaveLength(2)
-      expect(events.some(e => e.title === 'Start Boundary')).toBe(true)
-      expect(events.some(e => e.title === 'End Boundary')).toBe(true)
-      expect(events.some(e => e.title === 'Outside Range')).toBe(false)
+      expect(events.some((e) => e.title === 'Start Boundary')).toBe(true)
+      expect(events.some((e) => e.title === 'End Boundary')).toBe(true)
+      expect(events.some((e) => e.title === 'Outside Range')).toBe(false)
 
       // Test same-day range
       const sameDay = await getEventsForRange('2025-01-15', '2025-01-15')
@@ -307,7 +299,7 @@ describe('Schedule Manager', () => {
 
       const updated = await getEventsForDay('2025-01-15')
       const found = updated.find((e) => e.id === id)
-      
+
       // Duration should be recalculated (if implemented)
       expect(found.endTime).toBe('11:30')
       // The manager may or may not auto-recalculate - test both scenarios
@@ -367,16 +359,12 @@ describe('Schedule Manager', () => {
       })
 
       // Check for conflicts at target location
-      const conflicts = await checkConflicts(
-        '2025-01-16',
-        '14:30',
-        '15:30'
-      )
+      const conflicts = await checkConflicts('2025-01-16', '14:30', '15:30')
 
       expect(conflicts).toBeDefined()
       expect(Array.isArray(conflicts)).toBe(true)
       if (conflicts.length > 0) {
-        expect(conflicts.some(e => e.title === 'Blocking Event')).toBe(true)
+        expect(conflicts.some((e) => e.title === 'Blocking Event')).toBe(true)
       }
 
       // Move should work to non-conflicting slot
@@ -438,7 +426,7 @@ describe('Schedule Manager', () => {
       expect(conflicts).toBeDefined()
       expect(Array.isArray(conflicts)).toBe(true)
       // Should not conflict with itself
-      const selfConflict = conflicts.find(e => e.id === id)
+      const selfConflict = conflicts.find((e) => e.id === id)
       expect(selfConflict).toBeUndefined()
     })
   })
@@ -493,7 +481,7 @@ describe('Schedule Manager', () => {
       expect(Array.isArray(allSlots)).toBe(true)
 
       // Filter for minimum 60 minutes (should exclude 30 min slot)
-      const longSlots = allSlots.filter(slot => {
+      const longSlots = allSlots.filter((slot) => {
         if (slot.duration) return slot.duration >= 60
         // Calculate if no duration field
         const start = slot.startTime || slot.start
@@ -513,11 +501,11 @@ describe('Schedule Manager', () => {
     test('should respect business hours', async () => {
       // Get available slots (should respect business hours if implemented)
       const slots = await getAvailableSlots('2025-01-15')
-      
+
       expect(Array.isArray(slots)).toBe(true)
-      
+
       // Check that slots are within reasonable hours
-      slots.forEach(slot => {
+      slots.forEach((slot) => {
         const startTime = slot.startTime || slot.start
         if (startTime) {
           const [hour] = startTime.split(':').map(Number)

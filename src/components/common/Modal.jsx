@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useId } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import FocusLock from 'react-focus-lock'
@@ -10,11 +10,11 @@ import Icon from './Icon'
  * - Focus restoration: returns focus to trigger element on close
  * - Proper ARIA attributes and live regions
  * - Keyboard navigation support
- * 
+ *
  * Uses react-focus-lock for robust, battle-tested focus trapping instead of
  * custom implementation. This handles edge cases like iframes, shadow DOM,
  * disabled elements, and browser compatibility.
- * 
+ *
  * @component
  * @param {Object} props - Component properties
  * @param {boolean} props.isOpen - Whether modal is currently open
@@ -24,16 +24,28 @@ import Icon from './Icon'
  * @param {string} [props.className=''] - Additional CSS classes
  * @param {boolean} [props.closeOnOverlayClick=true] - Whether clicking overlay closes modal
  */
-function Modal({ isOpen, onClose, title, children, className = '', closeOnOverlayClick = true }) {
+function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  className = '',
+  closeOnOverlayClick = true
+}) {
+  // Generate unique IDs for aria-labelledby and aria-describedby to avoid conflicts
+  // when multiple modals are mounted
+  const titleId = useId()
+  const bodyId = useId()
+
   // Store onClose in a ref to avoid re-registering the keydown listener on every render
   const onCloseRef = useRef(onClose)
   const previousFocusRef = useRef(null)
-  
+
   // Keep ref up to date
   useEffect(() => {
     onCloseRef.current = onClose
   }, [onClose])
-  
+
   // Save current focus when modal opens for potential defensive fallback
   // FocusLock's returnFocus prop handles the actual focus restoration (WCAG 2.4.3)
   useEffect(() => {
@@ -41,7 +53,7 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
       previousFocusRef.current = document.activeElement
     }
   }, [isOpen])
-  
+
   // Handle Escape key at document level to ensure it always works
   // Respects e.defaultPrevented so inner components can consume Escape for their own UX
   useEffect(() => {
@@ -65,8 +77,8 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
       className='modal-overlay'
       role='dialog'
       aria-modal='true'
-      aria-labelledby={title ? 'modal-title' : undefined}
-      aria-describedby='modal-body'
+      aria-labelledby={title ? titleId : undefined}
+      aria-describedby={bodyId}
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
       <FocusLock returnFocus>
@@ -78,7 +90,7 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
         >
           {title && (
             <div className='modal-header'>
-              <h2 id='modal-title'>{title}</h2>
+              <h2 id={titleId}>{title}</h2>
               <button
                 className='btn btn-icon'
                 onClick={onClose}
@@ -89,7 +101,9 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
               </button>
             </div>
           )}
-          <div id='modal-body' className='modal-body'>{children}</div>
+          <div id={bodyId} className='modal-body'>
+            {children}
+          </div>
         </div>
       </FocusLock>
     </div>

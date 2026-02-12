@@ -65,7 +65,7 @@ export function getSettings() {
       showToast: false
     }
   )
-  
+
   // If tryCatch returned undefined (error occurred), return defaults
   return result || { ...DEFAULT_SETTINGS }
 }
@@ -192,18 +192,25 @@ export function importSettings(json) {
     () => {
       // Handle both JSON string and object inputs
       const parsed = typeof json === 'string' ? JSON.parse(json) : json
-      
+
       // Ensure we are working with a non-null, non-array object
-      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      if (
+        typeof parsed !== 'object' ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
         throw new Error('Invalid settings format')
       }
-      
-      const hasSettingsProp = Object.prototype.hasOwnProperty.call(parsed, 'settings')
-      
+
+      const hasSettingsProp = Object.prototype.hasOwnProperty.call(
+        parsed,
+        'settings'
+      )
+
       // Wrapped format: { settings: { ... } }
       if (hasSettingsProp) {
         const wrappedSettings = parsed.settings
-        
+
         // Validate that wrapped settings is a non-null, non-array object
         // Allow empty settings object as valid reset operation
         if (
@@ -211,13 +218,15 @@ export function importSettings(json) {
           wrappedSettings === null ||
           Array.isArray(wrappedSettings)
         ) {
-          throw new Error("Invalid settings format: 'settings' must be an object")
+          throw new Error(
+            "Invalid settings format: 'settings' must be an object"
+          )
         }
-        
+
         // Empty object = user wants to reset all settings to defaults
         return parsed
       }
-      
+
       // Direct settings object, wrap it for consistency
       // Note: Array.isArray check already done above
       return { settings: parsed }
@@ -242,7 +251,7 @@ export function importSettings(json) {
  */
 function deepMerge(target, source) {
   const result = { ...target }
-  
+
   // Dangerous keys that can cause prototype pollution
   const dangerousKeys = new Set(['__proto__', 'constructor', 'prototype'])
 
@@ -251,7 +260,7 @@ function deepMerge(target, source) {
     if (dangerousKeys.has(key)) {
       continue
     }
-    
+
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       if (
         typeof source[key] === 'object' &&

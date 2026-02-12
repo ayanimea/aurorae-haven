@@ -47,7 +47,12 @@ jest.mock('../components/Schedule/SearchableEventSelector', () => {
         onCreateNew()
       }
     }, [onCreateNew])
-    return <div data-testid='searchable-event-selector' data-event-type={eventType === null ? 'null' : eventType} />
+    return (
+      <div
+        data-testid='searchable-event-selector'
+        data-event-type={eventType === null ? 'null' : eventType}
+      />
+    )
   }
 })
 
@@ -397,7 +402,7 @@ describe('EventModal Component', () => {
     test('shows SearchableEventSelector for drag-to-schedule with null type', () => {
       // Reset the last props captured
       lastSearchableEventSelectorProps = null
-      
+
       const initialData = {
         title: '',
         day: '2025-09-16',
@@ -422,7 +427,7 @@ describe('EventModal Component', () => {
       // The mock stores the props before calling onCreateNew
       expect(lastSearchableEventSelectorProps).not.toBeNull()
       expect(lastSearchableEventSelectorProps.eventType).toBeNull()
-      
+
       // The SearchableEventSelector mock automatically triggers onCreateNew
       // So we should see the manual form after that
       // Check that the slot timing is preserved
@@ -466,7 +471,9 @@ describe('EventModal Component', () => {
         />
       )
 
-      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /delete/i })
+      ).toBeInTheDocument()
     })
 
     test('does not show delete button when creating new event', () => {
@@ -482,7 +489,9 @@ describe('EventModal Component', () => {
         />
       )
 
-      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: /delete/i })
+      ).not.toBeInTheDocument()
     })
 
     test('does not show delete button when onDelete prop is not provided', () => {
@@ -507,7 +516,9 @@ describe('EventModal Component', () => {
         />
       )
 
-      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: /delete/i })
+      ).not.toBeInTheDocument()
     })
 
     test('calls onDelete with event id when delete button is clicked and confirmed', async () => {
@@ -585,7 +596,9 @@ describe('EventModal Component', () => {
     })
 
     test('displays error when delete fails', async () => {
-      const mockOnDelete = jest.fn().mockRejectedValue(new Error('Delete failed'))
+      const mockOnDelete = jest
+        .fn()
+        .mockRejectedValue(new Error('Delete failed'))
       const initialData = {
         id: 123,
         title: 'Event to Delete',

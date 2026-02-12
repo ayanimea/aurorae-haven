@@ -48,7 +48,7 @@
    * Fallback value: 150px (for SSR or first paint before measurement)
    */
   --toolbar-height: 150px;
-  
+
   /* Time-of-day atmospheres - Canonical values from specification */
   /* Perceptible but subtle gradients for temporal orientation */
   /* Morning: warm orange/amber tones for gentle activation */

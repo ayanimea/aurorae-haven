@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  memo
+} from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import {
@@ -31,7 +38,7 @@ const SEARCH_DEBOUNCE_MS = 300
  *   onSelect={(item) => console.log('Selected:', item)}
  *   onCreateNew={() => console.log('Create new')}
  * />
- * 
+ *
  * @example
  * // Drag-to-schedule mode (show both routines and tasks)
  * <SearchableEventSelector
@@ -64,7 +71,8 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
       try {
         // Only show routines and tasks in search (meetings and habits are created from scratch)
         // null eventType means show both routines and tasks (drag-to-schedule)
-        const shouldSearch = eventType === 'routine' || eventType === 'task' || eventType === null
+        const shouldSearch =
+          eventType === 'routine' || eventType === 'task' || eventType === null
         if (shouldSearch) {
           const items = await getAllRoutinesAndTasks(eventType)
           setSearchResults(items)
@@ -86,7 +94,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
   useEffect(() => {
     const performSearch = async () => {
       const trimmedQuery = searchQuery.trim()
-      
+
       if (!trimmedQuery) {
         // If no search query, show all items (runs on mount and when eventType changes)
         try {
@@ -105,7 +113,8 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
         setSearchResults(results)
         // Announce results to screen readers (WCAG 4.1.3: Status Messages)
         const count = results.length
-        const typeText = eventType === null ? 'items' : `${eventType}${count === 1 ? '' : 's'}`
+        const typeText =
+          eventType === null ? 'items' : `${eventType}${count === 1 ? '' : 's'}`
         setLiveMessage(`${count} ${typeText} found`)
       } catch (err) {
         logger.error('Search failed:', err)
@@ -183,7 +192,8 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 
   // Only show search for routines and tasks (not meetings or habits)
   // null eventType means show both routines and tasks (drag-to-schedule)
-  const shouldShowSearch = eventType === 'routine' || eventType === 'task' || eventType === null
+  const shouldShowSearch =
+    eventType === 'routine' || eventType === 'task' || eventType === null
 
   // Memoize result count for better performance
   const resultCount = useMemo(
@@ -215,10 +225,12 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
       <div className='sr-only' aria-live='polite' aria-atomic='true'>
         {liveMessage}
       </div>
-      
+
       <div className='form-group'>
         <label htmlFor='event-search'>
-          Search existing {eventType === null ? 'routines or tasks' : `${eventType}s`}, or create a new one
+          Search existing{' '}
+          {eventType === null ? 'routines or tasks' : `${eventType}s`}, or
+          create a new one
         </label>
         <div className='search-input-wrapper'>
           <Icon name='search' />
@@ -262,12 +274,18 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
               aria-live='polite'
             >
               <Icon name='loader' />
-              <span>Searching {eventType === null ? 'routines and tasks' : `${eventType}s`}...</span>
+              <span>
+                Searching{' '}
+                {eventType === null ? 'routines and tasks' : `${eventType}s`}...
+              </span>
             </div>
           ) : searchResults.length > 0 ? (
             <>
               <div className='search-dropdown-header'>
-                <span>Select an existing {eventType === null ? 'routine or task' : eventType}</span>
+                <span>
+                  Select an existing{' '}
+                  {eventType === null ? 'routine or task' : eventType}
+                </span>
                 {resultCountText && (
                   <span className='search-dropdown-count'>
                     {resultCountText}
@@ -325,7 +343,8 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
             <div className='search-dropdown-empty' role='status'>
               <Icon name='inbox' />
               <p>
-                No {eventType === null ? 'routines or tasks' : `${eventType}s`} found
+                No {eventType === null ? 'routines or tasks' : `${eventType}s`}{' '}
+                found
                 {searchQuery && ` matching "${searchQuery}"`}
               </p>
             </div>
@@ -351,7 +370,8 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 SearchableEventSelector.propTypes = {
   // eventType can be null for drag-to-schedule mode, but must be explicitly provided
   // Using oneOf with null means the prop must be passed (not undefined), but null is valid
-  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]).isRequired,
+  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null])
+    .isRequired,
   onSelect: PropTypes.func.isRequired,
   onCreateNew: PropTypes.func.isRequired
 }

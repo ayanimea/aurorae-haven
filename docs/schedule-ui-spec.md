@@ -87,7 +87,7 @@ If the background is noticed before the events, the UI has failed.
 ### Time Ranges
 
 | Band      | Time        |
-|-----------|-------------|
+| --------- | ----------- |
 | Morning   | 07:00–12:00 |
 | Afternoon | 12:00–18:00 |
 | Evening   | 18:00–23:00 |

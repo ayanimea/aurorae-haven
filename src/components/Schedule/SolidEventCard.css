@@ -21,7 +21,7 @@
 .solid-event-card {
   position: relative;
   z-index: 3; /* Above bands (1) and grid (2) */
-  
+
   /* Fill parent container */
   height: 100%;
   width: 100%;
@@ -35,7 +35,7 @@
   border-radius: var(--event-radius);
 
   padding: var(--event-padding-v) var(--event-padding-h);
-  
+
   /* Use flexbox for content layout */
   display: flex;
   flex-direction: column;
