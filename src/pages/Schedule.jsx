@@ -273,6 +273,17 @@ function Schedule() {
     }
   }
 
+  // Shared helper to delete an event by ID
+  const deleteEventById = async (eventId) => {
+    if (!eventId) {
+      throw new Error('Event ID is required for deletion')
+    }
+
+    console.log('Deleting event:', eventId)
+    await EventService.deleteEvent(eventId)
+    await loadEvents()
+  }
+
   const handleDeleteEvent = async () => {
     if (!eventToDelete) {
       console.warn('handleDeleteEvent called with no eventToDelete')
@@ -280,13 +291,7 @@ function Schedule() {
     }
 
     try {
-      if (!eventToDelete.id) {
-        throw new Error('Event ID is required for deletion')
-      }
-
-      console.log('Deleting event:', eventToDelete.id)
-      await EventService.deleteEvent(eventToDelete.id)
-      await loadEvents()
+      await deleteEventById(eventToDelete.id)
       setShowActionModal(false)
       setEventToDelete(null)
     } catch (err) {
@@ -297,15 +302,9 @@ function Schedule() {
 
   const handleDeleteFromModal = async (eventId) => {
     try {
-      if (!eventId) {
-        throw new Error('Event ID is required for deletion')
-      }
-
-      console.log('Deleting event from modal:', eventId)
-      await EventService.deleteEvent(eventId)
-      await loadEvents()
+      await deleteEventById(eventId)
     } catch (err) {
-      console.error('[Schedule] Failed to delete event:', err)
+      console.error('[Schedule] Failed to delete event from modal:', err)
       throw err
     }
   }
