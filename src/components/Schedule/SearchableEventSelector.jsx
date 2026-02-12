@@ -11,7 +11,6 @@ const logger = createLogger('SearchableEventSelector')
 
 // Constants for better maintainability (WCAG 2.4.6: Headings and Labels)
 const SEARCH_DEBOUNCE_MS = 300
-const MIN_SEARCH_QUERY_LENGTH = 0 // Show all results by default
 
 /**
  * SearchableEventSelector - Component for searching and selecting existing routines/tasks
@@ -49,6 +48,14 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
   const [liveMessage, setLiveMessage] = useState('') // For screen reader announcements (WCAG 4.1.3)
   const searchInputRef = useRef(null)
   const dropdownRef = useRef(null)
+
+  // Focus management: Set focus to search input when component mounts
+  // Using useEffect instead of autoFocus for better accessibility control
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [])
 
   // Load all items when component mounts or eventType changes
   useEffect(() => {
@@ -230,7 +237,6 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
             autoComplete='off'
             role='combobox'
             aria-expanded={showDropdown}
-            autoFocus
           />
         </div>
         <div id='search-hint' className='search-hint' aria-live='polite'>
