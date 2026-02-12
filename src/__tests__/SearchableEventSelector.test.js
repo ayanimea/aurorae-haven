@@ -549,7 +549,7 @@ describe('SearchableEventSelector Component', () => {
         screen.getByPlaceholderText('Search for an existing routine or task...')
       ).toBeInTheDocument()
       expect(
-        screen.getByText('Search existing routines or tasks or create new')
+        screen.getByText('Search existing routines or tasks, or create a new one')
       ).toBeInTheDocument()
     })
 
