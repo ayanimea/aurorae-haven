@@ -88,7 +88,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
       const trimmedQuery = searchQuery.trim()
       
       if (!trimmedQuery) {
-        // If no search query, show all items (only on initial load, not on every type change)
+        // If no search query, show all items (runs on mount and when eventType changes)
         try {
           const items = await getAllRoutinesAndTasks(eventType)
           setSearchResults(items)

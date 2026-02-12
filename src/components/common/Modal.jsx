@@ -34,15 +34,12 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
     onCloseRef.current = onClose
   }, [onClose])
   
-  // Focus restoration: Save current focus (FocusLock's returnFocus handles actual restoration)
-  // We still save it in case FocusLock fails and we need defensive fallback (WCAG 2.4.3)
+  // Save current focus when modal opens for potential defensive fallback
+  // FocusLock's returnFocus prop handles the actual focus restoration (WCAG 2.4.3)
   useEffect(() => {
     if (isOpen) {
-      // Save currently focused element for potential fallback restoration
       previousFocusRef.current = document.activeElement
     }
-    // Note: FocusLock's returnFocus prop handles the actual focus restoration
-    // We don't manually restore to avoid double restoration
   }, [isOpen])
   
   // Handle Escape key at document level to ensure it always works
