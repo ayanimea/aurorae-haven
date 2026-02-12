@@ -171,7 +171,7 @@ describe('Settings Manager', () => {
       
       // updateSettings should catch the error and return settings from memory
       // Even though localStorage write fails, user gets updated settings for current session
-      const result = updateSettings(updates, { showToast: false })
+      const result = updateSettings(updates)
       
       // Should handle error gracefully - return updated settings even if write fails
       expect(result).toBeDefined()

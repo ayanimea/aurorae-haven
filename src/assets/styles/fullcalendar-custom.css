@@ -67,13 +67,12 @@
 }
 
 /* Time slot sizing
- * Note: Hardcoded 1.5rem provides consistent visual rhythm across viewports.
- * For 15-min slots (slotDuration), this gives 6rem per hour (4 slots × 1.5rem).
- * Future enhancement: derive from --minute-unit in schedule.css (lines 60-71)
- * for dynamic scaling based on slotDuration configuration.
+ * Derived from --minute-unit for dynamic scaling based on slotDuration.
+ * For 15-min slots, this gives calc(var(--minute-unit) * 15) per slot.
+ * This ensures proportional scaling across viewports per schedule.css (lines 60-71).
  */
 .fc-timegrid-slot {
-  height: 1.5rem;
+  height: calc(var(--minute-unit, 1.2px) * 15);
   border-color: var(--fc-border-color);
 }
 
@@ -320,8 +319,8 @@
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
-  /* Use CSS custom property for consistent toolbar height */
-  padding-top: var(--toolbar-height);
+  /* Use CSS custom property for consistent toolbar height with safe fallback */
+  padding-top: var(--toolbar-height, 150px);
 }
 
 /* Z-index hierarchy (from top to bottom):
@@ -425,17 +424,20 @@
   }
 
   .fc-timegrid-slot {
-    height: 1.25rem;
+    /* Maintain minute-based scaling on mobile (slightly reduced from default) */
+    height: calc(var(--minute-unit, 1.2px) * 12.5);
   }
 
   .schedule-bands-container {
     /* Use dynamic toolbar height provided via CSS variable (set by JavaScript) */
-    padding-top: var(--toolbar-height);
+    /* Include fallback to prevent misalignment if JS measurement fails */
+    padding-top: var(--toolbar-height, 150px);
   }
 }
 
 @media (min-height: 900px) {
   .fc-timegrid-slot {
-    height: 1.5rem;
+    /* Maintain minute-based scaling on tall viewports (same as default 15 minutes) */
+    height: calc(var(--minute-unit, 1.2px) * 15);
   }
 }

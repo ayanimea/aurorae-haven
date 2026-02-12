@@ -25,7 +25,9 @@
   /* Fill parent container */
   height: 100%;
   width: 100%;
-  min-height: 30px; /* Reduced from 40px to avoid conflicts with short (15-min) events */
+  /* Minimum height derived from minute-based scaling (15 minutes = 15 * --minute-unit) */
+  /* This ensures 15-minute events remain proportional across viewports */
+  min-height: calc(var(--minute-unit, 1.2px) * 15);
 
   /* Solid background - no glass effect */
   background: var(--event-bg);

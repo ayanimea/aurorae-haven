@@ -8,6 +8,7 @@ If implementation diverges from this file, the implementation is wrong.
 ## 0. Copilot / LLM Instruction Header (MANDATORY)
 
 This header **must be copied verbatim** at the top of:
+
 - `Schedule.tsx` / `Schedule.jsx`
 - the main schedule CSS file
 - or any file where Copilot generates Schedule-related code
@@ -85,14 +86,15 @@ If the background is noticed before the events, the UI has failed.
 
 ### Time Ranges
 
-| Band | Time |
-|-----|------|
-| Morning | 07:00–12:00 |
+| Band      | Time        |
+|-----------|-------------|
+| Morning   | 07:00–12:00 |
 | Afternoon | 12:00–18:00 |
-| Evening | 18:00–23:00 |
-| Night | 23:00–07:00 |
+| Evening   | 18:00–23:00 |
+| Night     | 23:00–07:00 |
 
 Bands:
+
 - are discrete zones
 - are perceptible without labels
 - fade softly at boundaries
@@ -136,6 +138,7 @@ All vertical positioning and sizing derives from this unit.
 ## 5. QA Rejection Rules
 
 Reject any PR that:
+
 - Applies background colors to hour rows
 - Uses a single gradient for the entire day
 - Hardcodes pixel heights for time
