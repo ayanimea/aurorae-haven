@@ -16,14 +16,23 @@ const logger = createLogger('SearchableEventSelector')
  *
  * @component
  * @param {Object} props - Component props
- * @param {('routine'|'task'|'meeting'|'habit')} props.eventType - Type of event to search/create
+ * @param {('routine'|'task'|'meeting'|'habit'|null)} props.eventType - Type of event to search/create, or null to show both routines and tasks (drag-to-schedule)
  * @param {Function} props.onSelect - Callback when an existing item is selected. Receives the selected item object.
  * @param {Function} props.onCreateNew - Callback when "create new" button is clicked
  * @returns {React.ReactElement|null} The search component or null if eventType doesn't support search
  *
  * @example
+ * // Search for specific type
  * <SearchableEventSelector
  *   eventType="task"
+ *   onSelect={(item) => console.log('Selected:', item)}
+ *   onCreateNew={() => console.log('Create new')}
+ * />
+ * 
+ * @example
+ * // Drag-to-schedule mode (show both routines and tasks)
+ * <SearchableEventSelector
+ *   eventType={null}
  *   onSelect={(item) => console.log('Selected:', item)}
  *   onCreateNew={() => console.log('Create new')}
  * />

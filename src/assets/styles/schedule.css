@@ -1244,11 +1244,13 @@ Ask for clarification or preserve the existing structure.
 
 @media (max-width: 768px) {
   .search-dropdown {
-    max-height: 300px;
+    /* Mobile needs MORE space, not less - modal takes up most of screen */
+    max-height: 60vh;
   }
 
   .search-dropdown-list {
-    max-height: 200px;
+    /* Increase list height to match available space in modal */
+    max-height: calc(60vh - 140px);
   }
 }
 

@@ -17,11 +17,12 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
   }, [onClose])
   
   // Handle Escape key at document level to ensure it always works
+  // Respects e.defaultPrevented so inner components can consume Escape for their own UX
   useEffect(() => {
     if (!isOpen) return
 
     const handleEscape = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
         onCloseRef.current()
       }
     }
@@ -33,19 +34,16 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
   if (!isOpen) return null
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
     <div
       className='modal-overlay'
       onClick={closeOnOverlayClick ? onClose : undefined}
-      role='dialog'
-      aria-modal='true'
-      aria-labelledby={title ? 'modal-title' : undefined}
     >
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div
         className={clsx('modal-content', className)}
         onClick={(e) => e.stopPropagation()}
-        role='document'
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={title ? 'modal-title' : undefined}
       >
         {title && (
           <div className='modal-header'>

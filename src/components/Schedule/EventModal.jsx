@@ -483,7 +483,7 @@ function EventModal({
               type='submit'
               className='btn btn-primary'
               disabled={isSubmitting}
-              aria-label={initialData ? 'Save' : 'Schedule'}
+              aria-label={initialData?.id ? 'Save' : 'Schedule'}
             >
               {isSubmitting ? (
                 <>
@@ -493,7 +493,7 @@ function EventModal({
               ) : (
                 <>
                   <Icon name='check' />
-                  {initialData ? 'Save' : 'Schedule'}
+                  {initialData?.id ? 'Save' : 'Schedule'}
                 </>
               )}
             </button>
