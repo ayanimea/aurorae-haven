@@ -160,7 +160,9 @@ function generateEvent(baseDate, hour, minute = 0) {
     travelTime: type === EVENT_TYPES.MEETING ? randomInt(0, 15) : 0,
     preparationTime: [EVENT_TYPES.MEETING, EVENT_TYPES.ROUTINE].includes(type)
       ? randomInt(0, 15)
-      : 0
+      : 0,
+    isTestData: true,
+    source: 'fakeDataGenerator'
   }
 }
 

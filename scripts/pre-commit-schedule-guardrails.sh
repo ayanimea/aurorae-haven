@@ -56,14 +56,16 @@ if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|s
 fi
 
 # 3. Single global gradient misuse (only in schedule-related files)
-# Note: This check may flag legitimate per-band gradients (e.g., .time-period-morning).
-# If you're adding per-band gradients, verify they follow the spec and use --no-verify if needed.
+# This check targets only global/container gradients applied to schedule wrapper/calendar.
+# Per-band gradients (e.g., .time-period-morning, .schedule-band) are allowed per spec.
+# Check for gradients on schedule container selectors: .schedule-wrapper, .fc, .calendar
 if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
-  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
-    echo "⚠️  Gradient guardrail triggered: linear-gradient detected in schedule files."
-    echo "   This pre-commit hook will block the commit when a gradient is detected."
+  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "\.(schedule-wrapper|fc|calendar)[[:space:]]*\{" -A 10 | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
+    echo "⚠️  Gradient guardrail triggered: global gradient detected on schedule container."
+    echo "   This pre-commit hook blocks gradients on .schedule-wrapper, .fc, or .calendar selectors."
     echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."
-    echo "   If this is a legitimate per-band gradient that follows the spec, re-run your commit with:"
+    echo "   If this is a legitimate per-band gradient (not on container), this is a false positive."
+    echo "   Re-run your commit with:"
     echo "     git commit --no-verify   # temporarily bypasses this guardrail"
     FAIL=1
   fi

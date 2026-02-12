@@ -67,13 +67,12 @@
 }
 
 /* Time slot sizing
- * Note: Hardcoded 1.5rem provides consistent visual rhythm across viewports.
- * For 15-min slots (slotDuration), this gives 6rem per hour (4 slots × 1.5rem).
- * Future enhancement: derive from --minute-unit in schedule.css (lines 60-71)
- * for dynamic scaling based on slotDuration configuration.
+ * Derived from --minute-unit for dynamic scaling based on slotDuration.
+ * For 15-min slots, this gives calc(var(--minute-unit) * 15) per slot.
+ * This ensures proportional scaling across viewports per schedule.css (lines 60-71).
  */
 .fc-timegrid-slot {
-  height: 1.5rem;
+  height: calc(var(--minute-unit, 1.2px) * 15);
   border-color: var(--fc-border-color);
 }
 
@@ -320,8 +319,8 @@
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
-  /* Use CSS custom property for consistent toolbar height */
-  padding-top: var(--toolbar-height);
+  /* Use CSS custom property for consistent toolbar height with safe fallback */
+  padding-top: var(--toolbar-height, 150px);
 }
 
 /* Z-index hierarchy (from top to bottom):

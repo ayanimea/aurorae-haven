@@ -104,6 +104,9 @@ function Schedule() {
   // Track if fake data auto-population has already been attempted (prevents multiple calls)
   const hasAutoPopulatedRef = useRef(false)
   
+  // Success message timeout ref for cleanup on unmount
+  const successMessageTimeoutRef = useRef(null)
+  
   // State management
   const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
   const [date, setDate] = useState(new Date())
@@ -226,6 +229,16 @@ function Schedule() {
     window.addEventListener('resize', updateToolbarHeight)
     return () => window.removeEventListener('resize', updateToolbarHeight)
   }, [view]) // Re-run when view changes as toolbar buttons may affect height
+
+  // Cleanup success message timeout on unmount to prevent setState on unmounted component
+  useEffect(() => {
+    return () => {
+      if (successMessageTimeoutRef.current) {
+        clearTimeout(successMessageTimeoutRef.current)
+        successMessageTimeoutRef.current = null
+      }
+    }
+  }, [])
 
   // Event handlers
   const handleEventContextMenu = useCallback((event, x, y) => {
@@ -389,8 +402,14 @@ function Schedule() {
       } else if (errorCount > 0) {
         setError(`⚠️ Created ${successCount} fake events, but ${errorCount} failed.`)
       } else {
+        if (successMessageTimeoutRef.current) {
+          clearTimeout(successMessageTimeoutRef.current)
+        }
         setSuccessMessage(`✅ Created ${successCount} fake events successfully!`)
-        setTimeout(() => setSuccessMessage(''), 3000)
+        successMessageTimeoutRef.current = window.setTimeout(() => {
+          setSuccessMessage('')
+          successMessageTimeoutRef.current = null
+        }, 3000)
       }
     } catch (err) {
       console.error('[Schedule] Error populating fake data:', err)
@@ -463,11 +482,23 @@ function Schedule() {
       await loadEvents()
       
       if (successCount > 0) {
+        if (successMessageTimeoutRef.current) {
+          clearTimeout(successMessageTimeoutRef.current)
+        }
         setSuccessMessage(`✅ Cleared ${successCount} events successfully!`)
-        setTimeout(() => setSuccessMessage(''), 3000)
+        successMessageTimeoutRef.current = window.setTimeout(() => {
+          setSuccessMessage('')
+          successMessageTimeoutRef.current = null
+        }, 3000)
       } else {
+        if (successMessageTimeoutRef.current) {
+          clearTimeout(successMessageTimeoutRef.current)
+        }
         setSuccessMessage('ℹ️ No events to clear')
-        setTimeout(() => setSuccessMessage(''), 3000)
+        successMessageTimeoutRef.current = window.setTimeout(() => {
+          setSuccessMessage('')
+          successMessageTimeoutRef.current = null
+        }, 3000)
       }
     } catch (err) {
       console.error('[Schedule] Error clearing all events:', err)
