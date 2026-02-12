@@ -66,6 +66,9 @@ import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
+// NOTE: FullCalendar v6+ uses CSS-in-JS and automatically injects all required styles
+// at runtime. No manual CSS imports (like '@fullcalendar/core/index.css') are needed
+// or supported. See: https://fullcalendar.io/docs/upgrading-from-v5
 import { format, startOfWeek, addDays } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
