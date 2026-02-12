@@ -60,13 +60,13 @@ This document describes the automatic save feature implementation for Aurorae Ha
 
 ## File Naming Convention
 
-```
+```text
 aurorae_save_YYYY-MM-DD_HHMMSS_<uuid>.json
 ```
 
 Example:
 
-```
+```text
 aurorae_save_2026-01-08_143025_a1b2c3d4.json
 ```
 

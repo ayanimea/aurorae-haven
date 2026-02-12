@@ -777,7 +777,7 @@ Click the **"Clean Old Files"** button to manually remove save files that exceed
 
 Auto-save files are stored with the following naming convention:
 
-```
+```text
 aurorae_save_YYYY-MM-DD_HHMMSS_<uuid>.json
 ```
 
