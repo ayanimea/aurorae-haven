@@ -245,7 +245,7 @@ describe('eventAdapter', () => {
       expect(eventData.startTime).toBe('14:00')
       expect(eventData.endTime).toBe('15:00')
       expect(eventData.title).toBe('')
-      expect(eventData.type).toBe('task')
+      expect(eventData.type).toBeNull()
       expect(eventData.travelTime).toBe(0)
       expect(eventData.preparationTime).toBe(0)
     })

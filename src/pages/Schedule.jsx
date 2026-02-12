@@ -228,12 +228,12 @@ function Schedule() {
   }, [view]) // Re-run when view changes as toolbar buttons may affect height
 
   // Event handlers
-  const handleEventContextMenu = useCallback((event) => {
+  const handleEventContextMenu = useCallback((event, x, y) => {
     try {
-      console.log('Event context menu:', event)
+      console.log('Event context menu:', event, x, y)
       const originalEvent = event.resource?.originalEvent || event
       if (originalEvent) {
-        setEventToDelete({ ...originalEvent, isContextMenu: true })
+        setEventToDelete({ ...originalEvent, isContextMenu: true, contextMenuX: x, contextMenuY: y })
         setShowActionModal(true)
       } else {
         console.warn('Context menu triggered but no originalEvent found')
@@ -258,7 +258,7 @@ function Schedule() {
 
       if (isUpdate) {
         console.log('Updating event:', eventData.id)
-        await EventService.updateEvent(eventData.id, eventData)
+        await EventService.updateEvent(eventData)
       } else {
         console.log('Creating new event')
         await EventService.createEvent(eventData)
@@ -273,6 +273,17 @@ function Schedule() {
     }
   }
 
+  // Shared helper to delete an event by ID
+  const deleteEventById = async (eventId) => {
+    if (!eventId) {
+      throw new Error('Event ID is required for deletion')
+    }
+
+    console.log('Deleting event:', eventId)
+    await EventService.deleteEvent(eventId)
+    await loadEvents()
+  }
+
   const handleDeleteEvent = async () => {
     if (!eventToDelete) {
       console.warn('handleDeleteEvent called with no eventToDelete')
@@ -280,18 +291,21 @@ function Schedule() {
     }
 
     try {
-      if (!eventToDelete.id) {
-        throw new Error('Event ID is required for deletion')
-      }
-
-      console.log('Deleting event:', eventToDelete.id)
-      await EventService.deleteEvent(eventToDelete.id)
-      await loadEvents()
+      await deleteEventById(eventToDelete.id)
       setShowActionModal(false)
       setEventToDelete(null)
     } catch (err) {
       console.error('[Schedule] Failed to delete event:', err)
       setError('Failed to delete event. Please try again.')
+    }
+  }
+
+  const handleDeleteFromModal = async (eventId) => {
+    try {
+      await deleteEventById(eventId)
+    } catch (err) {
+      console.error('[Schedule] Failed to delete event from modal:', err)
+      throw err
     }
   }
 
@@ -571,7 +585,7 @@ function Schedule() {
         e.preventDefault()
         const originalEvent = mouseEnterInfo.event.extendedProps?.originalEvent
         if (originalEvent) {
-          handleEventContextMenu(originalEvent)
+          handleEventContextMenu(originalEvent, e.clientX, e.clientY)
         }
       }
 
@@ -726,6 +740,7 @@ function Schedule() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onSave={handleSaveEvent}
+          onDelete={handleDeleteFromModal}
           eventType={selectedEventType}
           initialData={selectedEvent}
         />
