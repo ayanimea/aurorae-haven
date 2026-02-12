@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1211 KB compressed
+- ✅ Total size: 1218 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-12 16:07:10 UTC
+**Last Updated**: 2026-02-12 16:40:32 UTC
 **Source Branch**: sub-pr-410
-**Source Commit**: 3528644
+**Source Commit**: a2fa799
 
 ---
 
