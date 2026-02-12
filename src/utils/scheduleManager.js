@@ -59,6 +59,8 @@ export async function getEventsForDay(day) {
   // (these might be all-day events or data issues; showing them last keeps
   // the main schedule chronological while still displaying potentially incomplete data)
   return [...events].sort((a, b) => {
+    // Handle both missing startTime - maintain stable sort order
+    if (!a.startTime && !b.startTime) return 0
     if (!a.startTime) return 1 // No startTime → end of list
     if (!b.startTime) return -1 // No startTime → end of list
     return a.startTime.localeCompare(b.startTime)

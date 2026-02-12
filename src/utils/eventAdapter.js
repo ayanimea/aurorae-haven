@@ -13,6 +13,7 @@
 
 import { parse, format, addDays } from 'date-fns'
 import { createLogger } from './logger'
+import { VALID_EVENT_TYPES } from './scheduleConstants'
 
 const logger = createLogger('EventAdapter')
 
@@ -107,17 +108,8 @@ export const toFullCalendarEvent = (event) => {
     }
 
     // Whitelist valid event types to prevent CSS class injection
-    // Only allow known types; fallback to 'task' for safety
-    const validTypes = [
-      'task',
-      'appointment',
-      'reminder',
-      'event',
-      'routine',
-      'meeting',
-      'habit'
-    ]
-    const eventType = validTypes.includes(event.type) ? event.type : 'task'
+    // Only allow known types from VALID_EVENT_TYPES; fallback to 'task' for safety
+    const eventType = VALID_EVENT_TYPES.includes(event.type) ? event.type : 'task'
 
     // FullCalendar event format
     return {

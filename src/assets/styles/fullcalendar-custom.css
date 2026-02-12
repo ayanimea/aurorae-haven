@@ -309,19 +309,7 @@
 
 /* ===== TimeBands Integration ===== */
 
-/* Ensure TimeBands sit below the calendar grid but above decorative background */
-.schedule-bands-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-  /* Use CSS custom property for consistent toolbar height with safe fallback */
-  padding-top: var(--toolbar-height, 150px);
-}
+/* TimeBands container styling is defined in TimeBands.css */
 
 /* Z-index hierarchy (from top to bottom):
  * 1000: Modals and overlays
