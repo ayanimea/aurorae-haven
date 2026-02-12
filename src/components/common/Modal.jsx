@@ -34,16 +34,19 @@ function Modal({ isOpen, onClose, title, children, className = '', closeOnOverla
   if (!isOpen) return null
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
     <div
       className='modal-overlay'
+      role='dialog'
+      aria-modal='true'
+      aria-labelledby={title ? 'modal-title' : undefined}
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div
         className={clsx('modal-content', className)}
         onClick={(e) => e.stopPropagation()}
-        role='dialog'
-        aria-modal='true'
-        aria-labelledby={title ? 'modal-title' : undefined}
+        role='document'
       >
         {title && (
           <div className='modal-header'>
