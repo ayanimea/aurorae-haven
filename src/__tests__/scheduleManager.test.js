@@ -216,8 +216,8 @@ describe('Schedule Manager', () => {
       expect(events[2].startTime).toBeUndefined()
       expect(events[3].startTime).toBeUndefined()
       // The order of events without startTime should be stable (insertion order preserved)
-      expect(['All-day Event 1', 'All-day Event 2']).toContain(events[2].title)
-      expect(['All-day Event 1', 'All-day Event 2']).toContain(events[3].title)
+      expect(events[2].title).toBe('All-day Event 1')
+      expect(events[3].title).toBe('All-day Event 2')
     })
   })
 
