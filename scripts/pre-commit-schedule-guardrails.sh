@@ -62,16 +62,33 @@ fi
 if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
   # Use awk to properly parse CSS blocks and detect gradients in container selectors
   # This captures multi-line CSS blocks and checks if background: linear-gradient appears within them
+  # Matches selectors on both added (+) and context (space) lines to catch modifications to existing blocks
   if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk '
-    /^\+.*\.(schedule-wrapper|fc|calendar)[[:space:]]*\{/ { in_block=1; block="" }
-    in_block { block = block $0 "\n" }
-    /^\+.*\}/ && in_block { 
-      if (block ~ /background:[[:space:]]*linear-gradient/) {
+    # Enter a block when we see a relevant selector on either an added or context line
+    /^[ +].*\.(schedule-wrapper|fc|calendar)[[:space:]]*\{/ {
+      in_block = 1
+      block = ""
+      has_added_gradient = 0
+    }
+
+    # While inside a block, accumulate all diff lines for context
+    in_block {
+      block = block $0 "\n"
+      # Track only added gradient lines as violations
+      if ($0 ~ /^\+.*background:[[:space:]]*linear-gradient/) {
+        has_added_gradient = 1
+      }
+    }
+
+    # Close the block on a matching closing brace from either an added or context line
+    /^[ +].*\}/ && in_block {
+      if (has_added_gradient) {
         print block
         exit 1
       }
-      in_block=0
-      block=""
+      in_block = 0
+      block = ""
+      has_added_gradient = 0
     }
   '; then
     : # No gradient found, continue
