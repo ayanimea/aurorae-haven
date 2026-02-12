@@ -220,6 +220,7 @@ function EventModal({
     if (!validateForm()) return
 
     setIsSubmitting(true)
+    setError('') // Clear any previous errors
     try {
       // Trim title before saving to prevent whitespace issues
       const trimmedData = {
@@ -230,7 +231,10 @@ function EventModal({
       await onSave(trimmedData)
       onClose()
     } catch (err) {
-      setError(err.message || 'Failed to save event')
+      // Provide more specific error messages for better user experience
+      const errorMessage = err.message || 'Failed to save event. Please try again.'
+      logger.error('Save failed:', err)
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -239,15 +243,22 @@ function EventModal({
   const handleDelete = async () => {
     if (!initialData?.id || !onDelete) return
     
-    const confirmed = window.confirm('Are you sure you want to delete this event?')
+    const eventTypeLabel = formData.type || 'event'
+    const confirmed = window.confirm(
+      `Are you sure you want to delete this ${eventTypeLabel}? This action cannot be undone.`
+    )
     if (!confirmed) return
 
     setIsSubmitting(true)
+    setError('') // Clear any previous errors
     try {
       await onDelete(initialData.id)
       onClose()
     } catch (err) {
-      setError(err.message || 'Failed to delete event')
+      // Provide more specific error message
+      const errorMessage = err.message || `Failed to delete ${eventTypeLabel}. Please try again.`
+      logger.error('Delete failed:', err)
+      setError(errorMessage)
       setIsSubmitting(false)
     }
   }

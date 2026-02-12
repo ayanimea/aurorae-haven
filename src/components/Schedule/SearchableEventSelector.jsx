@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import {
@@ -8,6 +8,10 @@ import {
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('SearchableEventSelector')
+
+// Constants for better maintainability (WCAG 2.4.6: Headings and Labels)
+const SEARCH_DEBOUNCE_MS = 300
+const MIN_SEARCH_QUERY_LENGTH = 0 // Show all results by default
 
 /**
  * SearchableEventSelector - Component for searching and selecting existing routines/tasks
@@ -42,6 +46,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
   const [searchResults, setSearchResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [liveMessage, setLiveMessage] = useState('') // For screen reader announcements (WCAG 4.1.3)
   const searchInputRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -89,16 +94,21 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
       try {
         const results = await searchRoutinesAndTasks(searchQuery, eventType)
         setSearchResults(results)
+        // Announce results to screen readers (WCAG 4.1.3: Status Messages)
+        const count = results.length
+        const typeText = eventType === null ? 'items' : `${eventType}${count === 1 ? '' : 's'}`
+        setLiveMessage(`${count} ${typeText} found`)
       } catch (err) {
         logger.error('Search failed:', err)
         setSearchResults([])
+        setLiveMessage('Search failed. Please try again.')
       } finally {
         setIsLoading(false)
       }
     }
 
-    // Debounce search
-    const timeoutId = setTimeout(performSearch, 300)
+    // Debounce search using constant
+    const timeoutId = setTimeout(performSearch, SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(timeoutId)
   }, [searchQuery, eventType])
 
@@ -192,6 +202,11 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 
   return (
     <div className='searchable-event-selector'>
+      {/* Live region for screen reader announcements (WCAG 4.1.3) */}
+      <div className='sr-only' aria-live='polite' aria-atomic='true'>
+        {liveMessage}
+      </div>
+      
       <div className='form-group'>
         <label htmlFor='event-search'>
           Search existing {eventType === null ? 'routines or tasks' : `${eventType}s`}, or create a new one
@@ -215,6 +230,7 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
             autoComplete='off'
             role='combobox'
             aria-expanded={showDropdown}
+            autoFocus
           />
         </div>
         <div id='search-hint' className='search-hint' aria-live='polite'>
@@ -330,4 +346,5 @@ SearchableEventSelector.propTypes = {
   onCreateNew: PropTypes.func.isRequired
 }
 
-export default SearchableEventSelector
+// Memoize component to prevent unnecessary re-renders (Performance optimization)
+export default memo(SearchableEventSelector)
