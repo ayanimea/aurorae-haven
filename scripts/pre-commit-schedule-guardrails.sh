@@ -60,7 +60,22 @@ fi
 # Per-band gradients (e.g., .time-period-morning, .schedule-band) are allowed per spec.
 # Check for gradients on schedule container selectors: .schedule-wrapper, .fc, .calendar
 if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
-  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "\.(schedule-wrapper|fc|calendar)[[:space:]]*\{" -A 10 | grep -E "background:[[:space:]]*linear-gradient" > /dev/null; then
+  # Use awk to properly parse CSS blocks and detect gradients in container selectors
+  # This captures multi-line CSS blocks and checks if background: linear-gradient appears within them
+  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk '
+    /^\+.*\.(schedule-wrapper|fc|calendar)[[:space:]]*\{/ { in_block=1; block="" }
+    in_block { block = block $0 "\n" }
+    /^\+.*\}/ && in_block { 
+      if (block ~ /background:[[:space:]]*linear-gradient/) {
+        print block
+        exit 1
+      }
+      in_block=0
+      block=""
+    }
+  '; then
+    : # No gradient found, continue
+  else
     echo "⚠️  Gradient guardrail triggered: global gradient detected on schedule container."
     echo "   This pre-commit hook blocks gradients on .schedule-wrapper, .fc, or .calendar selectors."
     echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."

@@ -212,7 +212,7 @@ jobs:
           # These branches should NEVER be deployed to production URLs.
           # Security note: Dev features are baked into the build, not runtime-detected.
           # Deployment safety: Ensure branch-protection rules prevent accidental prod deploys.
-          if [[ "${{ github.ref }}" == refs/heads/copilot/* || "${{ github.ref }}" == refs/heads/hotfix-* ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/copilot/"* || "${{ github.ref }}" == "refs/heads/hotfix-"* ]]; then
             npm run build -- --mode development
           else
             npm run build
