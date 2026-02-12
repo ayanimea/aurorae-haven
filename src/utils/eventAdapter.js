@@ -109,7 +109,9 @@ export const toFullCalendarEvent = (event) => {
 
     // Whitelist valid event types to prevent CSS class injection
     // Only allow known types from VALID_EVENT_TYPES; fallback to 'task' for safety
-    const eventType = VALID_EVENT_TYPES.includes(event.type) ? event.type : 'task'
+    const eventType = VALID_EVENT_TYPES.includes(event.type)
+      ? event.type
+      : 'task'
 
     // FullCalendar event format
     return {
