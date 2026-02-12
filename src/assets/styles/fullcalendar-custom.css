@@ -309,7 +309,10 @@
 
 /* ===== TimeBands Integration ===== */
 
-/* TimeBands container styling is defined in TimeBands.css */
+/* TimeBands container base styling is defined in TimeBands.css.
+ * Responsive overrides (e.g. mobile .schedule-bands-container rules)
+ * are defined here in fullcalendar-custom.css.
+ */
 
 /* Z-index hierarchy (from top to bottom):
  * 1000: Modals and overlays
