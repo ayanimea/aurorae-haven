@@ -90,6 +90,15 @@ if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|s
       block = ""
       has_added_gradient = 0
     }
+
+    # Handle case where diff ends while still in a block (closing brace not in diff context)
+    # This catches gradients added to large CSS blocks where the closing brace is outside the diff hunk
+    END {
+      if (in_block && has_added_gradient) {
+        print block
+        exit 1
+      }
+    }
   '; then
     : # No gradient found, continue
   else
