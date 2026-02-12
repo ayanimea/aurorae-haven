@@ -325,6 +325,14 @@ function EventModal({
 
   // Handle creating new routine/task
   const handleCreateNew = () => {
+    // In drag-to-schedule mode, when user clicks "Create new", set concrete type
+    // instead of keeping it null (which would fall back to 'task' in toFullCalendarEvent)
+    if (isDragToSchedule && formData.type === null) {
+      setFormData(prev => ({
+        ...prev,
+        type: validatedEventType || EVENT_TYPES.TASK
+      }))
+    }
     setShowManualForm(true)
   }
 
