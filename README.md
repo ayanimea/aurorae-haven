@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1219 KB compressed
+- ✅ Total size: 1217 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-12 09:37:20 UTC
+**Last Updated**: 2026-02-12 11:00:33 UTC
 **Source Branch**: improve-scheduling-ui
-**Source Commit**: 3c0dc20
+**Source Commit**: 84bbdf9
 
 ---
 
