@@ -110,9 +110,6 @@ function Schedule() {
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
 
-  // Track if fake data auto-population has already been attempted (prevents multiple calls)
-  const hasAutoPopulatedRef = useRef(false)
-
   // Success message timeout ref for cleanup on unmount
   const successMessageTimeoutRef = useRef(null)
 
@@ -442,28 +439,6 @@ function Schedule() {
       setIsLoading(false)
     }
   }, [loadEvents])
-
-  // Auto-populate fake data on first load (dev mode only)
-  // Uses ref to prevent multiple auto-population attempts
-  useEffect(() => {
-    if (
-      isDevelopment() &&
-      events.length === 0 &&
-      !isLoading &&
-      !hasAutoPopulatedRef.current
-    ) {
-      hasAutoPopulatedRef.current = true
-      console.log('[Schedule] Auto-populating fake data for development...')
-      // Small delay to ensure component is fully mounted
-      const timer = setTimeout(() => {
-        handlePopulateFakeData()
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-    // Deliberately omit handlePopulateFakeData from deps - adding it would cause re-runs
-    // The ref tracking (hasAutoPopulatedRef) ensures single execution, making this safe
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events.length, isLoading])
 
   /**
    * Development-only: Clear all events from calendar
