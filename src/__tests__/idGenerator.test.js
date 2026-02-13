@@ -214,7 +214,11 @@ describe('idGenerator', () => {
       expect(result.updatedAt).toBeDefined()
     })
 
-    test('generates numeric timestamp ID without prefix', () => {
+    test('generates numeric timestamp ID without prefix', async () => {
+      // Add delay to ensure clean timestamp for test isolation
+      // This prevents contamination from previous tests' module-level counters
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
       const entity = { name: 'Test' }
       const result = normalizeEntity(entity)
 
