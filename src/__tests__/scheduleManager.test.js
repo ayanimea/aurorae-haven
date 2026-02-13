@@ -180,24 +180,24 @@ describe('Schedule Manager', () => {
 
     test('should sort events with missing startTime to the end', async () => {
       // Create events with and without startTime
-      const timedEvent1Id = await createEvent({
+      await createEvent({
         title: 'Timed Event 1',
         day: '2025-01-15',
         startTime: '09:00',
         endTime: '10:00'
       })
-      const allDayEvent1Id = await createEvent({
+      await createEvent({
         title: 'All-day Event 1',
         day: '2025-01-15'
         // No startTime/endTime
       })
-      const timedEvent2Id = await createEvent({
+      await createEvent({
         title: 'Timed Event 2',
         day: '2025-01-15',
         startTime: '14:00',
         endTime: '15:00'
       })
-      const allDayEvent2Id = await createEvent({
+      await createEvent({
         title: 'All-day Event 2',
         day: '2025-01-15'
         // No startTime/endTime
