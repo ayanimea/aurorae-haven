@@ -66,6 +66,12 @@ import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
+// NOTE: FullCalendar v6 still ships CSS that is typically imported explicitly
+// (for example: '@fullcalendar/core/index.css', '@fullcalendar/timegrid/index.css').
+// In this project we intentionally do NOT import FullCalendar's default CSS here.
+// Instead, '../assets/styles/fullcalendar-custom.css' provides the required styles,
+// redefining or replacing the stock styles to match our spec. See:
+// https://fullcalendar.io/docs/upgrading-from-v5 for background on v6 CSS entrypoints.
 import { format, startOfWeek, addDays } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'

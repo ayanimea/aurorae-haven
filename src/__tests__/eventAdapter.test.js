@@ -408,7 +408,7 @@ describe('eventAdapter', () => {
     })
 
     it('should handle different event types with correct classNames', () => {
-      const types = ['task', 'meeting', 'routine', 'habit']
+      const types = ['task', 'meeting', 'routine', 'habit', 'break', 'event']
 
       types.forEach((type) => {
         const event = {
@@ -422,7 +422,23 @@ describe('eventAdapter', () => {
 
         const fcEvent = toFullCalendarEvent(event)
         expect(fcEvent.classNames).toEqual([`event-${type}`])
+        expect(fcEvent.extendedProps.type).toBe(type)
       })
+    })
+
+    it('should fallback to task for unknown event types', () => {
+      const event = {
+        id: 'test-unknown',
+        title: 'Test Unknown',
+        day: '2026-02-03',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'unknown-type'
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+      expect(fcEvent.classNames).toEqual(['event-task'])
+      expect(fcEvent.extendedProps.type).toBe('task')
     })
   })
 

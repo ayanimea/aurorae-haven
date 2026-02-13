@@ -10,7 +10,10 @@ import { normalizeEntity, updateMetadata } from './idGenerator'
 import { createLogger } from './logger'
 import { createEvent } from './scheduleManager'
 import { sanitizeText } from './sanitization'
-import { DEFAULT_EVENT_DURATION_MINUTES } from './scheduleConstants'
+import {
+  DEFAULT_EVENT_DURATION_MINUTES,
+  EVENT_TYPES
+} from './scheduleConstants'
 import ical from 'node-ical'
 
 const logger = createLogger('CalendarSubscription')
@@ -228,7 +231,7 @@ function convertICSEventToScheduleEvent(icsEvent, calendarId) {
     endTime,
     description: icsEvent.description || '',
     location: icsEvent.location || '',
-    type: 'event',
+    type: EVENT_TYPES.EVENT,
     isExternal: true,
     externalCalendarId: calendarId,
     externalEventId: icsEvent.uid || `${calendarId}-${Date.now()}`

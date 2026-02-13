@@ -177,6 +177,48 @@ describe('Schedule Manager', () => {
         expect(times).toEqual(sortedTimes)
       }
     })
+
+    test('should sort events with missing startTime to the end', async () => {
+      // Create events with and without startTime
+      await createEvent({
+        title: 'Timed Event 1',
+        day: '2025-01-15',
+        startTime: '09:00',
+        endTime: '10:00'
+      })
+      await createEvent({
+        title: 'All-day Event 1',
+        day: '2025-01-15'
+        // No startTime/endTime
+      })
+      await createEvent({
+        title: 'Timed Event 2',
+        day: '2025-01-15',
+        startTime: '14:00',
+        endTime: '15:00'
+      })
+      await createEvent({
+        title: 'All-day Event 2',
+        day: '2025-01-15'
+        // No startTime/endTime
+      })
+
+      const events = await getEventsForDay('2025-01-15')
+      expect(events).toHaveLength(4)
+
+      // Events with startTime should come first, sorted by time
+      expect(events[0].title).toBe('Timed Event 1')
+      expect(events[0].startTime).toBe('09:00')
+      expect(events[1].title).toBe('Timed Event 2')
+      expect(events[1].startTime).toBe('14:00')
+
+      // Events without startTime should be at the end
+      expect(events[2].startTime).toBeUndefined()
+      expect(events[3].startTime).toBeUndefined()
+      // Both all-day events should be present at the end (order may vary)
+      const allDayTitles = [events[2].title, events[3].title].sort()
+      expect(allDayTitles).toEqual(['All-day Event 1', 'All-day Event 2'])
+    })
   })
 
   describe('getEventsForRange', () => {

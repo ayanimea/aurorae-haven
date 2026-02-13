@@ -10,7 +10,8 @@ export const EVENT_TYPES = {
   TASK: 'task',
   MEETING: 'meeting',
   HABIT: 'habit',
-  BREAK: 'break'
+  BREAK: 'break',
+  EVENT: 'event' // Used by external calendar imports (calendarSubscriptionManager)
 }
 
 // Array of valid event types for validation
