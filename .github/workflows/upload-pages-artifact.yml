@@ -204,19 +204,10 @@ jobs:
 
       - name: Build React PWA with Vite
         run: |
-          # Branch-conditional dev mode: copilot/ and hotfix branches build with dev features
-          # IMPORTANT: This enables dev-only controls (fake data button) in the build artifacts.
-          # __DEV__ is derived from Vite's mode parameter (see vite.config.js).
-          # Pass --mode development explicitly to enable __DEV__ in the build.
-          # Dev builds from these branches are intended for testing on GitHub Pages only.
-          # These branches should NEVER be deployed to production URLs.
-          # Security note: Dev features are baked into the build, not runtime-detected.
-          # Deployment safety: Ensure branch-protection rules prevent accidental prod deploys.
-          if [[ "${{ github.ref }}" == "refs/heads/copilot/"* || "${{ github.ref }}" == "refs/heads/hotfix-"* ]]; then
-            npm run build -- --mode development
-          else
-            npm run build
-          fi
+          # Always perform a production build in CI to avoid shipping dev-only features.
+          # If dev-mode builds are needed for experimentation, run them locally or in a
+          # separate, non-deploying workflow to ensure they never reach production URLs.
+          npm run build
         env:
           CI: true
           VITE_BASE_URL: '/aurorae-haven/'
