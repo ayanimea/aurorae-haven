@@ -28,30 +28,40 @@ SCHEDULE_PATHS=(
 )
 
 # Helper to check patterns in added lines only (not removed lines or diff headers)
+# Uses || true to prevent set -e from exiting when grep finds no matches
 check() {
-  if git diff --cached --no-color | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "$1" > /dev/null; then
-    echo "❌ Forbidden pattern in staged changes: $1"
-    FAIL=1
+  if git diff --cached --no-color | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "$1" > /dev/null || true; then
+    # Check if grep actually found something (exit code 0 from grep)
+    if [ "${PIPESTATUS[2]}" -eq 0 ]; then
+      echo "❌ Forbidden pattern in staged changes: $1"
+      FAIL=1
+    fi
   fi
 }
 
 # Helper to check patterns in added lines of specific files only
+# Uses || true to prevent set -e from exiting when grep finds no matches
 check_in_files() {
   local pattern="$1"
   shift
-  if git diff --cached --no-color -- "$@" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "$pattern" > /dev/null; then
-    echo "❌ Forbidden pattern in staged changes: $pattern"
-    FAIL=1
+  if git diff --cached --no-color -- "$@" | grep -E "^\+" | grep -v "^\+\+\+[[:space:]]" | grep -E "$pattern" > /dev/null || true; then
+    # Check if grep actually found something (exit code 0 from grep)
+    if [ "${PIPESTATUS[2]}" -eq 0 ]; then
+      echo "❌ Forbidden pattern in staged changes: $pattern"
+      FAIL=1
+    fi
   fi
 }
 
 # Helper to check patterns while excluding certain files
+# Uses || true to prevent set -e from exiting when grep finds no matches
 check_in_files_exclude() {
   local pattern="$1"
   local exclude_pattern="$2"
   shift 2
   # Get diff for all paths, then filter out excluded files from the file markers (+++/---)
-  if git diff --cached --no-color -- "$@" | awk -v exclude="$exclude_pattern" '
+  local awk_output
+  awk_output=$(git diff --cached --no-color -- "$@" | awk -v exclude="$exclude_pattern" '
     /^\+\+\+ / {
       if ($0 !~ exclude) {
         include_file = 1
@@ -61,9 +71,13 @@ check_in_files_exclude() {
     }
     /^---/ { next }
     include_file && /^\+/ && !/^\+\+\+/ { print }
-  ' | grep -E "$pattern" > /dev/null; then
-    echo "❌ Forbidden pattern in staged changes: $pattern"
-    FAIL=1
+  ')
+  if [ -n "$awk_output" ] && echo "$awk_output" | grep -E "$pattern" > /dev/null || true; then
+    # Check if grep actually found something (exit code 0 from grep)
+    if [ "${PIPESTATUS[0]}" -eq 0 ]; then
+      echo "❌ Forbidden pattern in staged changes: $pattern"
+      FAIL=1
+    fi
   fi
 }
 
@@ -73,88 +87,85 @@ check "background-color.*hour"
 
 # 2. Hardcoded pixel heights (time scaling violation) — scoped to Schedule UI files
 # Exclude dev tools (FloatingDevButtons) which intentionally use fixed pixel sizes
-if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
-  check_in_files_exclude "(^|[^-])(min-height|max-height|height)[[:space:]]*:[[:space:]]*[0-9]+px" "FloatingDevButtons" "${SCHEDULE_PATHS[@]}"
-  check_in_files_exclude "(^|[^-])top[[:space:]]*:[[:space:]]*[0-9]+px" "FloatingDevButtons" "${SCHEDULE_PATHS[@]}"
+if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null || true; then
+  [ "${PIPESTATUS[0]}" -eq 0 ] && {
+    # Use word boundaries to match CSS properties precisely and avoid false positives
+    # Pattern matches: height:, min-height:, max-height: followed by pixel values
+    # Avoids matching CSS custom properties (--height, --min-height, etc.)
+    check_in_files_exclude "(^|[^[:alnum:]-])(min-height|max-height|height)[[:space:]]*:[[:space:]]*[0-9]+px" "FloatingDevButtons" "${SCHEDULE_PATHS[@]}"
+    check_in_files_exclude "(^|[^[:alnum:]-])top[[:space:]]*:[[:space:]]*[0-9]+px" "FloatingDevButtons" "${SCHEDULE_PATHS[@]}"
+  }
 fi
 
 # 3. Single global gradient misuse (only in schedule-related files)
 # This check targets only global/container gradients applied to schedule wrapper/calendar.
 # Per-band gradients (e.g., .time-period-morning, .schedule-band) are allowed per spec.
 # Check for gradients on schedule container selectors: .schedule-wrapper, .fc, .calendar
-if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null; then
-  # Use awk to properly parse CSS blocks and detect gradients in container selectors
-  # This captures multi-line CSS blocks and checks if background: linear-gradient appears within them
-  # Matches selectors on both added (+) and context (space) lines to catch modifications to existing blocks
-  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk '
-    # Enter a block when we see a relevant selector on either an added or context line
-    /^[ +].*\.(schedule-wrapper|fc|calendar)[[:space:]]*\{/ {
-      in_block = 1
-      block = ""
-      has_added_gradient = 0
-    }
-
-    # While inside a block, accumulate all diff lines for context
-    in_block {
-      block = block $0 "\n"
-      # Track only added gradient lines as violations
-      if ($0 ~ /^\+.*background:[[:space:]]*linear-gradient/) {
-        has_added_gradient = 1
+if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null || true; then
+  [ "${PIPESTATUS[0]}" -eq 0 ] && {
+    # Use awk to properly parse CSS blocks and detect gradients in container selectors
+    # This captures multi-line CSS blocks and checks if background: linear-gradient appears within them
+    # Matches selectors on both added (+) and context (space) lines to catch modifications to existing blocks
+    if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk '
+      # Enter a block when we see a relevant selector on either an added or context line
+      /^[ +].*\.(schedule-wrapper|fc|calendar)[[:space:]]*\{/ {
+        in_block = 1
+        block = ""
+        has_added_gradient = 0
       }
-    }
 
-    # Close the block on a matching closing brace from either an added or context line
-    /^[ +].*\}/ && in_block {
-      if (has_added_gradient) {
-        print block
-        exit 1
+      # While inside a block, accumulate all diff lines for context
+      in_block {
+        block = block $0 "\n"
+        # Track only added gradient lines as violations
+        if ($0 ~ /^\+.*background:[[:space:]]*linear-gradient/) {
+          has_added_gradient = 1
+        }
       }
-      in_block = 0
-      block = ""
-      has_added_gradient = 0
-    }
 
-    # Handle case where diff ends while still in a block (closing brace not in diff context)
-    # This catches gradients added to large CSS blocks where the closing brace is outside the diff hunk
-    END {
-      if (in_block && has_added_gradient) {
-        print block
-        exit 1
+      # Close the block on a matching closing brace from either an added or context line
+      /^[ +].*\}/ && in_block {
+        if (has_added_gradient) {
+          print block
+          exit 1
+        }
+        in_block = 0
+        block = ""
+        has_added_gradient = 0
       }
-    }
-  '; then
-    : # No gradient found, continue
-  else
-    echo "⚠️  Gradient guardrail triggered: global gradient detected on schedule container."
-    echo "   This pre-commit hook blocks gradients on .schedule-wrapper, .fc, or .calendar selectors."
-    echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."
-    echo "   If this is a legitimate per-band gradient (not on container), this is a false positive."
-    echo "   Re-run your commit with:"
-    echo "     git commit --no-verify   # temporarily bypasses this guardrail"
-    FAIL=1
-  fi
+
+      # Handle case where diff ends while still in a block (closing brace not in diff context)
+      # This catches gradients added to large CSS blocks where the closing brace is outside the diff hunk
+      END {
+        if (in_block && has_added_gradient) {
+          print block
+          exit 1
+        }
+      }
+    '; then
+      : # No gradient found, continue
+    else
+      echo "⚠️  Gradient guardrail triggered: global gradient detected on schedule container."
+      echo "   This pre-commit hook blocks gradients on .schedule-wrapper, .fc, or .calendar selectors."
+      echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."
+      echo "   If this is a legitimate per-band gradient (not on container), this is a false positive."
+      echo "   Re-run your commit with:"
+      echo "     git commit --no-verify   # temporarily bypasses this guardrail"
+      FAIL=1
+    fi
+  }
 fi
 
 # 4. Missing minute-based scaling when touching schedule UI implementation files
 # Exclude dev tools (FloatingDevButtons) which don't need minute-based scaling
-if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" | grep -v "FloatingDevButtons" > /dev/null; then
-  # Only check if CSS-related changes are made in schedule files that affect vertical sizing/offsets
-  # Include height, min-height, max-height, top, bottom; exclude line-height
-  # Require at least one non-zero numeric value (exempt 0, auto, etc.)
-  if git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk -v exclude="FloatingDevButtons" '
-    /^\+\+\+ / {
-      if ($0 !~ exclude) {
-        include_file = 1
-      } else {
-        include_file = 0
-      }
-    }
-    /^---/ { next }
-    include_file && /^\+/ && !/^\+\+\+/ { print }
-  ' | grep -E "(^|[^-])(min-height|max-height|height|top|bottom)[[:space:]]*:[[:space:]]*.*[1-9][0-9]*" > /dev/null; then
-    # Require minute-based scaling via --minute-unit or derived variables like --hour-height
-    # (direct use or via var(--minute-unit) / var(--hour-height))
-    if ! git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk -v exclude="FloatingDevButtons" '
+if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" | grep -v "FloatingDevButtons" > /dev/null || true; then
+  [ "${PIPESTATUS[0]}" -eq 0 ] && {
+    # Only check if CSS-related changes are made in schedule files that affect vertical sizing/offsets
+    # Include height, min-height, max-height, top, bottom; exclude line-height
+    # Require at least one non-zero numeric value (exempt 0, auto, etc.)
+    # Use word boundaries to match CSS properties precisely
+    local awk_result
+    awk_result=$(git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk -v exclude="FloatingDevButtons" '
       /^\+\+\+ / {
         if ($0 !~ exclude) {
           include_file = 1
@@ -164,12 +175,33 @@ if git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|s
       }
       /^---/ { next }
       include_file && /^\+/ && !/^\+\+\+/ { print }
-    ' | grep -E "(\-\-minute-unit|\-\-hour-height|var\(\-\-hour-height\)|var\(\-\-minute-unit\))" > /dev/null; then
-      echo "❌ Schedule UI implementation modified with vertical sizing/offsets but minute-based scaling not used"
-      echo "   Required: --minute-unit, --hour-height, var(--hour-height), or var(--minute-unit)"
-      FAIL=1
+    ')
+    if [ -n "$awk_result" ] && echo "$awk_result" | grep -E "(^|[^[:alnum:]-])(min-height|max-height|height|top|bottom)[[:space:]]*:[[:space:]]*.*[1-9][0-9]*" > /dev/null || true; then
+      [ "${PIPESTATUS[0]}" -eq 0 ] && {
+        # Require minute-based scaling via --minute-unit or derived variables like --hour-height
+        # (direct use or via var(--minute-unit) / var(--hour-height))
+        local scaling_check
+        scaling_check=$(git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk -v exclude="FloatingDevButtons" '
+          /^\+\+\+ / {
+            if ($0 !~ exclude) {
+              include_file = 1
+            } else {
+              include_file = 0
+            }
+          }
+          /^---/ { next }
+          include_file && /^\+/ && !/^\+\+\+/ { print }
+        ')
+        if [ -n "$scaling_check" ] && ! echo "$scaling_check" | grep -E "(\-\-minute-unit|\-\-hour-height|var\(\-\-hour-height\)|var\(\-\-minute-unit\))" > /dev/null || true; then
+          [ "${PIPESTATUS[0]}" -ne 0 ] && {
+            echo "❌ Schedule UI implementation modified with vertical sizing/offsets but minute-based scaling not used"
+            echo "   Required: --minute-unit, --hour-height, var(--hour-height), or var(--minute-unit)"
+            FAIL=1
+          }
+        fi
+      }
     fi
-  fi
+  }
 fi
 
 if [ "$FAIL" -eq 1 ]; then

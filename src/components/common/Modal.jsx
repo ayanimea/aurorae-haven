@@ -54,10 +54,11 @@ function Modal({
     } else if (previousFocusRef.current) {
       // Defensive focus restoration fallback: if FocusLock's returnFocus doesn't work
       // (e.g., element was removed, browser incompatibility), manually restore focus
-      // Using setTimeout with 0ms delay defers to the next event loop tick, allowing
-      // FocusLock's own restoration mechanism to attempt first. This is sufficient
-      // because FocusLock's restoration is synchronous within the same event loop tick.
-      const timeoutId = setTimeout(() => {
+      // Using requestAnimationFrame provides more reliable timing than setTimeout(0)
+      // for defensive fallback, as it ensures the focus restoration happens after
+      // FocusLock's own mechanism and any DOM updates have completed.
+      let rafId
+      const attemptFocusRestore = () => {
         if (
           previousFocusRef.current &&
           previousFocusRef.current !== document.body &&
@@ -71,8 +72,13 @@ function Modal({
           }
         }
         previousFocusRef.current = null
-      }, 0)
-      return () => clearTimeout(timeoutId)
+      }
+      rafId = requestAnimationFrame(attemptFocusRestore)
+      return () => {
+        if (rafId !== undefined) {
+          cancelAnimationFrame(rafId)
+        }
+      }
     }
   }, [isOpen])
 
