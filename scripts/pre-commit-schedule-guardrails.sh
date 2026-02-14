@@ -35,7 +35,11 @@ check() {
   local result=$?
   set -e
   
-  if [ $result -eq 0 ]; then
+  if [ $result -eq 2 ]; then
+    echo "❌ Error: Invalid regex pattern in guardrail check: $1"
+    echo "   Please verify the pattern syntax in scripts/pre-commit-schedule-guardrails.sh"
+    exit 1
+  elif [ $result -eq 0 ]; then
     echo "❌ Forbidden pattern in staged changes: $1"
     FAIL=1
   fi
@@ -52,7 +56,11 @@ check_in_files() {
   local result=$?
   set -e
   
-  if [ $result -eq 0 ]; then
+  if [ $result -eq 2 ]; then
+    echo "❌ Error: Invalid regex pattern in guardrail check: $pattern"
+    echo "   Please verify the pattern syntax in scripts/pre-commit-schedule-guardrails.sh"
+    exit 1
+  elif [ $result -eq 0 ]; then
     echo "❌ Forbidden pattern in staged changes: $pattern"
     FAIL=1
   fi
@@ -80,11 +88,16 @@ check_in_files_exclude() {
   if [ -n "$awk_output" ]; then
     # Temporarily disable set -e for grep
     set +e
-    echo "$awk_output" | grep -E "$pattern" > /dev/null
+    # Use printf instead of echo to avoid flag/backslash interpretation issues
+    printf '%s\n' "$awk_output" | grep -E "$pattern" > /dev/null
     local result=$?
     set -e
     
-    if [ $result -eq 0 ]; then
+    if [ $result -eq 2 ]; then
+      echo "❌ Error: Invalid regex pattern in guardrail check: $pattern"
+      echo "   Please verify the pattern syntax in scripts/pre-commit-schedule-guardrails.sh"
+      exit 1
+    elif [ $result -eq 0 ]; then
       echo "❌ Forbidden pattern in staged changes: $pattern"
       FAIL=1
     fi
@@ -101,6 +114,12 @@ set +e
 git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/components/Schedule/|src/assets/styles/schedule\.css|src/assets/styles/fullcalendar-custom\.css" > /dev/null
 schedule_files_changed=$?
 set -e
+
+if [ $schedule_files_changed -eq 2 ]; then
+  echo "❌ Error: grep failed while detecting schedule-related files."
+  echo "   Please verify the regex and file paths in scripts/pre-commit-schedule-guardrails.sh."
+  exit 1
+fi
 
 if [ $schedule_files_changed -eq 0 ]; then
   # Use word boundaries to match CSS properties precisely and avoid false positives
@@ -162,7 +181,7 @@ if [ $schedule_files_changed -eq 0 ]; then
   gradient_result=$?
   set -e
   
-  if [ $gradient_result -ne 0 ]; then
+  if [ $gradient_result -eq 1 ]; then
     echo "⚠️  Gradient guardrail triggered: global gradient detected on schedule container."
     echo "   This pre-commit hook blocks gradients on .schedule-wrapper, .fc, or .calendar selectors."
     echo "   The Schedule spec prohibits a single global gradient but allows per-band gradients."
@@ -170,6 +189,10 @@ if [ $schedule_files_changed -eq 0 ]; then
     echo "   Re-run your commit with:"
     echo "     git commit --no-verify   # temporarily bypasses this guardrail"
     FAIL=1
+  elif [ $gradient_result -gt 1 ]; then
+    echo "❌ Error: awk script failed while checking for gradient violations."
+    echo "   Please verify the gradient detection logic in scripts/pre-commit-schedule-guardrails.sh."
+    exit 1
   fi
 fi
 
@@ -201,11 +224,16 @@ if [ $non_dev_schedule_changed -eq 0 ]; then
     set +e
     # Use [^[:alnum:]-] to match property boundaries while excluding CSS custom properties (--property)
     # This ensures we don't match --height or --min-height (custom properties) but do match height:
-    echo "$awk_result" | grep -E "(^|[^[:alnum:]-])(min-height|max-height|height|top|bottom)[[:space:]]*:[[:space:]]*.*[1-9][0-9]*" > /dev/null
+    # Use printf instead of echo to avoid flag/backslash interpretation issues
+    printf '%s\n' "$awk_result" | grep -E "(^|[^[:alnum:]-])(min-height|max-height|height|top|bottom)[[:space:]]*:[[:space:]]*.*[1-9][0-9]*" > /dev/null
     sizing_found=$?
     set -e
     
-    if [ $sizing_found -eq 0 ]; then
+    if [ $sizing_found -eq 2 ]; then
+      echo "❌ Error: Invalid regex pattern in vertical sizing check."
+      echo "   Please verify the pattern syntax in scripts/pre-commit-schedule-guardrails.sh."
+      exit 1
+    elif [ $sizing_found -eq 0 ]; then
       # Require minute-based scaling via --minute-unit or derived variables like --hour-height
       # (direct use or via var(--minute-unit) / var(--hour-height))
       scaling_check=$(git diff --cached --no-color -- "${SCHEDULE_PATHS[@]}" | awk -v exclude="FloatingDevButtons" '
@@ -222,11 +250,16 @@ if [ $non_dev_schedule_changed -eq 0 ]; then
       
       if [ -n "$scaling_check" ]; then
         set +e
-        echo "$scaling_check" | grep -E "(\-\-minute-unit|\-\-hour-height|var\(\-\-hour-height\)|var\(\-\-minute-unit\))" > /dev/null
+        # Use printf instead of echo to avoid flag/backslash interpretation issues
+        printf '%s\n' "$scaling_check" | grep -E "(\-\-minute-unit|\-\-hour-height|var\(\-\-hour-height\)|var\(\-\-minute-unit\))" > /dev/null
         scaling_found=$?
         set -e
         
-        if [ $scaling_found -ne 0 ]; then
+        if [ $scaling_found -eq 2 ]; then
+          echo "❌ Error: Invalid regex pattern in minute-based scaling check."
+          echo "   Please verify the pattern syntax in scripts/pre-commit-schedule-guardrails.sh."
+          exit 1
+        elif [ $scaling_found -ne 0 ]; then
           echo "❌ Schedule UI implementation modified with vertical sizing/offsets but minute-based scaling not used"
           echo "   Required: --minute-unit, --hour-height, var(--hour-height), or var(--minute-unit)"
           FAIL=1

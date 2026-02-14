@@ -364,4 +364,96 @@ describe('Modal Component', () => {
       expect(container.querySelector('.modal-header')).toBeInTheDocument()
     })
   })
+
+  describe('Focus Management', () => {
+    test('restores focus to previously focused element when modal closes', () => {
+      // Create a focusable element
+      const button = document.createElement('button')
+      button.textContent = 'Trigger Button'
+      document.body.appendChild(button)
+      button.focus()
+
+      // Store the button reference
+      const initialActiveElement = document.activeElement
+
+      // Render modal as open
+      const { rerender } = render(
+        <Modal isOpen={true} onClose={mockOnClose}>
+          <div>Modal Content</div>
+        </Modal>
+      )
+
+      // Modal should be open
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+      // Mock requestAnimationFrame for testing
+      const originalRaf = window.requestAnimationFrame
+      const originalCancelRaf = window.cancelAnimationFrame
+      let rafCallback = null
+
+      window.requestAnimationFrame = jest.fn((cb) => {
+        rafCallback = cb
+        return 1
+      })
+      window.cancelAnimationFrame = jest.fn()
+
+      // Close the modal by changing isOpen prop
+      rerender(
+        <Modal isOpen={false} onClose={mockOnClose}>
+          <div>Modal Content</div>
+        </Modal>
+      )
+
+      // Modal should be closed
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+      // Verify requestAnimationFrame was called
+      expect(window.requestAnimationFrame).toHaveBeenCalled()
+
+      // Execute the focus restoration callback
+      if (rafCallback) {
+        rafCallback()
+      }
+
+      // Focus should be restored to the original button
+      expect(document.activeElement).toBe(initialActiveElement)
+
+      // Cleanup
+      document.body.removeChild(button)
+      window.requestAnimationFrame = originalRaf
+      window.cancelAnimationFrame = originalCancelRaf
+    })
+
+    test('cleans up requestAnimationFrame on unmount', () => {
+      const button = document.createElement('button')
+      document.body.appendChild(button)
+      button.focus()
+
+      const originalCancelRaf = window.cancelAnimationFrame
+      window.cancelAnimationFrame = jest.fn()
+
+      const { unmount, rerender } = render(
+        <Modal isOpen={true} onClose={mockOnClose}>
+          <div>Modal Content</div>
+        </Modal>
+      )
+
+      // Close the modal
+      rerender(
+        <Modal isOpen={false} onClose={mockOnClose}>
+          <div>Modal Content</div>
+        </Modal>
+      )
+
+      // Unmount before the animation frame executes
+      unmount()
+
+      // cancelAnimationFrame should have been called during cleanup
+      expect(window.cancelAnimationFrame).toHaveBeenCalled()
+
+      // Cleanup
+      document.body.removeChild(button)
+      window.cancelAnimationFrame = originalCancelRaf
+    })
+  })
 })

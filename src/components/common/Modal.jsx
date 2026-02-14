@@ -73,10 +73,33 @@ function Modal({
         }
         previousFocusRef.current = null
       }
-      rafId = requestAnimationFrame(attemptFocusRestore)
+      
+      // Use window.requestAnimationFrame for browser compatibility (SSR/test safety)
+      const hasWindow = typeof window !== 'undefined'
+      const hasRaf =
+        hasWindow && typeof window.requestAnimationFrame === 'function'
+      const hasCancelRaf =
+        hasWindow && typeof window.cancelAnimationFrame === 'function'
+
+      if (hasRaf) {
+        rafId = window.requestAnimationFrame(attemptFocusRestore)
+      } else if (hasWindow) {
+        // Fallback when window exists but requestAnimationFrame does not
+        rafId = window.setTimeout(attemptFocusRestore, 0)
+      } else {
+        // Non-window environments (SSR/tests): best-effort fallback
+        rafId = setTimeout(attemptFocusRestore, 0)
+      }
+
       return () => {
         if (rafId !== undefined) {
-          cancelAnimationFrame(rafId)
+          if (hasCancelRaf) {
+            window.cancelAnimationFrame(rafId)
+          } else if (hasWindow) {
+            window.clearTimeout(rafId)
+          } else {
+            clearTimeout(rafId)
+          }
         }
       }
     }
