@@ -429,7 +429,10 @@ describe('Modal Component', () => {
       document.body.appendChild(button)
       button.focus()
 
+      const originalRaf = window.requestAnimationFrame
       const originalCancelRaf = window.cancelAnimationFrame
+      
+      window.requestAnimationFrame = jest.fn(() => 1)
       window.cancelAnimationFrame = jest.fn()
 
       const { unmount, rerender } = render(
@@ -445,6 +448,9 @@ describe('Modal Component', () => {
         </Modal>
       )
 
+      // Verify requestAnimationFrame was called when modal closed
+      expect(window.requestAnimationFrame).toHaveBeenCalled()
+
       // Unmount before the animation frame executes
       unmount()
 
@@ -453,6 +459,7 @@ describe('Modal Component', () => {
 
       // Cleanup
       document.body.removeChild(button)
+      window.requestAnimationFrame = originalRaf
       window.cancelAnimationFrame = originalCancelRaf
     })
   })

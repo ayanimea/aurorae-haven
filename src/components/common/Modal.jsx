@@ -58,6 +58,9 @@ function Modal({
       // for defensive fallback, as it ensures the focus restoration happens after
       // FocusLock's own mechanism and any DOM updates have completed.
       let rafId = undefined
+      let usedRaf = false
+      let usedWindowTimeout = false
+      
       const attemptFocusRestore = () => {
         if (
           previousFocusRef.current &&
@@ -78,14 +81,14 @@ function Modal({
       const hasWindow = typeof window !== 'undefined'
       const hasRaf =
         hasWindow && typeof window.requestAnimationFrame === 'function'
-      const hasCancelRaf =
-        hasWindow && typeof window.cancelAnimationFrame === 'function'
 
       if (hasRaf) {
         rafId = window.requestAnimationFrame(attemptFocusRestore)
+        usedRaf = true
       } else if (hasWindow) {
         // Fallback when window exists but requestAnimationFrame does not
         rafId = window.setTimeout(attemptFocusRestore, 0)
+        usedWindowTimeout = true
       } else {
         // Non-window environments (SSR/tests): best-effort fallback
         rafId = setTimeout(attemptFocusRestore, 0)
@@ -93,9 +96,9 @@ function Modal({
 
       return () => {
         if (rafId !== undefined) {
-          if (hasCancelRaf) {
+          if (usedRaf) {
             window.cancelAnimationFrame(rafId)
-          } else if (hasWindow) {
+          } else if (usedWindowTimeout) {
             window.clearTimeout(rafId)
           } else {
             clearTimeout(rafId)
