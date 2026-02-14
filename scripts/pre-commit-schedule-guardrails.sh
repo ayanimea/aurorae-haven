@@ -105,7 +105,10 @@ set -e
 if [ $schedule_files_changed -eq 0 ]; then
   # Use word boundaries to match CSS properties precisely and avoid false positives
   # Pattern matches: height:, min-height:, max-height: followed by pixel values
-  # Avoids matching CSS custom properties (--height, --min-height, etc.)
+  # [^[:alnum:]-] ensures we don't match CSS custom properties (--height) or hyphenated properties
+  # This pattern allows matching at the start of a line (^) or after non-alphanumeric/non-hyphen chars
+  # Note: CSS property names use hyphens but not underscores, so this pattern correctly identifies
+  # property boundaries while excluding custom properties that start with -- (double hyphen)
   check_in_files_exclude "(^|[^[:alnum:]-])(min-height|max-height|height)[[:space:]]*:[[:space:]]*[0-9]+px" "FloatingDevButtons" "${SCHEDULE_PATHS[@]}"
   check_in_files_exclude "(^|[^[:alnum:]-])top[[:space:]]*:[[:space:]]*[0-9]+px" "FloatingDevButtons" "${SCHEDULE_PATHS[@]}"
 fi
@@ -196,6 +199,8 @@ if [ $non_dev_schedule_changed -eq 0 ]; then
   
   if [ -n "$awk_result" ]; then
     set +e
+    # Use [^[:alnum:]-] to match property boundaries while excluding CSS custom properties (--property)
+    # This ensures we don't match --height or --min-height (custom properties) but do match height:
     echo "$awk_result" | grep -E "(^|[^[:alnum:]-])(min-height|max-height|height|top|bottom)[[:space:]]*:[[:space:]]*.*[1-9][0-9]*" > /dev/null
     sizing_found=$?
     set -e

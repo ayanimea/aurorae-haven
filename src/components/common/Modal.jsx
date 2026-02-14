@@ -57,7 +57,7 @@ function Modal({
       // Using requestAnimationFrame provides more reliable timing than setTimeout(0)
       // for defensive fallback, as it ensures the focus restoration happens after
       // FocusLock's own mechanism and any DOM updates have completed.
-      let rafId
+      let rafId = undefined
       const attemptFocusRestore = () => {
         if (
           previousFocusRef.current &&
