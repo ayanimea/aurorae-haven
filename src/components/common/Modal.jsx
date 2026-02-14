@@ -51,6 +51,28 @@ function Modal({
   useEffect(() => {
     if (isOpen) {
       previousFocusRef.current = document.activeElement
+    } else if (previousFocusRef.current) {
+      // Defensive focus restoration fallback: if FocusLock's returnFocus doesn't work
+      // (e.g., element was removed, browser incompatibility), manually restore focus
+      // Using setTimeout with 0ms delay defers to the next event loop tick, allowing
+      // FocusLock's own restoration mechanism to attempt first. This is sufficient
+      // because FocusLock's restoration is synchronous within the same event loop tick.
+      const timeoutId = setTimeout(() => {
+        if (
+          previousFocusRef.current &&
+          previousFocusRef.current !== document.body &&
+          typeof previousFocusRef.current.focus === 'function'
+        ) {
+          try {
+            previousFocusRef.current.focus()
+          } catch {
+            // Silently catch focus errors (element might be detached or hidden)
+            // This is expected behavior and not an error condition
+          }
+        }
+        previousFocusRef.current = null
+      }, 0)
+      return () => clearTimeout(timeoutId)
     }
   }, [isOpen])
 

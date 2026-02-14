@@ -6,12 +6,9 @@
  *
  * @global {boolean} __DEV__ - Compile-time constant injected by Vite's define config
  * This global is defined in vite.config.js and recognized by ESLint via the
- * `/* global __DEV__ *\/` comment below. IDEs with JSDoc support will provide
+ * globals configuration in eslint.config.js. IDEs with JSDoc support will provide
  * autocomplete and type checking.
  */
-
-/* global __DEV__ */
-// __DEV__ is injected by Vite's define config at build time (see vite.config.js)
 
 /**
  * Check if running in development mode
