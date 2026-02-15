@@ -17,6 +17,9 @@
     },
     {
       "pattern": "^https://github\\.com/ayanimea/aurorae-haven/actions/workflows/"
+    },
+    {
+      "pattern": "^https://iso25000\\.com/"
     }
   ],
   "timeout": "10s",
