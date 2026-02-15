@@ -359,205 +359,205 @@ function EventModal({
 
   return (
     <>
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={getModalTitle()}
-      closeOnOverlayClick={false}
-    >
-      {/* Show search selector for routines/tasks when not in manual form mode */}
-      {!showManualForm &&
-        (isDragToSchedule ||
-          validatedEventType === EVENT_TYPES.ROUTINE ||
-          validatedEventType === EVENT_TYPES.TASK) && (
-          <SearchableEventSelector
-            eventType={isDragToSchedule ? null : validatedEventType}
-            onSelect={handleItemSelect}
-            onCreateNew={handleCreateNew}
-          />
-        )}
-
-      {/* Show manual form when creating new or editing existing */}
-      {showManualForm && (
-        <form onSubmit={handleSubmit} className='event-form'>
-          {error && (
-            <div className='error-message' role='alert' aria-live='assertive'>
-              <Icon name='alertCircle' />
-              <span>{error}</span>
-            </div>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={getModalTitle()}
+        closeOnOverlayClick={false}
+      >
+        {/* Show search selector for routines/tasks when not in manual form mode */}
+        {!showManualForm &&
+          (isDragToSchedule ||
+            validatedEventType === EVENT_TYPES.ROUTINE ||
+            validatedEventType === EVENT_TYPES.TASK) && (
+            <SearchableEventSelector
+              eventType={isDragToSchedule ? null : validatedEventType}
+              onSelect={handleItemSelect}
+              onCreateNew={handleCreateNew}
+            />
           )}
 
-          <div className='form-group'>
-            <label htmlFor='event-title'>
-              Title <span className='required'>*</span>
-            </label>
-            <input
-              id='event-title'
-              type='text'
-              value={formData.title}
-              onChange={(e) => handleChange('title', e.target.value)}
-              placeholder='Enter title'
-              disabled={isSubmitting}
-              required
-              aria-required='true'
-              maxLength={200}
-              ref={titleInputRef}
-            />
-          </div>
+        {/* Show manual form when creating new or editing existing */}
+        {showManualForm && (
+          <form onSubmit={handleSubmit} className='event-form'>
+            {error && (
+              <div className='error-message' role='alert' aria-live='assertive'>
+                <Icon name='alertCircle' />
+                <span>{error}</span>
+              </div>
+            )}
 
-          <div className='form-group'>
-            <label htmlFor='event-date'>
-              Date <span className='required'>*</span>
-            </label>
-            <input
-              id='event-date'
-              type='date'
-              value={formData.day}
-              onChange={(e) => handleChange('day', e.target.value)}
-              disabled={isSubmitting}
-              required
-              aria-required='true'
-            />
-          </div>
-
-          <div className='form-row'>
             <div className='form-group'>
-              <label htmlFor='event-start-time'>
-                Start Time <span className='required'>*</span>
+              <label htmlFor='event-title'>
+                Title <span className='required'>*</span>
               </label>
               <input
-                id='event-start-time'
-                type='time'
-                value={formData.startTime}
-                onChange={(e) => handleChange('startTime', e.target.value)}
+                id='event-title'
+                type='text'
+                value={formData.title}
+                onChange={(e) => handleChange('title', e.target.value)}
+                placeholder='Enter title'
+                disabled={isSubmitting}
+                required
+                aria-required='true'
+                maxLength={200}
+                ref={titleInputRef}
+              />
+            </div>
+
+            <div className='form-group'>
+              <label htmlFor='event-date'>
+                Date <span className='required'>*</span>
+              </label>
+              <input
+                id='event-date'
+                type='date'
+                value={formData.day}
+                onChange={(e) => handleChange('day', e.target.value)}
                 disabled={isSubmitting}
                 required
                 aria-required='true'
               />
             </div>
 
-            <div className='form-group'>
-              <label htmlFor='event-end-time'>
-                End Time <span className='required'>*</span>
-              </label>
-              <input
-                id='event-end-time'
-                type='time'
-                value={formData.endTime}
-                onChange={(e) => handleChange('endTime', e.target.value)}
-                disabled={isSubmitting}
-                required
-                aria-required='true'
-              />
-            </div>
-          </div>
+            <div className='form-row'>
+              <div className='form-group'>
+                <label htmlFor='event-start-time'>
+                  Start Time <span className='required'>*</span>
+                </label>
+                <input
+                  id='event-start-time'
+                  type='time'
+                  value={formData.startTime}
+                  onChange={(e) => handleChange('startTime', e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                  aria-required='true'
+                />
+              </div>
 
-          <div className='form-row'>
-            <div className='form-group'>
-              <label htmlFor='event-travel-time'>Travel Time (minutes)</label>
-              <input
-                id='event-travel-time'
-                type='number'
-                min='0'
-                max={MAX_TRAVEL_TIME_MINUTES}
-                value={formData.travelTime}
-                onChange={(e) =>
-                  handleTimeInputChange(
-                    e.target.value,
-                    MAX_TRAVEL_TIME_MINUTES,
-                    (value) => handleChange('travelTime', value)
-                  )
-                }
-                disabled={isSubmitting}
-                aria-describedby='travel-time-help'
-              />
-              <small id='travel-time-help' className='form-help'>
-                Optional time needed to travel to this event (max{' '}
-                {MAX_TRAVEL_TIME_MINUTES} minutes)
-              </small>
+              <div className='form-group'>
+                <label htmlFor='event-end-time'>
+                  End Time <span className='required'>*</span>
+                </label>
+                <input
+                  id='event-end-time'
+                  type='time'
+                  value={formData.endTime}
+                  onChange={(e) => handleChange('endTime', e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                  aria-required='true'
+                />
+              </div>
             </div>
 
-            <div className='form-group'>
-              <label htmlFor='event-preparation-time'>
-                Preparation Time (minutes)
-              </label>
-              <input
-                id='event-preparation-time'
-                type='number'
-                min='0'
-                max={MAX_PREPARATION_TIME_MINUTES}
-                value={formData.preparationTime}
-                onChange={(e) =>
-                  handleTimeInputChange(
-                    e.target.value,
-                    MAX_PREPARATION_TIME_MINUTES,
-                    (value) => handleChange('preparationTime', value)
-                  )
-                }
-                disabled={isSubmitting}
-                aria-describedby='preparation-time-help'
-              />
-              <small id='preparation-time-help' className='form-help'>
-                Optional time needed to prepare for this event (max{' '}
-                {MAX_PREPARATION_TIME_MINUTES} minutes)
-              </small>
-            </div>
-          </div>
+            <div className='form-row'>
+              <div className='form-group'>
+                <label htmlFor='event-travel-time'>Travel Time (minutes)</label>
+                <input
+                  id='event-travel-time'
+                  type='number'
+                  min='0'
+                  max={MAX_TRAVEL_TIME_MINUTES}
+                  value={formData.travelTime}
+                  onChange={(e) =>
+                    handleTimeInputChange(
+                      e.target.value,
+                      MAX_TRAVEL_TIME_MINUTES,
+                      (value) => handleChange('travelTime', value)
+                    )
+                  }
+                  disabled={isSubmitting}
+                  aria-describedby='travel-time-help'
+                />
+                <small id='travel-time-help' className='form-help'>
+                  Optional time needed to travel to this event (max{' '}
+                  {MAX_TRAVEL_TIME_MINUTES} minutes)
+                </small>
+              </div>
 
-          <div className='form-actions'>
-            {initialData?.id && onDelete && (
+              <div className='form-group'>
+                <label htmlFor='event-preparation-time'>
+                  Preparation Time (minutes)
+                </label>
+                <input
+                  id='event-preparation-time'
+                  type='number'
+                  min='0'
+                  max={MAX_PREPARATION_TIME_MINUTES}
+                  value={formData.preparationTime}
+                  onChange={(e) =>
+                    handleTimeInputChange(
+                      e.target.value,
+                      MAX_PREPARATION_TIME_MINUTES,
+                      (value) => handleChange('preparationTime', value)
+                    )
+                  }
+                  disabled={isSubmitting}
+                  aria-describedby='preparation-time-help'
+                />
+                <small id='preparation-time-help' className='form-help'>
+                  Optional time needed to prepare for this event (max{' '}
+                  {MAX_PREPARATION_TIME_MINUTES} minutes)
+                </small>
+              </div>
+            </div>
+
+            <div className='form-actions'>
+              {initialData?.id && onDelete && (
+                <button
+                  type='button'
+                  className='btn btn-danger'
+                  onClick={handleDelete}
+                  disabled={isSubmitting}
+                  aria-label='Delete event'
+                >
+                  <Icon name='trash2' />
+                  Delete
+                </button>
+              )}
               <button
                 type='button'
-                className='btn btn-danger'
-                onClick={handleDelete}
+                className='btn btn-secondary'
+                onClick={onClose}
                 disabled={isSubmitting}
-                aria-label='Delete event'
               >
-                <Icon name='trash2' />
-                Delete
+                Cancel
               </button>
-            )}
-            <button
-              type='button'
-              className='btn btn-secondary'
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type='submit'
-              className='btn btn-primary'
-              disabled={isSubmitting}
-              aria-label={initialData?.id ? 'Save' : 'Schedule'}
-            >
-              {isSubmitting ? (
-                <>
-                  <Icon name='check' />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Icon name='check' />
-                  {initialData?.id ? 'Save' : 'Schedule'}
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      )}
-    </Modal>
-    {/* Accessible confirmation dialog for delete action */}
-    <ConfirmDialog
-      isOpen={showDeleteConfirm}
-      title="Confirm Delete"
-      message={`Are you sure you want to delete this ${formData.type || 'event'}? This action cannot be undone.`}
-      onConfirm={confirmDelete}
-      onCancel={cancelDelete}
-      confirmText="Delete"
-      cancelText="Cancel"
-      confirmDanger={true}
-    />
+              <button
+                type='submit'
+                className='btn btn-primary'
+                disabled={isSubmitting}
+                aria-label={initialData?.id ? 'Save' : 'Schedule'}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Icon name='check' />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Icon name='check' />
+                    {initialData?.id ? 'Save' : 'Schedule'}
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+      {/* Accessible confirmation dialog for delete action */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title='Confirm Delete'
+        message={`Are you sure you want to delete this ${formData.type || 'event'}? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        confirmText='Delete'
+        cancelText='Cancel'
+        confirmDanger={true}
+      />
     </>
   )
 }

@@ -544,11 +544,15 @@ describe('EventModal Component', () => {
       // Wait for ConfirmDialog to appear and click confirm button
       await waitFor(() => {
         expect(screen.getByText(/confirm delete/i)).toBeInTheDocument()
-        expect(screen.getByText(/This action cannot be undone/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/This action cannot be undone/i)
+        ).toBeInTheDocument()
       })
 
       // Get all delete buttons again (now there are 2: form and confirm dialog)
-      const allDeleteButtons = screen.getAllByRole('button', { name: /delete/i })
+      const allDeleteButtons = screen.getAllByRole('button', {
+        name: /delete/i
+      })
       const confirmButton = allDeleteButtons[allDeleteButtons.length - 1] // Last one is from ConfirmDialog
       fireEvent.click(confirmButton)
 
@@ -637,7 +641,9 @@ describe('EventModal Component', () => {
       })
 
       // Get all delete buttons again (now there are 2: form and confirm dialog)
-      const allDeleteButtons = screen.getAllByRole('button', { name: /delete/i })
+      const allDeleteButtons = screen.getAllByRole('button', {
+        name: /delete/i
+      })
       const confirmButton = allDeleteButtons[allDeleteButtons.length - 1] // Last one is from ConfirmDialog
       fireEvent.click(confirmButton)
 

@@ -60,7 +60,7 @@ function Modal({
       // FocusLock's own mechanism and any DOM updates have completed.
       let rafId = undefined
       let schedulingMethod = null // Track which method was used: 'raf', 'windowTimeout', or 'globalTimeout'
-      
+
       const attemptFocusRestore = () => {
         if (
           previousFocusRef.current &&
@@ -76,7 +76,7 @@ function Modal({
         }
         previousFocusRef.current = null
       }
-      
+
       // Use window.requestAnimationFrame for browser compatibility (SSR/test safety)
       const hasWindow = typeof window !== 'undefined'
       const hasRaf =
@@ -113,6 +113,9 @@ function Modal({
   // Only close if focus is within this modal's content (prevents closing underlying modals
   // when nested dialogs like ConfirmDialog are open on top)
   // Respects e.defaultPrevented so inner components can consume Escape for their own UX
+  // NOTE: Nested dialogs rendered inside modal content must call e.preventDefault() on Escape
+  // to prevent the parent modal from also closing. Alternatively, render nested dialogs
+  // outside the modal content hierarchy (e.g., as siblings with their own overlay).
   useEffect(() => {
     if (!isOpen) return
 
@@ -120,7 +123,14 @@ function Modal({
       if (e.key === 'Escape' && !e.defaultPrevented) {
         // Only close this modal if focus is within its content
         // Add null checks for robustness (activeElement can be null if focus is on body or not set)
-        if (document.activeElement && contentRef.current?.contains(document.activeElement)) {
+        // If no element has focus (document.body), treat it as eligible to close this modal
+        const hasFocusInModal =
+          document.activeElement &&
+          contentRef.current?.contains(document.activeElement)
+        const noFocusSet =
+          !document.activeElement || document.activeElement === document.body
+
+        if (hasFocusInModal || noFocusSet) {
           onCloseRef.current()
         }
       }

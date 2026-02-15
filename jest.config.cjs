@@ -1,8 +1,5 @@
 module.exports = {
   testEnvironment: 'jsdom',
-  globals: {
-    __DEV__: false // Tests run in production mode by default
-  },
   transform: {
     '^.+\\.(js|jsx)$': 'babel-jest'
   },

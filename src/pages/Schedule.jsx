@@ -181,12 +181,12 @@ function Schedule() {
 
   // Dev-only: Dynamically load FloatingDevButtons to prevent bundling in production
   useEffect(() => {
-    if (__DEV__ && isDevelopment()) {
+    if (typeof __DEV__ !== 'undefined' && __DEV__ && isDevelopment()) {
       import('../components/Schedule/FloatingDevButtons')
-        .then(module => {
+        .then((module) => {
           setFloatingDevButtons(() => module.default)
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Failed to load FloatingDevButtons:', err)
         })
     }

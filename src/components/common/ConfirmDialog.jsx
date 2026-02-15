@@ -32,6 +32,7 @@ function ConfirmDialog({
 
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
+        e.preventDefault() // Prevent parent modals from also closing
         onCancel()
       }
     }
