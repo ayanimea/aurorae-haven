@@ -20,6 +20,9 @@
     },
     {
       "pattern": "^https://iso25000\\.com/"
+    },
+    {
+      "pattern": "^https://github\\.com/(ayanimea|aurorae-haven)/aurorae-haven/issues"
     }
   ],
   "timeout": "10s",
