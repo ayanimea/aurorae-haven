@@ -376,17 +376,7 @@ describe('Modal Component', () => {
       // Store the button reference
       const initialActiveElement = document.activeElement
 
-      // Render modal as open
-      const { rerender } = render(
-        <Modal isOpen={true} onClose={mockOnClose}>
-          <div>Modal Content</div>
-        </Modal>
-      )
-
-      // Modal should be open
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-
-      // Mock requestAnimationFrame for testing
+      // Mock requestAnimationFrame for testing BEFORE rendering
       const originalRaf = window.requestAnimationFrame
       const originalCancelRaf = window.cancelAnimationFrame
       let rafCallback = null
@@ -396,6 +386,16 @@ describe('Modal Component', () => {
         return 1
       })
       window.cancelAnimationFrame = jest.fn()
+
+      // Render modal as open
+      const { rerender } = render(
+        <Modal isOpen={true} onClose={mockOnClose}>
+          <div>Modal Content</div>
+        </Modal>
+      )
+
+      // Modal should be open
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
 
       // Close the modal by changing isOpen prop
       rerender(
@@ -429,6 +429,7 @@ describe('Modal Component', () => {
       document.body.appendChild(button)
       button.focus()
 
+      // Mock requestAnimationFrame BEFORE rendering
       const originalRaf = window.requestAnimationFrame
       const originalCancelRaf = window.cancelAnimationFrame
       
