@@ -203,6 +203,12 @@ git diff --cached --no-color --name-only | grep -E "src/pages/Schedule\.jsx|src/
 non_dev_schedule_changed=$?
 set -e
 
+if [ $non_dev_schedule_changed -eq 2 ]; then
+  echo "❌ Error: grep failed while detecting non-dev schedule files."
+  echo "   Please verify the grep pattern in scripts/pre-commit-schedule-guardrails.sh."
+  exit 1
+fi
+
 if [ $non_dev_schedule_changed -eq 0 ]; then
   # Only check if CSS-related changes are made in schedule files that affect vertical sizing/offsets
   # Include height, min-height, max-height, top, bottom; exclude line-height

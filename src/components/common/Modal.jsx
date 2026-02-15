@@ -58,8 +58,7 @@ function Modal({
       // for defensive fallback, as it ensures the focus restoration happens after
       // FocusLock's own mechanism and any DOM updates have completed.
       let rafId = undefined
-      let usedRaf = false
-      let usedWindowTimeout = false
+      let schedulingMethod = null // Track which method was used: 'raf', 'windowTimeout', or 'globalTimeout'
       
       const attemptFocusRestore = () => {
         if (
@@ -84,21 +83,22 @@ function Modal({
 
       if (hasRaf) {
         rafId = window.requestAnimationFrame(attemptFocusRestore)
-        usedRaf = true
+        schedulingMethod = 'raf'
       } else if (hasWindow) {
         // Fallback when window exists but requestAnimationFrame does not
         rafId = window.setTimeout(attemptFocusRestore, 0)
-        usedWindowTimeout = true
+        schedulingMethod = 'windowTimeout'
       } else {
         // Non-window environments (SSR/tests): best-effort fallback
         rafId = setTimeout(attemptFocusRestore, 0)
+        schedulingMethod = 'globalTimeout'
       }
 
       return () => {
         if (rafId !== undefined) {
-          if (usedRaf) {
+          if (schedulingMethod === 'raf') {
             window.cancelAnimationFrame(rafId)
-          } else if (usedWindowTimeout) {
+          } else if (schedulingMethod === 'windowTimeout') {
             window.clearTimeout(rafId)
           } else {
             clearTimeout(rafId)
