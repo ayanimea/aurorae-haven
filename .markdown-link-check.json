@@ -14,11 +14,14 @@
     },
     {
       "pattern": "^https://aurorae-haven\\.github\\.io/aurorae-haven/"
+    },
+    {
+      "pattern": "^https://github\\.com/ayanimea/aurorae-haven/actions/workflows/"
     }
   ],
   "timeout": "10s",
   "retryOn429": true,
   "retryCount": 3,
   "fallbackRetryDelay": "5s",
-  "aliveStatusCodes": [200, 206, 301, 302, 307, 308, 403, 502, 0]
+  "aliveStatusCodes": [200, 206, 301, 302, 307, 308, 403, 0]
 }
