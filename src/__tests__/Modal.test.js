@@ -7,6 +7,18 @@ import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import Modal from '../components/common/Modal'
 
+/**
+ * Helper function to focus modal body for testing Escape key behavior
+ * Makes the modal body focusable and sets focus to it
+ */
+const focusModalBody = () => {
+  const modalBody = screen.getByRole('document').querySelector('.modal-body')
+  if (modalBody) {
+    modalBody.setAttribute('tabindex', '-1')
+    modalBody.focus()
+  }
+}
+
 describe('Modal Component', () => {
   const mockOnClose = jest.fn()
 
@@ -126,13 +138,7 @@ describe('Modal Component', () => {
       )
 
       // Focus must be within modal content for Escape to close it (prevents closing underlying modals)
-      // Focus on the modal body which is within the contentRef
-      const modalBody = screen.getByRole('document').querySelector('.modal-body')
-      if (modalBody) {
-        // Make it focusable and focus it
-        modalBody.setAttribute('tabindex', '-1')
-        modalBody.focus()
-      }
+      focusModalBody()
 
       // Escape is now handled at document level, so fire on document
       fireEvent.keyDown(document, { key: 'Escape' })
@@ -188,11 +194,7 @@ describe('Modal Component', () => {
       )
 
       // Focus must be within modal content for Escape to close it
-      const modalBody = screen.getByRole('document').querySelector('.modal-body')
-      if (modalBody) {
-        modalBody.setAttribute('tabindex', '-1')
-        modalBody.focus()
-      }
+      focusModalBody()
 
       fireEvent.keyDown(document, { key: 'Escape' })
 

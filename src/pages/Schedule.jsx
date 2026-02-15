@@ -130,7 +130,7 @@ function Schedule() {
   const [showActionModal, setShowActionModal] = useState(false)
 
   // Dev-only: Lazy-loaded FloatingDevButtons component
-  const [FloatingDevButtonsComponent, setFloatingDevButtonsComponent] = useState(null)
+  const [FloatingDevButtons, setFloatingDevButtons] = useState(null)
 
   // Get time format preference from settings (default to 24-hour)
   // Reactive settings: useState + storage listener for cross-tab updates
@@ -184,7 +184,7 @@ function Schedule() {
     if (__DEV__ && isDevelopment()) {
       import('../components/Schedule/FloatingDevButtons')
         .then(module => {
-          setFloatingDevButtonsComponent(() => module.default)
+          setFloatingDevButtons(() => module.default)
         })
         .catch(err => {
           console.error('Failed to load FloatingDevButtons:', err)
@@ -816,8 +816,8 @@ function Schedule() {
         )}
 
         {/* Floating Dev Buttons - Only visible in development mode */}
-        {isDevelopment() && FloatingDevButtonsComponent && (
-          <FloatingDevButtonsComponent
+        {isDevelopment() && FloatingDevButtons && (
+          <FloatingDevButtons
             onPopulateData={handlePopulateFakeData}
             onClearData={handleClearAllEvents}
           />

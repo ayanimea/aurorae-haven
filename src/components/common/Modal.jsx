@@ -119,7 +119,8 @@ function Modal({
     const handleEscape = (e) => {
       if (e.key === 'Escape' && !e.defaultPrevented) {
         // Only close this modal if focus is within its content
-        if (contentRef.current && contentRef.current.contains(document.activeElement)) {
+        // Add null checks for robustness (activeElement can be null if focus is on body or not set)
+        if (document.activeElement && contentRef.current?.contains(document.activeElement)) {
           onCloseRef.current()
         }
       }
