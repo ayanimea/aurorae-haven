@@ -438,15 +438,6 @@ describe('EventModal Component', () => {
   })
 
   describe('delete functionality', () => {
-    let confirmSpy
-
-    afterEach(() => {
-      // Restore window.confirm after each test
-      if (confirmSpy) {
-        confirmSpy.mockRestore()
-      }
-    })
-
     test('shows delete button when editing existing event with id and onDelete prop', () => {
       const mockOnDelete = jest.fn()
       const initialData = {
@@ -534,9 +525,6 @@ describe('EventModal Component', () => {
         preparationTime: 0
       }
 
-      // Spy on window.confirm to return true
-      confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true)
-
       render(
         <EventModal
           isOpen={true}
@@ -548,19 +536,29 @@ describe('EventModal Component', () => {
         />
       )
 
-      const deleteButton = screen.getByRole('button', { name: /delete/i })
-      fireEvent.click(deleteButton)
+      // Click delete button to show ConfirmDialog (use the first delete button from the form)
+      const deleteButtons = screen.getAllByRole('button', { name: /delete/i })
+      const formDeleteButton = deleteButtons[0]
+      fireEvent.click(formDeleteButton)
+
+      // Wait for ConfirmDialog to appear and click confirm button
+      await waitFor(() => {
+        expect(screen.getByText(/confirm delete/i)).toBeInTheDocument()
+        expect(screen.getByText(/This action cannot be undone/i)).toBeInTheDocument()
+      })
+
+      // Get all delete buttons again (now there are 2: form and confirm dialog)
+      const allDeleteButtons = screen.getAllByRole('button', { name: /delete/i })
+      const confirmButton = allDeleteButtons[allDeleteButtons.length - 1] // Last one is from ConfirmDialog
+      fireEvent.click(confirmButton)
 
       await waitFor(() => {
-        expect(confirmSpy).toHaveBeenCalledWith(
-          expect.stringContaining('This action cannot be undone.')
-        )
         expect(mockOnDelete).toHaveBeenCalledWith(123)
         expect(mockOnClose).toHaveBeenCalled()
       })
     })
 
-    test('does not call onDelete when delete button is clicked but not confirmed', () => {
+    test('does not call onDelete when delete button is clicked but not confirmed', async () => {
       const mockOnDelete = jest.fn()
       const initialData = {
         id: 123,
@@ -573,9 +571,6 @@ describe('EventModal Component', () => {
         preparationTime: 0
       }
 
-      // Spy on window.confirm to return false
-      confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false)
-
       render(
         <EventModal
           isOpen={true}
@@ -587,10 +582,20 @@ describe('EventModal Component', () => {
         />
       )
 
-      const deleteButton = screen.getByRole('button', { name: /delete/i })
-      fireEvent.click(deleteButton)
+      // Click delete button to show ConfirmDialog (use the first delete button from the form)
+      const deleteButtons = screen.getAllByRole('button', { name: /delete/i })
+      const formDeleteButton = deleteButtons[0]
+      fireEvent.click(formDeleteButton)
 
-      expect(confirmSpy).toHaveBeenCalled()
+      // Wait for ConfirmDialog to appear and click cancel button
+      await waitFor(() => {
+        expect(screen.getByText(/confirm delete/i)).toBeInTheDocument()
+      })
+
+      const cancelButtons = screen.getAllByRole('button', { name: /cancel/i })
+      const confirmDialogCancelButton = cancelButtons[cancelButtons.length - 1] // Last one is from ConfirmDialog
+      fireEvent.click(confirmDialogCancelButton)
+
       expect(mockOnDelete).not.toHaveBeenCalled()
       expect(mockOnClose).not.toHaveBeenCalled()
     })
@@ -610,9 +615,6 @@ describe('EventModal Component', () => {
         preparationTime: 0
       }
 
-      // Spy on window.confirm to return true
-      confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true)
-
       render(
         <EventModal
           isOpen={true}
@@ -624,8 +626,20 @@ describe('EventModal Component', () => {
         />
       )
 
-      const deleteButton = screen.getByRole('button', { name: /delete/i })
-      fireEvent.click(deleteButton)
+      // Click delete button to show ConfirmDialog (use the first delete button from the form)
+      const deleteButtons = screen.getAllByRole('button', { name: /delete/i })
+      const formDeleteButton = deleteButtons[0]
+      fireEvent.click(formDeleteButton)
+
+      // Wait for ConfirmDialog to appear and click confirm button
+      await waitFor(() => {
+        expect(screen.getByText(/confirm delete/i)).toBeInTheDocument()
+      })
+
+      // Get all delete buttons again (now there are 2: form and confirm dialog)
+      const allDeleteButtons = screen.getAllByRole('button', { name: /delete/i })
+      const confirmButton = allDeleteButtons[allDeleteButtons.length - 1] // Last one is from ConfirmDialog
+      fireEvent.click(confirmButton)
 
       await waitFor(() => {
         expect(screen.getByText(/Delete failed/i)).toBeInTheDocument()

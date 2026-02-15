@@ -4,7 +4,7 @@
  */
 
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import Modal from '../components/common/Modal'
 
 describe('Modal Component', () => {
@@ -125,6 +125,15 @@ describe('Modal Component', () => {
         </Modal>
       )
 
+      // Focus must be within modal content for Escape to close it (prevents closing underlying modals)
+      // Focus on the modal body which is within the contentRef
+      const modalBody = screen.getByRole('document').querySelector('.modal-body')
+      if (modalBody) {
+        // Make it focusable and focus it
+        modalBody.setAttribute('tabindex', '-1')
+        modalBody.focus()
+      }
+
       // Escape is now handled at document level, so fire on document
       fireEvent.keyDown(document, { key: 'Escape' })
 
@@ -177,6 +186,13 @@ describe('Modal Component', () => {
           <div>Content</div>
         </Modal>
       )
+
+      // Focus must be within modal content for Escape to close it
+      const modalBody = screen.getByRole('document').querySelector('.modal-body')
+      if (modalBody) {
+        modalBody.setAttribute('tabindex', '-1')
+        modalBody.focus()
+      }
 
       fireEvent.keyDown(document, { key: 'Escape' })
 

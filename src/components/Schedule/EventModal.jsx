@@ -358,6 +358,7 @@ function EventModal({
   }
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -557,6 +558,7 @@ function EventModal({
       cancelText="Cancel"
       confirmDanger={true}
     />
+    </>
   )
 }
 
