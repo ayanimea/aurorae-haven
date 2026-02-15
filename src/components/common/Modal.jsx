@@ -40,6 +40,7 @@ function Modal({
   // Store onClose in a ref to avoid re-registering the keydown listener on every render
   const onCloseRef = useRef(onClose)
   const previousFocusRef = useRef(null)
+  const contentRef = useRef(null)
 
   // Keep ref up to date
   useEffect(() => {
@@ -109,13 +110,18 @@ function Modal({
   }, [isOpen])
 
   // Handle Escape key at document level to ensure it always works
+  // Only close if focus is within this modal's content (prevents closing underlying modals
+  // when nested dialogs like ConfirmDialog are open on top)
   // Respects e.defaultPrevented so inner components can consume Escape for their own UX
   useEffect(() => {
     if (!isOpen) return
 
     const handleEscape = (e) => {
       if (e.key === 'Escape' && !e.defaultPrevented) {
-        onCloseRef.current()
+        // Only close this modal if focus is within its content
+        if (contentRef.current && contentRef.current.contains(document.activeElement)) {
+          onCloseRef.current()
+        }
       }
     }
 
@@ -138,6 +144,7 @@ function Modal({
       <FocusLock returnFocus>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
+          ref={contentRef}
           className={clsx('modal-content', className)}
           onClick={(e) => e.stopPropagation()}
           role='document'

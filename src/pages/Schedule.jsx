@@ -78,7 +78,6 @@ import ItemActionModal from '../components/ItemActionModal'
 import CustomToolbar from '../components/Schedule/CustomToolbar'
 import SolidEventCard from '../components/Schedule/SolidEventCard'
 import TimeBands from '../components/Schedule/TimeBands'
-import FloatingDevButtons from '../components/Schedule/FloatingDevButtons'
 import ErrorBoundary from '../components/ErrorBoundary'
 import EventService from '../services/EventService'
 import {
@@ -87,10 +86,12 @@ import {
 } from '../utils/eventAdapter'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
-import { generateFakeEvents } from '../utils/fakeDataGenerator'
 import { isDevelopment } from '../utils/environment'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
+
+// Dev-only imports are dynamically loaded to prevent bundling in production
+// FloatingDevButtons and generateFakeEvents are only imported when __DEV__ is true
 
 /* eslint-disable no-console */
 // Console statements are intentionally used throughout this file for production debugging
@@ -127,6 +128,9 @@ function Schedule() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [eventToDelete, setEventToDelete] = useState(null)
   const [showActionModal, setShowActionModal] = useState(false)
+
+  // Dev-only: Lazy-loaded FloatingDevButtons component
+  const [FloatingDevButtonsComponent, setFloatingDevButtonsComponent] = useState(null)
 
   // Get time format preference from settings (default to 24-hour)
   // Reactive settings: useState + storage listener for cross-tab updates
@@ -172,6 +176,19 @@ function Schedule() {
     return () => {
       window.removeEventListener('storage', handleStorage)
       window.removeEventListener('settingsUpdated', handleSettingsUpdated)
+    }
+  }, [])
+
+  // Dev-only: Dynamically load FloatingDevButtons to prevent bundling in production
+  useEffect(() => {
+    if (__DEV__ && isDevelopment()) {
+      import('../components/Schedule/FloatingDevButtons')
+        .then(module => {
+          setFloatingDevButtonsComponent(() => module.default)
+        })
+        .catch(err => {
+          console.error('Failed to load FloatingDevButtons:', err)
+        })
     }
   }, [])
 
@@ -395,6 +412,8 @@ function Schedule() {
       setSuccessMessage('')
 
       console.log('Generating fake events...')
+      // Dynamic import to prevent bundling in production
+      const { generateFakeEvents } = await import('../utils/fakeDataGenerator')
       const fakeEvents = generateFakeEvents(new Date(), 14) // 2 weeks of data
 
       console.log(`Creating ${fakeEvents.length} fake events...`)
@@ -797,8 +816,8 @@ function Schedule() {
         )}
 
         {/* Floating Dev Buttons - Only visible in development mode */}
-        {isDevelopment() && (
-          <FloatingDevButtons
+        {isDevelopment() && FloatingDevButtonsComponent && (
+          <FloatingDevButtonsComponent
             onPopulateData={handlePopulateFakeData}
             onClearData={handleClearAllEvents}
           />

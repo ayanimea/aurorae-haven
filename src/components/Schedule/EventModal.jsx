@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
+import ConfirmDialog from '../common/ConfirmDialog'
 import SearchableEventSelector from './SearchableEventSelector'
 import {
   getCurrentDateISO,
@@ -84,6 +85,7 @@ function EventModal({
   const [showManualForm, setShowManualForm] = useState(false)
   // Track if this is a drag-to-schedule operation (show both routines and tasks)
   const [isDragToSchedule, setIsDragToSchedule] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const titleInputRef = useRef(null)
 
   // Reset form when modal opens or event type changes
@@ -249,15 +251,17 @@ function EventModal({
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    if (!initialData?.id || !onDelete) return
+    // Show confirmation dialog instead of window.confirm for better UX/accessibility
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirm(false)
     if (!initialData?.id || !onDelete) return
 
     const eventTypeLabel = formData.type || 'event'
-    const confirmed = window.confirm(
-      `Are you sure you want to delete this ${eventTypeLabel}? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
     setIsSubmitting(true)
     setError('') // Clear any previous errors
     try {
@@ -271,6 +275,10 @@ function EventModal({
       setError(errorMessage)
       setIsSubmitting(false)
     }
+  }
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false)
   }
 
   const getModalTitle = () => {
@@ -538,6 +546,17 @@ function EventModal({
         </form>
       )}
     </Modal>
+    {/* Accessible confirmation dialog for delete action */}
+    <ConfirmDialog
+      isOpen={showDeleteConfirm}
+      title="Confirm Delete"
+      message={`Are you sure you want to delete this ${formData.type || 'event'}? This action cannot be undone.`}
+      onConfirm={confirmDelete}
+      onCancel={cancelDelete}
+      confirmText="Delete"
+      cancelText="Cancel"
+      confirmDanger={true}
+    />
   )
 }
 

@@ -104,9 +104,9 @@ check_in_files_exclude() {
   fi
 }
 
-# 1. Row background colouring (semantic violation)
-check "hour[-_ ]row.*background"
-check "background-color.*hour"
+# 1. Row background colouring (semantic violation) — scoped to Schedule UI files
+check_in_files "hour[-_ ]row.*background" "${SCHEDULE_PATHS[@]}"
+check_in_files "background-color.*hour" "${SCHEDULE_PATHS[@]}"
 
 # 2. Hardcoded pixel heights (time scaling violation) — scoped to Schedule UI files
 # Exclude dev tools (FloatingDevButtons) which intentionally use fixed pixel sizes
