@@ -1,5 +1,11 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within
+} from '@testing-library/react'
 import '@testing-library/jest-dom'
 import EventModal from '../components/Schedule/EventModal'
 
@@ -549,11 +555,13 @@ describe('EventModal Component', () => {
         ).toBeInTheDocument()
       })
 
-      // Get all delete buttons again (now there are 2: form and confirm dialog)
-      const allDeleteButtons = screen.getAllByRole('button', {
-        name: /delete/i
+      // Find the confirmation dialog and query within it for the Delete button
+      const confirmDialog = screen.getByRole('dialog', {
+        name: /confirm delete/i
       })
-      const confirmButton = allDeleteButtons[allDeleteButtons.length - 1] // Last one is from ConfirmDialog
+      const confirmButton = within(confirmDialog).getByRole('button', {
+        name: /^delete$/i
+      })
       fireEvent.click(confirmButton)
 
       await waitFor(() => {
@@ -596,9 +604,14 @@ describe('EventModal Component', () => {
         expect(screen.getByText(/confirm delete/i)).toBeInTheDocument()
       })
 
-      const cancelButtons = screen.getAllByRole('button', { name: /cancel/i })
-      const confirmDialogCancelButton = cancelButtons[cancelButtons.length - 1] // Last one is from ConfirmDialog
-      fireEvent.click(confirmDialogCancelButton)
+      // Find the confirmation dialog and query within it for the Cancel button
+      const confirmDialog = screen.getByRole('dialog', {
+        name: /confirm delete/i
+      })
+      const cancelButton = within(confirmDialog).getByRole('button', {
+        name: /cancel/i
+      })
+      fireEvent.click(cancelButton)
 
       expect(mockOnDelete).not.toHaveBeenCalled()
       expect(mockOnClose).not.toHaveBeenCalled()
@@ -640,11 +653,14 @@ describe('EventModal Component', () => {
         expect(screen.getByText(/confirm delete/i)).toBeInTheDocument()
       })
 
-      // Get all delete buttons again (now there are 2: form and confirm dialog)
-      const allDeleteButtons = screen.getAllByRole('button', {
-        name: /delete/i
+      // Find the confirmation dialog and query within it for the Delete button
+      const confirmDialog = screen.getByRole('dialog', {
+        name: /confirm delete/i
       })
-      const confirmButton = allDeleteButtons[allDeleteButtons.length - 1] // Last one is from ConfirmDialog
+      const confirmButton = within(confirmDialog).getByRole('button', {
+        name: /^delete$/i
+      })
+      fireEvent.click(confirmButton)
       fireEvent.click(confirmButton)
 
       await waitFor(() => {

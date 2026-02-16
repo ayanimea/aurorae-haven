@@ -109,13 +109,16 @@ function Modal({
     }
   }, [isOpen])
 
-  // Handle Escape key at document level to ensure it always works
+  // Handle Escape key at document level (bubbling phase) to ensure it always works
   // Only close if focus is within this modal's content (prevents closing underlying modals
   // when nested dialogs like ConfirmDialog are open on top)
-  // Respects e.defaultPrevented so inner components can consume Escape for their own UX
-  // NOTE: Nested dialogs rendered inside modal content must call e.preventDefault() on Escape
-  // to prevent the parent modal from also closing. Alternatively, render nested dialogs
-  // outside the modal content hierarchy (e.g., as siblings with their own overlay).
+  // Respects e.defaultPrevented so inner components can consume Escape for their own UX.
+  // NOTE: Because this listener is attached to document in the bubble phase, nested dialogs
+  // rendered inside the modal content that also listen for Escape on document must intercept
+  // the event earlier (for example, with a capture-phase listener that calls e.preventDefault(),
+  // or by handling keydown on an element inside the nested dialog and calling e.stopPropagation()).
+  // Alternatively, render nested dialogs outside the modal content hierarchy (e.g., as siblings
+  // with their own overlay/portal) so they can manage Escape independently.
   useEffect(() => {
     if (!isOpen) return
 

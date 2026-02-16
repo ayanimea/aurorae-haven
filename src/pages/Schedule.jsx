@@ -412,7 +412,8 @@ function Schedule() {
       setSuccessMessage('')
 
       console.log('Generating fake events...')
-      // Dynamic import to prevent bundling in production
+      // Dynamic import reduces initial bundle size but doesn't eliminate code from production
+      // (runtime guard still allows bundler to create a separate chunk)
       const { generateFakeEvents } = await import('../utils/fakeDataGenerator')
       const fakeEvents = generateFakeEvents(new Date(), 14) // 2 weeks of data
 
