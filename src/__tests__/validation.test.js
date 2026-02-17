@@ -145,9 +145,7 @@ describe('validateTemplateData', () => {
       const result = validateTemplateData(template)
 
       expect(result.valid).toBe(false)
-      expect(result.errors).toContain(
-        'Template type must be one of: task, routine (found: 123)'
-      )
+      expect(result.errors).toContain('Template type must be a string')
     })
   })
 

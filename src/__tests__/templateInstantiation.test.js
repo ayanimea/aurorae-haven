@@ -442,6 +442,53 @@ describe('templateInstantiation', () => {
         'Unknown template type: unknown'
       )
     })
+
+    test('handles routine template with uppercase type', async () => {
+      const template = {
+        type: 'ROUTINE',
+        title: 'Test routine with uppercase'
+      }
+
+      const result = await instantiateTemplate(template)
+
+      expect(result.type).toBe('routine')
+      expect(result.id).toBe('test-routine-uuid-456')
+    })
+
+    test('handles task template with mixed case type', async () => {
+      const template = {
+        type: 'Task',
+        title: 'Test task with mixed case'
+      }
+
+      const result = await instantiateTemplate(template)
+
+      expect(result.type).toBe('task')
+      expect(result.id).toBe('test-task-uuid-123')
+    })
+
+    test('handles routine template with whitespace in type', async () => {
+      const template = {
+        type: '  routine  ',
+        title: 'Test routine with whitespace'
+      }
+
+      const result = await instantiateTemplate(template)
+
+      expect(result.type).toBe('routine')
+      expect(result.id).toBe('test-routine-uuid-456')
+    })
+
+    test('throws error for invalid type field', async () => {
+      const template = {
+        type: null,
+        title: 'Template with null type'
+      }
+
+      await expect(instantiateTemplate(template)).rejects.toThrow(
+        'Template must have a valid type field'
+      )
+    })
   })
 
   describe('instantiateTemplatesBatch', () => {
