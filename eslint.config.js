@@ -50,6 +50,8 @@ export default [
         clearTimeout: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
         Blob: 'readonly',
         URL: 'readonly',
         fetch: 'readonly',
@@ -65,7 +67,9 @@ export default [
         // remove these if you now import them as modules:
         DOMPurify: 'readonly',
         marked: 'readonly',
-        FullCalendar: 'readonly'
+        FullCalendar: 'readonly',
+        // Compile-time constant defined by Vite in vite.config.js
+        __DEV__: 'readonly'
       }
     },
     settings: {

@@ -46,20 +46,28 @@ const DEFAULT_SETTINGS = {
  */
 export function getSettings() {
   // TODO: Implement settings validation
-  return tryCatch(
+  const result = tryCatch(
     () => {
       const stored = localStorage.getItem(SETTINGS_KEY)
       if (!stored) {
         return { ...DEFAULT_SETTINGS }
       }
       const parsed = JSON.parse(stored)
-      return { ...DEFAULT_SETTINGS, ...parsed }
+      // Deep merge to preserve nested objects from DEFAULT_SETTINGS
+      // Uses deepMerge utility (defined at bottom of this file) which:
+      // - Handles nested objects recursively
+      // - Replaces arrays (doesn't merge them)
+      // - Blocks prototype pollution keys (__proto__, constructor, prototype)
+      return deepMerge(DEFAULT_SETTINGS, parsed)
     },
     'Loading settings from localStorage',
     {
       showToast: false
     }
   )
+
+  // If tryCatch returned undefined (error occurred), return defaults
+  return result || { ...DEFAULT_SETTINGS }
 }
 
 /**
@@ -87,13 +95,15 @@ export function getSetting(key) {
 /**
  * Update settings
  * @param {object} updates - Settings updates (partial or full)
- * @returns {object} Updated settings
+ * @returns {object} Updated settings (from memory, even if localStorage write fails)
  */
 export function updateSettings(updates) {
   // TODO: Implement validation and merge strategy
   const current = getSettings()
   const updated = deepMerge(current, updates)
 
+  // Try to persist to localStorage, but don't throw if it fails
+  // User still gets updated settings in memory for current session
   tryCatch(
     () => {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated))
@@ -101,7 +111,7 @@ export function updateSettings(updates) {
     'Saving settings to localStorage',
     {
       showToast: false,
-      rethrow: true
+      rethrow: false // Handle storage errors gracefully
     }
   )
 
@@ -173,18 +183,53 @@ export function exportSettings() {
 
 /**
  * Import settings from JSON
- * @param {string} json - JSON string of settings
- * @returns {object} Imported settings
+ * @param {string|object} json - JSON string or settings object to import
+ * @returns {object} Result from updateSettings after applying imported settings
  */
 export function importSettings(json) {
   // TODO: Implement validation and version checking
   const data = tryCatch(
     () => {
-      const parsed = JSON.parse(json)
-      if (!parsed.settings) {
+      // Handle both JSON string and object inputs
+      const parsed = typeof json === 'string' ? JSON.parse(json) : json
+
+      // Ensure we are working with a non-null, non-array object
+      if (
+        typeof parsed !== 'object' ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
         throw new Error('Invalid settings format')
       }
-      return parsed
+
+      const hasSettingsProp = Object.prototype.hasOwnProperty.call(
+        parsed,
+        'settings'
+      )
+
+      // Wrapped format: { settings: { ... } }
+      if (hasSettingsProp) {
+        const wrappedSettings = parsed.settings
+
+        // Validate that wrapped settings is a non-null, non-array object
+        // Allow empty settings object as valid reset operation
+        if (
+          typeof wrappedSettings !== 'object' ||
+          wrappedSettings === null ||
+          Array.isArray(wrappedSettings)
+        ) {
+          throw new Error(
+            "Invalid settings format: 'settings' must be an object"
+          )
+        }
+
+        // Empty object = user wants to reset all settings to defaults
+        return parsed
+      }
+
+      // Direct settings object, wrap it for consistency
+      // Note: Array.isArray check already done above
+      return { settings: parsed }
     },
     'Parsing imported settings',
     {
@@ -199,7 +244,7 @@ export function importSettings(json) {
 }
 
 /**
- * Deep merge two objects
+ * Deep merge two objects (with prototype pollution protection)
  * @param {object} target - Target object
  * @param {object} source - Source object
  * @returns {object} Merged object
@@ -207,7 +252,15 @@ export function importSettings(json) {
 function deepMerge(target, source) {
   const result = { ...target }
 
+  // Dangerous keys that can cause prototype pollution
+  const dangerousKeys = new Set(['__proto__', 'constructor', 'prototype'])
+
   for (const key in source) {
+    // Skip dangerous keys to prevent prototype pollution
+    if (dangerousKeys.has(key)) {
+      continue
+    }
+
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       if (
         typeof source[key] === 'object' &&

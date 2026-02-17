@@ -8,6 +8,7 @@ If implementation diverges from this file, the implementation is wrong.
 ## 0. Copilot / LLM Instruction Header (MANDATORY)
 
 This header **must be copied verbatim** at the top of:
+
 - `Schedule.tsx` / `Schedule.jsx`
 - the main schedule CSS file
 - or any file where Copilot generates Schedule-related code
@@ -85,14 +86,20 @@ If the background is noticed before the events, the UI has failed.
 
 ### Time Ranges
 
-| Band | Time |
-|-----|------|
-| Morning | 07:00–12:00 |
-| Afternoon | 12:00–18:00 |
-| Evening | 18:00–23:00 |
-| Night | 23:00–07:00 |
+These ranges are **semantic day parts for the full 24-hour day**. The schedule **time grid only renders the visible window 07:00–24:00**:
+
+- Morning, Afternoon, and Evening are fully within the visible 07:00–24:00 window.
+- Night **wraps across midnight**: it is defined as 23:00–07:00 semantically, but within the visible grid only the **23:00–24:00 segment is drawn** (e.g., via `TimeBands`). The 00:00–07:00 portion of Night is outside the rendered window.
+
+| Band      | Time        | Visible in Grid |
+| --------- | ----------- | --------------- |
+| Morning   | 07:00–12:00 | Fully visible   |
+| Afternoon | 12:00–18:00 | Fully visible   |
+| Evening   | 18:00–23:00 | Fully visible   |
+| Night     | 23:00–07:00 | 23:00–24:00 only (wraps) |
 
 Bands:
+
 - are discrete zones
 - are perceptible without labels
 - fade softly at boundaries
@@ -136,6 +143,7 @@ All vertical positioning and sizing derives from this unit.
 ## 5. QA Rejection Rules
 
 Reject any PR that:
+
 - Applies background colors to hour rows
 - Uses a single gradient for the entire day
 - Hardcodes pixel heights for time

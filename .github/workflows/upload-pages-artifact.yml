@@ -203,7 +203,11 @@ jobs:
           npm_config_audit: false
 
       - name: Build React PWA with Vite
-        run: npm run build
+        run: |
+          # Always perform a production build in CI to avoid shipping dev-only features.
+          # If dev-mode builds are needed for experimentation, run them locally or in a
+          # separate, non-deploying workflow to ensure they never reach production URLs.
+          npm run build
         env:
           CI: true
           VITE_BASE_URL: '/aurorae-haven/'

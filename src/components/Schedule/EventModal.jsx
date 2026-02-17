@@ -2,8 +2,13 @@ import React, { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
+import ConfirmDialog from '../common/ConfirmDialog'
 import SearchableEventSelector from './SearchableEventSelector'
-import { getCurrentDateISO } from '../../utils/timeUtils'
+import {
+  getCurrentDateISO,
+  getCurrentTimeHHMM,
+  getCurrentTimePlusMinutes
+} from '../../utils/timeUtils'
 import {
   EVENT_TYPES,
   VALID_EVENT_TYPES,
@@ -56,6 +61,7 @@ function EventModal({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   eventType,
   initialData = null
 }) {
@@ -68,8 +74,8 @@ function EventModal({
   const [formData, setFormData] = useState({
     title: '',
     day: getCurrentDateISO(),
-    startTime: '09:00',
-    endTime: '10:00',
+    startTime: getCurrentTimeHHMM(),
+    endTime: getCurrentTimePlusMinutes(60),
     type: validatedEventType,
     travelTime: 0,
     preparationTime: 0
@@ -77,32 +83,54 @@ function EventModal({
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showManualForm, setShowManualForm] = useState(false)
+  // Track if this is a drag-to-schedule operation (show both routines and tasks)
+  const [isDragToSchedule, setIsDragToSchedule] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const titleInputRef = useRef(null)
 
   // Reset form when modal opens or event type changes
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
+        const hasTitle = initialData.title && initialData.title.trim() !== ''
+        // Detect drag-to-schedule: must have NO id (new event) AND null type (from createEventFromSlot)
+        // This prevents misclassifying existing events with missing type as drag-to-schedule
+        const isDragToSchedule =
+          !initialData.id && initialData.type === null && !hasTitle
+
         setFormData({
           title: initialData.title || '',
           day: initialData.day || getCurrentDateISO(),
-          startTime: initialData.startTime || '09:00',
-          endTime: initialData.endTime || '10:00',
-          type: initialData.type || validatedEventType,
+          startTime: initialData.startTime || getCurrentTimeHHMM(),
+          endTime: initialData.endTime || getCurrentTimePlusMinutes(60),
+          // Default missing type to validatedEventType for backward compatibility
+          type:
+            initialData.type !== undefined
+              ? initialData.type
+              : validatedEventType,
           travelTime: initialData.travelTime || 0,
           preparationTime: initialData.preparationTime || 0
         })
-        setShowManualForm(true) // Show form directly if editing
+
+        setIsDragToSchedule(isDragToSchedule)
+
+        // Show search selector if drag-to-schedule or editing event without title
+        // Show form directly if editing existing event with title
+        const isSearchableType =
+          validatedEventType === EVENT_TYPES.ROUTINE ||
+          validatedEventType === EVENT_TYPES.TASK
+        setShowManualForm(hasTitle || (!isDragToSchedule && !isSearchableType))
       } else {
         setFormData({
           title: '',
           day: getCurrentDateISO(),
-          startTime: '09:00',
-          endTime: '10:00',
+          startTime: getCurrentTimeHHMM(),
+          endTime: getCurrentTimePlusMinutes(60),
           type: validatedEventType,
           travelTime: 0,
           preparationTime: 0
         })
+        setIsDragToSchedule(false)
         // For routine/task, start with search; for meeting/habit, show form directly
         setShowManualForm(
           validatedEventType === EVENT_TYPES.MEETING ||
@@ -202,6 +230,7 @@ function EventModal({
     if (!validateForm()) return
 
     setIsSubmitting(true)
+    setError('') // Clear any previous errors
     try {
       // Trim title before saving to prevent whitespace issues
       const trimmedData = {
@@ -212,243 +241,331 @@ function EventModal({
       await onSave(trimmedData)
       onClose()
     } catch (err) {
-      setError(err.message || 'Failed to save event')
+      // Provide more specific error messages for better user experience
+      const errorMessage =
+        err.message || 'Failed to save event. Please try again.'
+      logger.error('Save failed:', err)
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const handleDelete = () => {
+    if (!initialData?.id || !onDelete) return
+    // Show confirmation dialog instead of window.confirm for better UX/accessibility
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirm(false)
+    if (!initialData?.id || !onDelete) return
+
+    const eventTypeLabel = formData.type || 'event'
+    setIsSubmitting(true)
+    setError('') // Clear any previous errors
+    try {
+      await onDelete(initialData.id)
+      onClose()
+    } catch (err) {
+      // Provide more specific error message
+      const errorMessage =
+        err.message || `Failed to delete ${eventTypeLabel}. Please try again.`
+      logger.error('Delete failed:', err)
+      setError(errorMessage)
+      setIsSubmitting(false)
+    }
+  }
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false)
+  }
+
   const getModalTitle = () => {
-    const action = initialData ? 'Save' : 'Schedule'
-    const typeLabel = eventType
-      ? eventType.charAt(0).toUpperCase() + eventType.slice(1)
-      : 'Event'
+    const action = initialData?.id ? 'Save' : 'Schedule'
+
+    // In drag-to-schedule with an undecided type (initialData.type === null)
+    // and before the manual form is shown, keep the title generic so it
+    // matches the selector offering both routines and tasks.
+    const isUndecidedDragToSchedule =
+      isDragToSchedule &&
+      initialData &&
+      initialData.type == null &&
+      !showManualForm
+
+    const typeLabel = isUndecidedDragToSchedule
+      ? 'Event'
+      : formData.type
+        ? formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
+        : 'Event'
+
     return `${action} ${typeLabel}`
   }
 
   // Handle selecting an existing routine/task
   const handleItemSelect = async (item) => {
     // If item is a template, instantiate it as a routine first
-    if (item.isTemplate && item.type === 'routine') {
+    if (item.isTemplate && item.type === EVENT_TYPES.ROUTINE) {
       try {
         logger.log('Instantiating routine from template:', item.title)
         const instantiatedRoutine = await instantiateRoutineFromTemplate(item)
-        // Use the new routine
-        setFormData({
+        // Use the new routine and preserve slot timing if available
+        // For drag-to-schedule, use the item's type; otherwise use validatedEventType
+        setFormData((prev) => ({
+          ...prev,
           title: instantiatedRoutine.title,
-          day: getCurrentDateISO(),
-          startTime: '09:00',
-          endTime: '10:00',
-          type: validatedEventType,
-          travelTime: 0,
-          preparationTime: 0
-        })
+          type: isDragToSchedule ? EVENT_TYPES.ROUTINE : validatedEventType
+        }))
       } catch (err) {
         logger.error('Failed to instantiate routine from template:', err)
         setError('Failed to create routine from template. Please try again.')
-        // Reset to a safe state so user can retry
-        setFormData({
+        // Reset to a safe state so user can retry, preserving slot timing if available
+        setFormData((prev) => ({
           title: '',
-          day: getCurrentDateISO(),
-          startTime: '09:00',
-          endTime: '10:00',
+          day: prev.day || getCurrentDateISO(),
+          startTime: prev.startTime || getCurrentTimeHHMM(),
+          endTime: prev.endTime || getCurrentTimePlusMinutes(60),
           type: validatedEventType,
           travelTime: 0,
           preparationTime: 0
-        })
+        }))
         setShowManualForm(false)
         return
       }
     } else {
-      setFormData({
+      // Preserve slot timing (day, startTime, endTime) if available from drag
+      // For drag-to-schedule, use the item's actual type; otherwise use validatedEventType
+      setFormData((prev) => ({
+        ...prev,
         title: item.title,
-        day: getCurrentDateISO(),
-        startTime: '09:00',
-        endTime: '10:00',
-        type: validatedEventType,
-        travelTime: 0,
-        preparationTime: 0
-      })
+        type: isDragToSchedule ? item.type : validatedEventType
+      }))
     }
     setShowManualForm(true)
   }
 
   // Handle creating new routine/task
   const handleCreateNew = () => {
+    // In drag-to-schedule mode, when user clicks "Create new", set concrete type
+    // instead of keeping it null (which would fall back to 'task' in toFullCalendarEvent)
+    // This ensures modal title and saved event are consistent
+    setFormData((prev) => ({
+      ...prev,
+      type:
+        prev.type === null ? validatedEventType || EVENT_TYPES.TASK : prev.type
+    }))
     setShowManualForm(true)
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={getModalTitle()}>
-      {/* Show search selector for routines/tasks when not in manual form mode */}
-      {!showManualForm &&
-        (validatedEventType === EVENT_TYPES.ROUTINE ||
-          validatedEventType === EVENT_TYPES.TASK) && (
-          <SearchableEventSelector
-            eventType={validatedEventType}
-            onSelect={handleItemSelect}
-            onCreateNew={handleCreateNew}
-          />
-        )}
-
-      {/* Show manual form when creating new or editing existing */}
-      {showManualForm && (
-        <form onSubmit={handleSubmit} className='event-form'>
-          {error && (
-            <div className='error-message' role='alert' aria-live='assertive'>
-              <Icon name='alertCircle' />
-              <span>{error}</span>
-            </div>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={getModalTitle()}
+        closeOnOverlayClick={false}
+      >
+        {/* Show search selector for routines/tasks when not in manual form mode */}
+        {!showManualForm &&
+          (isDragToSchedule ||
+            validatedEventType === EVENT_TYPES.ROUTINE ||
+            validatedEventType === EVENT_TYPES.TASK) && (
+            <SearchableEventSelector
+              eventType={isDragToSchedule ? null : validatedEventType}
+              onSelect={handleItemSelect}
+              onCreateNew={handleCreateNew}
+            />
           )}
 
-          <div className='form-group'>
-            <label htmlFor='event-title'>
-              Title <span className='required'>*</span>
-            </label>
-            <input
-              id='event-title'
-              type='text'
-              value={formData.title}
-              onChange={(e) => handleChange('title', e.target.value)}
-              placeholder='Enter title'
-              disabled={isSubmitting}
-              required
-              aria-required='true'
-              maxLength={200}
-              ref={titleInputRef}
-            />
-          </div>
+        {/* Show manual form when creating new or editing existing */}
+        {showManualForm && (
+          <form onSubmit={handleSubmit} className='event-form'>
+            {error && (
+              <div className='error-message' role='alert' aria-live='assertive'>
+                <Icon name='alertCircle' />
+                <span>{error}</span>
+              </div>
+            )}
 
-          <div className='form-group'>
-            <label htmlFor='event-date'>
-              Date <span className='required'>*</span>
-            </label>
-            <input
-              id='event-date'
-              type='date'
-              value={formData.day}
-              onChange={(e) => handleChange('day', e.target.value)}
-              disabled={isSubmitting}
-              required
-              aria-required='true'
-            />
-          </div>
-
-          <div className='form-row'>
             <div className='form-group'>
-              <label htmlFor='event-start-time'>
-                Start Time <span className='required'>*</span>
+              <label htmlFor='event-title'>
+                Title <span className='required'>*</span>
               </label>
               <input
-                id='event-start-time'
-                type='time'
-                value={formData.startTime}
-                onChange={(e) => handleChange('startTime', e.target.value)}
+                id='event-title'
+                type='text'
+                value={formData.title}
+                onChange={(e) => handleChange('title', e.target.value)}
+                placeholder='Enter title'
+                disabled={isSubmitting}
+                required
+                aria-required='true'
+                maxLength={200}
+                ref={titleInputRef}
+              />
+            </div>
+
+            <div className='form-group'>
+              <label htmlFor='event-date'>
+                Date <span className='required'>*</span>
+              </label>
+              <input
+                id='event-date'
+                type='date'
+                value={formData.day}
+                onChange={(e) => handleChange('day', e.target.value)}
                 disabled={isSubmitting}
                 required
                 aria-required='true'
               />
             </div>
 
-            <div className='form-group'>
-              <label htmlFor='event-end-time'>
-                End Time <span className='required'>*</span>
-              </label>
-              <input
-                id='event-end-time'
-                type='time'
-                value={formData.endTime}
-                onChange={(e) => handleChange('endTime', e.target.value)}
-                disabled={isSubmitting}
-                required
-                aria-required='true'
-              />
-            </div>
-          </div>
+            <div className='form-row'>
+              <div className='form-group'>
+                <label htmlFor='event-start-time'>
+                  Start Time <span className='required'>*</span>
+                </label>
+                <input
+                  id='event-start-time'
+                  type='time'
+                  value={formData.startTime}
+                  onChange={(e) => handleChange('startTime', e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                  aria-required='true'
+                />
+              </div>
 
-          <div className='form-row'>
-            <div className='form-group'>
-              <label htmlFor='event-travel-time'>Travel Time (minutes)</label>
-              <input
-                id='event-travel-time'
-                type='number'
-                min='0'
-                max={MAX_TRAVEL_TIME_MINUTES}
-                value={formData.travelTime}
-                onChange={(e) =>
-                  handleTimeInputChange(
-                    e.target.value,
-                    MAX_TRAVEL_TIME_MINUTES,
-                    (value) => handleChange('travelTime', value)
-                  )
-                }
-                disabled={isSubmitting}
-                aria-describedby='travel-time-help'
-              />
-              <small id='travel-time-help' className='form-help'>
-                Optional time needed to travel to this event (max{' '}
-                {MAX_TRAVEL_TIME_MINUTES} minutes)
-              </small>
+              <div className='form-group'>
+                <label htmlFor='event-end-time'>
+                  End Time <span className='required'>*</span>
+                </label>
+                <input
+                  id='event-end-time'
+                  type='time'
+                  value={formData.endTime}
+                  onChange={(e) => handleChange('endTime', e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                  aria-required='true'
+                />
+              </div>
             </div>
 
-            <div className='form-group'>
-              <label htmlFor='event-preparation-time'>
-                Preparation Time (minutes)
-              </label>
-              <input
-                id='event-preparation-time'
-                type='number'
-                min='0'
-                max={MAX_PREPARATION_TIME_MINUTES}
-                value={formData.preparationTime}
-                onChange={(e) =>
-                  handleTimeInputChange(
-                    e.target.value,
-                    MAX_PREPARATION_TIME_MINUTES,
-                    (value) => handleChange('preparationTime', value)
-                  )
-                }
-                disabled={isSubmitting}
-                aria-describedby='preparation-time-help'
-              />
-              <small id='preparation-time-help' className='form-help'>
-                Optional time needed to prepare for this event (max{' '}
-                {MAX_PREPARATION_TIME_MINUTES} minutes)
-              </small>
-            </div>
-          </div>
+            <div className='form-row'>
+              <div className='form-group'>
+                <label htmlFor='event-travel-time'>Travel Time (minutes)</label>
+                <input
+                  id='event-travel-time'
+                  type='number'
+                  min='0'
+                  max={MAX_TRAVEL_TIME_MINUTES}
+                  value={formData.travelTime}
+                  onChange={(e) =>
+                    handleTimeInputChange(
+                      e.target.value,
+                      MAX_TRAVEL_TIME_MINUTES,
+                      (value) => handleChange('travelTime', value)
+                    )
+                  }
+                  disabled={isSubmitting}
+                  aria-describedby='travel-time-help'
+                />
+                <small id='travel-time-help' className='form-help'>
+                  Optional time needed to travel to this event (max{' '}
+                  {MAX_TRAVEL_TIME_MINUTES} minutes)
+                </small>
+              </div>
 
-          <div className='form-actions'>
-            <button
-              type='button'
-              className='btn btn-secondary'
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type='submit'
-              className='btn btn-primary'
-              disabled={isSubmitting}
-              aria-label={initialData ? 'Save' : 'Schedule'}
-            >
-              {isSubmitting ? (
-                <>
-                  <Icon name='check' />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Icon name='check' />
-                  {initialData ? 'Save' : 'Schedule'}
-                </>
+              <div className='form-group'>
+                <label htmlFor='event-preparation-time'>
+                  Preparation Time (minutes)
+                </label>
+                <input
+                  id='event-preparation-time'
+                  type='number'
+                  min='0'
+                  max={MAX_PREPARATION_TIME_MINUTES}
+                  value={formData.preparationTime}
+                  onChange={(e) =>
+                    handleTimeInputChange(
+                      e.target.value,
+                      MAX_PREPARATION_TIME_MINUTES,
+                      (value) => handleChange('preparationTime', value)
+                    )
+                  }
+                  disabled={isSubmitting}
+                  aria-describedby='preparation-time-help'
+                />
+                <small id='preparation-time-help' className='form-help'>
+                  Optional time needed to prepare for this event (max{' '}
+                  {MAX_PREPARATION_TIME_MINUTES} minutes)
+                </small>
+              </div>
+            </div>
+
+            <div className='form-actions'>
+              {initialData?.id && onDelete && (
+                <button
+                  type='button'
+                  className='btn btn-danger'
+                  onClick={handleDelete}
+                  disabled={isSubmitting}
+                  aria-label='Delete event'
+                >
+                  <Icon name='trash2' />
+                  Delete
+                </button>
               )}
-            </button>
-          </div>
-        </form>
-      )}
-    </Modal>
+              <button
+                type='button'
+                className='btn btn-secondary'
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type='submit'
+                className='btn btn-primary'
+                disabled={isSubmitting}
+                aria-label={initialData?.id ? 'Save' : 'Schedule'}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Icon name='check' />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Icon name='check' />
+                    {initialData?.id ? 'Save' : 'Schedule'}
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+      {/* Accessible confirmation dialog for delete action 
+          NOTE: ConfirmDialog is rendered as a sibling to Modal (outside its FocusLock).
+          This is intentional - ConfirmDialog uses capture-phase Escape handling to
+          intercept events before Modal's bubble-phase listener, preventing the parent
+          modal from closing. Focus management works because ConfirmDialog auto-focuses
+          its cancel button on open, and Modal's Escape handler checks focus containment
+          before closing. This pattern works for simple confirm dialogs but may need
+          adjustment if more complex nested modal interactions are required. */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title='Confirm Delete'
+        message={`Are you sure you want to delete this ${formData.type || 'event'}? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        confirmText='Delete'
+        cancelText='Cancel'
+        confirmDanger={true}
+      />
+    </>
   )
 }
 
@@ -456,6 +573,7 @@ EventModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
+  onDelete: PropTypes.func,
   eventType: PropTypes.oneOf(VALID_EVENT_TYPES),
   initialData: PropTypes.shape({
     id: PropTypes.number,
@@ -463,7 +581,7 @@ EventModal.propTypes = {
     day: PropTypes.string,
     startTime: PropTypes.string,
     endTime: PropTypes.string,
-    type: PropTypes.string,
+    type: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]),
     travelTime: PropTypes.number,
     preparationTime: PropTypes.number
   })

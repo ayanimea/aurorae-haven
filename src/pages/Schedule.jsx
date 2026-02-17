@@ -57,13 +57,22 @@ Ask for clarification or preserve the existing structure.
 */
 
 /**
- * Schedule Page - Calendar view for events using React Big Calendar
+ * Schedule Page - Calendar view for events using FullCalendar
  * Manages routines, tasks, meetings, and habits with a clean, accessible interface
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
-import { format, parse, startOfWeek, getDay, addDays } from 'date-fns'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import FullCalendar from '@fullcalendar/react'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import interactionPlugin from '@fullcalendar/interaction'
+// NOTE: FullCalendar v6 still ships CSS that is typically imported explicitly
+// (for example: '@fullcalendar/core/index.css', '@fullcalendar/timegrid/index.css').
+// In this project we intentionally do NOT import FullCalendar's default CSS here.
+// Instead, '../assets/styles/fullcalendar-custom.css' provides the required styles,
+// redefining or replacing the stock styles to match our spec. See:
+// https://fullcalendar.io/docs/upgrading-from-v5 for background on v6 CSS entrypoints.
+import { format, startOfWeek, addDays } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
 import CustomToolbar from '../components/Schedule/CustomToolbar'
@@ -71,12 +80,20 @@ import SolidEventCard from '../components/Schedule/SolidEventCard'
 import TimeBands from '../components/Schedule/TimeBands'
 import ErrorBoundary from '../components/ErrorBoundary'
 import EventService from '../services/EventService'
-import { toRBCEvents, createEventFromSlot } from '../utils/eventAdapter'
+import {
+  toFullCalendarEvents,
+  createEventFromSlot
+} from '../utils/eventAdapter'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
-import '../assets/styles/schedule-rbc.css'
+import { isDevelopment } from '../utils/environment'
+import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
+
+// Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
+// With Vite, these modules are still included in the production build as separate
+// code-split chunks; the guard only controls whether they are requested at runtime.
+// This reduces initial bundle size but does NOT remove dev-only code from production.
 
 /* eslint-disable no-console */
 // Console statements are intentionally used throughout this file for production debugging
@@ -86,29 +103,26 @@ import '../components/ErrorBoundary.css'
 // to tree-shaking and ensures reliable error reporting in production environments.
 // See commit 511b225 for the migration from custom logger to console methods.
 
-// Format helper functions (module level to avoid recreation on each render)
-const createTimeFormatter = (use24HourFormat) => {
-  const timeFormat = use24HourFormat ? 'HH:mm' : 'h:mm a'
-  return ({ start, end }) =>
-    `${format(start, timeFormat)} - ${format(end, timeFormat)}`
-}
-
-// Configure date-fns localizer for React Big Calendar with European settings
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: (date) => startOfWeek(date, { weekStartsOn: 1 }), // Monday start (European)
-  getDay,
-  locales: {}
-})
-
 function Schedule() {
+  // FullCalendar ref for API access
+  const calendarRef = useRef(null)
+
+  // Toolbar ref for dynamic height measurement (aligns time-of-day bands)
+  const toolbarRef = useRef(null)
+
+  // WeakMap for storing context menu handlers (better memory management than DOM properties)
+  const contextMenuHandlersRef = useRef(new WeakMap())
+
+  // Success message timeout ref for cleanup on unmount
+  const successMessageTimeoutRef = useRef(null)
+
   // State management
-  const [view, setView] = useState('day')
+  const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
   const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -116,6 +130,9 @@ function Schedule() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [eventToDelete, setEventToDelete] = useState(null)
   const [showActionModal, setShowActionModal] = useState(false)
+
+  // Dev-only: Lazy-loaded FloatingDevButtons component
+  const [FloatingDevButtons, setFloatingDevButtons] = useState(null)
 
   // Get time format preference from settings (default to 24-hour)
   // Reactive settings: useState + storage listener for cross-tab updates
@@ -164,8 +181,24 @@ function Schedule() {
     }
   }, [])
 
-  // Convert events to RBC format
-  const rbcEvents = useMemo(() => toRBCEvents(events), [events])
+  // Dev-only: Dynamically load FloatingDevButtons to prevent bundling in production
+  useEffect(() => {
+    if (isDevelopment()) {
+      import('../components/Schedule/FloatingDevButtons')
+        .then((module) => {
+          setFloatingDevButtons(() => module.default)
+        })
+        .catch((err) => {
+          console.error('Failed to load FloatingDevButtons:', err)
+        })
+    }
+  }, [])
+
+  // Convert events to FullCalendar format
+  const fullCalendarEvents = useMemo(
+    () => toFullCalendarEvents(events),
+    [events]
+  )
 
   // Load events based on current view and date
   const loadEvents = useCallback(async () => {
@@ -204,48 +237,52 @@ function Schedule() {
     loadEvents()
   }, [loadEvents])
 
+  // Dynamically measure and sync toolbar height with TimeBands CSS variable
+  // This ensures time-of-day bands align with the time grid after layout changes
+  // Currently measures on mount, view changes, and window resize
+  // TODO: Consider ResizeObserver for more robust detection of toolbar height changes
+  // (e.g., when date label length changes, isLoading state changes, or fonts load)
+  useEffect(() => {
+    const updateToolbarHeight = () => {
+      if (toolbarRef.current) {
+        const height = toolbarRef.current.offsetHeight
+        document.documentElement.style.setProperty(
+          '--toolbar-height',
+          `${height}px`
+        )
+      }
+    }
+
+    // Measure on mount and view changes (toolbar may resize)
+    updateToolbarHeight()
+
+    // Re-measure on window resize (responsive toolbar height)
+    window.addEventListener('resize', updateToolbarHeight)
+    return () => window.removeEventListener('resize', updateToolbarHeight)
+  }, [view]) // Re-run when view changes as toolbar buttons may affect height
+
+  // Cleanup success message timeout on unmount to prevent setState on unmounted component
+  useEffect(() => {
+    return () => {
+      if (successMessageTimeoutRef.current) {
+        clearTimeout(successMessageTimeoutRef.current)
+        successMessageTimeoutRef.current = null
+      }
+    }
+  }, [])
+
   // Event handlers
-  const handleSelectSlot = useCallback((slotInfo) => {
+  const handleEventContextMenu = useCallback((event, x, y) => {
     try {
-      console.log('Slot selected:', slotInfo)
-      const eventData = createEventFromSlot(slotInfo)
-      if (eventData) {
-        setSelectedEvent(eventData)
-        setSelectedEventType(EVENT_TYPES.TASK)
-        setIsModalOpen(true)
-      } else {
-        console.warn('Failed to create event data from slot')
-      }
-    } catch (err) {
-      console.error('[Schedule] Error handling slot selection:', err)
-      setError('Failed to create event. Please try again.')
-    }
-  }, [])
-
-  const handleSelectEvent = useCallback((event) => {
-    try {
-      console.log('Event selected:', event)
-      const originalEvent = event.resource?.originalEvent
+      console.log('Event context menu:', event, x, y)
+      const originalEvent = event.resource?.originalEvent || event
       if (originalEvent) {
-        const isContextMenu =
-          event.resource?.isContextMenu ?? event.isContextMenu ?? false
-        setEventToDelete({ ...originalEvent, isContextMenu })
-        setShowActionModal(true)
-      } else {
-        console.warn('Event selected but no originalEvent found in resource')
-      }
-    } catch (err) {
-      console.error('[Schedule] Error handling event selection:', err)
-      setError('Failed to open event. Please try again.')
-    }
-  }, [])
-
-  const handleEventContextMenu = useCallback((event) => {
-    try {
-      console.log('Event context menu:', event)
-      const originalEvent = event.resource?.originalEvent
-      if (originalEvent) {
-        setEventToDelete({ ...originalEvent, isContextMenu: true })
+        setEventToDelete({
+          ...originalEvent,
+          isContextMenu: true,
+          contextMenuX: x,
+          contextMenuY: y
+        })
         setShowActionModal(true)
       } else {
         console.warn('Context menu triggered but no originalEvent found')
@@ -270,7 +307,7 @@ function Schedule() {
 
       if (isUpdate) {
         console.log('Updating event:', eventData.id)
-        await EventService.updateEvent(eventData.id, eventData)
+        await EventService.updateEvent(eventData)
       } else {
         console.log('Creating new event')
         await EventService.createEvent(eventData)
@@ -285,6 +322,17 @@ function Schedule() {
     }
   }
 
+  // Shared helper to delete an event by ID
+  const deleteEventById = async (eventId) => {
+    if (!eventId) {
+      throw new Error('Event ID is required for deletion')
+    }
+
+    console.log('Deleting event:', eventId)
+    await EventService.deleteEvent(eventId)
+    await loadEvents()
+  }
+
   const handleDeleteEvent = async () => {
     if (!eventToDelete) {
       console.warn('handleDeleteEvent called with no eventToDelete')
@@ -292,18 +340,21 @@ function Schedule() {
     }
 
     try {
-      if (!eventToDelete.id) {
-        throw new Error('Event ID is required for deletion')
-      }
-
-      console.log('Deleting event:', eventToDelete.id)
-      await EventService.deleteEvent(eventToDelete.id)
-      await loadEvents()
+      await deleteEventById(eventToDelete.id)
       setShowActionModal(false)
       setEventToDelete(null)
     } catch (err) {
       console.error('[Schedule] Failed to delete event:', err)
       setError('Failed to delete event. Please try again.')
+    }
+  }
+
+  const handleDeleteFromModal = async (eventId) => {
+    try {
+      await deleteEventById(eventId)
+    } catch (err) {
+      console.error('[Schedule] Failed to delete event from modal:', err)
+      throw err
     }
   }
 
@@ -348,74 +399,367 @@ function Schedule() {
     }
   }
 
-  // Calendar configuration
-  const views = useMemo(
-    () => ({
-      day: true,
-      week: true,
-      month: true
-    }),
-    []
+  /**
+   * Development-only: Populate calendar with fake events
+   */
+  const handlePopulateFakeData = useCallback(async () => {
+    if (!isDevelopment()) {
+      console.warn('Fake data population only available in development mode')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      setError('')
+      setSuccessMessage('')
+
+      console.log('Generating fake events...')
+      // Dynamic import reduces initial bundle size but doesn't eliminate code from production
+      // (runtime guard still allows bundler to create a separate chunk)
+      const { generateFakeEvents } = await import('../utils/fakeDataGenerator')
+      const fakeEvents = generateFakeEvents(new Date(), 14) // 2 weeks of data
+
+      console.log(`Creating ${fakeEvents.length} fake events...`)
+      let successCount = 0
+      let errorCount = 0
+
+      for (const eventData of fakeEvents) {
+        try {
+          await EventService.createEvent(eventData)
+          successCount++
+        } catch (err) {
+          console.error('Failed to create fake event:', err)
+          errorCount++
+        }
+      }
+
+      console.log(`Created ${successCount} events (${errorCount} errors)`)
+      await loadEvents()
+
+      if (successCount === 0) {
+        setError('❌ Failed to create fake events')
+      } else if (errorCount > 0) {
+        setError(
+          `⚠️ Created ${successCount} fake events, but ${errorCount} failed.`
+        )
+      } else {
+        if (successMessageTimeoutRef.current) {
+          clearTimeout(successMessageTimeoutRef.current)
+        }
+        setSuccessMessage(
+          `✅ Created ${successCount} fake events successfully!`
+        )
+        successMessageTimeoutRef.current = window.setTimeout(() => {
+          setSuccessMessage('')
+          successMessageTimeoutRef.current = null
+        }, 3000)
+      }
+    } catch (err) {
+      console.error('[Schedule] Error populating fake data:', err)
+      setError('Failed to populate fake data. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [loadEvents])
+
+  /**
+   * Development-only: Clear all events from calendar
+   */
+  const handleClearAllEvents = async () => {
+    if (!isDevelopment()) {
+      console.warn('Clear all events only available in development mode')
+      return
+    }
+
+    // Confirm before clearing
+    const confirmed = window.confirm(
+      '⚠️ Are you sure you want to delete ALL events?\n\n' +
+        'This action cannot be undone and will remove all events from the calendar.'
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      setError('')
+
+      console.log('Clearing all events...')
+
+      // Get all events first
+      const allEvents = await EventService.getAllEvents()
+      console.log(`Found ${allEvents.length} events to delete`)
+
+      let successCount = 0
+      let errorCount = 0
+
+      for (const event of allEvents) {
+        try {
+          await EventService.deleteEvent(event.id)
+          successCount++
+        } catch (err) {
+          console.error('Failed to delete event:', err)
+          errorCount++
+        }
+      }
+
+      console.log(`Deleted ${successCount} events (${errorCount} errors)`)
+      await loadEvents()
+
+      if (successCount > 0) {
+        if (successMessageTimeoutRef.current) {
+          clearTimeout(successMessageTimeoutRef.current)
+        }
+        setSuccessMessage(`✅ Cleared ${successCount} events successfully!`)
+        successMessageTimeoutRef.current = window.setTimeout(() => {
+          setSuccessMessage('')
+          successMessageTimeoutRef.current = null
+        }, 3000)
+      } else {
+        if (successMessageTimeoutRef.current) {
+          clearTimeout(successMessageTimeoutRef.current)
+        }
+        setSuccessMessage('ℹ️ No events to clear')
+        successMessageTimeoutRef.current = window.setTimeout(() => {
+          setSuccessMessage('')
+          successMessageTimeoutRef.current = null
+        }, 3000)
+      }
+    } catch (err) {
+      console.error('[Schedule] Error clearing all events:', err)
+      setError('Failed to clear events. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Compute min/max times for the schedule view (07:00 to 24:00)
+  const slotMinTime = '07:00:00'
+  const slotMaxTime = '24:00:00'
+
+  // Map normalized view names to FullCalendar view names
+  const getFullCalendarView = useCallback((normalizedView) => {
+    const viewMap = {
+      day: 'timeGridDay',
+      week: 'timeGridWeek',
+      month: 'dayGridMonth'
+    }
+    return viewMap[normalizedView] || 'timeGridDay'
+  }, [])
+
+  // Sync view state changes with FullCalendar
+  useEffect(() => {
+    const calendarApi = calendarRef.current?.getApi()
+    if (calendarApi) {
+      const fullCalendarView = getFullCalendarView(view)
+      if (calendarApi.view.type !== fullCalendarView) {
+        calendarApi.changeView(fullCalendarView)
+      }
+    }
+  }, [view, getFullCalendarView])
+
+  // Sync date state changes with FullCalendar
+  useEffect(() => {
+    const calendarApi = calendarRef.current?.getApi()
+    if (calendarApi) {
+      const currentDate = calendarApi.getDate()
+      // Only update if dates differ significantly (avoid infinite loops)
+      if (Math.abs(currentDate.getTime() - date.getTime()) > 1000) {
+        calendarApi.gotoDate(date)
+      }
+    }
+  }, [date])
+
+  // Handle view change from toolbar (receives FullCalendar view name, converts to normalized)
+  const handleViewChange = useCallback((newFullCalendarView) => {
+    const normalizedViewMap = {
+      timeGridDay: 'day',
+      timeGridWeek: 'week',
+      dayGridMonth: 'month'
+    }
+    const normalizedView = normalizedViewMap[newFullCalendarView] || 'day'
+    setView(normalizedView)
+  }, [])
+
+  // Handle event click (FullCalendar)
+  const handleEventClick = useCallback((clickInfo) => {
+    const event = clickInfo.event
+    const originalEvent = event.extendedProps?.originalEvent
+
+    if (originalEvent) {
+      setSelectedEvent(originalEvent)
+      setSelectedEventType(originalEvent.type || EVENT_TYPES.TASK)
+      setIsModalOpen(true)
+    }
+  }, [])
+
+  // Handle date select (FullCalendar equivalent of onSelectSlot)
+  const handleDateSelect = useCallback((selectInfo) => {
+    const slotInfo = {
+      start: selectInfo.start,
+      end: selectInfo.end
+    }
+    const newEvent = createEventFromSlot(slotInfo)
+    if (newEvent) {
+      setSelectedEvent(newEvent)
+      setSelectedEventType(newEvent.type || EVENT_TYPES.TASK)
+      setIsModalOpen(true)
+    }
+    // Clear the selection
+    selectInfo.view.calendar.unselect()
+  }, [])
+
+  // Handle event unmount for cleanup
+  const handleEventWillUnmount = useCallback((unmountInfo) => {
+    const el = unmountInfo.el
+    if (!el) return
+
+    // Remove event listener when event is unmounted
+    const handler = contextMenuHandlersRef.current.get(el)
+    if (typeof handler === 'function') {
+      el.removeEventListener('contextmenu', handler)
+      contextMenuHandlersRef.current.delete(el)
+    }
+  }, [])
+
+  // Handle event context menu (right-click) using WeakMap for better memory management
+  const handleEventMouseEnter = useCallback(
+    (mouseEnterInfo) => {
+      const el = mouseEnterInfo.el
+
+      if (!el) {
+        return
+      }
+
+      // Remove any existing contextmenu handler
+      const previousHandler = contextMenuHandlersRef.current.get(el)
+      if (typeof previousHandler === 'function') {
+        el.removeEventListener('contextmenu', previousHandler)
+      }
+
+      const contextMenuHandler = (e) => {
+        e.preventDefault()
+        const originalEvent = mouseEnterInfo.event.extendedProps?.originalEvent
+        if (originalEvent) {
+          handleEventContextMenu(originalEvent, e.clientX, e.clientY)
+        }
+      }
+
+      // Store the handler in WeakMap for proper garbage collection
+      contextMenuHandlersRef.current.set(el, contextMenuHandler)
+      el.addEventListener('contextmenu', contextMenuHandler)
+    },
+    [handleEventContextMenu]
   )
 
-  const formats = useMemo(() => {
-    const gutterFormat = use24HourFormat ? 'HH:mm' : 'h a'
-    const timeFormatter = createTimeFormatter(use24HourFormat)
-
-    return {
-      timeGutterFormat: gutterFormat,
-      eventTimeRangeFormat: timeFormatter,
-      agendaTimeRangeFormat: timeFormatter,
-      dayFormat: 'EEE dd',
-      dayHeaderFormat: 'EEEE, MMMM d',
-      monthHeaderFormat: 'MMMM yyyy'
+  // Cleanup all context menu handlers on component unmount
+  // Prevents memory leaks if component unmounts before eventWillUnmount fires
+  useEffect(() => {
+    return () => {
+      // Note: WeakMap doesn't support iteration, but handlers will be garbage collected
+      // when their associated DOM elements are removed
+      console.log(
+        '[Schedule] Component unmounting, context menu handlers will be garbage collected'
+      )
     }
-  }, [use24HourFormat])
+  }, [])
 
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
         <div className='schedule-container'>
           <div className='schedule-wrapper'>
-            <TimeBands />
-            <Calendar
-              localizer={localizer}
-              events={rbcEvents}
-              view={view}
-              views={views}
-              date={date}
-              onNavigate={setDate}
-              onView={setView}
-              onSelectSlot={handleSelectSlot}
-              onSelectEvent={handleSelectEvent}
-              selectable
-              popup
-              step={15}
-              timeslots={4}
-              min={new Date(2000, 0, 1, 7, 0)}
-              max={new Date(2000, 0, 2, 0, 0)}
-              formats={formats}
-              aria-label='Event calendar'
-              components={{
-                toolbar: (props) => (
-                  <CustomToolbar
-                    {...props}
-                    views={['day', 'week', 'month']}
-                    onScheduleEvent={handleScheduleEvent}
-                    EVENT_TYPES={EVENT_TYPES}
-                  />
-                ),
-                event: (props) => (
+            {/* Only render time-of-day bands for time grid views (not month view) */}
+            {(view === 'day' || view === 'week') && <TimeBands />}
+
+            {/* Custom Toolbar - Wrapped for dynamic height measurement */}
+            <div ref={toolbarRef}>
+              <CustomToolbar
+                date={date}
+                view={getFullCalendarView(view)}
+                views={['timeGridDay', 'timeGridWeek', 'dayGridMonth']}
+                onNavigate={(action) => {
+                  const calendarApi = calendarRef.current?.getApi()
+                  if (!calendarApi) return
+
+                  switch (action) {
+                    case 'PREV':
+                      calendarApi.prev()
+                      setDate(calendarApi.getDate())
+                      break
+                    case 'NEXT':
+                      calendarApi.next()
+                      setDate(calendarApi.getDate())
+                      break
+                    case 'TODAY':
+                      calendarApi.today()
+                      setDate(calendarApi.getDate())
+                      break
+                    default:
+                      break
+                  }
+                }}
+                onView={handleViewChange}
+                onScheduleEvent={handleScheduleEvent}
+                isLoading={isLoading}
+                EVENT_TYPES={EVENT_TYPES}
+              />
+            </div>
+
+            {/* FullCalendar - Wrapped for aria-label support */}
+            <div role='region' aria-label='Event calendar'>
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+                initialView={getFullCalendarView(view)}
+                initialDate={date}
+                events={fullCalendarEvents}
+                slotMinTime={slotMinTime}
+                slotMaxTime={slotMaxTime}
+                slotDuration='00:15:00'
+                slotLabelInterval='01:00:00'
+                allDaySlot={false}
+                headerToolbar={false}
+                height='auto'
+                expandRows={true}
+                slotLabelFormat={{
+                  hour: use24HourFormat ? '2-digit' : 'numeric',
+                  minute: '2-digit',
+                  hour12: !use24HourFormat,
+                  meridiem: use24HourFormat ? false : 'short'
+                }}
+                eventTimeFormat={{
+                  hour: use24HourFormat ? '2-digit' : 'numeric',
+                  minute: '2-digit',
+                  hour12: !use24HourFormat
+                }}
+                firstDay={1}
+                selectable={true}
+                selectMirror={true}
+                editable={false}
+                eventClick={handleEventClick}
+                select={handleDateSelect}
+                eventMouseEnter={handleEventMouseEnter}
+                eventWillUnmount={handleEventWillUnmount}
+                eventContent={(eventInfo) => (
                   <SolidEventCard
-                    {...props}
-                    onContextMenu={handleEventContextMenu}
+                    event={{
+                      ...eventInfo.event,
+                      title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
+                      resource: {
+                        type: eventInfo.event.extendedProps?.type,
+                        originalEvent:
+                          eventInfo.event.extendedProps?.originalEvent,
+                        preparationTime:
+                          eventInfo.event.extendedProps?.preparationTime,
+                        travelTime: eventInfo.event.extendedProps?.travelTime
+                      }
+                    }}
                   />
-                )
-              }}
-              eventPropGetter={(event) => ({
-                className: `event-${event.resource?.type || 'task'}`
-              })}
-            />
+                )}
+              />
+            </div>
           </div>
 
           {isLoading && (
@@ -436,6 +780,19 @@ function Schedule() {
               </button>
             </div>
           )}
+
+          {successMessage && (
+            <div className='success-message' role='status'>
+              {successMessage}
+              <button
+                onClick={() => setSuccessMessage('')}
+                className='success-dismiss'
+                aria-label='Dismiss message'
+              >
+                ×
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Event Modal */}
@@ -443,6 +800,7 @@ function Schedule() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onSave={handleSaveEvent}
+          onDelete={handleDeleteFromModal}
           eventType={selectedEventType}
           initialData={selectedEvent}
         />
@@ -457,6 +815,14 @@ function Schedule() {
             }}
             onEdit={handleEditEvent}
             onDelete={handleDeleteEvent}
+          />
+        )}
+
+        {/* Floating Dev Buttons - Only visible in development mode */}
+        {isDevelopment() && FloatingDevButtons && (
+          <FloatingDevButtons
+            onPopulateData={handlePopulateFakeData}
+            onClearData={handleClearAllEvents}
           />
         )}
       </div>

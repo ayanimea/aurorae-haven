@@ -1,10 +1,19 @@
 /**
- * Event Adapter - Transform EventService data to React Big Calendar format
- * Converts between our event data model and RBC's expected format
+ * Event Adapter - Transform EventService data to calendar format
+ * Converts between our event data model and calendar libraries' expected formats.
+ *
+ * Calendar library strategy:
+ * - Historically supported both React Big Calendar (RBC) and FullCalendar.
+ * - FullCalendar is now the primary and sole calendar library used by Schedule
+ *   and other production views.
+ * - RBC-specific adapters (toRBCEvent, toRBCEvents, and related helpers) are kept
+ *   only for test coverage and potential short-term rollback during migration and
+ *   are considered deprecated and candidates for eventual removal.
  */
 
-import { parseISO, parse, format, addDays } from 'date-fns'
+import { parse, format, addDays } from 'date-fns'
 import { createLogger } from './logger'
+import { VALID_EVENT_TYPES } from './scheduleConstants'
 
 const logger = createLogger('EventAdapter')
 
@@ -20,8 +29,9 @@ export const toRBCEvent = (event) => {
       return null
     }
 
-    // Parse the day (YYYY-MM-DD format)
-    const dayDate = parseISO(event.day)
+    // Parse the day (YYYY-MM-DD format) as local date to avoid UTC timezone shifts
+    // parseISO treats date-only strings as UTC, which can shift the day in non-UTC zones
+    const dayDate = parse(event.day, 'yyyy-MM-dd', new Date())
 
     // Validate the parsed date
     if (Number.isNaN(dayDate.getTime())) {
@@ -63,6 +73,67 @@ export const toRBCEvent = (event) => {
 }
 
 /**
+ * Convert our event format to FullCalendar format
+ * @param {Object} event - Event from EventService
+ * @returns {Object} Event in FullCalendar format
+ */
+export const toFullCalendarEvent = (event) => {
+  try {
+    if (!event) {
+      logger.error('toFullCalendarEvent: event is null or undefined')
+      return null
+    }
+
+    // Parse the day (YYYY-MM-DD format) as local date to avoid UTC timezone shifts
+    // parseISO treats date-only strings as UTC, which can shift the day in non-UTC zones
+    const dayDate = parse(event.day, 'yyyy-MM-dd', new Date())
+
+    // Validate the parsed date
+    if (Number.isNaN(dayDate.getTime())) {
+      return null
+    }
+
+    // Parse start and end times (HH:mm format)
+    const startTime = parse(event.startTime, 'HH:mm', dayDate)
+    let endTime = parse(event.endTime, 'HH:mm', dayDate)
+
+    // Validate parsed times
+    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+      return null
+    }
+
+    // Handle events that span midnight (endTime < startTime)
+    if (endTime < startTime) {
+      endTime = addDays(endTime, 1)
+    }
+
+    // Whitelist valid event types to prevent CSS class injection
+    // Only allow known types from VALID_EVENT_TYPES; fallback to 'task' for safety
+    const eventType = VALID_EVENT_TYPES.includes(event.type)
+      ? event.type
+      : 'task'
+
+    // FullCalendar event format
+    return {
+      id: event.id,
+      title: event.title,
+      start: startTime,
+      end: endTime,
+      classNames: [`event-${eventType}`],
+      extendedProps: {
+        type: eventType,
+        travelTime: event.travelTime || 0,
+        preparationTime: event.preparationTime || 0,
+        originalEvent: event
+      }
+    }
+  } catch (error) {
+    logger.error('Error converting event to FullCalendar format:', error, event)
+    return null
+  }
+}
+
+/**
  * Convert multiple events to RBC format
  * @param {Array} events - Array of events from EventService
  * @returns {Array} Array of events in RBC format
@@ -77,8 +148,22 @@ export const toRBCEvents = (events) => {
 }
 
 /**
+ * Convert multiple events to FullCalendar format
+ * @param {Array} events - Array of events from EventService
+ * @returns {Array} Array of events in FullCalendar format
+ */
+export const toFullCalendarEvents = (events) => {
+  if (!Array.isArray(events)) {
+    logger.error('toFullCalendarEvents: events is not an array', events)
+    return []
+  }
+
+  return events.map(toFullCalendarEvent).filter(Boolean)
+}
+
+/**
  * Create a new event from date/time selection
- * @param {Object} slotInfo - Slot info from RBC
+ * @param {Object} slotInfo - Slot/selection info from the calendar (React Big Calendar or FullCalendar)
  * @returns {Object} Event data for EventModal
  */
 export const createEventFromSlot = (slotInfo) => {
@@ -92,7 +177,7 @@ export const createEventFromSlot = (slotInfo) => {
       startTime,
       endTime,
       title: '',
-      type: 'task',
+      type: null, // Let EventModal determine type based on user selection
       travelTime: 0,
       preparationTime: 0
     }
