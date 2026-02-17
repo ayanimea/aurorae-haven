@@ -91,8 +91,9 @@ import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
 // Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
-// The bundler still emits a production chunk for these modules, but they are only
-// requested at runtime when isDevelopment() returns true.
+// With Vite, these modules are still included in the production build as separate
+// code-split chunks; the guard only controls whether they are requested at runtime.
+// This reduces initial bundle size but does NOT remove dev-only code from production.
 
 /* eslint-disable no-console */
 // Console statements are intentionally used throughout this file for production debugging
