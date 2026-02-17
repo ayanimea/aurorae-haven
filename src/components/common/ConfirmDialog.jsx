@@ -32,12 +32,14 @@ function ConfirmDialog({
 
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
+        e.preventDefault() // Prevent parent modals from also closing
         onCancel()
       }
     }
 
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
+    // Use capture phase to intercept Escape before parent Modal's bubble-phase listener
+    document.addEventListener('keydown', handleEscape, true)
+    return () => document.removeEventListener('keydown', handleEscape, true)
   }, [isOpen, onCancel])
 
   if (!isOpen) return null

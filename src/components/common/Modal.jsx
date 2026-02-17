@@ -40,6 +40,7 @@ function Modal({
   // Store onClose in a ref to avoid re-registering the keydown listener on every render
   const onCloseRef = useRef(onClose)
   const previousFocusRef = useRef(null)
+  const contentRef = useRef(null)
 
   // Keep ref up to date
   useEffect(() => {
@@ -59,7 +60,7 @@ function Modal({
       // FocusLock's own mechanism and any DOM updates have completed.
       let rafId = undefined
       let schedulingMethod = null // Track which method was used: 'raf', 'windowTimeout', or 'globalTimeout'
-      
+
       const attemptFocusRestore = () => {
         if (
           previousFocusRef.current &&
@@ -75,7 +76,7 @@ function Modal({
         }
         previousFocusRef.current = null
       }
-      
+
       // Use window.requestAnimationFrame for browser compatibility (SSR/test safety)
       const hasWindow = typeof window !== 'undefined'
       const hasRaf =
@@ -108,14 +109,39 @@ function Modal({
     }
   }, [isOpen])
 
-  // Handle Escape key at document level to ensure it always works
-  // Respects e.defaultPrevented so inner components can consume Escape for their own UX
+  // Handle Escape key at document level (bubbling phase) to ensure it always works
+  // Only close if focus is within this modal's content (prevents closing underlying modals
+  // when nested dialogs like ConfirmDialog are open on top)
+  // Respects e.defaultPrevented so inner components can consume Escape for their own UX.
+  // NOTE: Because this listener is attached to document in the bubble phase, nested dialogs
+  // rendered inside the modal content that also listen for Escape on document must intercept
+  // the event earlier (for example, with a capture-phase listener that calls e.preventDefault(),
+  // or by handling keydown on an element inside the nested dialog and calling e.stopPropagation()).
+  // Alternatively, render nested dialogs outside the modal content hierarchy (e.g., as siblings
+  // with their own overlay/portal) so they can manage Escape independently.
+  //
+  // FOCUS MANAGEMENT: This approach relies on focus being within the modal content (or on
+  // document.body when no focusable element exists). FocusLock typically ensures focus stays
+  // in the modal, but in edge cases focus may be on lock guards or the trigger element when
+  // the modal first opens. The noFocusSet check handles modals with no focusable content.
+  // Tests manually focus .modal-body to simulate typical FocusLock behavior.
   useEffect(() => {
     if (!isOpen) return
 
     const handleEscape = (e) => {
       if (e.key === 'Escape' && !e.defaultPrevented) {
-        onCloseRef.current()
+        // Only close this modal if focus is within its content
+        // Add null checks for robustness (activeElement can be null if focus is on body or not set)
+        // If no element has focus (document.body), treat it as eligible to close this modal
+        const hasFocusInModal =
+          document.activeElement &&
+          contentRef.current?.contains(document.activeElement)
+        const noFocusSet =
+          !document.activeElement || document.activeElement === document.body
+
+        if (hasFocusInModal || noFocusSet) {
+          onCloseRef.current()
+        }
       }
     }
 
@@ -138,6 +164,7 @@ function Modal({
       <FocusLock returnFocus>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
+          ref={contentRef}
           className={clsx('modal-content', className)}
           onClick={(e) => e.stopPropagation()}
           role='document'
