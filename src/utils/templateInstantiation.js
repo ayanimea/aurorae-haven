@@ -234,7 +234,8 @@ export async function instantiateTemplate(template) {
     `Instantiating template: ${template.title || '[untitled]'} (type: ${template.type})`
   )
 
-  // Defensive check: ensure template.type is valid
+  // Defensive check: ensure template.type is valid before routing
+  // Sub-functions will validate the specific type match (task vs routine)
   if (!template.type || typeof template.type !== 'string') {
     logger.error('Invalid template type:', template.type)
     throw new Error('Template must have a valid type field')

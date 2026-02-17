@@ -190,19 +190,21 @@ export function validateTemplateData(template) {
     return { valid: false, errors }
   }
 
+  // Normalize type once for use throughout validation
+  const normalizedType =
+    template.type && typeof template.type === 'string'
+      ? template.type.trim().toLowerCase()
+      : ''
+
   // Validate required field: type
   if (!template.type) {
     errors.push('Template type is required')
   } else if (typeof template.type !== 'string') {
     errors.push('Template type must be a string')
-  } else {
-    // Normalize type for validation (trim whitespace, lowercase)
-    const normalizedType = template.type.trim().toLowerCase()
-    if (!VALID_TEMPLATE_TYPES.includes(normalizedType)) {
-      errors.push(
-        `Template type must be one of: ${VALID_TEMPLATE_TYPES.join(', ')} (found: ${template.type})`
-      )
-    }
+  } else if (!VALID_TEMPLATE_TYPES.includes(normalizedType)) {
+    errors.push(
+      `Template type must be one of: ${VALID_TEMPLATE_TYPES.join(', ')} (found: ${template.type})`
+    )
   }
 
   // Validate required field: title
@@ -217,10 +219,6 @@ export function validateTemplateData(template) {
   }
 
   // Type-specific validation - use normalized type
-  const normalizedType =
-    template.type && typeof template.type === 'string'
-      ? template.type.trim().toLowerCase()
-      : ''
   if (normalizedType === 'routine') {
     // Validate steps for routine templates
     if (template.steps !== undefined && template.steps !== null) {
