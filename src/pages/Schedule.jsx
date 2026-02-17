@@ -90,8 +90,9 @@ import { isDevelopment } from '../utils/environment'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
-// Dev-only imports are dynamically loaded to prevent bundling in production
-// FloatingDevButtons and generateFakeEvents are only imported when __DEV__ is true
+// Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
+// The bundler still emits a production chunk for these modules, but they are only
+// requested at runtime when isDevelopment() returns true.
 
 /* eslint-disable no-console */
 // Console statements are intentionally used throughout this file for production debugging

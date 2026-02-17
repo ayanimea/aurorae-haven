@@ -169,10 +169,12 @@ describe('ConfirmDialog', () => {
       })
     })
 
-    it('focuses cancel button initially for safety with destructive actions', () => {
+    it('focuses cancel button initially for safety with destructive actions', async () => {
       render(<ConfirmDialog {...defaultProps} confirmDanger={true} />)
-      const cancelButton = screen.getByRole('button', { name: /cancel/i })
-      expect(cancelButton).toHaveFocus()
+      await waitFor(() => {
+        const cancelButton = screen.getByRole('button', { name: /cancel/i })
+        expect(cancelButton).toHaveFocus()
+      })
     })
   })
 
@@ -197,8 +199,6 @@ describe('ConfirmDialog', () => {
     })
 
     it('uses capture phase listener to intercept Escape before bubble phase', () => {
-      render(<ConfirmDialog {...defaultProps} />)
-
       // Track listener registration
       const addEventListenerSpy = jest.spyOn(document, 'addEventListener')
       const removeEventListenerSpy = jest.spyOn(
@@ -206,7 +206,7 @@ describe('ConfirmDialog', () => {
         'removeEventListener'
       )
 
-      // Re-render to trigger useEffect
+      // Render and rerender to trigger useEffect
       const { rerender } = render(
         <ConfirmDialog {...defaultProps} isOpen={false} />
       )

@@ -119,6 +119,12 @@ function Modal({
   // or by handling keydown on an element inside the nested dialog and calling e.stopPropagation()).
   // Alternatively, render nested dialogs outside the modal content hierarchy (e.g., as siblings
   // with their own overlay/portal) so they can manage Escape independently.
+  //
+  // FOCUS MANAGEMENT: This approach relies on focus being within the modal content (or on
+  // document.body when no focusable element exists). FocusLock typically ensures focus stays
+  // in the modal, but in edge cases focus may be on lock guards or the trigger element when
+  // the modal first opens. The noFocusSet check handles modals with no focusable content.
+  // Tests manually focus .modal-body to simulate typical FocusLock behavior.
   useEffect(() => {
     if (!isOpen) return
 

@@ -547,7 +547,14 @@ function EventModal({
           </form>
         )}
       </Modal>
-      {/* Accessible confirmation dialog for delete action */}
+      {/* Accessible confirmation dialog for delete action 
+          NOTE: ConfirmDialog is rendered as a sibling to Modal (outside its FocusLock).
+          This is intentional - ConfirmDialog uses capture-phase Escape handling to
+          intercept events before Modal's bubble-phase listener, preventing the parent
+          modal from closing. Focus management works because ConfirmDialog auto-focuses
+          its cancel button on open, and Modal's Escape handler checks focus containment
+          before closing. This pattern works for simple confirm dialogs but may need
+          adjustment if more complex nested modal interactions are required. */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         title='Confirm Delete'
