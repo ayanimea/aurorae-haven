@@ -63,6 +63,13 @@ function Library() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState(null)
 
+  // Toast notification helper
+  const showToastNotification = (message) => {
+    setToastMessage(message)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }
+
   // Load templates on mount
   useEffect(() => {
     const loadTemplates = async () => {
@@ -138,12 +145,6 @@ function Library() {
 
     return result
   }, [templates, searchQuery, sortBy, filters])
-
-  const showToastNotification = (message) => {
-    setToastMessage(message)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }
 
   const handleNewTemplate = () => {
     setEditingTemplate(null)

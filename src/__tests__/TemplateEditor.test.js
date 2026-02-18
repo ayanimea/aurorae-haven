@@ -184,7 +184,7 @@ describe('TemplateEditor', () => {
 
     // Just submit without changes
     const submitButton = screen.getByRole('button', {
-      name: /save changes/i
+      name: /update template/i
     })
     fireEvent.click(submitButton)
 

@@ -10,12 +10,14 @@ import Library from '../pages/Library'
 import * as templatesManager from '../utils/templatesManager'
 import * as indexedDBManager from '../utils/indexedDBManager'
 import * as predefinedTemplates from '../utils/predefinedTemplates'
+import * as templateMigration from '../utils/templateMigration'
 
 // Mock the modules
 jest.mock('../utils/templatesManager')
 jest.mock('../utils/indexedDBManager')
 jest.mock('../utils/predefinedTemplates')
 jest.mock('../utils/templateInstantiation')
+jest.mock('../utils/templateMigration')
 jest.mock('../components/Library/TemplateCard', () => {
   return function MockTemplateCard({ template }) {
     return <div data-testid={`template-${template.id}`}>{template.title}</div>
@@ -79,6 +81,11 @@ describe('Library Page', () => {
     predefinedTemplates.seedPredefinedTemplates.mockResolvedValue({
       added: 0,
       skipped: 0
+    })
+    templateMigration.needsTemplateMigration.mockResolvedValue(false)
+    templateMigration.fixCorruptedTemplateTypes.mockResolvedValue({
+      fixed: 0,
+      errors: []
     })
     templatesManager.getAllTemplates.mockResolvedValue([])
     templatesManager.saveTemplate.mockResolvedValue('new-template-id')
