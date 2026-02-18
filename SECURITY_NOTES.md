@@ -11,13 +11,13 @@
 - CVE: GHSA-2g4f-4pwh-qvx6
 - Severity: Moderate
 - Vulnerability: ReDoS when using `$data` option
-- Affected Package: ajv@6.12.6 (transitive dependency of eslint@9.39.2)
+- Affected Package: `ajv@6.12.6` (transitive dependency of `eslint@9.39.2`)
 
-**Note on Direct ajv Dependency**: This project also includes ajv@8.18.0 as a direct dev dependency for JSON schema validation in tests and tooling. The ajv@8.18.0 version is secure and does not have this vulnerability. The vulnerability only affects the older ajv@6.12.6 version used internally by ESLint.
+**Note on Direct ajv Dependency**: This project also includes `ajv@8.18.0` as a direct dev dependency for JSON schema validation in tests and tooling. The `ajv@8.18.0` version is secure and does not have this vulnerability. The vulnerability only affects the older `ajv@6.12.6` version used internally by ESLint.
 
 **Why Not Fixed**:
 
-- The fix requires `npm audit fix --force` which would downgrade ESLint from v9.39.2 to v4.1.1
+- The fix requires `npm audit fix --force` which would downgrade ESLint from `v9.39.2` to `v4.1.1`
 - This is a 5-major-version downgrade that would break our entire linting configuration
 - ajv 8.x introduces breaking API changes incompatible with ESLint 9.x's internal usage
 
@@ -39,7 +39,7 @@
 
 - Monitor for ESLint updates that resolve this dependency issue
 - Run `npm audit` regularly to detect any new vulnerabilities
-- Production code is not affected as ajv@6.12.6 is not included in the build
+- Production code is not affected as `ajv@6.12.6` is not included in the build
 
 **Future Action**:
 
