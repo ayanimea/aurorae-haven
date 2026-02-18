@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-test('Reproduce routine bug: Click Use on routine template', async ({ page }) => {
-  // Enable console logging
+test('Verify routine templates are created as routines, not tasks', async ({ page, context }, testInfo) => {
+  // Enable console logging for debugging
   const logs = [];
   page.on('console', msg => {
     const text = msg.text();
@@ -11,118 +11,128 @@ test('Reproduce routine bug: Click Use on routine template', async ({ page }) =>
 
   // Step 1: Navigate to the app
   await page.goto('http://localhost:4173/');
-  await page.waitForTimeout(2000);
+  await page.waitForLoadState('networkidle');
 
   // Step 2: Go to Library tab directly
   console.log('\n=== Going to Library tab ===');
   await page.click('text=Library');
-  await page.waitForTimeout(2000);
-  await page.screenshot({ path: '/tmp/01-library-page.png', fullPage: true });
+  await page.waitForLoadState('networkidle');
+  
+  // Take screenshot using Playwright's test info for proper path handling
+  await page.screenshot({ 
+    path: testInfo.outputPath('01-library-page.png'), 
+    fullPage: true 
+  });
 
-  // Step 3: Look for routine templates
+  // Step 3: Find and verify routines section exists
   console.log('\n=== Looking for routine templates ===');
   
-  // Find routines section
-  const routinesHeading = await page.locator('h2:has-text("Routines")');
-  if (await routinesHeading.isVisible({ timeout: 5000 })) {
-    console.log('✓ Found Routines section');
-    
-    // Count routine templates
-    const routineSection = routinesHeading.locator('..').locator('..');
-    const routineCards = await routineSection.locator('.template-card').count();
-    console.log(`Found ${routineCards} routine template cards`);
-    
-    // Find first "Use" button in routines section
-    const useButton = routineSection.locator('button:has-text("Use")').first();
-    
-    if (await useButton.isVisible({ timeout: 2000 })) {
-      console.log('\n=== Clicking Use button on routine ===');
-      
-      // Get the routine title before clicking
-      const card = useButton.locator('../..');
-      const routineTitle = await card.locator('.template-title').textContent();
-      const routineType = await card.locator('.template-type').textContent();
-      console.log('Routine title:', routineTitle);
-      console.log('Routine type badge:', routineType);
-      
-      await useButton.click();
-      await page.waitForTimeout(3000);
-      await page.screenshot({ path: '/tmp/02-after-use-click.png', fullPage: true });
-      
-      // Check what toast message appears
-      const toast = page.locator('.toast, [role="alert"], .notification');
-      if (await toast.isVisible({ timeout: 3000 })) {
-        const toastText = await toast.textContent();
-        console.log('\nToast message:', toastText);
-        
-        if (toastText.includes('Task created')) {
-          console.log('\n❌ BUG CONFIRMED: Toast says "Task created" for routine!');
-        } else if (toastText.includes('Routine created')) {
-          console.log('\n✅ CORRECT: Toast says "Routine created"');
-        }
-      } else {
-        console.log('No toast message found');
-      }
-      
-      // Check console logs for our debug messages
-      console.log('\n=== Checking for debug logs ===');
-      const handleUseTemplateLogs = logs.filter(l => l.includes('handleUseTemplate') || l.includes('Template type:'));
-      if (handleUseTemplateLogs.length > 0) {
-        console.log('Debug logs found:');
-        handleUseTemplateLogs.forEach(log => console.log('  ', log));
-      }
-      
-      // Check localStorage for tasks
-      const localStorageTasks = await page.evaluate(() => {
-        const tasks = localStorage.getItem('aurorae_tasks');
-        return tasks ? JSON.parse(tasks) : null;
-      });
-      
-      if (localStorageTasks) {
-        const allTasks = [
-          ...(localStorageTasks.urgent_important || []),
-          ...(localStorageTasks.not_urgent_important || []),
-          ...(localStorageTasks.urgent_not_important || []),
-          ...(localStorageTasks.not_urgent_not_important || [])
-        ];
-        console.log('\nTasks in localStorage:', allTasks.length);
-        const latestTask = allTasks[allTasks.length - 1];
-        if (latestTask) {
-          console.log('Latest task text:', latestTask.text || latestTask.title);
-          if (latestTask.text && latestTask.text.includes(routineTitle)) {
-            console.log('❌ BUG: Routine was saved as a TASK in localStorage!');
-          }
-        }
-      }
-      
-      // Check IndexedDB for routines
-      const routinesData = await page.evaluate(async () => {
-        return new Promise((resolve) => {
-          const request = indexedDB.open('aurorae_haven_db', 3);
-          request.onsuccess = (event) => {
-            const db = event.target.result;
-            const transaction = db.transaction(['routines'], 'readonly');
-            const store = transaction.objectStore('routines');
-            const getAllRequest = store.getAll();
-            getAllRequest.onsuccess = () => {
-              resolve(getAllRequest.result);
-            };
-            getAllRequest.onerror = () => resolve([]);
-          };
-          request.onerror = () => resolve([]);
-        });
-      });
-      
-      console.log('Routines in IndexedDB:', routinesData.length);
-      if (routinesData.length > 0) {
-        const latestRoutine = routinesData[routinesData.length - 1];
-        console.log('Latest routine name:', latestRoutine.name);
-      }
-      
-    } else {
-      console.log('❌ No Use button found in Routines section');
-    }
-  } else {
-    console.log('❌ Routines section not found');
+  const routinesHeading = page.locator('h2:has-text("Routines")');
+  await expect(routinesHeading).toBeVisible({ timeout: 5000 });
+  console.log('✓ Found Routines section');
+  
+  // Count routine templates
+  const routineSection = routinesHeading.locator('..').locator('..');
+  const routineCards = routineSection.locator('.template-card');
+  const cardCount = await routineCards.count();
+  console.log(`Found ${cardCount} routine template cards`);
+  expect(cardCount).toBeGreaterThan(0);
+  
+  // Step 4: Get routine info before clicking
+  const firstCard = routineCards.first();
+  const routineTitle = await firstCard.locator('.template-title').textContent();
+  const routineType = await firstCard.locator('.template-type').textContent();
+  console.log('Routine title:', routineTitle);
+  console.log('Routine type badge:', routineType);
+  
+  // Verify the type badge shows 'routine'
+  expect(routineType?.toLowerCase()).toBe('routine');
+  
+  // Step 5: Click the "Use" button
+  const useButton = firstCard.locator('button:has-text("Use")');
+  await expect(useButton).toBeVisible({ timeout: 2000 });
+  console.log('\n=== Clicking Use button on routine ===');
+  
+  await useButton.click();
+  
+  // Step 6: Wait for and verify the toast message
+  const toast = page.locator('.toast, [role="alert"], .notification');
+  await expect(toast).toBeVisible({ timeout: 5000 });
+  
+  const toastText = await toast.textContent();
+  console.log('\nToast message:', toastText);
+  
+  // Take screenshot after action
+  await page.screenshot({ 
+    path: testInfo.outputPath('02-after-use-click.png'), 
+    fullPage: true 
+  });
+  
+  // ASSERTION: Verify toast says "Routine created", not "Task created"
+  expect(toastText).toContain('Routine created');
+  expect(toastText).not.toContain('Task created');
+  console.log('✅ CORRECT: Toast says "Routine created"');
+  
+  // Step 7: Check debug logs if available
+  console.log('\n=== Checking for debug logs ===');
+  const handleUseTemplateLogs = logs.filter(l => 
+    l.includes('handleUseTemplate') || l.includes('Template type:')
+  );
+  if (handleUseTemplateLogs.length > 0) {
+    console.log('Debug logs found:');
+    handleUseTemplateLogs.forEach(log => console.log('  ', log));
   }
+  
+  // Step 8: Verify routine is NOT in localStorage tasks
+  const localStorageTasks = await page.evaluate(() => {
+    const tasks = localStorage.getItem('aurorae_tasks');
+    return tasks ? JSON.parse(tasks) : null;
+  });
+  
+  if (localStorageTasks) {
+    const allTasks = [
+      ...(localStorageTasks.urgent_important || []),
+      ...(localStorageTasks.not_urgent_important || []),
+      ...(localStorageTasks.urgent_not_important || []),
+      ...(localStorageTasks.not_urgent_not_important || [])
+    ];
+    console.log('\nTasks in localStorage:', allTasks.length);
+    
+    // ASSERTION: Routine should NOT appear in tasks
+    const routineInTasks = allTasks.some(task => 
+      (task.text || task.title || '').includes(routineTitle || '')
+    );
+    expect(routineInTasks).toBe(false);
+    console.log('✅ CORRECT: Routine NOT found in localStorage tasks');
+  }
+  
+  // Step 9: Verify routine IS in IndexedDB
+  const routinesData = await page.evaluate(async () => {
+    return new Promise((resolve) => {
+      const request = indexedDB.open('aurorae_haven_db', 3);
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['routines'], 'readonly');
+        const store = transaction.objectStore('routines');
+        const getAllRequest = store.getAll();
+        getAllRequest.onsuccess = () => {
+          resolve(getAllRequest.result);
+        };
+        getAllRequest.onerror = () => resolve([]);
+      };
+      request.onerror = () => resolve([]);
+    });
+  });
+  
+  console.log('Routines in IndexedDB:', routinesData.length);
+  
+  // ASSERTION: At least one routine should exist in IndexedDB
+  expect(routinesData.length).toBeGreaterThan(0);
+  
+  // ASSERTION: The routine we just created should be in IndexedDB
+  const createdRoutine = routinesData.find(r => 
+    (r.name || r.title || '').includes(routineTitle || '')
+  );
+  expect(createdRoutine).toBeDefined();
+  console.log('✅ CORRECT: Routine found in IndexedDB:', createdRoutine?.name);
 });
