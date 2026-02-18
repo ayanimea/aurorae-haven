@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
 import { formatTime } from '../utils/routineRunner'
-import { Link } from 'react-router-dom'
 import { exportRoutines, importRoutines } from '../utils/routinesManager'
 import { saveTemplate } from '../utils/templatesManager'
+import { instantiateTemplate } from '../utils/templateInstantiation'
 import { createLogger } from '../utils/logger'
 import ConfirmModal from '../components/common/ConfirmModal'
 import Icon from '../components/common/Icon'
+import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
 
 const logger = createLogger('Routines')
 
@@ -18,6 +19,9 @@ function Routines() {
 
   // TAB-RTN-18: Cancel confirmation modal state
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  // Routine creation modal state
+  const [showCreationModal, setShowCreationModal] = useState(false)
 
   // TAB-RTN-45: Reduced motion detection
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
@@ -231,9 +235,22 @@ function Routines() {
     }
   }
 
-  // Handle routine selection (would come from Library via state/context in production)
-  // For now, user needs to go to Library to select a routine
-  // In future, could open a modal to select from available routines
+  // Handle template selection from modal
+  const handleSelectTemplate = async (template) => {
+    try {
+      logger.log('Selected template:', template.title)
+      // Instantiate the template to create a routine
+      await instantiateTemplate(template)
+      showToastNotification('Routine created from template')
+
+      // Reload the page to show the new routine
+      // In production, this would be handled via state updates
+      setTimeout(() => window.location.reload(), 1000)
+    } catch (error) {
+      logger.error('Failed to create routine from template:', error)
+      showToastNotification('Failed to create routine: ' + error.message)
+    }
+  }
 
   return (
     <>
@@ -426,7 +443,7 @@ function Routines() {
         </div>
       )}
 
-      {/* No routine selected - prompt to select from Library */}
+      {/* No routine selected - prompt to create new routine */}
       {!runner.state || !runner.state.isRunning ? (
         <div className='card'>
           <div className='card-b'>
@@ -444,12 +461,15 @@ function Routines() {
                 className='small'
                 style={{ marginTop: '8px', marginBottom: '16px' }}
               >
-                Select a routine from the Library to get started
+                Create a new routine to get started
               </p>
-              <Link to='/library' className='btn btn-primary'>
-                <Icon name='file' />
-                Browse Routines
-              </Link>
+              <button
+                className='btn btn-primary'
+                onClick={() => setShowCreationModal(true)}
+              >
+                <Icon name='plus' />
+                Create New Routine
+              </button>
             </div>
           </div>
         </div>
@@ -674,6 +694,13 @@ function Routines() {
           onClose={() => setShowCancelConfirm(false)}
         />
       )}
+
+      {/* Routine Creation Modal */}
+      <RoutineCreationModal
+        isOpen={showCreationModal}
+        onClose={() => setShowCreationModal(false)}
+        onSelectTemplate={handleSelectTemplate}
+      />
     </>
   )
 }
