@@ -6,7 +6,12 @@ This document describes the implementation of the global navigation bar for Auro
 
 ## Purpose
 
-Provide global navigation between major tabs (Tasks, Routines, Habits, Schedule, Brain Dump, Library, Settings). The navbar remains visible, consistent, and responsive across all devices.
+Provide global navigation between major tabs (Tasks, Routines, Habits, Schedule, Brain Dump, Stats, Settings). The navbar remains visible, consistent, and responsive across all devices.
+
+**Navigation Update (2026)**: The Library tab has been removed from the main navigation. Library access is now provided through:
+
+- Settings page (Template Library section)
+- Routines page (inline modal for creating routines from templates)
 
 ## Structure
 
@@ -53,15 +58,17 @@ The navbar is divided into three distinct zones:
 
 ### TAB-NAV-06: Tab List
 
-Seven primary navigation tabs:
+Six primary navigation tabs (Library removed from main navigation in 2026):
 
 1. **Tasks** - Task management with Eisenhower matrix
 2. **Routines** - Routines with timers
 3. **Habits** - Habit tracking and streaks
 4. **Schedule** - Daily schedule and time blocks
 5. **Brain Dump** - Quick note capture
-6. **Library** - Stats and analytics (formerly Stats)
+6. **Stats** - Stats and analytics
 7. **Settings** - App configuration
+
+**Note**: Library is now accessible via Settings page or inline in Routines workflow.
 
 ### TAB-NAV-07: Tab Styling
 
