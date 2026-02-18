@@ -12,9 +12,17 @@ import { createLogger } from './logger'
 
 const logger = createLogger('TemplateMigration')
 
+// LocalStorage key for migration completion flag
+const MIGRATION_FLAG_KEY = 'aurorae_templates_migrated_v1'
+
 /**
  * Diagnostic: Check if any templates have incorrect types
- * @returns {Promise<Object>} Diagnostic results
+ * 
+ * Note: This only checks predefined templates. Custom user-created templates
+ * (those not in the predefined list) are considered correct and excluded from
+ * migration. Only predefined templates with mismatched types are flagged as corrupted.
+ * 
+ * @returns {Promise<Object>} Diagnostic results with counts and details
  */
 export async function diagnoseTemplateTypes() {
   const results = {
@@ -39,7 +47,8 @@ export async function diagnoseTemplateTypes() {
       const predefined = predefinedMap.get(stored.id)
       
       if (!predefined) {
-        // Custom template created by user
+        // Custom template created by user - not part of migration
+        // These are considered correct since they're user-defined
         results.correct++
         continue
       }
@@ -81,7 +90,11 @@ export async function diagnoseTemplateTypes() {
 
 /**
  * Fix corrupted template types by comparing with predefined templates
- * @returns {Promise<Object>} Fix results
+ * 
+ * Note: This only fixes predefined templates. Custom user templates are not modified.
+ * After successful fix, sets a localStorage flag to skip future checks.
+ * 
+ * @returns {Promise<Object>} Fix results with count of fixed templates and any errors
  */
 export async function fixCorruptedTemplateTypes() {
   const results = {
@@ -96,6 +109,8 @@ export async function fixCorruptedTemplateTypes() {
 
     if (diagnosis.corrupted.length === 0) {
       logger.log('No corrupted templates found. Nothing to fix.')
+      // Set flag to avoid future checks
+      localStorage.setItem(MIGRATION_FLAG_KEY, 'true')
       return results
     }
 
@@ -143,6 +158,12 @@ export async function fixCorruptedTemplateTypes() {
     }
 
     logger.log(`Fix complete: ${results.fixed} fixed, ${results.errors.length} errors`)
+    
+    // Set flag to avoid future checks if all fixes succeeded
+    if (results.errors.length === 0) {
+      localStorage.setItem(MIGRATION_FLAG_KEY, 'true')
+    }
+    
     return results
 
   } catch (error) {
@@ -152,15 +173,35 @@ export async function fixCorruptedTemplateTypes() {
 }
 
 /**
- * Check if templates need migration (quick check)
+ * Check if templates need migration (quick check with caching)
+ * 
+ * Performance optimization: Checks localStorage flag first. If migration was
+ * already completed, returns false immediately without querying IndexedDB.
+ * This avoids unnecessary work on every Library page load.
+ * 
  * @returns {Promise<boolean>} True if migration is needed
  */
 export async function needsTemplateMigration() {
   try {
+    // Quick check: if migration was already done, skip
+    const migrationComplete = localStorage.getItem(MIGRATION_FLAG_KEY)
+    if (migrationComplete === 'true') {
+      return false
+    }
+    
+    // Otherwise, perform full diagnostic
     const diagnosis = await diagnoseTemplateTypes()
     return diagnosis.corrupted.length > 0
   } catch (error) {
     logger.error('Error checking if migration is needed:', error)
     return false
   }
+}
+
+/**
+ * Reset migration flag (for testing or forcing re-check)
+ * @internal
+ */
+export function resetMigrationFlag() {
+  localStorage.removeItem(MIGRATION_FLAG_KEY)
 }

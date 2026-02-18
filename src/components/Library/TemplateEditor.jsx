@@ -24,12 +24,12 @@ function convertToNumberOrNull(value) {
   
   // If already a number, return it as-is
   if (typeof value === 'number') {
-    return isNaN(value) ? null : value
+    return Number.isNaN(value) ? null : value
   }
   
   // Convert string to number
   const num = Number(value)
-  return isNaN(num) ? null : num
+  return Number.isNaN(num) ? null : num
 }
 
 function TemplateEditor({ template, onSave, onClose }) {

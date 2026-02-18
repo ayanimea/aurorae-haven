@@ -10,7 +10,7 @@ test('Verify routine templates are created as routines, not tasks', async ({ pag
   });
 
   // Step 1: Navigate to the app
-  await page.goto('http://localhost:4173/');
+  await page.goto('/');
   await page.waitForLoadState('networkidle');
 
   // Step 2: Go to Library tab directly

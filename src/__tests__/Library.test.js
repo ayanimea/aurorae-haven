@@ -265,4 +265,50 @@ describe('Library Page', () => {
     // that the TemplateEditor component handles conversion
     // This is more of a documentation test showing the issue exists
   })
+
+  test('should show toast notification when templates are migrated', async () => {
+    // Arrange - Migration is needed and will fix 3 templates
+    templateMigration.needsTemplateMigration.mockResolvedValue(true)
+    templateMigration.fixCorruptedTemplateTypes.mockResolvedValue({
+      fixed: 3,
+      errors: []
+    })
+    templatesManager.getAllTemplates.mockResolvedValue([])
+
+    // Act
+    render(<Library />)
+
+    // Assert - Wait for migration to complete and toast to appear
+    await waitFor(() => {
+      expect(templateMigration.needsTemplateMigration).toHaveBeenCalled()
+      expect(templateMigration.fixCorruptedTemplateTypes).toHaveBeenCalled()
+    })
+
+    // Verify toast message appears (checking in the document)
+    await waitFor(() => {
+      expect(screen.getByText(/Fixed 3 templates with incorrect types/)).toBeInTheDocument()
+    })
+  })
+
+  test('should not show toast when migration finds no issues', async () => {
+    // Arrange - Migration check returns false (no issues)
+    templateMigration.needsTemplateMigration.mockResolvedValue(false)
+    templatesManager.getAllTemplates.mockResolvedValue([])
+
+    // Act
+    render(<Library />)
+
+    // Wait for component to fully load
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Loading your template library...')
+      ).not.toBeInTheDocument()
+    })
+
+    // Assert - fixCorruptedTemplateTypes should NOT be called
+    expect(templateMigration.fixCorruptedTemplateTypes).not.toHaveBeenCalled()
+    
+    // Verify no toast appears
+    expect(screen.queryByText(/Fixed.*templates/)).not.toBeInTheDocument()
+  })
 })
