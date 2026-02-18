@@ -57,13 +57,13 @@ describe('templateMigration', () => {
         { id: 'routine-morning', title: 'Morning Routine', type: 'task' }, // WRONG!
         { id: 'task-email', title: 'Email Task', type: 'task' }
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' },
         { id: 'task-email', title: 'Email Task', type: 'task' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
 
       // Act
       const result = await diagnoseTemplateTypes()
@@ -86,13 +86,13 @@ describe('templateMigration', () => {
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' },
         { id: 'custom-user-template', title: 'My Custom Template', type: 'task' }
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
         // custom-user-template is NOT in predefined list
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
 
       // Act
       const result = await diagnoseTemplateTypes()
@@ -108,13 +108,13 @@ describe('templateMigration', () => {
       const storedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' },
         { id: 'routine-evening', title: 'Evening Routine', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
 
       // Act
       const result = await diagnoseTemplateTypes()
@@ -149,13 +149,13 @@ describe('templateMigration', () => {
         { id: 'template-1', title: 'Template 1', type: null },
         { id: 'template-2', title: 'Template 2', type: undefined }
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'template-1', title: 'Template 1', type: 'task' },
         { id: 'template-2', title: 'Template 2', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
 
       // Act
       const result = await diagnoseTemplateTypes()
@@ -180,13 +180,13 @@ describe('templateMigration', () => {
         { id: 'routine-morning', title: 'Morning Routine', type: 'task' }, // WRONG!
         { id: 'routine-evening', title: 'Evening Routine', type: 'task' }  // WRONG!
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' },
         { id: 'routine-evening', title: 'Evening Routine', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
       templatesManager.updateTemplate.mockResolvedValue(undefined)
 
       // Act
@@ -211,12 +211,12 @@ describe('templateMigration', () => {
       const storedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
 
       // Act
       const result = await fixCorruptedTemplateTypes()
@@ -235,13 +235,13 @@ describe('templateMigration', () => {
         { id: 'routine-morning', title: 'Morning Routine', type: 'task' },
         { id: 'routine-evening', title: 'Evening Routine', type: 'task' }
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' },
         { id: 'routine-evening', title: 'Evening Routine', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
       // First update succeeds, second fails
       templatesManager.updateTemplate
         .mockResolvedValueOnce(undefined)
@@ -266,12 +266,12 @@ describe('templateMigration', () => {
       const storedTemplates = [
         { id: 'unknown-template', title: 'Unknown', type: 'task' }
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
 
       // Act
       const result = await fixCorruptedTemplateTypes()
@@ -309,12 +309,12 @@ describe('templateMigration', () => {
       const storedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'task' } // WRONG!
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
 
       // Act
       const result = await needsTemplateMigration()
@@ -328,12 +328,12 @@ describe('templateMigration', () => {
       const storedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(storedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
 
       // Act
       const result = await needsTemplateMigration()
@@ -373,12 +373,12 @@ describe('templateMigration', () => {
       const corruptedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'task' } // WRONG!
       ]
-      const mockPredefinedTemplates = [
+      const predefinedTemplates = [
         { id: 'routine-morning', title: 'Morning Routine', type: 'routine' }
       ]
 
       templatesManager.getAllTemplates.mockResolvedValue(corruptedTemplates)
-      predefinedTemplates.getPredefinedTemplates.mockReturnValue(mockPredefinedTemplates)
+      predefinedTemplates.getPredefinedTemplates.mockReturnValue(predefinedTemplates)
       templatesManager.updateTemplate.mockResolvedValue(undefined)
 
       // Step 1: Check if migration needed
@@ -396,8 +396,8 @@ describe('templateMigration', () => {
       const needsMigrationAgain = await needsTemplateMigration()
       expect(needsMigrationAgain).toBe(false)
       
-      // Verify getAllTemplates was called twice (step 1 and step 2), not in step 4 due to flag
-      expect(templatesManager.getAllTemplates).toHaveBeenCalledTimes(2)
+      // Verify getAllTemplates was only called during diagnosis, not after flag was set
+      expect(templatesManager.getAllTemplates).toHaveBeenCalledTimes(1)
     })
   })
 })
