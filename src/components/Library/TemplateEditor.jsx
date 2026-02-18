@@ -7,6 +7,9 @@
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('TemplateEditor')
 
 /**
  * Convert a numeric string value to a number or null
@@ -22,6 +25,7 @@ function convertToNumberOrNull(value) {
 }
 
 function TemplateEditor({ template, onSave, onClose }) {
+  logger.log('TemplateEditor opened with template:', template)
   const [formData, setFormData] = useState(() => {
     if (template) {
       return {
@@ -104,7 +108,12 @@ function TemplateEditor({ template, onSave, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (!validateForm()) return
+    logger.log('Form submitted with data:', formData)
+
+    if (!validateForm()) {
+      logger.warn('Form validation failed')
+      return
+    }
 
     // Convert numeric fields to numbers (or null if empty)
     const templateData = {
@@ -117,6 +126,7 @@ function TemplateEditor({ template, onSave, onClose }) {
       }))
     }
 
+    logger.log('Calling onSave with template data:', templateData)
     onSave(templateData)
   }
 
