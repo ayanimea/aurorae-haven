@@ -22,6 +22,10 @@ import {
   seedPredefinedTemplates,
   arePredefinedTemplatesSeeded
 } from '../utils/predefinedTemplates'
+import {
+  fixCorruptedTemplateTypes,
+  needsTemplateMigration
+} from '../utils/templateMigration'
 import TemplateCard from '../components/Library/TemplateCard'
 import TemplateEditor from '../components/Library/TemplateEditor'
 import TemplateToolbar from '../components/Library/TemplateToolbar'
@@ -59,6 +63,13 @@ function Library() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState(null)
 
+  // Toast notification helper
+  const showToastNotification = (message) => {
+    setToastMessage(message)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }
+
   // Load templates on mount
   useEffect(() => {
     const loadTemplates = async () => {
@@ -78,6 +89,22 @@ function Library() {
             const seedResults = await seedPredefinedTemplates()
             if (seedResults.added > 0) {
               logger.log(`Seeded ${seedResults.added} predefined templates`)
+            }
+          }
+
+          // Check for and fix corrupted template types
+          const needsMigration = await needsTemplateMigration()
+          if (needsMigration) {
+            logger.log('Detected corrupted template types, fixing...')
+            const fixResults = await fixCorruptedTemplateTypes()
+            if (fixResults.fixed > 0) {
+              logger.log(`Fixed ${fixResults.fixed} corrupted templates`)
+              showToastNotification(
+                `Fixed ${fixResults.fixed} template${fixResults.fixed > 1 ? 's' : ''} with incorrect types`
+              )
+            }
+            if (fixResults.errors.length > 0) {
+              logger.error(`Failed to fix ${fixResults.errors.length} templates`)
             }
           }
 
@@ -118,12 +145,6 @@ function Library() {
 
     return result
   }, [templates, searchQuery, sortBy, filters])
-
-  const showToastNotification = (message) => {
-    setToastMessage(message)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }
 
   const handleNewTemplate = () => {
     setEditingTemplate(null)
@@ -219,10 +240,25 @@ function Library() {
   }
 
   const handleUseTemplate = async (template) => {
-    const successMessage =
-      template.type === 'task'
-        ? 'Template applied — Task created'
-        : 'Template applied — Routine created'
+    // Normalize template type to handle edge cases (whitespace, casing)
+    const normalizedType =
+      typeof template.type === 'string'
+        ? template.type.trim().toLowerCase()
+        : ''
+    const isTaskTemplate = normalizedType === 'task'
+
+    const successMessage = isTaskTemplate
+      ? 'Template applied — Task created'
+      : 'Template applied — Routine created'
+
+    // Summary log for template usage
+    logger.log('Using template:', {
+      id: template.id,
+      title: template.title,
+      type: template.type,
+      normalizedType,
+      action: successMessage
+    })
 
     await withErrorHandling(
       async () => {

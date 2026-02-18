@@ -37,6 +37,8 @@ test-server/
 # Testing and analysis
 coverage/
 audit-report.txt
+test-results/
+playwright-report/
 
 # Jupyter Notebook
 .ipynb_checkpoints/

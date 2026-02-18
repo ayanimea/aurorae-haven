@@ -7,21 +7,33 @@
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('TemplateEditor')
 
 /**
  * Convert a numeric string value to a number or null
- * @param {string} value - The value to convert
+ * @param {string|number} value - The value to convert
  * @returns {number|null} The converted number or null if empty
  */
 function convertToNumberOrNull(value) {
-  if (value && value !== '') {
-    const num = Number(value)
-    return isNaN(num) ? null : num
+  // Handle undefined, null, or empty string
+  if (value === undefined || value === null || value === '') {
+    return null
   }
-  return null
+  
+  // If already a number, return it as-is
+  if (typeof value === 'number') {
+    return Number.isNaN(value) ? null : value
+  }
+  
+  // Convert string to number
+  const num = Number(value)
+  return Number.isNaN(num) ? null : num
 }
 
 function TemplateEditor({ template, onSave, onClose }) {
+  logger.log('TemplateEditor opened with template:', template)
   const [formData, setFormData] = useState(() => {
     if (template) {
       return {
@@ -104,7 +116,12 @@ function TemplateEditor({ template, onSave, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (!validateForm()) return
+    logger.log('Form submitted with data:', formData)
+
+    if (!validateForm()) {
+      logger.warn('Form validation failed')
+      return
+    }
 
     // Convert numeric fields to numbers (or null if empty)
     const templateData = {
@@ -117,6 +134,7 @@ function TemplateEditor({ template, onSave, onClose }) {
       }))
     }
 
+    logger.log('Calling onSave with template data:', templateData)
     onSave(templateData)
   }
 
@@ -205,7 +223,6 @@ function TemplateEditor({ template, onSave, onClose }) {
               onChange={(e) =>
                 setFormData({ ...formData, type: e.target.value })
               }
-              disabled={!!template}
               required
             >
               <option value='task'>Task</option>

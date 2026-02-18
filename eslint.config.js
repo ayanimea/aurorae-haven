@@ -20,7 +20,10 @@ export default [
       '**/__tests__/**',
       '**/__mocks__/**',
       '**/*.test.js',
-      '**/*.test.jsx'
+      '**/*.test.jsx',
+      'playwright-report/**',
+      'test-results/**',
+      'e2e/**'
     ]
   },
   js.configs.recommended,

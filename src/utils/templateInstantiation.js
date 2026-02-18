@@ -52,8 +52,20 @@ function createTaskFromTemplate(template, quadrant = null) {
  * @returns {Object} Created task object with id and quadrant
  */
 export function instantiateTaskFromTemplate(template) {
-  if (!template || template.type !== 'task') {
+  if (!template) {
     throw new Error('Invalid task template')
+  }
+
+  // Normalize template type for comparison
+  const normalizedType =
+    typeof template.type === 'string'
+      ? template.type.trim().toLowerCase()
+      : ''
+
+  if (normalizedType !== 'task') {
+    throw new Error(
+      `Invalid task template: expected type 'task', found '${template.type}'`
+    )
   }
 
   // Validate template data
@@ -77,6 +89,11 @@ export function instantiateTaskFromTemplate(template) {
 
   // Create new independent task
   const task = createTaskFromTemplate(template, quadrant)
+
+  // Log task creation for debugging (including task ID)
+  logger.log(
+    `Creating task in localStorage: ${task.text} (ID: ${task.id}) in quadrant ${quadrant}`
+  )
 
   // Load existing tasks from localStorage
   const tasks =
@@ -102,6 +119,9 @@ export function instantiateTaskFromTemplate(template) {
   // Save back to localStorage
   try {
     localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
+    logger.log(
+      `Task saved successfully to localStorage: ID ${task.id} in ${quadrant} quadrant`
+    )
   } catch (err) {
     logger.error('Failed to save task:', err)
     // Check for quota exceeded error
@@ -126,8 +146,20 @@ export function instantiateTaskFromTemplate(template) {
  * @returns {Promise<string>} Created routine ID
  */
 export async function instantiateRoutineFromTemplate(template) {
-  if (!template || template.type !== 'routine') {
+  if (!template) {
     throw new Error('Invalid routine template')
+  }
+
+  // Normalize template type for comparison
+  const normalizedType =
+    typeof template.type === 'string'
+      ? template.type.trim().toLowerCase()
+      : ''
+
+  if (normalizedType !== 'routine') {
+    throw new Error(
+      `Invalid routine template: expected type 'routine', found '${template.type}'`
+    )
   }
 
   // Validate template data
@@ -185,8 +217,15 @@ export async function instantiateRoutineFromTemplate(template) {
     createdAt: new Date().toISOString()
   }
 
+  // Log routine creation for debugging
+  logger.log(
+    `Creating routine in IndexedDB: ${routine.name} with ${routine.steps.length} steps`
+  )
+
   // Use existing createRoutine function from routinesManager
   const routineId = await createRoutine(routine)
+
+  logger.log(`Routine created successfully with ID: ${routineId}`)
 
   return routineId
 }
@@ -202,7 +241,23 @@ export async function instantiateTemplate(template) {
     throw new Error('Template is required')
   }
 
-  if (template.type === 'task') {
+  // Enhanced logging to diagnose template type issues
+  logger.log(
+    `Instantiating template: ${template.title || '[untitled]'} (type: ${template.type})`
+  )
+
+  // Defensive check: ensure template.type is valid before routing
+  // Sub-functions will validate the specific type match (task vs routine)
+  if (!template.type || typeof template.type !== 'string') {
+    logger.error('Invalid template type:', template.type)
+    throw new Error('Template must have a valid type field')
+  }
+
+  // Normalize template type (trim whitespace, lowercase)
+  const normalizedType = template.type.trim().toLowerCase()
+
+  if (normalizedType === 'task') {
+    logger.log(`Creating task from template: ${template.title}`)
     const result = instantiateTaskFromTemplate(template)
     return {
       type: 'task',
@@ -210,14 +265,18 @@ export async function instantiateTemplate(template) {
       quadrant: result.quadrant,
       task: result.task
     }
-  } else if (template.type === 'routine') {
+  } else if (normalizedType === 'routine') {
+    logger.log(`Creating routine from template: ${template.title}`)
     const routineId = await instantiateRoutineFromTemplate(template)
     return {
       type: 'routine',
       id: routineId
     }
   } else {
-    throw new Error(`Unknown template type: ${template.type}`)
+    logger.error(`Unknown template type: ${template.type}`)
+    throw new Error(
+      `Unknown template type: ${template.type}. Expected 'task' or 'routine'.`
+    )
   }
 }
 
