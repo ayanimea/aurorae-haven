@@ -13,15 +13,23 @@ const logger = createLogger('TemplateEditor')
 
 /**
  * Convert a numeric string value to a number or null
- * @param {string} value - The value to convert
+ * @param {string|number} value - The value to convert
  * @returns {number|null} The converted number or null if empty
  */
 function convertToNumberOrNull(value) {
-  if (value && value !== '') {
-    const num = Number(value)
-    return isNaN(num) ? null : num
+  // Handle undefined, null, or empty string
+  if (value === undefined || value === null || value === '') {
+    return null
   }
-  return null
+  
+  // If already a number, return it as-is
+  if (typeof value === 'number') {
+    return isNaN(value) ? null : value
+  }
+  
+  // Convert string to number
+  const num = Number(value)
+  return isNaN(num) ? null : num
 }
 
 function TemplateEditor({ template, onSave, onClose }) {

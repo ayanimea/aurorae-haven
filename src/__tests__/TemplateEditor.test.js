@@ -124,4 +124,82 @@ describe('TemplateEditor', () => {
       )
     })
   })
+
+  test('should handle zero as a valid numeric value', async () => {
+    const onSave = jest.fn()
+    const onClose = jest.fn()
+
+    render(<TemplateEditor template={null} onSave={onSave} onClose={onClose} />)
+
+    // Fill in form with zero as dueOffset
+    const titleInput = screen.getByLabelText(/title/i)
+    fireEvent.change(titleInput, { target: { value: 'Test Task' } })
+
+    const dueOffsetInput = screen.getByLabelText(/due date offset/i)
+    fireEvent.change(dueOffsetInput, { target: { value: '0' } })
+
+    // Submit the form
+    const submitButton = screen.getByRole('button', {
+      name: /create template/i
+    })
+    fireEvent.click(submitButton)
+
+    // Verify onSave was called with numeric 0, not null
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dueOffset: 0 // Should be 0, not null
+        })
+      )
+    })
+  })
+
+  test('should preserve existing numeric values when editing', async () => {
+    const onSave = jest.fn()
+    const onClose = jest.fn()
+
+    const existingTemplate = {
+      id: 'test-routine',
+      type: 'routine',
+      title: 'Test Routine',
+      tags: [],
+      steps: [
+        {
+          label: 'Step 1',
+          duration: 60, // Already a number
+          description: 'First step'
+        }
+      ],
+      estimatedDuration: 300, // Already a number
+      energyTag: 'medium'
+    }
+
+    render(
+      <TemplateEditor
+        template={existingTemplate}
+        onSave={onSave}
+        onClose={onClose}
+      />
+    )
+
+    // Just submit without changes
+    const submitButton = screen.getByRole('button', {
+      name: /save changes/i
+    })
+    fireEvent.click(submitButton)
+
+    // Verify numeric values are preserved as numbers
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          estimatedDuration: 300, // Should stay as number
+          steps: expect.arrayContaining([
+            expect.objectContaining({
+              duration: 60 // Should stay as number
+            })
+          ])
+        })
+      )
+    })
+  })
 })
