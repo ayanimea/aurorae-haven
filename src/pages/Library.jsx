@@ -219,10 +219,21 @@ function Library() {
   }
 
   const handleUseTemplate = async (template) => {
+    // Enhanced logging to debug the systematic bug
+    logger.log('=== handleUseTemplate called ===')
+    logger.log('Template ID:', template.id)
+    logger.log('Template title:', template.title)
+    logger.log('Template type:', template.type)
+    logger.log('Template type typeof:', typeof template.type)
+    logger.log('Template type === "task":', template.type === 'task')
+    logger.log('Template type === "routine":', template.type === 'routine')
+    
     const successMessage =
       template.type === 'task'
         ? 'Template applied — Task created'
         : 'Template applied — Routine created'
+    
+    logger.log('Success message will be:', successMessage)
 
     await withErrorHandling(
       async () => {
