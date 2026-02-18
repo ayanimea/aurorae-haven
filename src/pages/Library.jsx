@@ -22,6 +22,10 @@ import {
   seedPredefinedTemplates,
   arePredefinedTemplatesSeeded
 } from '../utils/predefinedTemplates'
+import {
+  fixCorruptedTemplateTypes,
+  needsTemplateMigration
+} from '../utils/templateMigration'
 import TemplateCard from '../components/Library/TemplateCard'
 import TemplateEditor from '../components/Library/TemplateEditor'
 import TemplateToolbar from '../components/Library/TemplateToolbar'
@@ -78,6 +82,22 @@ function Library() {
             const seedResults = await seedPredefinedTemplates()
             if (seedResults.added > 0) {
               logger.log(`Seeded ${seedResults.added} predefined templates`)
+            }
+          }
+
+          // Check for and fix corrupted template types
+          const needsMigration = await needsTemplateMigration()
+          if (needsMigration) {
+            logger.log('Detected corrupted template types, fixing...')
+            const fixResults = await fixCorruptedTemplateTypes()
+            if (fixResults.fixed > 0) {
+              logger.log(`Fixed ${fixResults.fixed} corrupted templates`)
+              showToastNotification(
+                `Fixed ${fixResults.fixed} template${fixResults.fixed > 1 ? 's' : ''} with incorrect types`
+              )
+            }
+            if (fixResults.errors.length > 0) {
+              logger.error(`Failed to fix ${fixResults.errors.length} templates`)
             }
           }
 
