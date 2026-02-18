@@ -74,7 +74,8 @@ Now explicitly checks for truly empty values and handles existing numbers correc
 1. Navigate to the Library tab
 2. Click "Edit" on any template
 3. Observe console output - should see:
-   ```
+
+   ```text
    [TemplateEditor] TemplateEditor opened with template: {id: '...', type: '...', ...}
    ```
 
@@ -88,7 +89,7 @@ Now explicitly checks for truly empty values and handles existing numbers correc
 
 If the update works correctly, you should see:
 
-```
+```text
 [TemplateEditor] Form submitted with data: {...}
 [TemplateEditor] Calling onSave with template data: {...}
 [TemplatesManager] Updating template routine-morning-launch {updates...}
@@ -106,7 +107,7 @@ Then you should see a toast notification: "Template updated"
 
 If validation fails, you'll see:
 
-```
+```text
 [TemplatesManager] Validation failed for template X: ["error message 1", "error message 2"]
 [TemplatesManager] Template data that failed validation: {problematic object}
 ```
@@ -125,7 +126,7 @@ If validation fails, you'll see:
 
 If the template doesn't exist in IndexedDB:
 
-```
+```text
 [TemplatesManager] Template routine-XXX not found in IndexedDB
 ```
 
@@ -138,7 +139,7 @@ If the template doesn't exist in IndexedDB:
 
 If IndexedDB save fails:
 
-```
+```text
 [TemplatesManager] Failed to save template X: {error object}
 ```
 
@@ -152,7 +153,7 @@ If IndexedDB save fails:
 
 If clicking "Save" doesn't trigger any logs:
 
-```
+```text
 [TemplateEditor] Form submitted with data: {...}
 [TemplateEditor] Form validation failed  // <-- Stops here
 ```

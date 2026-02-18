@@ -20,7 +20,7 @@ Open Developer Tools (F12) and look for migration logs:
 
 **If templates were corrupted, you'll see:**
 
-```
+```text
 [TemplateMigration] Diagnosing 22 templates...
 [TemplateMigration] Corrupted: routine-morning-launch - stored as "task", should be "routine"
 [TemplateMigration] Corrupted: routine-pomodoro - stored as "task", should be "routine"
@@ -36,7 +36,7 @@ Open Developer Tools (F12) and look for migration logs:
 
 **If no corruption, you'll see:**
 
-```
+```text
 [TemplateMigration] Diagnosing 22 templates...
 [TemplateMigration] Diagnostic complete: 22 correct, 0 corrupted, 0 missing
 ```
@@ -45,7 +45,7 @@ Open Developer Tools (F12) and look for migration logs:
 
 If templates were fixed, you should see a toast notification:
 
-```
+```text
 Fixed 10 templates with incorrect types
 ```
 
@@ -149,7 +149,7 @@ In the Library page, you should now see:
 
 ### Migration Sequence
 
-```
+```text
 Library.jsx load:
   1. Check IndexedDB available
   2. Seed predefined templates (if needed)

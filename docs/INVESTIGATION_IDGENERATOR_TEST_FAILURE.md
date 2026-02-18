@@ -55,7 +55,7 @@ export function generateMetadata() {
 
 ### Test Results
 
-```
+```text
 ✅ All idGenerator tests: 43/43 passing
 ✅ Full test suite: 68 suites, 1589 tests passed, 0 failures
 ✅ Specific test: "timestamp matches createdAt time" - PASS
