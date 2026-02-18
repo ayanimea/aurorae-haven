@@ -147,6 +147,42 @@ describe('validateTemplateData', () => {
       expect(result.valid).toBe(false)
       expect(result.errors).toContain('Template type must be a string')
     })
+
+    test('accepts uppercase type values', () => {
+      const template = {
+        type: 'TASK',
+        title: 'Test Task'
+      }
+
+      const result = validateTemplateData(template)
+
+      expect(result.valid).toBe(true)
+      expect(result.errors).toEqual([])
+    })
+
+    test('accepts mixed case type values', () => {
+      const template = {
+        type: 'Routine',
+        title: 'Test Routine'
+      }
+
+      const result = validateTemplateData(template)
+
+      expect(result.valid).toBe(true)
+      expect(result.errors).toEqual([])
+    })
+
+    test('accepts type values with surrounding whitespace', () => {
+      const template = {
+        type: '  task  ',
+        title: 'Test Task'
+      }
+
+      const result = validateTemplateData(template)
+
+      expect(result.valid).toBe(true)
+      expect(result.errors).toEqual([])
+    })
   })
 
   describe('title validation', () => {

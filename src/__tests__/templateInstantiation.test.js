@@ -142,7 +142,52 @@ describe('templateInstantiation', () => {
 
       expect(() => {
         instantiateTaskFromTemplate(template)
-      }).toThrow('Invalid task template')
+      }).toThrow(/Invalid task template: expected type 'task'/)
+    })
+
+    test('handles task template with uppercase type', () => {
+      const template = {
+        type: 'TASK',
+        title: 'Uppercase task'
+      }
+
+      const result = instantiateTaskFromTemplate(template)
+
+      expect(result.task.text).toBe('Uppercase task')
+      expect(result.quadrant).toBe('urgent_important')
+    })
+
+    test('handles task template with mixed case type', () => {
+      const template = {
+        type: 'Task',
+        title: 'Mixed case task'
+      }
+
+      const result = instantiateTaskFromTemplate(template)
+
+      expect(result.task.text).toBe('Mixed case task')
+    })
+
+    test('handles task template with whitespace in type', () => {
+      const template = {
+        type: '  task  ',
+        title: 'Task with whitespace'
+      }
+
+      const result = instantiateTaskFromTemplate(template)
+
+      expect(result.task.text).toBe('Task with whitespace')
+    })
+
+    test('throws error for non-string type', () => {
+      const template = {
+        type: 123,
+        title: 'Numeric type'
+      }
+
+      expect(() => {
+        instantiateTaskFromTemplate(template)
+      }).toThrow(/Invalid task template: expected type 'task'/)
     })
 
     test('creates independent task (not linked to template)', () => {
@@ -285,7 +330,69 @@ describe('templateInstantiation', () => {
       }
 
       await expect(instantiateRoutineFromTemplate(template)).rejects.toThrow(
-        'Invalid routine template'
+        /Invalid routine template: expected type 'routine'/
+      )
+    })
+
+    test('handles routine template with uppercase type', async () => {
+      const template = {
+        type: 'ROUTINE',
+        title: 'Uppercase routine',
+        steps: [{ label: 'Step 1', duration: 60 }]
+      }
+
+      const routineId = await instantiateRoutineFromTemplate(template)
+
+      expect(routineId).toBe('test-routine-uuid-456')
+      expect(routinesManager.createRoutine).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Uppercase routine'
+        })
+      )
+    })
+
+    test('handles routine template with mixed case type', async () => {
+      const template = {
+        type: 'Routine',
+        title: 'Mixed case routine',
+        steps: [{ label: 'Step 1', duration: 60 }]
+      }
+
+      const routineId = await instantiateRoutineFromTemplate(template)
+
+      expect(routineId).toBe('test-routine-uuid-456')
+      expect(routinesManager.createRoutine).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Mixed case routine'
+        })
+      )
+    })
+
+    test('handles routine template with whitespace in type', async () => {
+      const template = {
+        type: '  routine  ',
+        title: 'Routine with whitespace',
+        steps: [{ label: 'Step 1', duration: 60 }]
+      }
+
+      const routineId = await instantiateRoutineFromTemplate(template)
+
+      expect(routineId).toBe('test-routine-uuid-456')
+      expect(routinesManager.createRoutine).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Routine with whitespace'
+        })
+      )
+    })
+
+    test('throws error for non-string type', async () => {
+      const template = {
+        type: true,
+        title: 'Boolean type'
+      }
+
+      await expect(instantiateRoutineFromTemplate(template)).rejects.toThrow(
+        /Invalid routine template: expected type 'routine'/
       )
     })
 
@@ -439,7 +546,7 @@ describe('templateInstantiation', () => {
       }
 
       await expect(instantiateTemplate(template)).rejects.toThrow(
-        'Unknown template type: unknown'
+        /Unknown template type: unknown/
       )
     })
 

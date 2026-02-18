@@ -57,10 +57,15 @@ export function instantiateTaskFromTemplate(template) {
   }
 
   // Normalize template type for comparison
-  const normalizedType = template.type ? template.type.trim().toLowerCase() : ''
+  const normalizedType =
+    typeof template.type === 'string'
+      ? template.type.trim().toLowerCase()
+      : ''
 
   if (normalizedType !== 'task') {
-    throw new Error('Invalid task template')
+    throw new Error(
+      `Invalid task template: expected type 'task', found '${template.type}'`
+    )
   }
 
   // Validate template data
@@ -144,10 +149,15 @@ export async function instantiateRoutineFromTemplate(template) {
   }
 
   // Normalize template type for comparison
-  const normalizedType = template.type ? template.type.trim().toLowerCase() : ''
+  const normalizedType =
+    typeof template.type === 'string'
+      ? template.type.trim().toLowerCase()
+      : ''
 
   if (normalizedType !== 'routine') {
-    throw new Error('Invalid routine template')
+    throw new Error(
+      `Invalid routine template: expected type 'routine', found '${template.type}'`
+    )
   }
 
   // Validate template data
