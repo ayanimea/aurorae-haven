@@ -34,6 +34,13 @@ function Routines() {
 
   const runner = useRoutineRunner(selectedRoutine)
 
+  // Show toast notification
+  const showToastNotification = useCallback((message) => {
+    setToastMessage(message)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }, [])
+
   const loadAvailableRoutines = useCallback(async () => {
     try {
       setLoadingRoutines(true)
@@ -45,7 +52,7 @@ function Routines() {
     } finally {
       setLoadingRoutines(false)
     }
-  }, [])
+  }, [showToastNotification])
 
   // Load available routines on mount
   useEffect(() => {
@@ -181,13 +188,6 @@ function Routines() {
       runner.start()
     }
   }, [selectedRoutine, runner])
-
-  // Show toast notification
-  const showToastNotification = (message) => {
-    setToastMessage(message)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }
 
   // Handle routine data export - TAB-RTN-47
   const handleExportRoutines = async () => {
@@ -512,15 +512,22 @@ function Routines() {
             ) : (
               <div style={{ display: 'grid', gap: '12px' }}>
                 {availableRoutines.map((routine) => (
-                  <button
+                  <div
                     key={routine.id}
                     className='panel'
                     style={{
                       cursor: 'pointer',
-                      width: '100%',
-                      textAlign: 'left'
+                      width: '100%'
                     }}
                     onClick={() => setSelectedRoutine(routine)}
+                    role='button'
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setSelectedRoutine(routine)
+                      }
+                    }}
                     aria-label={`View routine: ${routine.name || routine.title}`}
                   >
                     <div
@@ -569,7 +576,7 @@ function Routines() {
                         Start
                       </button>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}

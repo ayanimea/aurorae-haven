@@ -17,12 +17,6 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
     onClose()
   }
 
-  const handleManualCreate = () => {
-    // For now, redirect to Library to create a new template
-    // In future, could have inline creation form
-    setShowLibrary(true)
-  }
-
   return (
     <Modal
       isOpen={isOpen}
@@ -33,7 +27,7 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
       {!showLibrary ? (
         <div className='routine-creation-options'>
           <p className='small' style={{ marginBottom: '16px' }}>
-            Choose how to create your routine:
+            Choose a routine template from the library:
           </p>
 
           <button
@@ -42,16 +36,7 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
             style={{ marginBottom: '12px' }}
           >
             <Icon name='library' />
-            Add from Library
-          </button>
-
-          <button
-            className='btn btn-block'
-            onClick={handleManualCreate}
-            style={{ marginBottom: '12px' }}
-          >
-            <Icon name='plus' />
-            Create from Scratch
+            Browse Library
           </button>
 
           <button className='btn btn-block' onClick={onClose}>

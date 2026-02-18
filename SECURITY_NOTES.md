@@ -13,6 +13,8 @@
 - Vulnerability: ReDoS when using `$data` option
 - Affected Package: ajv@6.12.6 (transitive dependency of eslint@9.39.2)
 
+**Note on Direct ajv Dependency**: This project also includes ajv@8.18.0 as a direct dev dependency for JSON schema validation in tests and tooling. The ajv@8.18.0 version is secure and does not have this vulnerability. The vulnerability only affects the older ajv@6.12.6 version used internally by ESLint.
+
 **Why Not Fixed**:
 
 - The fix requires `npm audit fix --force` which would downgrade ESLint from v9.39.2 to v4.1.1
