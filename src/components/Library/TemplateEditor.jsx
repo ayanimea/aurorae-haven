@@ -223,7 +223,6 @@ function TemplateEditor({ template, onSave, onClose }) {
               onChange={(e) =>
                 setFormData({ ...formData, type: e.target.value })
               }
-              disabled={!!template}
               required
             >
               <option value='task'>Task</option>
