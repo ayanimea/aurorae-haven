@@ -109,7 +109,11 @@ test('Verify routine templates are created as routines, not tasks', async ({ pag
   // Step 9: Verify routine IS in IndexedDB
   const routinesData = await page.evaluate(async () => {
     return new Promise((resolve) => {
-      const request = indexedDB.open('aurorae_haven_db', 3);
+      // NOTE: Database name must match the application's IndexedDB name.
+      // Defined in src/utils/indexedDBManager.js as DB_NAME = 'aurorae_haven_db'
+      // We omit the explicit version parameter to open the current version,
+      // making the test more resilient to future schema version changes.
+      const request = indexedDB.open('aurorae_haven_db');
       request.onsuccess = (event) => {
         const db = event.target.result;
         const transaction = db.transaction(['routines'], 'readonly');
