@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1220 KB compressed
+- ✅ Total size: 1219 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-18 18:08:50 UTC
+**Last Updated**: 2026-02-18 19:23:59 UTC
 **Source Branch**: refactor-library-access-flow
-**Source Commit**: f2527a2
+**Source Commit**: 32178d5
 
 ---
 
