@@ -87,6 +87,8 @@ function LibrarySelector({ onSelectTemplate }) {
 
           // Load all templates
           const allTemplates = await getAllTemplates()
+          logger.log(`Loaded ${allTemplates.length} total templates`)
+          logger.log(`Template types: ${allTemplates.map(t => t.type).join(', ')}`)
           setTemplates(allTemplates)
         },
         'Loading templates',
@@ -107,10 +109,13 @@ function LibrarySelector({ onSelectTemplate }) {
 
   // Filter and sort templates - only show routine templates
   const filteredAndSortedTemplates = useMemo(() => {
+    logger.log(`Filtering templates. Total templates: ${templates.length}`)
+    
     // Only show routine templates
     const routineTemplates = templates.filter(
       (t) => t.type?.trim().toLowerCase() === 'routine'
     )
+    logger.log(`Routine templates after type filter: ${routineTemplates.length}`)
 
     // Apply search filter
     let filtered = filterTemplates(routineTemplates, {
@@ -119,6 +124,7 @@ function LibrarySelector({ onSelectTemplate }) {
       durationMin: null,
       durationMax: null
     })
+    logger.log(`Templates after filterTemplates: ${filtered.length}`)
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
@@ -127,6 +133,7 @@ function LibrarySelector({ onSelectTemplate }) {
           t.title?.toLowerCase().includes(query) ||
           t.tags?.some((tag) => tag.toLowerCase().includes(query))
       )
+      logger.log(`Templates after search filter: ${filtered.length}`)
     }
 
     // Sort templates
