@@ -32,7 +32,7 @@ function convertToNumberOrNull(value) {
   return Number.isNaN(num) ? null : num
 }
 
-function TemplateEditor({ template, onSave, onClose }) {
+function TemplateEditor({ template, onSave, onClose, typeFilter }) {
   logger.log('TemplateEditor opened with template:', template)
   const [formData, setFormData] = useState(() => {
     if (template) {
@@ -51,7 +51,7 @@ function TemplateEditor({ template, onSave, onClose }) {
       }
     }
     return {
-      type: 'task',
+      type: typeFilter || 'task',
       title: '',
       tags: [],
       category: '',
@@ -223,11 +223,17 @@ function TemplateEditor({ template, onSave, onClose }) {
               onChange={(e) =>
                 setFormData({ ...formData, type: e.target.value })
               }
+              disabled={!!typeFilter}
               required
             >
               <option value='task'>Task</option>
               <option value='routine'>Routine</option>
             </select>
+            {typeFilter && (
+              <small className='form-hint'>
+                Type is fixed to {typeFilter} in this context
+              </small>
+            )}
           </div>
 
           {/* Title */}
@@ -480,7 +486,8 @@ TemplateEditor.propTypes = {
     description: PropTypes.string
   }),
   onSave: PropTypes.func.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
+  typeFilter: PropTypes.oneOf(['task', 'routine'])
 }
 
 export default TemplateEditor

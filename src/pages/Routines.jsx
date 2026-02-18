@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
 import { formatTime } from '../utils/routineRunner'
 import {
@@ -34,7 +34,7 @@ function Routines() {
 
   const runner = useRoutineRunner(selectedRoutine)
 
-  const loadAvailableRoutines = async () => {
+  const loadAvailableRoutines = useCallback(async () => {
     try {
       setLoadingRoutines(true)
       const routines = await getRoutines({ sortBy: 'name', order: 'asc' })
@@ -45,13 +45,12 @@ function Routines() {
     } finally {
       setLoadingRoutines(false)
     }
-  }
+  }, [])
 
   // Load available routines on mount
   useEffect(() => {
     loadAvailableRoutines()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [loadAvailableRoutines])
 
   // TAB-RTN-45: Detect reduced motion preference
   useEffect(() => {
