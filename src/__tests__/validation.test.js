@@ -183,6 +183,33 @@ describe('validateTemplateData', () => {
       expect(result.valid).toBe(true)
       expect(result.errors).toEqual([])
     })
+
+    test('rejects empty string type as invalid (not missing)', () => {
+      const template = {
+        type: '',
+        title: 'Test Task'
+      }
+
+      const result = validateTemplateData(template)
+
+      expect(result.valid).toBe(false)
+      // Empty string should be treated as invalid type, not missing
+      expect(result.errors).toContain(
+        'Template type must be one of: task, routine (found: )'
+      )
+    })
+
+    test('rejects zero as non-string type', () => {
+      const template = {
+        type: 0,
+        title: 'Test Task'
+      }
+
+      const result = validateTemplateData(template)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContain('Template type must be a string')
+    })
   })
 
   describe('title validation', () => {

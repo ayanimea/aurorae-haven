@@ -197,7 +197,7 @@ export function validateTemplateData(template) {
       : ''
 
   // Validate required field: type
-  if (!template.type) {
+  if (template.type === undefined || template.type === null) {
     errors.push('Template type is required')
   } else if (typeof template.type !== 'string') {
     errors.push('Template type must be a string')

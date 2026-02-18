@@ -90,9 +90,9 @@ export function instantiateTaskFromTemplate(template) {
   // Create new independent task
   const task = createTaskFromTemplate(template, quadrant)
 
-  // Log task creation for debugging
+  // Log task creation for debugging (including task ID)
   logger.log(
-    `Creating task in localStorage: ${task.text} in quadrant ${quadrant}`
+    `Creating task in localStorage: ${task.text} (ID: ${task.id}) in quadrant ${quadrant}`
   )
 
   // Load existing tasks from localStorage
@@ -119,7 +119,9 @@ export function instantiateTaskFromTemplate(template) {
   // Save back to localStorage
   try {
     localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
-    logger.log(`Task saved successfully to localStorage in ${quadrant} quadrant`)
+    logger.log(
+      `Task saved successfully to localStorage: ID ${task.id} in ${quadrant} quadrant`
+    )
   } catch (err) {
     logger.error('Failed to save task:', err)
     // Check for quota exceeded error
