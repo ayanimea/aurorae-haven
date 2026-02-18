@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
 import { formatTime } from '../utils/routineRunner'
-import { exportRoutines, importRoutines } from '../utils/routinesManager'
+import {
+  exportRoutines,
+  importRoutines,
+  getRoutines
+} from '../utils/routinesManager'
 import { saveTemplate } from '../utils/templatesManager'
 import { instantiateTemplate } from '../utils/templateInstantiation'
 import { createLogger } from '../utils/logger'
@@ -13,6 +17,8 @@ const logger = createLogger('Routines')
 
 function Routines() {
   const [selectedRoutine, setSelectedRoutine] = useState(null)
+  const [availableRoutines, setAvailableRoutines] = useState([])
+  const [loadingRoutines, setLoadingRoutines] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
   const [showToast, setShowToast] = useState(false)
   const fileInputRef = useRef(null)
@@ -28,10 +34,28 @@ function Routines() {
 
   const runner = useRoutineRunner(selectedRoutine)
 
+  const loadAvailableRoutines = async () => {
+    try {
+      setLoadingRoutines(true)
+      const routines = await getRoutines({ sortBy: 'name', order: 'asc' })
+      setAvailableRoutines(routines)
+    } catch (error) {
+      logger.error('Failed to load routines:', error)
+      showToastNotification('Failed to load routines')
+    } finally {
+      setLoadingRoutines(false)
+    }
+  }
+
+  // Load available routines on mount
+  useEffect(() => {
+    loadAvailableRoutines()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // TAB-RTN-45: Detect reduced motion preference
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPrefersReducedMotion(mediaQuery.matches)
 
     const handleChange = (e) => setPrefersReducedMotion(e.matches)
@@ -243,9 +267,8 @@ function Routines() {
       await instantiateTemplate(template)
       showToastNotification('Routine created from template')
 
-      // Reload the page to show the new routine
-      // In production, this would be handled via state updates
-      setTimeout(() => window.location.reload(), 1000)
+      // Reload the routine list to show the new routine
+      await loadAvailableRoutines()
     } catch (error) {
       logger.error('Failed to create routine from template:', error)
       showToastNotification('Failed to create routine: ' + error.message)
@@ -443,34 +466,114 @@ function Routines() {
         </div>
       )}
 
-      {/* No routine selected - prompt to create new routine */}
+      {/* No routine running - show available routines list */}
       {!runner.state || !runner.state.isRunning ? (
         <div className='card'>
+          <div className='card-h'>
+            <strong>Available Routines</strong>
+            <button
+              className='btn btn-primary'
+              onClick={() => setShowCreationModal(true)}
+            >
+              <Icon name='plus' />
+              Create New Routine
+            </button>
+          </div>
           <div className='card-b'>
-            <div className='empty-state'>
-              <svg
-                className='icon'
-                viewBox='0 0 24 24'
-                style={{ width: '48px', height: '48px', opacity: 0.5 }}
-              >
-                <circle cx='12' cy='12' r='10' />
-                <path d='M12 8v4M12 16h.01' />
-              </svg>
-              <p className='empty-state-text'>No routine running</p>
-              <p
-                className='small'
-                style={{ marginTop: '8px', marginBottom: '16px' }}
-              >
-                Create a new routine to get started
-              </p>
-              <button
-                className='btn btn-primary'
-                onClick={() => setShowCreationModal(true)}
-              >
-                <Icon name='plus' />
-                Create New Routine
-              </button>
-            </div>
+            {loadingRoutines ? (
+              <div style={{ textAlign: 'center', padding: '24px' }}>
+                <Icon name='loader' className='icon-spin' />
+                <p className='small'>Loading routines...</p>
+              </div>
+            ) : availableRoutines.length === 0 ? (
+              <div className='empty-state'>
+                <svg
+                  className='icon'
+                  viewBox='0 0 24 24'
+                  style={{ width: '48px', height: '48px', opacity: 0.5 }}
+                >
+                  <circle cx='12' cy='12' r='10' />
+                  <path d='M12 8v4M12 16h.01' />
+                </svg>
+                <p className='empty-state-text'>No routines yet</p>
+                <p
+                  className='small'
+                  style={{ marginTop: '8px', marginBottom: '16px' }}
+                >
+                  Create your first routine to get started
+                </p>
+                <button
+                  className='btn btn-primary'
+                  onClick={() => setShowCreationModal(true)}
+                >
+                  <Icon name='plus' />
+                  Create New Routine
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {availableRoutines.map((routine) => (
+                  <button
+                    key={routine.id}
+                    className='panel'
+                    style={{
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                    onClick={() => setSelectedRoutine(routine)}
+                    aria-label={`View routine: ${routine.name || routine.title}`}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div>
+                        <div className='step-title'>
+                          {routine.name || routine.title}
+                        </div>
+                        {routine.steps && routine.steps.length > 0 && (
+                          <div className='small dim'>
+                            {routine.steps.length} steps
+                            {routine.estimatedDuration &&
+                              ` · ${formatTime(routine.estimatedDuration)}`}
+                          </div>
+                        )}
+                        {routine.tags && routine.tags.length > 0 && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '4px',
+                              marginTop: '4px'
+                            }}
+                          >
+                            {routine.tags.map((tag, i) => (
+                              <span key={i} className='tag'>
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        className='btn btn-primary'
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedRoutine(routine)
+                        }}
+                        aria-label={`Start ${routine.name || routine.title}`}
+                      >
+                        <Icon name='play' />
+                        Start
+                      </button>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ) : null}
