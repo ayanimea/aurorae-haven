@@ -47,7 +47,7 @@ if (value === undefined || value === null || value === '') {
   return null
 }
 if (typeof value === 'number') {
-  return isNaN(value) ? null : value
+  return Number.isNaN(value) ? null : value
 }
 return Number(value)
 ```
