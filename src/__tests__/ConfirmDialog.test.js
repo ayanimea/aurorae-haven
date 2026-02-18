@@ -86,10 +86,7 @@ describe('ConfirmDialog', () => {
     it('has aria-labelledby pointing to title', () => {
       render(<ConfirmDialog {...defaultProps} />)
       const dialog = screen.getByRole('dialog')
-      expect(dialog).toHaveAttribute(
-        'aria-labelledby',
-        'confirm-dialog-title'
-      )
+      expect(dialog).toHaveAttribute('aria-labelledby', 'confirm-dialog-title')
       const title = screen.getByText('Confirm Action')
       expect(title).toHaveAttribute('id', 'confirm-dialog-title')
     })
@@ -106,9 +103,7 @@ describe('ConfirmDialog', () => {
     })
 
     it('has aria-label on confirm button', () => {
-      render(
-        <ConfirmDialog {...defaultProps} confirmText='Delete Forever' />
-      )
+      render(<ConfirmDialog {...defaultProps} confirmText='Delete Forever' />)
       const confirmButton = screen.getByRole('button', {
         name: 'Delete Forever'
       })
@@ -201,10 +196,7 @@ describe('ConfirmDialog', () => {
     it('uses capture phase listener to intercept Escape before bubble phase', () => {
       // Track listener registration
       const addEventListenerSpy = jest.spyOn(document, 'addEventListener')
-      const removeEventListenerSpy = jest.spyOn(
-        document,
-        'removeEventListener'
-      )
+      const removeEventListenerSpy = jest.spyOn(document, 'removeEventListener')
 
       // Render and rerender to trigger useEffect
       const { rerender } = render(
@@ -271,10 +263,7 @@ describe('ConfirmDialog', () => {
 
   describe('Cleanup', () => {
     it('removes event listener when unmounted', () => {
-      const removeEventListenerSpy = jest.spyOn(
-        document,
-        'removeEventListener'
-      )
+      const removeEventListenerSpy = jest.spyOn(document, 'removeEventListener')
       const { unmount } = render(<ConfirmDialog {...defaultProps} />)
       unmount()
 
@@ -288,10 +277,7 @@ describe('ConfirmDialog', () => {
     })
 
     it('removes event listener when isOpen changes to false', () => {
-      const removeEventListenerSpy = jest.spyOn(
-        document,
-        'removeEventListener'
-      )
+      const removeEventListenerSpy = jest.spyOn(document, 'removeEventListener')
       const { rerender } = render(<ConfirmDialog {...defaultProps} />)
       rerender(<ConfirmDialog {...defaultProps} isOpen={false} />)
 

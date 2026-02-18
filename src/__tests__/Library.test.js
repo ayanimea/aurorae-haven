@@ -286,7 +286,9 @@ describe('Library Page', () => {
 
     // Verify toast message appears (checking in the document)
     await waitFor(() => {
-      expect(screen.getByText(/Fixed 3 templates with incorrect types/)).toBeInTheDocument()
+      expect(
+        screen.getByText(/Fixed 3 templates with incorrect types/)
+      ).toBeInTheDocument()
     })
   })
 
@@ -307,7 +309,7 @@ describe('Library Page', () => {
 
     // Assert - fixCorruptedTemplateTypes should NOT be called
     expect(templateMigration.fixCorruptedTemplateTypes).not.toHaveBeenCalled()
-    
+
     // Verify no toast appears
     expect(screen.queryByText(/Fixed.*templates/)).not.toBeInTheDocument()
   })

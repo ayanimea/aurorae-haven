@@ -208,11 +208,6 @@ function Layout({ children, onExport, onImport }) {
   // Secondary tabs in More menu
   const secondaryTabs = [
     {
-      path: '/library',
-      label: 'Library',
-      icon: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M20 17v-5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5M20 17v5H6.5A2.5 2.5 0 0 1 4 19.5M8 7h8M8 11h4'
-    },
-    {
       path: '/stats',
       label: 'Stats',
       icon: 'M3 3v18h18M7 10l4 4 4-4 4 4'

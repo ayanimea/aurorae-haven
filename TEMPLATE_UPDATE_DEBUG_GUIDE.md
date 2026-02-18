@@ -11,6 +11,7 @@ User reported that templates in the Library cannot be updated.
 Added comprehensive logging to track the entire update flow:
 
 **In `templatesManager.js` - `updateTemplate()` function:**
+
 - Logs when update starts (template ID and update data)
 - Logs existing template retrieved from IndexedDB
 - Logs merged template data before validation
@@ -18,6 +19,7 @@ Added comprehensive logging to track the entire update flow:
 - Logs IndexedDB save operation results
 
 **In `TemplateEditor.jsx`:**
+
 - Logs when editor opens with full template object
 - Logs form data when submit button clicked
 - Logs validation failures
@@ -28,19 +30,23 @@ Added comprehensive logging to track the entire update flow:
 Fixed a bug where the number `0` was being converted to `null`:
 
 **Problem:**
+
 ```javascript
 // Old code
-if (value && value !== '') {  // BUG: 0 is falsy!
+if (value && value !== '') {
+  // BUG: 0 is falsy!
   return Number(value)
 }
 return null
 ```
 
 When `value` is `0`, the condition `value && value !== ''` is false because `0` is falsy in JavaScript. This would incorrectly convert:
+
 - `dueOffset: 0` → `null`
 - `duration: 0` → `null`
 
 **Solution:**
+
 ```javascript
 // New code
 if (value === undefined || value === null || value === '') {
@@ -99,12 +105,14 @@ Then you should see a toast notification: "Template updated"
 #### Scenario 1: Validation Failure
 
 If validation fails, you'll see:
+
 ```
 [TemplatesManager] Validation failed for template X: ["error message 1", "error message 2"]
 [TemplatesManager] Template data that failed validation: {problematic object}
 ```
 
 **What to check:**
+
 - Look at the validation error messages
 - Compare the "Template data that failed validation" object with the expected structure
 - Common issues:
@@ -116,22 +124,26 @@ If validation fails, you'll see:
 #### Scenario 2: Template Not Found
 
 If the template doesn't exist in IndexedDB:
+
 ```
 [TemplatesManager] Template routine-XXX not found in IndexedDB
 ```
 
 **What this means:**
+
 - The template ID in the editor doesn't match any template in storage
 - Possible after data corruption or migration issues
 
 #### Scenario 3: IndexedDB Failure
 
 If IndexedDB save fails:
+
 ```
 [TemplatesManager] Failed to save template X: {error object}
 ```
 
 **What to check:**
+
 - Browser IndexedDB quota/permissions
 - IndexedDB database corruption
 - Browser compatibility issues
@@ -139,12 +151,14 @@ If IndexedDB save fails:
 #### Scenario 4: Form Doesn't Submit
 
 If clicking "Save" doesn't trigger any logs:
+
 ```
 [TemplateEditor] Form submitted with data: {...}
 [TemplateEditor] Form validation failed  // <-- Stops here
 ```
 
 **What this means:**
+
 - Client-side form validation is rejecting the input
 - Check the UI for red error messages under form fields
 - Common issues:
@@ -159,6 +173,7 @@ If clicking "Save" doesn't trigger any logs:
 **Cause:** The `type` field is missing or has an invalid value.
 
 **Solution:**
+
 1. Check the console log: "TemplateEditor opened with template"
 2. Verify the template object has a `type` field
 3. Verify `type` is either `"task"` or `"routine"`
@@ -169,6 +184,7 @@ If clicking "Save" doesn't trigger any logs:
 **Cause:** Numeric fields like `estimatedDuration` or `step.duration` are strings instead of numbers.
 
 **Solution:**
+
 - The `convertToNumberOrNull` fix should handle this
 - If still failing, check the "Template data that failed validation" log
 - Look for fields that should be numbers but are shown as strings
@@ -178,6 +194,7 @@ If clicking "Save" doesn't trigger any logs:
 **Cause:** Routine templates must have at least one step, and each step must have a `label`.
 
 **Solution:**
+
 1. Check if `steps` is an empty array
 2. Check if any step is missing the `label` field
 3. Ensure step `duration` values are numbers (or null)
@@ -187,6 +204,7 @@ If clicking "Save" doesn't trigger any logs:
 Please test the following scenarios and report results:
 
 ### Test 1: Edit Task Template
+
 - [ ] Open Library tab
 - [ ] Click "Edit" on any task template
 - [ ] Change the title
@@ -196,6 +214,7 @@ Please test the following scenarios and report results:
 - [ ] Verify: Is the title changed when you re-open the editor?
 
 ### Test 2: Edit Routine Template
+
 - [ ] Open Library tab
 - [ ] Click "Edit" on any routine template
 - [ ] Change the title
@@ -205,6 +224,7 @@ Please test the following scenarios and report results:
 - [ ] Verify: Is the title changed when you re-open the editor?
 
 ### Test 3: Edit Routine Steps
+
 - [ ] Open Library tab
 - [ ] Click "Edit" on routine template
 - [ ] Modify a step (change label or duration)
@@ -213,6 +233,7 @@ Please test the following scenarios and report results:
 - [ ] Verify: Are changes saved?
 
 ### Test 4: Edit with Zero Values
+
 - [ ] Open Library tab
 - [ ] Click "Edit" on task template
 - [ ] Set "Due date offset (days)" to 0

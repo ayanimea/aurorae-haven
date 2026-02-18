@@ -21,12 +21,12 @@ function convertToNumberOrNull(value) {
   if (value === undefined || value === null || value === '') {
     return null
   }
-  
+
   // If already a number, return it as-is
   if (typeof value === 'number') {
     return Number.isNaN(value) ? null : value
   }
-  
+
   // Convert string to number
   const num = Number(value)
   return Number.isNaN(num) ? null : num

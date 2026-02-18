@@ -1,7 +1,7 @@
 /**
  * Template Migration Utility
  * Fixes corrupted template types in IndexedDB
- * 
+ *
  * Issue: Routine templates incorrectly stored with type: "task"
  * This utility diagnoses and fixes the corruption.
  */
@@ -29,11 +29,11 @@ const MIGRATION_FLAG_KEY = 'aurorae_templates_migrated_v1'
 
 /**
  * Diagnostic: Check if any templates have incorrect types
- * 
+ *
  * Note: This only checks predefined templates. Custom user-created templates
  * (those not in the predefined list) are considered correct and excluded from
  * migration. Only predefined templates with mismatched types are flagged as corrupted.
- * 
+ *
  * @returns {Promise<Object>} Diagnostic results with counts and details
  */
 export async function diagnoseTemplateTypes() {
@@ -51,13 +51,13 @@ export async function diagnoseTemplateTypes() {
 
     // Get predefined templates for comparison
     const predefinedTemplates = getPredefinedTemplates()
-    const predefinedMap = new Map(predefinedTemplates.map(t => [t.id, t]))
+    const predefinedMap = new Map(predefinedTemplates.map((t) => [t.id, t]))
 
     logger.log(`Diagnosing ${storedTemplates.length} templates...`)
 
     for (const stored of storedTemplates) {
       const predefined = predefinedMap.get(stored.id)
-      
+
       if (!predefined) {
         // Custom template created by user - not part of migration
         // These are considered correct since they're user-defined
@@ -73,14 +73,16 @@ export async function diagnoseTemplateTypes() {
           storedType: stored.type,
           correctType: predefined.type
         })
-        logger.warn(`Corrupted: ${stored.id} - stored as "${stored.type}", should be "${predefined.type}"`)
+        logger.warn(
+          `Corrupted: ${stored.id} - stored as "${stored.type}", should be "${predefined.type}"`
+        )
       } else {
         results.correct++
       }
     }
 
     // Check for missing predefined templates
-    const storedIds = new Set(storedTemplates.map(t => t.id))
+    const storedIds = new Set(storedTemplates.map((t) => t.id))
     for (const predefined of predefinedTemplates) {
       if (!storedIds.has(predefined.id)) {
         results.missing.push({
@@ -91,9 +93,10 @@ export async function diagnoseTemplateTypes() {
       }
     }
 
-    logger.log(`Diagnostic complete: ${results.correct} correct, ${results.corrupted.length} corrupted, ${results.missing.length} missing`)
+    logger.log(
+      `Diagnostic complete: ${results.correct} correct, ${results.corrupted.length} corrupted, ${results.missing.length} missing`
+    )
     return results
-
   } catch (error) {
     logger.error('Error during template type diagnosis:', error)
     throw error
@@ -102,10 +105,10 @@ export async function diagnoseTemplateTypes() {
 
 /**
  * Fix corrupted template types by comparing with predefined templates
- * 
+ *
  * Note: This only fixes predefined templates. Custom user templates are not modified.
  * After successful fix, sets a localStorage flag to skip future checks.
- * 
+ *
  * @returns {Promise<Object>} Fix results with count of fixed templates and any errors
  */
 export async function fixCorruptedTemplateTypes() {
@@ -130,14 +133,16 @@ export async function fixCorruptedTemplateTypes() {
 
     // Get predefined templates for correct type info
     const predefinedTemplates = getPredefinedTemplates()
-    const predefinedMap = new Map(predefinedTemplates.map(t => [t.id, t]))
+    const predefinedMap = new Map(predefinedTemplates.map((t) => [t.id, t]))
 
     // Fix each corrupted template
     for (const corrupted of diagnosis.corrupted) {
       try {
         const predefined = predefinedMap.get(corrupted.id)
         if (!predefined) {
-          logger.error(`Cannot fix ${corrupted.id}: predefined template not found`)
+          logger.error(
+            `Cannot fix ${corrupted.id}: predefined template not found`
+          )
           results.errors.push({
             id: corrupted.id,
             error: 'Predefined template not found'
@@ -158,8 +163,9 @@ export async function fixCorruptedTemplateTypes() {
           newType: predefined.type
         })
 
-        logger.log(`Fixed: ${corrupted.title} (${corrupted.storedType} → ${predefined.type})`)
-
+        logger.log(
+          `Fixed: ${corrupted.title} (${corrupted.storedType} → ${predefined.type})`
+        )
       } catch (error) {
         logger.error(`Error fixing template ${corrupted.id}:`, error)
         results.errors.push({
@@ -169,15 +175,16 @@ export async function fixCorruptedTemplateTypes() {
       }
     }
 
-    logger.log(`Fix complete: ${results.fixed} fixed, ${results.errors.length} errors`)
-    
+    logger.log(
+      `Fix complete: ${results.fixed} fixed, ${results.errors.length} errors`
+    )
+
     // Set flag to avoid future checks if all fixes succeeded
     if (results.errors.length === 0) {
       localStorage.setItem(MIGRATION_FLAG_KEY, 'true')
     }
-    
-    return results
 
+    return results
   } catch (error) {
     logger.error('Error during template type fix:', error)
     throw error
@@ -186,11 +193,11 @@ export async function fixCorruptedTemplateTypes() {
 
 /**
  * Check if templates need migration (quick check with caching)
- * 
+ *
  * Performance optimization: Checks localStorage flag first. If migration was
  * already completed, returns false immediately without querying IndexedDB.
  * This avoids unnecessary work on every Library page load.
- * 
+ *
  * @returns {Promise<boolean>} True if migration is needed
  */
 export async function needsTemplateMigration() {
@@ -200,7 +207,7 @@ export async function needsTemplateMigration() {
     if (migrationComplete === 'true') {
       return false
     }
-    
+
     // Otherwise, perform full diagnostic
     const diagnosis = await diagnoseTemplateTypes()
     return diagnosis.corrupted.length > 0
