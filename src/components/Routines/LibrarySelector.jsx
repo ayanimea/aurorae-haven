@@ -4,7 +4,7 @@
  * Displays only routine templates and provides action buttons
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import {
   getAllTemplates,
@@ -46,12 +46,12 @@ function LibrarySelector({ onSelectTemplate }) {
   const [toastMessage, setToastMessage] = useState('')
   const [showToast, setShowToast] = useState(false)
 
-  // Toast notification helper
-  const showToastNotification = (message) => {
+  // Toast notification helper - memoized to avoid recreating on every render
+  const showToastNotification = useCallback((message) => {
     setToastMessage(message)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
-  }
+  }, [])
 
   // Load templates on mount
   useEffect(() => {
@@ -88,7 +88,9 @@ function LibrarySelector({ onSelectTemplate }) {
           // Load all templates
           const allTemplates = await getAllTemplates()
           logger.log(`Loaded ${allTemplates.length} total templates`)
-          logger.log(`Template types: ${allTemplates.map(t => t.type).join(', ')}`)
+          logger.log(
+            `Template types: ${allTemplates.map((t) => t.type).join(', ')}`
+          )
           setTemplates(allTemplates)
         },
         'Loading templates',
@@ -105,17 +107,19 @@ function LibrarySelector({ onSelectTemplate }) {
     }
 
     loadTemplates()
-  }, [])
+  }, [showToastNotification])
 
   // Filter and sort templates - only show routine templates
   const filteredAndSortedTemplates = useMemo(() => {
     logger.log(`Filtering templates. Total templates: ${templates.length}`)
-    
+
     // Only show routine templates
     const routineTemplates = templates.filter(
       (t) => t.type?.trim().toLowerCase() === 'routine'
     )
-    logger.log(`Routine templates after type filter: ${routineTemplates.length}`)
+    logger.log(
+      `Routine templates after type filter: ${routineTemplates.length}`
+    )
 
     // Apply search filter
     let filtered = filterTemplates(routineTemplates, {
@@ -191,6 +195,32 @@ function LibrarySelector({ onSelectTemplate }) {
       {
         showToast: false,
         onError: () => showToastNotification('Failed to delete template')
+      }
+    )
+  }
+
+  const handleDuplicateTemplate = async (template) => {
+    await withErrorHandling(
+      async () => {
+        // Create a copy with a new ID and modified title
+        const duplicatedTemplate = {
+          ...template,
+          id: undefined, // Let saveTemplate generate a new ID
+          title: `${template.title} (Copy)`,
+          createdAt: new Date().toISOString(),
+          lastUsed: null
+        }
+        await saveTemplate(duplicatedTemplate)
+        showToastNotification('Template duplicated')
+
+        // Reload templates
+        const allTemplates = await getAllTemplates()
+        setTemplates(allTemplates)
+      },
+      'Duplicating template',
+      {
+        showToast: false,
+        onError: () => showToastNotification('Failed to duplicate template')
       }
     )
   }
@@ -298,7 +328,7 @@ function LibrarySelector({ onSelectTemplate }) {
               onUse={handleUseTemplate}
               onEdit={handleEditTemplate}
               onDelete={handleDeleteTemplate}
-              onDuplicate={() => {}}
+              onDuplicate={handleDuplicateTemplate}
             />
           ))}
         </div>

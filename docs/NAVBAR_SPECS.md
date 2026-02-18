@@ -58,7 +58,7 @@ The navbar is divided into three distinct zones:
 
 ### TAB-NAV-06: Tab List
 
-Six primary navigation tabs (Library removed from main navigation in 2026):
+Seven primary navigation tabs (Library removed from main navigation in 2026, but Settings added):
 
 1. **Tasks** - Task management with Eisenhower matrix
 2. **Routines** - Routines with timers

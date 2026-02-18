@@ -48,5 +48,5 @@
 
 ---
 
-_Last Updated_: 2026-02-18
-_Reviewed By_: Copilot
+_Last Updated_: 2026-02-18  
+_Risk Acceptance_: Development Team

@@ -12,15 +12,21 @@ import LibrarySelector from './LibrarySelector'
 function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
   const [showLibrary, setShowLibrary] = useState(false)
 
+  const handleClose = () => {
+    // Reset state when closing
+    setShowLibrary(false)
+    onClose()
+  }
+
   const handleSelectTemplate = (template) => {
     onSelectTemplate(template)
-    onClose()
+    handleClose()
   }
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title='Create New Routine'
       className='routine-creation-modal'
     >
@@ -39,7 +45,7 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
             Browse Library
           </button>
 
-          <button className='btn btn-block' onClick={onClose}>
+          <button className='btn btn-block' onClick={handleClose}>
             Cancel
           </button>
         </div>
