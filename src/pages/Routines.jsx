@@ -45,6 +45,12 @@ function Routines() {
     try {
       setLoadingRoutines(true)
       const routines = await getRoutines({ sortBy: 'name', order: 'asc' })
+      logger.log(`Loaded ${routines.length} routines from getRoutines()`)
+      logger.log('Routine IDs:', routines.map((r) => r.id).join(', '))
+      logger.log(
+        'Routine names:',
+        routines.map((r) => r.name || r.title).join(', ')
+      )
       setAvailableRoutines(routines)
     } catch (error) {
       logger.error('Failed to load routines:', error)
@@ -262,12 +268,18 @@ function Routines() {
   const handleSelectTemplate = async (template) => {
     try {
       logger.log('Selected template:', template.title)
+      logger.log('Template object:', template)
+
       // Instantiate the template to create a routine
-      await instantiateTemplate(template)
+      const routineId = await instantiateTemplate(template)
+      logger.log('Routine created with ID:', routineId)
+
       showToastNotification('Routine created from template')
 
       // Reload the routine list to show the new routine
+      logger.log('Reloading available routines...')
       await loadAvailableRoutines()
+      logger.log('Routine list reload complete')
     } catch (error) {
       logger.error('Failed to create routine from template:', error)
       showToastNotification('Failed to create routine: ' + error.message)

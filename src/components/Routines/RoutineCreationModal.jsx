@@ -11,16 +11,24 @@ import LibrarySelector from './LibrarySelector'
 
 function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
   const [showLibrary, setShowLibrary] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
 
   const handleClose = () => {
     // Reset state when closing
     setShowLibrary(false)
+    setIsCreating(false)
     onClose()
   }
 
-  const handleSelectTemplate = (template) => {
-    onSelectTemplate(template)
-    handleClose()
+  const handleSelectTemplate = async (template) => {
+    setIsCreating(true)
+    try {
+      await onSelectTemplate(template) // Wait for template instantiation and list reload
+      handleClose()
+    } finally {
+      // Always re-enable UI even if there was an error (parent handles error display)
+      setIsCreating(false)
+    }
   }
 
   return (
@@ -63,13 +71,22 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
               className='btn'
               onClick={() => setShowLibrary(false)}
               aria-label='Back to options'
+              disabled={isCreating}
             >
               <Icon name='chevronLeft' />
               Back
             </button>
+            {isCreating && (
+              <span className='small' style={{ opacity: 0.7 }}>
+                Creating routine...
+              </span>
+            )}
           </div>
 
-          <LibrarySelector onSelectTemplate={handleSelectTemplate} />
+          <LibrarySelector
+            onSelectTemplate={handleSelectTemplate}
+            disabled={isCreating}
+          />
         </div>
       )}
     </Modal>
