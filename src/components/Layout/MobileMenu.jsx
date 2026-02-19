@@ -1,4 +1,4 @@
-import React from 'react'
+
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 
@@ -14,7 +14,6 @@ function MobileMenu({ isOpen, onClose, tabs, isActive, mobileMenuRef }) {
       ref={mobileMenuRef}
       id='mobile-menu'
       className='mobile-menu open'
-      role='navigation'
       aria-label='Mobile navigation menu'
     >
       <div className='mobile-menu-content'>

@@ -6,7 +6,6 @@
  * Visual hierarchy: Below events (z-index: 1), above background (z-index: 0)
  */
 
-import React from 'react'
 import './TimeBands.css'
 
 function TimeBands() {

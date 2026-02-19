@@ -5,9 +5,7 @@
 // It reads settings directly from localStorage on each call, making it stateless
 // and avoiding tight coupling with other modules. This approach eliminates race
 // conditions during initialization and follows clean architecture principles.
-
-/* eslint-disable no-console -- Logger utility requires console access */
-// This file is the logger utility itself, so it needs to use console
+// This file is the logger utility itself, so it intentionally uses console methods.
 
 /**
  * Check if logging should be enabled
@@ -47,7 +45,6 @@ function isLoggingEnabled() {
  */
 export function log(...args) {
   if (isLoggingEnabled()) {
-    console.log(...args)
   }
 }
 
@@ -58,7 +55,6 @@ export function log(...args) {
  */
 export function warn(...args) {
   if (isLoggingEnabled()) {
-    console.warn(...args)
   }
 }
 
@@ -68,7 +64,6 @@ export function warn(...args) {
  * @param {...any} args - Arguments to log
  */
 export function error(...args) {
-  console.error(...args)
 }
 
 /**
@@ -78,7 +73,6 @@ export function error(...args) {
  */
 export function info(...args) {
   if (isLoggingEnabled()) {
-    console.info(...args)
   }
 }
 

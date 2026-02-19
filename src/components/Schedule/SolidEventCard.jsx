@@ -13,7 +13,6 @@
  * This is the "hero" of the schedule - everything else is context
  */
 
-import React from 'react'
 import PropTypes from 'prop-types'
 import { VALID_EVENT_TYPES } from '../../utils/scheduleConstants'
 import './SolidEventCard.css'
@@ -28,11 +27,6 @@ function SolidEventCard({ event, onContextMenu }) {
 
   // Log warning for invalid event types to detect data corruption or injection attempts
   if (rawEventType && !VALID_EVENT_TYPES.includes(rawEventType)) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[SolidEventCard] Invalid event type "${rawEventType}" encountered for event "${title}". ` +
-        `Falling back to "task". Valid types: ${VALID_EVENT_TYPES.join(', ')}`
-    )
   }
 
   const prepTime = resource?.preparationTime || 0

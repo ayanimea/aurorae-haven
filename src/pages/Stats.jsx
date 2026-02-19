@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getStatsByType, isIndexedDBAvailable } from '../utils/indexedDBManager'
 import { createLogger } from '../utils/logger'
 

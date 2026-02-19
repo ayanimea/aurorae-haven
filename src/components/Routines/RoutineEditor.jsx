@@ -3,7 +3,7 @@
  * Form for creating or editing routines with steps
  */
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 

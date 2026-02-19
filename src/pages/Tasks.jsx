@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useTasksState } from '../hooks/useTasksState'
 import { useDragAndDrop } from '../hooks/useDragAndDrop'
 import TaskForm from '../components/Tasks/TaskForm'

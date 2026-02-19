@@ -76,7 +76,7 @@ export function useNotesState() {
     // We depend on the first note's ID (not the full notes array) to detect meaningful changes.
     // This avoids re-loading when only note content changes, but captures note reordering/replacement.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notes[0]?.id, currentNoteId])
+  }, [notes[0]?.id, currentNoteId, notes.length, loadNote, notes[0]])
 
   // Memoize current note to avoid redundant array searches
   const currentNote = useMemo(
