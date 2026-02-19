@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 /**
  * @vitest-environment jsdom
  */
@@ -33,13 +34,13 @@ Object.defineProperty(window, 'localStorage', {
 })
 
 // Mock dependencies
-jest.mock('../utils/templatesManager')
-jest.mock('../utils/predefinedTemplates')
-jest.mock('../utils/logger', () => ({
+vi.mock('../utils/templatesManager')
+vi.mock('../utils/predefinedTemplates')
+vi.mock('../utils/logger', () => ({
   createLogger: () => ({
-    log: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+    log: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
   })
 }))
 

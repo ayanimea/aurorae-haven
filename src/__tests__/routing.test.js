@@ -3,54 +3,55 @@
  * Validates that routes are properly configured for Home page at root and fallback
  */
 
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import Home from '../pages/Home.jsx'
 
 // Mock all page components
-jest.mock('../pages/Home.jsx', () => {
+vi.mock('../pages/Home.jsx', () => {
   return function MockHome() {
     return <div data-testid='home-page'>Home Page</div>
   }
 })
 
-jest.mock('../pages/Schedule', () => {
+vi.mock('../pages/Schedule', () => {
   return function MockSchedule() {
     return <div data-testid='schedule-page'>Schedule Page</div>
   }
 })
 
-jest.mock('../pages/Notes', () => {
+vi.mock('../pages/Notes', () => {
   return function MockNotes() {
     return <div data-testid='braindump-page'>Notes Page</div>
   }
 })
 
-jest.mock('../pages/Routines', () => {
+vi.mock('../pages/Routines', () => {
   return function MockRoutines() {
     return <div data-testid='routines-page'>Routines Page</div>
   }
 })
 
-jest.mock('../pages/Tasks', () => {
+vi.mock('../pages/Tasks', () => {
   return function MockTasks() {
     return <div data-testid='tasks-page'>Tasks Page</div>
   }
 })
 
-jest.mock('../pages/Habits', () => {
+vi.mock('../pages/Habits', () => {
   return function MockHabits() {
     return <div data-testid='habits-page'>Habits Page</div>
   }
 })
 
-jest.mock('../pages/Stats', () => {
+vi.mock('../pages/Stats', () => {
   return function MockStats() {
     return <div data-testid='stats-page'>Stats Page</div>
   }
 })
 
-jest.mock('../pages/Settings', () => {
+vi.mock('../pages/Settings', () => {
   return function MockSettings() {
     return <div data-testid='settings-page'>Settings Page</div>
   }

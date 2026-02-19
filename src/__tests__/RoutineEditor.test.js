@@ -1,13 +1,14 @@
 /**
  * @vitest-environment jsdom
  */
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import RoutineEditor from '../components/Routines/RoutineEditor'
 
 // Mock Icon component
-jest.mock('../components/common/Icon', () => ({
+vi.mock('../components/common/Icon', () => ({
   __esModule: true,
   default: ({ name }) => <span data-testid={`icon-${name}`}>{name}</span>
 }))

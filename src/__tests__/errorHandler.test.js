@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 /**
  * Tests for centralized error handler utility
  */
@@ -17,11 +18,11 @@ import {
 } from '../utils/errorHandler'
 
 // Mock logger
-jest.mock('../utils/logger', () => ({
+vi.mock('../utils/logger', () => ({
   createLogger: () => ({
-    error: jest.fn(),
-    warn: jest.fn(),
-    info: jest.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
     log: jest.fn()
   })
 }))

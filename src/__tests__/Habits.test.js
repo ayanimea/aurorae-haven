@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import React from 'react'
 import {
   render,
@@ -14,9 +15,9 @@ import { createHabit, getHabits } from '../utils/habitsManager'
 import { clear, STORES } from '../utils/indexedDBManager'
 
 // Mock logger
-jest.mock('../utils/logger', () => ({
-  log: jest.fn(),
-  warn: jest.fn(),
+vi.mock('../utils/logger', () => ({
+  log: vi.fn(),
+  warn: vi.fn(),
   error: jest.fn(),
   info: jest.fn(),
   createLogger: jest.fn(() => ({

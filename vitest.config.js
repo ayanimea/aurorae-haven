@@ -3,6 +3,13 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      // Point uuid to its Node ESM build to avoid CJS/ESM wrapper.mjs interop issue
+      uuid: new URL('./node_modules/uuid/dist/esm-node/index.js', import.meta.url)
+        .pathname,
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
@@ -20,14 +27,8 @@ export default defineConfig({
           'dompurify',
           'react-router',
           'react-router-dom',
-          'uuid',
           '@fullcalendar',
         ],
-      },
-    },
-    environmentOptions: {
-      node: {
-        experimentalVmModules: true,
       },
     },
   },

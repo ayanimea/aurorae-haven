@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
@@ -5,14 +6,14 @@ import CalendarSubscriptionModal from '../components/Schedule/CalendarSubscripti
 import * as calendarManager from '../utils/calendarSubscriptionManager'
 
 // Mock Icon component
-jest.mock('../components/common/Icon', () => {
+vi.mock('../components/common/Icon', () => {
   return function Icon({ name }) {
     return <span data-testid={`icon-${name}`}>{name}</span>
   }
 })
 
 // Mock Modal component
-jest.mock('../components/common/Modal', () => {
+vi.mock('../components/common/Modal', () => {
   return function Modal({ isOpen, children, title, onClose }) {
     if (!isOpen) return null
     return (
@@ -28,20 +29,20 @@ jest.mock('../components/common/Modal', () => {
 })
 
 // Mock calendar subscription manager
-jest.mock('../utils/calendarSubscriptionManager', () => ({
-  getCalendarSubscriptions: jest.fn(),
-  addCalendarSubscription: jest.fn(),
+vi.mock('../utils/calendarSubscriptionManager', () => ({
+  getCalendarSubscriptions: vi.fn(),
+  addCalendarSubscription: vi.fn(),
   deleteCalendarSubscription: jest.fn(),
   updateCalendarSubscription: jest.fn(),
   syncCalendar: jest.fn()
 }))
 
 // Mock logger
-jest.mock('../utils/logger', () => ({
+vi.mock('../utils/logger', () => ({
   createLogger: () => ({
-    error: jest.fn(),
-    log: jest.fn(),
-    warn: jest.fn()
+    error: vi.fn(),
+    log: vi.fn(),
+    warn: vi.fn()
   })
 }))
 

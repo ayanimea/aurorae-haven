@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
@@ -5,24 +6,24 @@ import SearchableEventSelector from '../components/Schedule/SearchableEventSelec
 import * as scheduleHelpers from '../utils/scheduleHelpers'
 
 // Mock the schedule helpers
-jest.mock('../utils/scheduleHelpers', () => ({
-  searchRoutinesAndTasks: jest.fn(),
-  getAllRoutinesAndTasks: jest.fn()
+vi.mock('../utils/scheduleHelpers', () => ({
+  searchRoutinesAndTasks: vi.fn(),
+  getAllRoutinesAndTasks: vi.fn()
 }))
 
 // Mock Icon component
-jest.mock('../components/common/Icon', () => {
+vi.mock('../components/common/Icon', () => {
   return function Icon({ name }) {
     return <span data-testid={`icon-${name}`}>{name}</span>
   }
 })
 
 // Mock logger
-jest.mock('../utils/logger', () => ({
+vi.mock('../utils/logger', () => ({
   createLogger: () => ({
-    error: jest.fn(),
-    log: jest.fn(),
-    info: jest.fn()
+    error: vi.fn(),
+    log: vi.fn(),
+    info: vi.fn()
   })
 }))
 

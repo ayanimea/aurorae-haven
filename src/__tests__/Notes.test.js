@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 /**
  * Integration tests for Notes component
  */
@@ -7,14 +8,14 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import Notes from '../pages/Notes.jsx'
 
 // Mock marked and DOMPurify
-jest.mock('marked', () => ({
+vi.mock('marked', () => ({
   marked: {
-    parse: jest.fn((content) => `<p>${content}</p>`)
+    parse: vi.fn((content) => `<p>${content}</p>`)
   }
 }))
 
-jest.mock('dompurify', () => {
-  const sanitize = jest.fn((html) => html)
+vi.mock('dompurify', () => {
+  const sanitize = vi.fn((html) => html)
   return {
     __esModule: true,
     default: {

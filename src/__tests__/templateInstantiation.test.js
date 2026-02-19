@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import {
   instantiateTaskFromTemplate,
   instantiateRoutineFromTemplate,
@@ -8,8 +9,8 @@ import * as routinesManager from '../utils/routinesManager'
 import { v4 as uuidv4 } from 'uuid'
 
 // Mock dependencies
-jest.mock('uuid')
-jest.mock('../utils/routinesManager')
+vi.mock('uuid')
+vi.mock('../utils/routinesManager')
 
 describe('templateInstantiation', () => {
   beforeEach(() => {

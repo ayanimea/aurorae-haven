@@ -3,12 +3,13 @@
  * Validates routine creation workflow, library integration, and state management
  */
 
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
 
 // Mock the LibrarySelector component
-jest.mock('../components/Routines/LibrarySelector', () => {
+vi.mock('../components/Routines/LibrarySelector', () => {
   return function MockLibrarySelector({ onSelectTemplate }) {
     return (
       <div data-testid='library-selector'>
@@ -29,7 +30,7 @@ jest.mock('../components/Routines/LibrarySelector', () => {
 })
 
 // Mock the RoutineEditor component
-jest.mock('../components/Routines/RoutineEditor', () => {
+vi.mock('../components/Routines/RoutineEditor', () => {
   return function MockRoutineEditor({ onSave, onCancel }) {
     return (
       <div data-testid='routine-editor'>

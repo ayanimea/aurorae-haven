@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import {
   toRBCEvent,
   toRBCEvents,
@@ -8,11 +9,11 @@ import {
 import { parseISO } from 'date-fns'
 
 // Mock logger
-jest.mock('../utils/logger', () => ({
-  createLogger: jest.fn(() => ({
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+vi.mock('../utils/logger', () => ({
+  createLogger: vi.fn(() => ({
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
     info: jest.fn()
   }))
 }))

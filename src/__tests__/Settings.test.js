@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 /**
  * Tests for Settings component
  * Tests basic rendering and accessibility features
@@ -9,12 +10,12 @@ import '@testing-library/jest-dom'
 import Settings from '../pages/Settings'
 
 // Mock CSS imports
-jest.mock('../assets/styles/settings.css', () => ({}))
+vi.mock('../assets/styles/settings.css', () => ({}))
 
 // Mock the autoSaveFS module
-jest.mock('../utils/autoSaveFS', () => ({
-  isFileSystemAccessSupported: jest.fn(() => true),
-  requestDirectoryAccess: jest.fn(),
+vi.mock('../utils/autoSaveFS', () => ({
+  isFileSystemAccessSupported: vi.fn(() => true),
+  requestDirectoryAccess: vi.fn(),
   getCurrentDirectoryHandle: jest.fn(() => null),
   setDirectoryHandle: jest.fn(),
   verifyDirectoryHandle: jest.fn(),
@@ -29,8 +30,8 @@ jest.mock('../utils/autoSaveFS', () => ({
 }))
 
 // Mock the settingsManager module
-jest.mock('../utils/settingsManager', () => ({
-  getSettings: jest.fn(() => ({
+vi.mock('../utils/settingsManager', () => ({
+  getSettings: vi.fn(() => ({
     autoSave: {
       enabled: false,
       intervalMinutes: 5,
@@ -38,7 +39,7 @@ jest.mock('../utils/settingsManager', () => ({
       directoryConfigured: false
     }
   })),
-  updateSetting: jest.fn((key, value) => ({
+  updateSetting: vi.fn((key, value) => ({
     autoSave: {
       enabled: key === 'autoSave.enabled' ? value : false,
       intervalMinutes: key === 'autoSave.intervalMinutes' ? value : 5,
@@ -54,8 +55,8 @@ jest.mock('../utils/settingsManager', () => ({
 }))
 
 // Mock the importData module
-jest.mock('../utils/importData', () => ({
-  reloadPageAfterDelay: jest.fn(),
+vi.mock('../utils/importData', () => ({
+  reloadPageAfterDelay: vi.fn(),
   IMPORT_SUCCESS_MESSAGE: 'Data imported successfully'
 }))
 

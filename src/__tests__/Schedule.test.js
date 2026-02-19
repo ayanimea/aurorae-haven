@@ -1,10 +1,11 @@
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 
 // Mock FullCalendar to avoid ESM parsing issues
-jest.mock('@fullcalendar/react', () => {
+vi.mock('@fullcalendar/react', () => {
   return function FullCalendar(props) {
     return (
       <div className='fc' data-testid='fullcalendar'>
@@ -14,26 +15,26 @@ jest.mock('@fullcalendar/react', () => {
   }
 })
 
-jest.mock('@fullcalendar/timegrid', () => ({}))
-jest.mock('@fullcalendar/daygrid', () => ({}))
-jest.mock('@fullcalendar/interaction', () => ({}))
+vi.mock('@fullcalendar/timegrid', () => ({}))
+vi.mock('@fullcalendar/daygrid', () => ({}))
+vi.mock('@fullcalendar/interaction', () => ({}))
 
 // Mock Icon component
-jest.mock('../components/common/Icon', () => {
+vi.mock('../components/common/Icon', () => {
   return function Icon({ name }) {
     return <span data-testid={`icon-${name}`}>{name}</span>
   }
 })
 
 // Mock EventModal component
-jest.mock('../components/Schedule/EventModal', () => {
+vi.mock('../components/Schedule/EventModal', () => {
   return function EventModal() {
     return null
   }
 })
 
 // Mock CustomToolbar component
-jest.mock('../components/Schedule/CustomToolbar', () => {
+vi.mock('../components/Schedule/CustomToolbar', () => {
   return function CustomToolbar({
     date,
     view,
@@ -81,25 +82,25 @@ jest.mock('../components/Schedule/CustomToolbar', () => {
 })
 
 // Mock CustomEvent component
-jest.mock('../components/Schedule/CustomEvent', () => {
+vi.mock('../components/Schedule/CustomEvent', () => {
   return function CustomEvent({ event }) {
     return <div>{event.title}</div>
   }
 })
 
 // Mock ItemActionModal component
-jest.mock('../components/ItemActionModal', () => {
+vi.mock('../components/ItemActionModal', () => {
   return function ItemActionModal() {
     return null
   }
 })
 
 // Mock EventService
-jest.mock('../services/EventService', () => ({
+vi.mock('../services/EventService', () => ({
   __esModule: true,
   default: {
-    getEventsForDate: jest.fn().mockResolvedValue([]),
-    getEventsForWeek: jest.fn().mockResolvedValue([]),
+    getEventsForDate: vi.fn().mockResolvedValue([]),
+    getEventsForWeek: vi.fn().mockResolvedValue([]),
     getEventsForRange: jest.fn().mockResolvedValue([]),
     getEventsForDays: jest.fn().mockResolvedValue([]),
     createEvent: jest.fn(),
@@ -110,11 +111,11 @@ jest.mock('../services/EventService', () => ({
 }))
 
 // Mock logger
-jest.mock('../utils/logger', () => ({
-  createLogger: jest.fn(() => ({
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+vi.mock('../utils/logger', () => ({
+  createLogger: vi.fn(() => ({
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
     info: jest.fn()
   }))
 }))
