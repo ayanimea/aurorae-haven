@@ -30,7 +30,7 @@ jest.mock('../components/Routines/LibrarySelector', () => {
 
 describe('RoutineCreationModal', () => {
   const mockOnClose = jest.fn()
-  const mockOnSelectTemplate = jest.fn()
+  const mockOnSelectTemplate = jest.fn().mockResolvedValue()
 
   const defaultProps = {
     isOpen: true,
