@@ -10,58 +10,66 @@ import Home from '../pages/Home.jsx'
 
 // Mock all page components
 vi.mock('../pages/Home.jsx', () => {
-  return { default: function MockHome() {
-    return <div data-testid='home-page'>Home Page</div>
-  }
+  return {
+    default: function MockHome() {
+      return <div data-testid='home-page'>Home Page</div>
+    }
   }
 })
 
 vi.mock('../pages/Schedule', () => {
-  return { default: function MockSchedule() {
-    return <div data-testid='schedule-page'>Schedule Page</div>
-  }
+  return {
+    default: function MockSchedule() {
+      return <div data-testid='schedule-page'>Schedule Page</div>
+    }
   }
 })
 
 vi.mock('../pages/Notes', () => {
-  return { default: function MockNotes() {
-    return <div data-testid='braindump-page'>Notes Page</div>
-  }
+  return {
+    default: function MockNotes() {
+      return <div data-testid='braindump-page'>Notes Page</div>
+    }
   }
 })
 
 vi.mock('../pages/Routines', () => {
-  return { default: function MockRoutines() {
-    return <div data-testid='routines-page'>Routines Page</div>
-  }
+  return {
+    default: function MockRoutines() {
+      return <div data-testid='routines-page'>Routines Page</div>
+    }
   }
 })
 
 vi.mock('../pages/Tasks', () => {
-  return { default: function MockTasks() {
-    return <div data-testid='tasks-page'>Tasks Page</div>
-  }
+  return {
+    default: function MockTasks() {
+      return <div data-testid='tasks-page'>Tasks Page</div>
+    }
   }
 })
 
 vi.mock('../pages/Habits', () => {
-  return { default: function MockHabits() {
-    return <div data-testid='habits-page'>Habits Page</div>
-  }
+  return {
+    default: function MockHabits() {
+      return <div data-testid='habits-page'>Habits Page</div>
+    }
   }
 })
 
 vi.mock('../pages/Stats', () => {
-  return { default: function MockStats() {
-    return <div data-testid='stats-page'>Stats Page</div>
-  }
+  return {
+    default: function MockStats() {
+      return <div data-testid='stats-page'>Stats Page</div>
+    }
   }
 })
 
 vi.mock('../pages/Settings', () => {
-  return { default: function MockSettings() {
-    return <div data-testid='settings-page'>Settings Page</div>
-  }
+  return {
+    default: function MockSettings() {
+      return <div data-testid='settings-page'>Settings Page</div>
+    }
   }
 })
 

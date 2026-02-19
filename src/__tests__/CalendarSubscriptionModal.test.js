@@ -7,26 +7,28 @@ import * as calendarManager from '../utils/calendarSubscriptionManager'
 
 // Mock Icon component
 vi.mock('../components/common/Icon', () => {
-  return { default: function Icon({ name }) {
-    return <span data-testid={`icon-${name}`}>{name}</span>
-  }
+  return {
+    default: function Icon({ name }) {
+      return <span data-testid={`icon-${name}`}>{name}</span>
+    }
   }
 })
 
 // Mock Modal component
 vi.mock('../components/common/Modal', () => {
-  return { default: function Modal({ isOpen, children, title, onClose }) {
-    if (!isOpen) return null
-    return (
-      <div data-testid='modal'>
-        <h2>{title}</h2>
-        <button onClick={onClose} data-testid='modal-close'>
-          Close
-        </button>
-        {children}
-      </div>
-    )
-  }
+  return {
+    default: function Modal({ isOpen, children, title, onClose }) {
+      if (!isOpen) return null
+      return (
+        <div data-testid='modal'>
+          <h2>{title}</h2>
+          <button onClick={onClose} data-testid='modal-close'>
+            Close
+          </button>
+          {children}
+        </div>
+      )
+    }
   }
 })
 

@@ -7,13 +7,14 @@ import EventService from '../services/EventService'
 
 // Mock FullCalendar to avoid ESM parsing issues
 vi.mock('@fullcalendar/react', () => {
-  return { default: function FullCalendar(props) {
-    return (
-      <div className='fc' data-testid='fullcalendar'>
-        <div className='fc-view'>{props.initialView}</div>
-      </div>
-    )
-  }
+  return {
+    default: function FullCalendar(props) {
+      return (
+        <div className='fc' data-testid='fullcalendar'>
+          <div className='fc-view'>{props.initialView}</div>
+        </div>
+      )
+    }
   }
 })
 
@@ -23,82 +24,87 @@ vi.mock('@fullcalendar/interaction', () => ({ default: {} }))
 
 // Mock Icon component
 vi.mock('../components/common/Icon', () => {
-  return { default: function Icon({ name }) {
-    return <span data-testid={`icon-${name}`}>{name}</span>
-  }
+  return {
+    default: function Icon({ name }) {
+      return <span data-testid={`icon-${name}`}>{name}</span>
+    }
   }
 })
 
 // Mock EventModal component
 vi.mock('../components/Schedule/EventModal', () => {
-  return { default: function EventModal() {
-    return null
-  }
+  return {
+    default: function EventModal() {
+      return null
+    }
   }
 })
 
 // Mock CustomToolbar component
 vi.mock('../components/Schedule/CustomToolbar', () => {
-  return { default: function CustomToolbar({
-    date,
-    view,
-    views,
-    onNavigate,
-    onView,
-    onScheduleEvent,
-    EVENT_TYPES
-  }) {
-    return (
-      <div className='calendar-toolbar'>
-        <div className='toolbar-left'>
-          <h2>Schedule</h2>
-          <p className='date-display'>
-            {date.toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric'
-            })}
-          </p>
+  return {
+    default: function CustomToolbar({
+      date,
+      view,
+      views,
+      onNavigate,
+      onView,
+      onScheduleEvent,
+      EVENT_TYPES
+    }) {
+      return (
+        <div className='calendar-toolbar'>
+          <div className='toolbar-left'>
+            <h2>Schedule</h2>
+            <p className='date-display'>
+              {date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              })}
+            </p>
+          </div>
+          <div className='toolbar-center'>
+            <button onClick={() => onNavigate('PREV')}>Previous</button>
+            <button onClick={() => onNavigate('TODAY')}>Today</button>
+            <button onClick={() => onNavigate('NEXT')}>Next</button>
+            <select value={view} onChange={(e) => onView(e.target.value)}>
+              {views.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className='toolbar-right'>
+            <button
+              onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}
+              aria-label='Schedule an event'
+            >
+              + Schedule
+            </button>
+          </div>
         </div>
-        <div className='toolbar-center'>
-          <button onClick={() => onNavigate('PREV')}>Previous</button>
-          <button onClick={() => onNavigate('TODAY')}>Today</button>
-          <button onClick={() => onNavigate('NEXT')}>Next</button>
-          <select value={view} onChange={(e) => onView(e.target.value)}>
-            {views.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className='toolbar-right'>
-          <button
-            onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}
-            aria-label='Schedule an event'
-          >
-            + Schedule
-          </button>
-        </div>
-      </div>
-    )
-  }
+      )
+    }
   }
 })
 
 // Mock CustomEvent component
 vi.mock('../components/Schedule/CustomEvent', () => {
-  return { default: function CustomEvent({ event }) {
-    return <div>{event.title}</div>
-  }
+  return {
+    default: function CustomEvent({ event }) {
+      return <div>{event.title}</div>
+    }
   }
 })
 
 // Mock ItemActionModal component
 vi.mock('../components/ItemActionModal', () => {
-  return { default: function ItemActionModal() {
-    return null
-  }
+  return {
+    default: function ItemActionModal() {
+      return null
+    }
   }
 })
 

@@ -342,7 +342,8 @@ $$`}
       >
         <div className='modal-header'>
           <h2 id='help-modal-title'>Brain Dump Help</h2>
-          <button type="button"
+          <button
+            type='button'
             ref={closeButtonRef}
             className='modal-close'
             onClick={onClose}
@@ -359,7 +360,8 @@ $$`}
         <div className='modal-body'>
           <div role='tablist' aria-label='Help topics' className='help-tabs'>
             {tabs.map((tab) => (
-              <button type="button"
+              <button
+                type='button'
                 key={tab.id}
                 role='tab'
                 aria-selected={activeTab === tab.id}

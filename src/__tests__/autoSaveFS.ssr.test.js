@@ -10,26 +10,26 @@ import { vi } from 'vitest'
 // Mock uuid to avoid CJS/ESM interop issue in node environment
 vi.mock('uuid', () => ({
   v4: () => 'mock-uuid-v4',
-  v1: () => 'mock-uuid-v1',
+  v1: () => 'mock-uuid-v1'
 }))
 
 // Mock complex dependencies that pull in browser-only code
 vi.mock('../utils/exportData', () => ({}))
 vi.mock('../utils/indexedDBManager', () => ({
   isIndexedDBAvailable: () => false,
-  importAllData: vi.fn(),
+  importAllData: vi.fn()
 }))
 vi.mock('../utils/importData', () => ({
-  importToLocalStorage: vi.fn(),
+  importToLocalStorage: vi.fn()
 }))
 vi.mock('../utils/settingsManager', () => ({
-  getSetting: vi.fn(),
+  getSetting: vi.fn()
 }))
 vi.mock('../utils/idGenerator', () => ({
-  generateUniqueId: () => 'mock-id',
+  generateUniqueId: () => 'mock-id'
 }))
 vi.mock('../utils/validation', () => ({
-  validateImportData: vi.fn(() => ({ valid: true })),
+  validateImportData: vi.fn(() => ({ valid: true }))
 }))
 
 describe('autoSaveFS - SSR Tests', () => {

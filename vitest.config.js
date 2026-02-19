@@ -6,9 +6,11 @@ export default defineConfig({
   resolve: {
     alias: {
       // Point uuid to its Node ESM build to avoid CJS/ESM wrapper.mjs interop issue
-      uuid: new URL('./node_modules/uuid/dist/esm-node/index.js', import.meta.url)
-        .pathname,
-    },
+      uuid: new URL(
+        './node_modules/uuid/dist/esm-node/index.js',
+        import.meta.url
+      ).pathname
+    }
   },
   test: {
     globals: true,
@@ -18,7 +20,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{js,jsx}'],
-      exclude: ['src/index.jsx', 'src/serviceWorkerRegistration.js'],
+      exclude: ['src/index.jsx', 'src/serviceWorkerRegistration.js']
     },
     css: true,
     server: {
@@ -28,14 +30,14 @@ export default defineConfig({
           'dompurify',
           'react-router',
           'react-router-dom',
-          '@fullcalendar',
-        ],
-      },
-    },
+          '@fullcalendar'
+        ]
+      }
+    }
   },
   esbuild: {
     loader: 'jsx',
     include: /src\/.*\.jsx?$/,
-    exclude: [],
-  },
+    exclude: []
+  }
 })

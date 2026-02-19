@@ -220,7 +220,8 @@ describe('idGenerator', () => {
 
       // ID is numeric when timestamp is unique, or string with decimal format on collision
       const idIsNumeric = typeof result.id === 'number'
-      const idIsCollisionString = typeof result.id === 'string' && /^\d+\.\d{3}$/.test(String(result.id))
+      const idIsCollisionString =
+        typeof result.id === 'string' && /^\d+\.\d{3}$/.test(String(result.id))
       expect(idIsNumeric || idIsCollisionString).toBe(true)
       expect(Number(String(result.id).split('.')[0])).toBeGreaterThan(0)
     })

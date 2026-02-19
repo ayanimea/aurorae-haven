@@ -12,24 +12,26 @@ import EventModal from '../components/Schedule/EventModal'
 
 // Mock Icon component
 vi.mock('../components/common/Icon', () => {
-  return { default: function Icon({ name }) {
-    return <span data-testid={`icon-${name}`}>{name}</span>
-  }
+  return {
+    default: function Icon({ name }) {
+      return <span data-testid={`icon-${name}`}>{name}</span>
+    }
   }
 })
 
 // Mock Modal component
 vi.mock('../components/common/Modal', () => {
-  return { default: function Modal({ isOpen, children, title, onClose }) {
-    if (!isOpen) return null
-    return (
-      <div data-testid='modal'>
-        <h2>{title}</h2>
-        <button onClick={onClose}>Close</button>
-        {children}
-      </div>
-    )
-  }
+  return {
+    default: function Modal({ isOpen, children, title, onClose }) {
+      if (!isOpen) return null
+      return (
+        <div data-testid='modal'>
+          <h2>{title}</h2>
+          <button onClick={onClose}>Close</button>
+          {children}
+        </div>
+      )
+    }
   }
 })
 
@@ -46,23 +48,24 @@ vi.mock('../utils/timeUtils', () => ({
 let lastSearchableEventSelectorProps = null
 vi.mock('../components/Schedule/SearchableEventSelector', () => {
   const React = require('react')
-  return { default: function SearchableEventSelector(props) {
-    // Store props for test assertions
-    lastSearchableEventSelectorProps = props
-    const { onCreateNew, eventType } = props
-    // Automatically call onCreateNew to show the form
-    React.useEffect(() => {
-      if (onCreateNew) {
-        onCreateNew()
-      }
-    }, [onCreateNew])
-    return (
-      <div
-        data-testid='searchable-event-selector'
-        data-event-type={eventType === null ? 'null' : eventType}
-      />
-    )
-  }
+  return {
+    default: function SearchableEventSelector(props) {
+      // Store props for test assertions
+      lastSearchableEventSelectorProps = props
+      const { onCreateNew, eventType } = props
+      // Automatically call onCreateNew to show the form
+      React.useEffect(() => {
+        if (onCreateNew) {
+          onCreateNew()
+        }
+      }, [onCreateNew])
+      return (
+        <div
+          data-testid='searchable-event-selector'
+          data-event-type={eventType === null ? 'null' : eventType}
+        />
+      )
+    }
   }
 })
 

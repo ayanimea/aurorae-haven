@@ -608,7 +608,9 @@ describe('Notes Component', () => {
         result: fileContent
       }
 
-      global.FileReader = function FileReader() { return mockFileReader }
+      global.FileReader = function FileReader() {
+        return mockFileReader
+      }
 
       fireEvent.change(importInput, { target: { files: [file] } })
 
@@ -641,7 +643,9 @@ describe('Notes Component', () => {
         result: fileContent
       }
 
-      global.FileReader = function FileReader() { return mockFileReader }
+      global.FileReader = function FileReader() {
+        return mockFileReader
+      }
 
       fireEvent.change(importInput, { target: { files: [file] } })
       mockFileReader.onload({ target: { result: fileContent } })
