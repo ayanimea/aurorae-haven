@@ -104,7 +104,9 @@ function Library() {
               )
             }
             if (fixResults.errors.length > 0) {
-              logger.error(`Failed to fix ${fixResults.errors.length} templates`)
+              logger.error(
+                `Failed to fix ${fixResults.errors.length} templates`
+              )
             }
           }
 

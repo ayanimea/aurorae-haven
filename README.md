@@ -9,9 +9,9 @@
 ## ✨ Features
 
 - **Progressive Web App (PWA)**: Install on any device, works offline
-- **Routines**: Create, edit, and run daily routines with timers
+- **Routines**: Create, edit, and run daily routines with timers. Create routines from templates via an integrated library modal
 - **Tasks**: Prioritise using the Eisenhower matrix
-- **Template Library**: 13+ predefined task and routine templates to get started quickly
+- **Template Library**: 13+ predefined task and routine templates to get started quickly. Access from Settings or inline when creating routines
 - **Habits**: Track streaks and small wins
 - **Notes & Brain Dump**: Markdown-ready with comprehensive import/export (`.json` for full backup, `.md` for content only)
 - **Stats Foundation**: Track routine time and structured progress with IndexedDB

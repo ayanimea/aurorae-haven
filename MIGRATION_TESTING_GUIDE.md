@@ -12,14 +12,15 @@
 
 ### 1. Open the Application
 
-Navigate to the Library tab in your browser.
+Navigate to **Settings** → **Template Library**, or go directly to `/library` in your browser.
 
 ### 2. Check the Browser Console
 
 Open Developer Tools (F12) and look for migration logs:
 
 **If templates were corrupted, you'll see:**
-```
+
+```text
 [TemplateMigration] Diagnosing 22 templates...
 [TemplateMigration] Corrupted: routine-morning-launch - stored as "task", should be "routine"
 [TemplateMigration] Corrupted: routine-pomodoro - stored as "task", should be "routine"
@@ -34,7 +35,8 @@ Open Developer Tools (F12) and look for migration logs:
 ```
 
 **If no corruption, you'll see:**
-```
+
+```text
 [TemplateMigration] Diagnosing 22 templates...
 [TemplateMigration] Diagnostic complete: 22 correct, 0 corrupted, 0 missing
 ```
@@ -42,7 +44,8 @@ Open Developer Tools (F12) and look for migration logs:
 ### 3. Check the Toast Notification
 
 If templates were fixed, you should see a toast notification:
-```
+
+```text
 Fixed 10 templates with incorrect types
 ```
 
@@ -51,6 +54,7 @@ Fixed 10 templates with incorrect types
 In the Library page, you should now see:
 
 **Routines Section:**
+
 - Morning Launch Routine
 - Deep Focus Work Session
 - Pomodoro Work Session
@@ -63,6 +67,7 @@ In the Library page, you should now see:
 - Work Review
 
 **Tasks Section:**
+
 - Morning Review
 - 30-Minute Exercise
 - Meal Prep
@@ -93,12 +98,14 @@ In the Library page, you should now see:
 ## What the Migration Does
 
 ### Diagnostic Phase
+
 1. Loads all templates from IndexedDB
 2. Compares each against predefined templates
 3. Identifies mismatches in `type` field
 4. Reports: correct count, corrupted count, missing count
 
 ### Fix Phase
+
 1. For each corrupted template:
    - Look up the correct type from predefined template
    - Update the template in IndexedDB with correct type
@@ -106,6 +113,7 @@ In the Library page, you should now see:
 2. Report success/error counts
 
 ### Safety Features
+
 - **Idempotent**: Safe to run multiple times
 - **Non-destructive**: Only updates the `type` field
 - **Preserves data**: All other template fields remain unchanged
@@ -115,16 +123,19 @@ In the Library page, you should now see:
 ## Troubleshooting
 
 ### Migration doesn't run
+
 - Check console for errors
 - Verify IndexedDB is available in browser
 - Try hard refresh (Ctrl+Shift+R / Cmd+Shift+R)
 
 ### Templates still appear in wrong section
+
 - Check console logs - migration may have failed
 - Clear IndexedDB: Dev Tools → Application → IndexedDB → Delete database
 - Refresh page to reseed templates
 
 ### "Failed to fix X templates" in console
+
 - Check console for specific error messages
 - Some templates may have been manually created with invalid data
 - Report the error for investigation
@@ -132,11 +143,13 @@ In the Library page, you should now see:
 ## Technical Details
 
 ### Files Modified
+
 - `src/utils/templateMigration.js` - New migration utility
 - `src/pages/Library.jsx` - Integrated auto-migration on load
 
 ### Migration Sequence
-```
+
+```text
 Library.jsx load:
   1. Check IndexedDB available
   2. Seed predefined templates (if needed)
@@ -148,13 +161,16 @@ Library.jsx load:
 ### Migration Functions
 
 **`diagnoseTemplateTypes()`**
+
 - Returns: `{ total, correct, corrupted[], missing[] }`
 - Compares stored vs predefined template types
 
 **`fixCorruptedTemplateTypes()`**
+
 - Returns: `{ fixed, errors[], details[] }`
 - Updates corrupted templates with correct types
 
 **`needsTemplateMigration()`**
+
 - Returns: `boolean`
 - Quick check to avoid unnecessary work

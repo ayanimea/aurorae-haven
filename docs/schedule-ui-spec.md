@@ -91,11 +91,11 @@ These ranges are **semantic day parts for the full 24-hour day**. The schedule *
 - Morning, Afternoon, and Evening are fully within the visible 07:00–24:00 window.
 - Night **wraps across midnight**: it is defined as 23:00–07:00 semantically, but within the visible grid only the **23:00–24:00 segment is drawn** (e.g., via `TimeBands`). The 00:00–07:00 portion of Night is outside the rendered window.
 
-| Band      | Time        | Visible in Grid |
-| --------- | ----------- | --------------- |
-| Morning   | 07:00–12:00 | Fully visible   |
-| Afternoon | 12:00–18:00 | Fully visible   |
-| Evening   | 18:00–23:00 | Fully visible   |
+| Band      | Time        | Visible in Grid          |
+| --------- | ----------- | ------------------------ |
+| Morning   | 07:00–12:00 | Fully visible            |
+| Afternoon | 12:00–18:00 | Fully visible            |
+| Evening   | 18:00–23:00 | Fully visible            |
 | Night     | 23:00–07:00 | 23:00–24:00 only (wraps) |
 
 Bands:

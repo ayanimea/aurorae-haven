@@ -414,12 +414,14 @@ export function filterTemplates(templates, filters) {
     // Duration range (for routines)
     if (
       filters.durationMin !== undefined &&
+      filters.durationMin !== null &&
       template.estimatedDuration < filters.durationMin
     ) {
       return false
     }
     if (
       filters.durationMax !== undefined &&
+      filters.durationMax !== null &&
       template.estimatedDuration > filters.durationMax
     ) {
       return false

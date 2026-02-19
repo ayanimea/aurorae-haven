@@ -58,9 +58,7 @@ export function instantiateTaskFromTemplate(template) {
 
   // Normalize template type for comparison
   const normalizedType =
-    typeof template.type === 'string'
-      ? template.type.trim().toLowerCase()
-      : ''
+    typeof template.type === 'string' ? template.type.trim().toLowerCase() : ''
 
   if (normalizedType !== 'task') {
     throw new Error(
@@ -152,9 +150,7 @@ export async function instantiateRoutineFromTemplate(template) {
 
   // Normalize template type for comparison
   const normalizedType =
-    typeof template.type === 'string'
-      ? template.type.trim().toLowerCase()
-      : ''
+    typeof template.type === 'string' ? template.type.trim().toLowerCase() : ''
 
   if (normalizedType !== 'routine') {
     throw new Error(
