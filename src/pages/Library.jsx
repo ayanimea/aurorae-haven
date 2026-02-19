@@ -125,7 +125,6 @@ function Library() {
     }
 
     loadTemplates()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Filter and sort templates using useMemo
