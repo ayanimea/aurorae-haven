@@ -1,4 +1,4 @@
-import React from 'react'
+
 import PropTypes from 'prop-types'
 import TaskItem from './TaskItem'
 
@@ -27,6 +27,7 @@ function TaskQuadrant({
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop drop target zone
     <div
       className={`matrix-quadrant ${quadrant.colorClass}`}
       onDragOver={onDragOver}

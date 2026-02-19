@@ -1,4 +1,4 @@
-import React from 'react'
+
 import PropTypes from 'prop-types'
 import { createLogger } from '../../utils/logger'
 
@@ -254,6 +254,7 @@ function Icon({ name, className = 'icon', ...props }) {
 
   return (
     <svg className={className} viewBox='0 0 24 24' {...props}>
+      <title>{name}</title>
       {iconPath}
     </svg>
   )

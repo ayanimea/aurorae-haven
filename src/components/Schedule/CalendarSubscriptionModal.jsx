@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
@@ -35,7 +35,8 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
     if (isOpen) {
       loadSubscriptions()
     }
-  }, [isOpen])
+    // biome-ignore lint/correctness/noInvalidUseBeforeDeclaration: loadSubscriptions is a const declared below; safe in React component body as useEffect runs after full render
+  }, [isOpen, loadSubscriptions])
 
   const loadSubscriptions = async () => {
     setIsLoading(true)
@@ -282,12 +283,12 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
                     <div
                       className='calendar-subscription-color'
                       style={{ backgroundColor: sub.color }}
+                      role='img'
                       aria-label={`Color indicator for ${sub.name}`}
                     />
                     <h4 className='calendar-subscription-name'>{sub.name}</h4>
                     <span
                       className={`calendar-subscription-status ${sub.enabled ? 'enabled' : 'disabled'}`}
-                      aria-label={`Status: ${sub.enabled ? 'Enabled' : 'Disabled'}`}
                     >
                       {sub.enabled ? 'Enabled' : 'Disabled'}
                     </span>

@@ -1,4 +1,4 @@
-import React from 'react'
+
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import Icon from '../common/Icon'
@@ -27,7 +27,7 @@ function NotesList({
       <div className='note-list-header'>
         <div className='note-list-header-left'>
           <strong>Notes</strong>
-          <button
+          <button type="button"
             className='btn btn-icon toggle-notes-btn'
             onClick={onToggleNoteList}
             aria-label='Hide notes list'
@@ -35,7 +35,7 @@ function NotesList({
           >
             <Icon name='menu' />
           </button>
-          <button
+          <button type="button"
             className='btn btn-icon'
             onClick={onFilterClick}
             aria-label='Filter Notes'
@@ -44,7 +44,7 @@ function NotesList({
             <Icon name='filter' />
           </button>
         </div>
-        <button
+        <button type="button"
           className='btn btn-icon'
           onClick={onNewNote}
           aria-label='New Note'
@@ -63,7 +63,7 @@ function NotesList({
           aria-label='Search notes'
         />
         {searchQuery && (
-          <button
+          <button type="button"
             className='btn btn-icon note-search-clear'
             onClick={onClearSearch}
             aria-label='Clear search'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon from './common/Icon'
@@ -228,11 +228,11 @@ function Layout({ children, onExport, onImport }) {
         <div className='planet' />
       </div>
       {/* TAB-NAV-20: role="navigation" with aria-label="Main" */}
-      <header className='appbar' role='banner'>
+      <header className='appbar' >
         <div className='inner'>
           {/* TAB-NAV-04 & TAB-NAV-05: Left Zone - Logo/Title */}
           <div className='navbar-left'>
-            <button
+            <button type="button"
               className='logo-button'
               onClick={handleLogoClick}
               aria-label='Return to Tasks'
@@ -247,7 +247,7 @@ function Layout({ children, onExport, onImport }) {
 
           {/* TAB-NAV-06: Center Zone - Primary Tabs (Desktop) */}
           {/* TAB-NAV-20 & TAB-NAV-21: role="navigation" and role="tablist" */}
-          <nav className='navbar-center' aria-label='Main' role='navigation'>
+          <nav className='navbar-center' aria-label='Main' >
             <div
               className='appnav'
               role='tablist'
@@ -296,7 +296,7 @@ function Layout({ children, onExport, onImport }) {
                 </Link>
               ))}
               {/* More menu button */}
-              <button
+              <button type="button"
                 className={`nav-tab more-button ${secondaryTabs.some((tab) => isActive(tab.path)) || moreMenuOpen ? 'active' : ''}`}
                 onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                 aria-haspopup='true'
@@ -333,7 +333,7 @@ function Layout({ children, onExport, onImport }) {
           </Link>
 
           {/* TAB-NAV-13: Mobile hamburger button */}
-          <button
+          <button type="button"
             ref={hamburgerButtonRef}
             className='hamburger-button'
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -347,7 +347,7 @@ function Layout({ children, onExport, onImport }) {
           {/* TAB-NAV-10: Right Zone - Global Actions */}
           <div className='navbar-right'>
             {/* TAB-NAV-10: Search icon (placeholder for future) */}
-            <button
+            <button type="button"
               className='icon-button'
               aria-label='Search'
               title='Search (Coming soon)'
@@ -356,7 +356,7 @@ function Layout({ children, onExport, onImport }) {
             </button>
 
             {/* TAB-NAV-10: Theme toggle (placeholder for future) */}
-            <button
+            <button type="button"
               className='icon-button'
               aria-label='Toggle theme'
               title='Theme (Coming soon)'
@@ -365,7 +365,7 @@ function Layout({ children, onExport, onImport }) {
             </button>
 
             {/* Export/Import buttons */}
-            <button className='btn' onClick={onExport} aria-label='Export data'>
+            <button type="button" className='btn' onClick={onExport} aria-label='Export data'>
               Export
             </button>
             <FileInputButton

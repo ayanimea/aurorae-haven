@@ -1,4 +1,4 @@
-import React from 'react'
+
 import PropTypes from 'prop-types'
 import './FloatingDevButtons.css'
 
@@ -18,7 +18,7 @@ const FloatingDevButtons = ({ onPopulateData, onClearData }) => {
       role='group'
       aria-label='Development tools'
     >
-      <button
+      <button type="button"
         className='fab fab-secondary'
         onClick={onClearData}
         aria-label='Clear all events'
@@ -26,7 +26,7 @@ const FloatingDevButtons = ({ onPopulateData, onClearData }) => {
       >
         🗑️
       </button>
-      <button
+      <button type="button"
         className='fab fab-primary'
         onClick={onPopulateData}
         aria-label='Generate fake data'

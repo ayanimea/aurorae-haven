@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import '../../assets/styles/help-modal.css'
@@ -321,6 +321,7 @@ $$`}
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes modal on click
     <div
       className='modal-overlay'
       onClick={handleOverlayClick}
@@ -341,7 +342,7 @@ $$`}
       >
         <div className='modal-header'>
           <h2 id='help-modal-title'>Brain Dump Help</h2>
-          <button
+          <button type="button"
             ref={closeButtonRef}
             className='modal-close'
             onClick={onClose}
@@ -358,7 +359,7 @@ $$`}
         <div className='modal-body'>
           <div role='tablist' aria-label='Help topics' className='help-tabs'>
             {tabs.map((tab) => (
-              <button
+              <button type="button"
                 key={tab.id}
                 role='tab'
                 aria-selected={activeTab === tab.id}
@@ -377,7 +378,6 @@ $$`}
             id={`panel-${activeTab}`}
             aria-labelledby={`tab-${activeTab}`}
             className='help-panel'
-            tabIndex={0}
           >
             {activeTab === 'quick' && renderQuickReference()}
             {activeTab === 'latex' && renderLatexExamples()}

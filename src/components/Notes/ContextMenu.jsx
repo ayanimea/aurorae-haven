@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -48,7 +48,7 @@ function ContextMenu({
       }}
       role='menu'
     >
-      <button
+      <button type="button"
         className='context-menu-item'
         onClick={() => {
           onExport(contextMenu.note.id)
@@ -59,7 +59,7 @@ function ContextMenu({
         <Icon name='download' />
         Export Note
       </button>
-      <button
+      <button type="button"
         className='context-menu-item'
         onClick={() => {
           onLockToggle(contextMenu.note.id)
@@ -70,7 +70,7 @@ function ContextMenu({
         <Icon name={contextMenu.note.locked ? 'unlock' : 'lock'} />
         {contextMenu.note.locked ? 'Unlock Note' : 'Lock Note'}
       </button>
-      <button
+      <button type="button"
         className='context-menu-item'
         onClick={() => {
           onDelete(contextMenu.note.id)

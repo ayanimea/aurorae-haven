@@ -160,6 +160,7 @@ function Modal({
       aria-labelledby={title ? titleId : undefined}
       aria-describedby={bodyId}
       onClick={closeOnOverlayClick ? onClose : undefined}
+      onKeyDown={(e) => { if (e.key === 'Escape' && closeOnOverlayClick) onClose() }}
     >
       <FocusLock returnFocus>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
@@ -167,12 +168,13 @@ function Modal({
           ref={contentRef}
           className={clsx('modal-content', className)}
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
           role='document'
         >
           {title && (
             <div className='modal-header'>
               <h2 id={titleId}>{title}</h2>
-              <button
+              <button type="button"
                 className='btn btn-icon'
                 onClick={onClose}
                 aria-label='Close'

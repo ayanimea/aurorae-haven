@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -94,7 +94,10 @@ function TaskItem({
       ) : (
         <span
           className='task-text'
+          role='button'
+          tabIndex={0}
           onDoubleClick={() => onEdit(quadrant, task)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onEdit(quadrant, task) }}
         >
           {task.text}
         </span>
@@ -102,14 +105,14 @@ function TaskItem({
       <div className='task-actions'>
         {isEditing ? (
           <>
-            <button
+            <button type="button"
               className='btn-save'
               onClick={onSaveEdit}
               aria-label='Save task'
             >
               <Icon name='check' />
             </button>
-            <button
+            <button type="button"
               className='btn-cancel'
               onClick={onCancelEdit}
               aria-label='Cancel editing'
@@ -119,14 +122,14 @@ function TaskItem({
           </>
         ) : (
           <>
-            <button
+            <button type="button"
               className='btn-edit'
               onClick={() => onEdit(quadrant, task)}
               aria-label={`Edit task "${task.text}"`}
             >
               <Icon name='edit' />
             </button>
-            <button
+            <button type="button"
               className='btn-delete'
               onClick={() => onDelete(quadrant, task.id)}
               aria-label={`Delete task "${task.text}"`}

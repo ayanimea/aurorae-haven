@@ -344,7 +344,7 @@ function Routines() {
               alignItems: 'center'
             }}
           >
-            <button
+            <button type="button"
               className='btn'
               onClick={handleExportRoutines}
               aria-label='Export all routine data'
@@ -352,7 +352,7 @@ function Routines() {
               <Icon name='download' />
               Export Routines
             </button>
-            <button
+            <button type="button"
               className='btn'
               onClick={() => fileInputRef.current?.click()}
               aria-label='Import routine data'
@@ -455,7 +455,7 @@ function Routines() {
                 </div>
                 {/* TAB-RTN-11: Controls with accessible labels */}
                 <div className='controls'>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={runner.complete}
                     aria-label='Complete current step'
@@ -464,7 +464,7 @@ function Routines() {
                     <Icon name='check' />
                     Complete
                   </button>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={runner.togglePause}
                     aria-label={
@@ -474,7 +474,7 @@ function Routines() {
                     <Icon name={runner.state.isPaused ? 'play' : 'pause'} />
                     {runner.state.isPaused ? 'Resume' : 'Pause'}
                   </button>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={() => runner.skip()}
                     aria-label='Skip current step'
@@ -483,7 +483,7 @@ function Routines() {
                     <Icon name='skip' />
                     Skip
                   </button>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={handleCancelRoutine}
                     aria-label='Cancel routine'
@@ -527,7 +527,7 @@ function Routines() {
         <div className='card'>
           <div className='card-h'>
             <strong>Available Routines</strong>
-            <button
+            <button type="button"
               className='btn btn-primary'
               onClick={() => setShowCreationModal(true)}
             >
@@ -548,6 +548,7 @@ function Routines() {
                   viewBox='0 0 24 24'
                   style={{ width: '48px', height: '48px', opacity: 0.5 }}
                 >
+                  <title>No routines yet</title>
                   <circle cx='12' cy='12' r='10' />
                   <path d='M12 8v4M12 16h.01' />
                 </svg>
@@ -558,7 +559,7 @@ function Routines() {
                 >
                   Create your first routine to get started
                 </p>
-                <button
+                <button type="button"
                   className='btn btn-primary'
                   onClick={() => setShowCreationModal(true)}
                 >
@@ -625,7 +626,7 @@ function Routines() {
                           </div>
                         )}
                       </div>
-                      <button
+                      <button type="button"
                         className='btn btn-primary'
                         onClick={(e) => {
                           e.stopPropagation()
@@ -680,7 +681,7 @@ function Routines() {
               >
                 🎉 Routine Complete!
               </h2>
-              <button
+              <button type="button"
                 className='btn'
                 onClick={() => {
                   runner.reset()
@@ -798,7 +799,7 @@ function Routines() {
                   justifyContent: 'space-between'
                 }}
               >
-                <button
+                <button type="button"
                   className='btn'
                   onClick={handleSaveAsTemplate}
                   aria-label='Save routine as template'
@@ -807,7 +808,7 @@ function Routines() {
                   Save as Template
                 </button>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={() => {
                       runner.reset()
@@ -816,7 +817,7 @@ function Routines() {
                   >
                     Close
                   </button>
-                  <button
+                  <button type="button"
                     className='btn btn-primary'
                     onClick={() => {
                       runner.reset()

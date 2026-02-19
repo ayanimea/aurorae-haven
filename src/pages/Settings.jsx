@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { getSettings, updateSetting } from '../utils/settingsManager'
 import {
@@ -124,7 +124,7 @@ function Settings() {
     } finally {
       setIsConfiguring(false)
     }
-  }, [showMessage, setDirectoryName, setDirectoryHandleLost, setSettingsState])
+  }, [showMessage])
 
   const handleToggleAutoSave = useCallback(
     async (enabled) => {
@@ -333,7 +333,7 @@ function Settings() {
                     className='settings-input'
                     aria-describedby='save-directory-hint'
                   />
-                  <button
+                  <button type="button"
                     onClick={handleSelectDirectory}
                     disabled={isConfiguring}
                     className='settings-button settings-button-primary'
@@ -428,7 +428,7 @@ function Settings() {
                 role='group'
                 aria-label='Auto-save actions'
               >
-                <button
+                <button type="button"
                   onClick={handleManualSave}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-success'
@@ -437,7 +437,7 @@ function Settings() {
                 >
                   Save Now
                 </button>
-                <button
+                <button type="button"
                   onClick={handleLoadLastSave}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-info'
@@ -446,7 +446,7 @@ function Settings() {
                 >
                   Load Last Save
                 </button>
-                <button
+                <button type="button"
                   onClick={handleCleanOldFiles}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-warning'

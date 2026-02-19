@@ -3,7 +3,7 @@
  * Modal for creating routines from scratch or from library templates
  */
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
@@ -63,7 +63,7 @@ function RoutineCreationModal({
             Create a new routine from scratch or choose a template:
           </p>
 
-          <button
+          <button type="button"
             className='btn btn-primary btn-block'
             onClick={() => setView('editor')}
             style={{ marginBottom: '12px' }}
@@ -72,7 +72,7 @@ function RoutineCreationModal({
             Create from Scratch
           </button>
 
-          <button
+          <button type="button"
             className='btn btn-block'
             onClick={() => setView('library')}
             style={{ marginBottom: '12px' }}
@@ -81,7 +81,7 @@ function RoutineCreationModal({
             Browse Library
           </button>
 
-          <button className='btn btn-block' onClick={handleClose}>
+          <button type="button" className='btn btn-block' onClick={handleClose}>
             Cancel
           </button>
         </div>
@@ -97,7 +97,7 @@ function RoutineCreationModal({
               marginBottom: '16px'
             }}
           >
-            <button
+            <button type="button"
               className='btn'
               onClick={handleBackToOptions}
               aria-label='Back to options'
@@ -120,7 +120,7 @@ function RoutineCreationModal({
       {view === 'editor' && (
         <div className='routine-editor-wrapper'>
           <div style={{ marginBottom: '16px' }}>
-            <button
+            <button type="button"
               className='btn'
               onClick={handleBackToOptions}
               aria-label='Back to options'

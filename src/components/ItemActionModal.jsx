@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { adjustMenuPosition } from '../utils/positionUtils'
 import './ItemActionModal.css'
@@ -137,6 +137,7 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
     )
 
     return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes modal on click
       <div
         className='item-action-backdrop'
         role='presentation'
@@ -152,7 +153,7 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
             top: `${y}px`
           }}
         >
-          <button
+          <button type="button"
             ref={firstButtonRef}
             className='context-menu-item'
             onClick={handleEdit}
@@ -163,7 +164,7 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
             </span>
             Edit
           </button>
-          <button
+          <button type="button"
             className='context-menu-item context-menu-item-danger'
             onClick={handleDelete}
             role='menuitem'
@@ -182,6 +183,7 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
   const content = formatContent ? formatContent(item) : null
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes modal on click
     <div
       className='item-action-backdrop'
       role='presentation'
@@ -196,7 +198,7 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
       >
         <div className='item-action-header'>
           <h3 id='modal-title'>{item.title || 'Item Details'}</h3>
-          <button
+          <button type="button"
             className='item-action-close'
             onClick={onClose}
             aria-label='Close'
@@ -208,14 +210,14 @@ function ItemActionModal({ item, onClose, onEdit, onDelete, formatContent }) {
         {content && <div className='item-action-content'>{content}</div>}
 
         <div className='item-action-buttons'>
-          <button
+          <button type="button"
             ref={firstButtonRef}
             className='item-action-btn item-action-btn-secondary'
             onClick={handleEdit}
           >
             <span aria-hidden='true'>✏️</span> Edit
           </button>
-          <button
+          <button type="button"
             className='item-action-btn item-action-btn-danger'
             onClick={handleDelete}
           >
