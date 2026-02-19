@@ -113,10 +113,7 @@ function RoutineCreationModal({
             )}
           </div>
 
-          <LibrarySelector
-            onSelectTemplate={handleSelectTemplate}
-            disabled={isCreating}
-          />
+          <LibrarySelector onSelectTemplate={handleSelectTemplate} />
         </div>
       )}
 

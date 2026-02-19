@@ -68,7 +68,8 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean),
-      steps: validSteps
+      steps: validSteps,
+      estimatedDuration: totalDuration
     }
 
     onSave(routineData)
