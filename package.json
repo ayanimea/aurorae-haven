@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "test": "vitest run --coverage",
+    "test": "vitest run",
     "test:export": "vitest run src/__tests__/dataManager.test.js -t 'should export aurorae_tasks|should export brainDumpEntries'",
     "lint": "biome lint .",
     "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#package-lock.json'",
