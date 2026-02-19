@@ -19,7 +19,8 @@ function TemplateCard({
   onUse,
   onEdit,
   onDelete,
-  onDuplicate
+  onDuplicate,
+  showDelete = true
 }) {
   const [showActions, setShowActions] = useState(false)
   const MAX_FILENAME_LEN = 50
@@ -168,14 +169,16 @@ function TemplateCard({
         >
           Duplicate
         </button>
-        <button
-          className='btn btn-sm btn-danger'
-          onClick={() => onDelete(template)}
-          aria-label='Delete template'
-          title='Delete template'
-        >
-          Delete
-        </button>
+        {showDelete && (
+          <button
+            className='btn btn-sm btn-danger'
+            onClick={() => onDelete(template)}
+            aria-label='Delete template'
+            title='Delete template'
+          >
+            Delete
+          </button>
+        )}
         <button
           className='btn btn-sm'
           onClick={handleExport}
@@ -207,7 +210,8 @@ TemplateCard.propTypes = {
   onUse: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
-  onDuplicate: PropTypes.func.isRequired
+  onDuplicate: PropTypes.func.isRequired,
+  showDelete: PropTypes.bool
 }
 
 export default TemplateCard

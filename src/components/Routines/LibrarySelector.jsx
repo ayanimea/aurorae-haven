@@ -330,6 +330,7 @@ function LibrarySelector({ onSelectTemplate }) {
               onEdit={handleEditTemplate}
               onDelete={handleDeleteTemplate}
               onDuplicate={handleDuplicateTemplate}
+              showDelete={false}
             />
           ))}
         </div>
