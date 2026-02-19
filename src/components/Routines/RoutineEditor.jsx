@@ -59,6 +59,12 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
       return
     }
 
+    // Compute total duration from valid steps only
+    const totalDuration = validSteps.reduce(
+      (sum, step) => sum + (step.duration || 0),
+      0
+    )
+
     // Prepare routine data
     const routineData = {
       ...(routine?.id && { id: routine.id }),
@@ -75,7 +81,8 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
     onSave(routineData)
   }
 
-  const totalDuration = steps.reduce(
+  // Display total duration from all steps (for UI feedback)
+  const displayDuration = steps.reduce(
     (sum, step) => sum + (step.duration || 0),
     0
   )
@@ -240,8 +247,8 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
         </div>
 
         <div className='small' style={{ opacity: 0.7, marginTop: '8px' }}>
-          Total duration: {Math.floor(totalDuration / 60)} min{' '}
-          {totalDuration % 60} sec
+          Total duration: {Math.floor(displayDuration / 60)} min{' '}
+          {displayDuration % 60} sec
         </div>
       </div>
 

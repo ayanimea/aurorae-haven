@@ -35,11 +35,18 @@ function Routines() {
 
   const runner = useRoutineRunner(selectedRoutine)
 
+  // Toast timeout ref to prevent race conditions
+  const toastTimeoutRef = React.useRef(null)
+
   // Show toast notification
   const showToastNotification = useCallback((message) => {
+    // Clear any existing timeout to prevent race conditions
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current)
+    }
     setToastMessage(message)
     setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
+    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 3000)
   }, [])
 
   const loadAvailableRoutines = useCallback(async () => {
@@ -272,8 +279,17 @@ function Routines() {
       logger.log('Template object:', template)
 
       // Instantiate the template to create a routine
-      const routineId = await instantiateTemplate(template)
-      logger.log('Routine created with ID:', routineId)
+      const result = await instantiateTemplate(template)
+      logger.log('instantiateTemplate returned:', result)
+      
+      // Validate result structure
+      if (!result || result.type !== 'routine') {
+        logger.error('instantiateTemplate returned unexpected result:', result)
+        showToastNotification('Failed to create routine from template')
+        return
+      }
+      
+      logger.log('Routine created with ID:', result.id)
 
       showToastNotification('Routine created from template')
 
@@ -547,19 +563,8 @@ function Routines() {
                     key={routine.id}
                     className='panel'
                     style={{
-                      cursor: 'pointer',
                       width: '100%'
                     }}
-                    onClick={() => setSelectedRoutine(routine)}
-                    role='button'
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setSelectedRoutine(routine)
-                      }
-                    }}
-                    aria-label={`View routine: ${routine.name || routine.title}`}
                   >
                     <div
                       style={{
@@ -568,7 +573,22 @@ function Routines() {
                         alignItems: 'center'
                       }}
                     >
-                      <div>
+                      <div
+                        style={{
+                          flex: 1,
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setSelectedRoutine(routine)}
+                        role='button'
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setSelectedRoutine(routine)
+                          }
+                        }}
+                        aria-label={`View routine: ${routine.name || routine.title}`}
+                      >
                         <div className='step-title'>
                           {routine.name || routine.title}
                         </div>
