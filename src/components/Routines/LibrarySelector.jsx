@@ -70,20 +70,26 @@ function LibrarySelector({ onSelectTemplate }) {
 
   // Load templates on mount
   useEffect(() => {
+    let isCancelled = false
+
     const loadTemplates = async () => {
       if (!isIndexedDBAvailable()) {
-        setLoading(false)
-        setUseIndexedDB(false)
+        if (!isCancelled) {
+          setLoading(false)
+          setUseIndexedDB(false)
+        }
         return
       }
 
-      setUseIndexedDB(true)
+      if (!isCancelled) {
+        setUseIndexedDB(true)
+      }
 
       await withErrorHandling(
         async () => {
           // Check if predefined templates need to be seeded
           const isSeeded = await arePredefinedTemplatesSeeded()
-          if (!isSeeded) {
+          if (!isSeeded && !isCancelled) {
             const seedResults = await seedPredefinedTemplates()
             if (seedResults.added > 0) {
               logger.log(`Seeded ${seedResults.added} predefined templates`)
@@ -92,7 +98,7 @@ function LibrarySelector({ onSelectTemplate }) {
 
           // Check for and fix corrupted template types
           const needsMigration = await needsTemplateMigration()
-          if (needsMigration) {
+          if (needsMigration && !isCancelled) {
             logger.log('Detected corrupted template types, fixing...')
             const fixResults = await fixCorruptedTemplateTypes()
             if (fixResults.fixed > 0) {
@@ -102,26 +108,36 @@ function LibrarySelector({ onSelectTemplate }) {
 
           // Load all templates
           const allTemplates = await getAllTemplates()
-          logger.log(`Loaded ${allTemplates.length} total templates`)
-          logger.log(
-            `Template types: ${allTemplates.map((t) => t.type).join(', ')}`
-          )
-          setTemplates(allTemplates)
+          if (!isCancelled) {
+            logger.log(`Loaded ${allTemplates.length} total templates`)
+            logger.log(
+              `Template types: ${allTemplates.map((t) => t.type).join(', ')}`
+            )
+            setTemplates(allTemplates)
+          }
         },
         'Loading templates',
         {
           showToast: false,
           onError: (error) => {
             logger.error('Failed to load templates:', error)
-            showToastNotification('Failed to load templates')
+            if (!isCancelled) {
+              showToastNotification('Failed to load templates')
+            }
           }
         }
       )
 
-      setLoading(false)
+      if (!isCancelled) {
+        setLoading(false)
+      }
     }
 
     loadTemplates()
+
+    return () => {
+      isCancelled = true
+    }
   }, [showToastNotification])
 
   // Filter and sort templates - only show routine templates

@@ -211,7 +211,8 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
                   <input
                     id={`step-${index}-duration`}
                     type='number'
-                    min='1'
+                    min='10'
+                    max='7200'
                     value={step.duration}
                     onChange={(e) =>
                       handleStepChange(index, 'duration', e.target.value)
