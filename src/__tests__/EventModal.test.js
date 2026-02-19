@@ -39,7 +39,7 @@ vi.mock('../components/common/Modal', () => {
 vi.mock('../utils/timeUtils', () => ({
   getCurrentDateISO: vi.fn(() => '2025-09-16'),
   getCurrentTimeHHMM: vi.fn(() => '09:00'),
-  getCurrentTimePlusMinutes: jest.fn(() => '10:00')
+  getCurrentTimePlusMinutes: vi.fn(() => '10:00')
 }))
 
 // Mock SearchableEventSelector to automatically trigger create new
