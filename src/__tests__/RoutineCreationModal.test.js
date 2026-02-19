@@ -80,7 +80,9 @@ describe('RoutineCreationModal', () => {
     it('shows initial options screen by default', () => {
       render(<RoutineCreationModal {...defaultProps} />)
       expect(
-        screen.getByText(/Create a new routine from scratch or choose a template/i)
+        screen.getByText(
+          /Create a new routine from scratch or choose a template/i
+        )
       ).toBeInTheDocument()
       expect(screen.getByText('Create from Scratch')).toBeInTheDocument()
       expect(screen.getByText('Browse Library')).toBeInTheDocument()
@@ -111,7 +113,9 @@ describe('RoutineCreationModal', () => {
       fireEvent.click(backButton)
 
       expect(
-        screen.getByText(/Create a new routine from scratch or choose a template/i)
+        screen.getByText(
+          /Create a new routine from scratch or choose a template/i
+        )
       ).toBeInTheDocument()
       expect(screen.queryByTestId('library-selector')).not.toBeInTheDocument()
     })
@@ -197,7 +201,9 @@ describe('RoutineCreationModal', () => {
       fireEvent.click(cancelButton)
 
       expect(
-        screen.getByText(/Create a new routine from scratch or choose a template/i)
+        screen.getByText(
+          /Create a new routine from scratch or choose a template/i
+        )
       ).toBeInTheDocument()
       expect(screen.queryByTestId('routine-editor')).not.toBeInTheDocument()
     })

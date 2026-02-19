@@ -74,7 +74,10 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
     onSave(routineData)
   }
 
-  const totalDuration = steps.reduce((sum, step) => sum + (step.duration || 0), 0)
+  const totalDuration = steps.reduce(
+    (sum, step) => sum + (step.duration || 0),
+    0
+  )
 
   return (
     <form onSubmit={handleSubmit} className='routine-editor'>
@@ -92,7 +95,6 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
           className='form-input'
           required
           disabled={isSaving}
-          autoFocus
         />
       </div>
 
@@ -122,9 +124,7 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
             marginBottom: '12px'
           }}
         >
-          <label className='form-label'>
-            <strong>Steps</strong>
-          </label>
+          <strong className='form-label'>Steps</strong>
           <button
             type='button'
             className='btn btn-small'
@@ -178,7 +178,9 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
                 type='text'
                 placeholder='Step name...'
                 value={step.label}
-                onChange={(e) => handleStepChange(index, 'label', e.target.value)}
+                onChange={(e) =>
+                  handleStepChange(index, 'label', e.target.value)
+                }
                 className='form-input'
                 style={{ marginBottom: '8px' }}
                 required
@@ -237,7 +239,8 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
         </div>
 
         <div className='small' style={{ opacity: 0.7, marginTop: '8px' }}>
-          Total duration: {Math.floor(totalDuration / 60)} min {totalDuration % 60} sec
+          Total duration: {Math.floor(totalDuration / 60)} min{' '}
+          {totalDuration % 60} sec
         </div>
       </div>
 
@@ -249,7 +252,9 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
         <button
           type='submit'
           className='btn btn-primary'
-          disabled={isSaving || !name.trim() || steps.every((s) => !s.label.trim())}
+          disabled={
+            isSaving || !name.trim() || steps.every((s) => !s.label.trim())
+          }
         >
           <Icon name='check' />
           {isSaving ? 'Creating...' : 'Create Routine'}
