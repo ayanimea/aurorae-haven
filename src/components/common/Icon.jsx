@@ -8,7 +8,7 @@ const logger = createLogger('Icon')
  * Common icon component for SVG icons
  * Reduces duplication of SVG markup across components
  */
-function Icon({ name, className = 'icon', ...props }) {
+function Icon({ name, className = 'icon', title, ...props }) {
   const icons = {
     // Common actions
     plus: (
@@ -253,8 +253,15 @@ function Icon({ name, className = 'icon', ...props }) {
   }
 
   return (
-    <svg className={className} viewBox='0 0 24 24' {...props}>
-      <title>{name}</title>
+    // biome-ignore lint/a11y/noSvgWithoutTitle: aria-hidden="true" makes decorative SVGs accessible; title is rendered when explicitly provided via prop
+    <svg
+      className={className}
+      viewBox='0 0 24 24'
+      aria-hidden={title ? undefined : 'true'}
+      focusable='false'
+      {...props}
+    >
+      {title && <title>{title}</title>}
       {iconPath}
     </svg>
   )
@@ -262,7 +269,8 @@ function Icon({ name, className = 'icon', ...props }) {
 
 Icon.propTypes = {
   name: PropTypes.string.isRequired,
-  className: PropTypes.string
+  className: PropTypes.string,
+  title: PropTypes.string
 }
 
 export default Icon

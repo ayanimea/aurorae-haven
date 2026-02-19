@@ -378,15 +378,13 @@ async function generateReadme() {
 /**
  * Create ZIP using adm-zip package
  */
-async function createZipWithAdmZip(outputFile, readmeContent) {
+async function createZipWithAdmZip(outputFile) {
   const { default: AdmZip } = await import('adm-zip')
 
   const zip = new AdmZip()
 
-  // Add README
-  zip.addFile('README.md', Buffer.from(readmeContent, 'utf-8'))
-
   // Add all files from offline build directory recursively
+  // (README.md is already written there by the caller before invoking this function)
   zip.addLocalFolder(DIST_OFFLINE_DIR, '')
 
   zip.writeZip(outputFile)
@@ -433,7 +431,7 @@ async function createZip() {
       return false
     }
 
-    await createZipWithAdmZip(outputFile, readmeContent)
+    await createZipWithAdmZip(outputFile)
     return true
   } catch (error) {
     console.error('❌ Error creating ZIP:')

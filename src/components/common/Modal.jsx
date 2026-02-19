@@ -164,11 +164,11 @@ function Modal({
     >
       <FocusLock returnFocus>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick stops click propagation to the overlay; keyboard Escape is handled by the document-level listener in useEffect */}
         <div
           ref={contentRef}
           className={clsx('modal-content', className)}
           onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
           role='document'
         >
           {title && (

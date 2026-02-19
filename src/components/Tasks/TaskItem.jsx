@@ -92,15 +92,15 @@ function TaskItem({
           aria-label='Edit task text'
         />
       ) : (
-        <span
-          className='task-text'
-          role='button'
-          tabIndex={0}
-          onDoubleClick={() => onEdit(quadrant, task)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onEdit(quadrant, task) }}
-        >
-          {task.text}
-        </span>
+        <>
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: onDoubleClick is a power-user shortcut; primary edit interaction is via the accessible Edit button */}
+          <span
+            className='task-text'
+            onDoubleClick={() => onEdit(quadrant, task)}
+          >
+            {task.text}
+          </span>
+        </>
       )}
       <div className='task-actions'>
         {isEditing ? (
