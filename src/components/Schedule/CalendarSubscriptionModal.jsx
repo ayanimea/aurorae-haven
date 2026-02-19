@@ -31,11 +31,11 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
   })
 
   // Load subscriptions when modal opens
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadSubscriptions is a const defined below in the same component scope; safe because useEffect runs after full render, and listing it would cause an infinite loop since it's not wrapped in useCallback
   useEffect(() => {
     if (isOpen) {
       loadSubscriptions()
     }
-    // biome-ignore lint/correctness/useExhaustiveDependencies: loadSubscriptions is defined after; intentionally omitted to avoid infinite loop
   }, [isOpen])
 
   const loadSubscriptions = async () => {
@@ -289,6 +289,8 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
                     <h4 className='calendar-subscription-name'>{sub.name}</h4>
                     <span
                       className={`calendar-subscription-status ${sub.enabled ? 'enabled' : 'disabled'}`}
+                      role='status'
+                      aria-label={`Status: ${sub.enabled ? 'Enabled' : 'Disabled'}`}
                     >
                       {sub.enabled ? 'Enabled' : 'Disabled'}
                     </span>

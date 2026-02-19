@@ -389,8 +389,8 @@ describe('Offline Package - CI/CD Integration', () => {
       'utf-8'
     )
 
-    // Script has createZipWithArchiver as fallback
-    expect(scriptContent).toContain('createZipWithArchiver')
+    // Script has createZipWithAdmZip as fallback
+    expect(scriptContent).toContain('createZipWithAdmZip')
     expect(scriptContent).toContain('.zip')
   })
 

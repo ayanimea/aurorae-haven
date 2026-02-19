@@ -378,6 +378,8 @@ $$`}
             id={`panel-${activeTab}`}
             aria-labelledby={`tab-${activeTab}`}
             className='help-panel'
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: WAI-ARIA spec requires tabIndex="0" on tabpanel containers to make them keyboard-focusable when they don't contain inherently focusable content
+            tabIndex={0}
           >
             {activeTab === 'quick' && renderQuickReference()}
             {activeTab === 'latex' && renderLatexExamples()}
