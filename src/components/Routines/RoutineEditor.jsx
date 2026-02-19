@@ -81,11 +81,10 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
     onSave(routineData)
   }
 
-  // Display total duration from all steps (for UI feedback)
-  const displayDuration = steps.reduce(
-    (sum, step) => sum + (step.duration || 0),
-    0
-  )
+  // Display total duration from valid (labeled) steps only, to match estimatedDuration
+  const displayDuration = steps
+    .filter((step) => step.label && step.label.trim())
+    .reduce((sum, step) => sum + (step.duration || 0), 0)
 
   return (
     <form onSubmit={handleSubmit} className='routine-editor'>
@@ -191,7 +190,6 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
                 }
                 className='form-input'
                 style={{ marginBottom: '8px' }}
-                required
                 disabled={isSaving}
               />
 

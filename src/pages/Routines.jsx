@@ -39,14 +39,26 @@ function Routines() {
   const toastTimeoutRef = React.useRef(null)
 
   // Show toast notification
+  const toastTimeoutRef = useRef(null)
+
   const showToastNotification = useCallback((message) => {
     // Clear any existing timeout to prevent race conditions
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current)
+      toastTimeoutRef.current = null
     }
     setToastMessage(message)
     setShowToast(true)
     toastTimeoutRef.current = setTimeout(() => setShowToast(false), 3000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current)
+        toastTimeoutRef.current = null
+      }
+    }
   }, [])
 
   const loadAvailableRoutines = useCallback(async () => {

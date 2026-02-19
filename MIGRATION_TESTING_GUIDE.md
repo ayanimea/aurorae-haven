@@ -12,7 +12,7 @@
 
 ### 1. Open the Application
 
-Navigate to the Library tab in your browser.
+Navigate to **Settings** → **Template Library**, or go directly to `/library` in your browser.
 
 ### 2. Check the Browser Console
 

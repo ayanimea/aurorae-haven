@@ -71,9 +71,10 @@ Now explicitly checks for truly empty values and handles existing numbers correc
 
 ### Step 2: Try to Edit a Template
 
-1. Navigate to the Library tab
-2. Click "Edit" on any template
-3. Observe console output - should see:
+1. Open **Settings** from the main navigation
+2. Go to the **Template Library** section (or navigate to `/library` directly)
+3. Click "Edit" on any template
+4. Observe console output - should see:
 
    ```text
    [TemplateEditor] TemplateEditor opened with template: {id: '...', type: '...', ...}

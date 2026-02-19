@@ -46,11 +46,26 @@ function LibrarySelector({ onSelectTemplate }) {
   const [toastMessage, setToastMessage] = useState('')
   const [showToast, setShowToast] = useState(false)
 
+  const toastTimeoutRef = useRef(null)
+
   // Toast notification helper - memoized to avoid recreating on every render
   const showToastNotification = useCallback((message) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current)
+      toastTimeoutRef.current = null
+    }
     setToastMessage(message)
     setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
+    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 3000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current)
+        toastTimeoutRef.current = null
+      }
+    }
   }, [])
 
   // Load templates on mount
@@ -182,10 +197,13 @@ function LibrarySelector({ onSelectTemplate }) {
     )
   }
 
-  const handleDeleteTemplate = async (templateId) => {
+  const handleDeleteTemplate = async (template) => {
     await withErrorHandling(
       async () => {
-        await deleteTemplate(templateId)
+        if (!template || !template.id) {
+          throw new Error('Cannot delete template without a valid id')
+        }
+        await deleteTemplate(template.id)
         showToastNotification('Template deleted')
 
         // Reload templates
