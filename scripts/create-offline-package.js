@@ -319,18 +319,14 @@ async function createSimpleArchive() {
   // Create README for the offline package
   const readmeContent = await generateReadme()
 
-  // Try to use the archiver package if available
+  // Try to create ZIP with adm-zip
   try {
-    const archiver = await import('archiver').catch(() => null)
-
-    if (archiver) {
-      return await createZipWithArchiver(
-        outputFile.replace('.tar', '.zip'),
-        readmeContent
-      )
-    }
+    return await createZipWithAdmZip(
+      outputFile.replace('.tar', '.zip'),
+      readmeContent
+    )
   } catch (error) {
-    console.warn('⚠️  archiver package not available, using basic method')
+    console.warn('⚠️  adm-zip not available, using basic method:', error.message)
   }
 
   // Fallback: Just copy files to a folder with README
@@ -380,39 +376,26 @@ async function generateReadme() {
 }
 
 /**
- * Create ZIP using archiver package
+ * Create ZIP using adm-zip package
  */
-async function createZipWithArchiver(outputFile, readmeContent) {
-  const archiver = await import('archiver')
-  const fs = await import('fs')
+async function createZipWithAdmZip(outputFile, readmeContent) {
+  const { default: AdmZip } = await import('adm-zip')
 
-  return new Promise((resolve, reject) => {
-    const output = fs.createWriteStream(outputFile)
-    const archive = archiver.default('zip', { zlib: { level: 9 } })
+  const zip = new AdmZip()
 
-    output.on('close', () => {
-      const sizeKB = (archive.pointer() / 1024).toFixed(2)
-      console.log('✓ ZIP archive created successfully!')
-      console.log(`  → Location: ${outputFile}`)
-      console.log(`  → Size: ${sizeKB} KB`)
-      resolve(true)
-    })
+  // Add README
+  zip.addFile('README.md', Buffer.from(readmeContent, 'utf-8'))
 
-    archive.on('error', (err) => {
-      console.error('❌ Error creating ZIP:', err)
-      reject(err)
-    })
+  // Add all files from offline build directory recursively
+  zip.addLocalFolder(DIST_OFFLINE_DIR, '')
 
-    archive.pipe(output)
+  zip.writeZip(outputFile)
 
-    // Add README
-    archive.append(readmeContent, { name: 'README.md' })
-
-    // Add all files from offline build directory
-    archive.directory(DIST_OFFLINE_DIR, false)
-
-    archive.finalize()
-  })
+  const sizeKB = (statSync(outputFile).size / 1024).toFixed(2)
+  console.log('✓ ZIP archive created successfully!')
+  console.log(`  → Location: ${outputFile}`)
+  console.log(`  → Size: ${sizeKB} KB`)
+  return true
 }
 
 /**
@@ -442,15 +425,15 @@ async function createZip() {
     writeFileSync(readmePath, readmeContent)
     console.log('  → Added README.md to package')
 
-    // Try to create ZIP with archiver
-    const archiver = await import('archiver').catch(() => null)
+    // Try to create ZIP with adm-zip
+    const admZip = await import('adm-zip').catch(() => null)
 
-    if (!archiver) {
-      console.warn('⚠️  archiver package not available, skipping ZIP creation')
+    if (!admZip) {
+      console.warn('⚠️  adm-zip package not available, skipping ZIP creation')
       return false
     }
 
-    await createZipWithArchiver(outputFile, readmeContent)
+    await createZipWithAdmZip(outputFile, readmeContent)
     return true
   } catch (error) {
     console.error('❌ Error creating ZIP:')
