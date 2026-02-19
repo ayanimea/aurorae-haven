@@ -35,8 +35,8 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
     if (isOpen) {
       loadSubscriptions()
     }
-    // biome-ignore lint/correctness/noInvalidUseBeforeDeclaration: loadSubscriptions is a const declared below; safe in React component body as useEffect runs after full render
-  }, [isOpen, loadSubscriptions])
+    // biome-ignore lint/correctness/useExhaustiveDependencies: loadSubscriptions is defined after; intentionally omitted to avoid infinite loop
+  }, [isOpen])
 
   const loadSubscriptions = async () => {
     setIsLoading(true)

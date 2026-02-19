@@ -3,7 +3,7 @@
  * Manages reusable Task and Routine templates
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   getAllTemplates,
   saveTemplate,
@@ -124,6 +124,7 @@ function Library() {
     }
 
     loadTemplates()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Filter and sort templates using useMemo

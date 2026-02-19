@@ -152,8 +152,8 @@ function Habits() {
     return () => window.removeEventListener('keydown', handleKeyDown)
     // handleToggleCompletion is stable (memoized with useCallback) and doesn't need to be in deps.
     // We only want to re-register the listener when the specific values it uses (habits, focusedHabitId, etc.) change.
-    // biome-ignore lint/correctness/noInvalidUseBeforeDeclaration: handleToggleCompletion declared below; safe as useEffect runs after full render
-  }, [habits, focusedHabitId, showNewHabitModal, selectedHabit, handleToggleCompletion])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [habits, focusedHabitId, showNewHabitModal, selectedHabit])
 
   const handleToggleCompletion = useCallback(
     async (habitId) => {
