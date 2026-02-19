@@ -41,7 +41,7 @@ All vulnerabilities are in **development dependencies only**. Production build h
 **Why not fixed**:
 
 - 31 packages depend on older minimatch versions
-- Forcing minimatch@10.2.1 breaks eslint-plugin-jsx-a11y (API incompatibility)
+- Forcing `minimatch@10.2.1` breaks eslint-plugin-jsx-a11y (API incompatibility)
 - Packages need upstream updates to support new minimatch API
 
 **Risk assessment**:
