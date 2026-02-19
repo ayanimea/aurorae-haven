@@ -1,9 +1,36 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
+
+import { vi } from 'vitest'
 
 // SSR (Server-Side Rendering) tests for autoSaveFS utility
 // These tests run in a pure Node.js environment without jsdom
+
+// Mock uuid to avoid CJS/ESM interop issue in node environment
+vi.mock('uuid', () => ({
+  v4: () => 'mock-uuid-v4',
+  v1: () => 'mock-uuid-v1',
+}))
+
+// Mock complex dependencies that pull in browser-only code
+vi.mock('../utils/exportData', () => ({}))
+vi.mock('../utils/indexedDBManager', () => ({
+  isIndexedDBAvailable: () => false,
+  importAllData: vi.fn(),
+}))
+vi.mock('../utils/importData', () => ({
+  importToLocalStorage: vi.fn(),
+}))
+vi.mock('../utils/settingsManager', () => ({
+  getSetting: vi.fn(),
+}))
+vi.mock('../utils/idGenerator', () => ({
+  generateUniqueId: () => 'mock-id',
+}))
+vi.mock('../utils/validation', () => ({
+  validateImportData: vi.fn(() => ({ valid: true })),
+}))
 
 describe('autoSaveFS - SSR Tests', () => {
   beforeEach(() => {
@@ -13,9 +40,9 @@ describe('autoSaveFS - SSR Tests', () => {
     }
   })
 
-  test('isFileSystemAccessSupported returns false when window is undefined', () => {
+  test('isFileSystemAccessSupported returns false when window is undefined', async () => {
     // Import in Node environment where window is undefined
-    const { isFileSystemAccessSupported } = require('../utils/autoSaveFS')
+    const { isFileSystemAccessSupported } = await import('../utils/autoSaveFS')
 
     // Verify window is undefined
     expect(typeof window).toBe('undefined')
@@ -25,8 +52,8 @@ describe('autoSaveFS - SSR Tests', () => {
     expect(result).toBe(false)
   })
 
-  test('isFileSystemAccessSupported handles SSR without crashing', () => {
-    const { isFileSystemAccessSupported } = require('../utils/autoSaveFS')
+  test('isFileSystemAccessSupported handles SSR without crashing', async () => {
+    const { isFileSystemAccessSupported } = await import('../utils/autoSaveFS')
 
     // Should not throw in SSR environment
     expect(() => {

@@ -1,6 +1,8 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
+
+import { vi } from 'vitest'
 
 // SSR (Server-Side Rendering) tests for errorHandler utility
 // These tests run in a pure Node.js environment without jsdom
@@ -15,12 +17,12 @@ describe('errorHandler - SSR Tests', () => {
       delete global.document
     }
     // Clear module cache to get fresh imports
-    jest.resetModules()
+    vi.resetModules()
   })
 
-  test('handleError works without window object (SSR)', () => {
+  test('handleError works without window object (SSR)', async () => {
     // Import in Node environment where window is undefined
-    const { handleError } = require('../utils/errorHandler')
+    const { handleError } = await import('../utils/errorHandler')
 
     // Verify SSR environment
     expect(typeof window).toBe('undefined')
@@ -35,10 +37,10 @@ describe('errorHandler - SSR Tests', () => {
     }).not.toThrow()
   })
 
-  test('handleError with custom callback works in SSR', () => {
-    const { handleError } = require('../utils/errorHandler')
+  test('handleError with custom callback works in SSR', async () => {
+    const { handleError } = await import('../utils/errorHandler')
 
-    const mockCallback = jest.fn()
+    const mockCallback = vi.fn()
     const error = new Error('Custom callback test')
     const context = 'SSR Callback Test'
 
@@ -51,8 +53,8 @@ describe('errorHandler - SSR Tests', () => {
     expect(mockCallback).toHaveBeenCalledWith(error, context)
   })
 
-  test('handleError can rethrow errors in SSR', () => {
-    const { handleError } = require('../utils/errorHandler')
+  test('handleError can rethrow errors in SSR', async () => {
+    const { handleError } = await import('../utils/errorHandler')
 
     const error = new Error('Rethrow test')
 
@@ -64,10 +66,10 @@ describe('errorHandler - SSR Tests', () => {
     }).toThrow('Rethrow test')
   })
 
-  test('handleError respects all options in SSR environment', () => {
-    const { handleError } = require('../utils/errorHandler')
+  test('handleError respects all options in SSR environment', async () => {
+    const { handleError } = await import('../utils/errorHandler')
 
-    const mockCallback = jest.fn()
+    const mockCallback = vi.fn()
     const error = new Error('Options test')
     const context = 'SSR Options Test'
 
@@ -82,12 +84,12 @@ describe('errorHandler - SSR Tests', () => {
     expect(mockCallback).toHaveBeenCalledWith(error, context)
   })
 
-  test('handleError does not crash when trying to show toast in SSR', () => {
-    const { handleError } = require('../utils/errorHandler')
+  test('handleError does not crash when trying to show toast in SSR', async () => {
+    const { handleError } = await import('../utils/errorHandler')
 
     const error = new Error('Toast test')
 
-    // Even with showToast: true, should not crash in SSR
+    // Even with showToast: true, should not crash in SSR environment
     expect(() => {
       handleError(error, 'SSR Toast Test', {
         showToast: true,
@@ -96,8 +98,8 @@ describe('errorHandler - SSR Tests', () => {
     }).not.toThrow()
   })
 
-  test('handleError returns error object for inspection', () => {
-    const { handleError } = require('../utils/errorHandler')
+  test('handleError returns error object for inspection', async () => {
+    const { handleError } = await import('../utils/errorHandler')
 
     const error = new Error('Return test')
     const result = handleError(error, 'SSR Return Test', {
