@@ -1,13 +1,12 @@
 import { vi } from 'vitest'
-/**
- * Tests for Settings component
- * Tests basic rendering and accessibility features
- */
 
-import React from 'react'
+// Mock react-router-dom (uses src/__mocks__/react-router-dom.js)
+vi.mock('react-router-dom')
+
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Settings from '../pages/Settings'
+import * as autoSaveFS from '../utils/autoSaveFS'
 
 // Mock CSS imports
 vi.mock('../assets/styles/settings.css', () => ({}))
@@ -16,17 +15,17 @@ vi.mock('../assets/styles/settings.css', () => ({}))
 vi.mock('../utils/autoSaveFS', () => ({
   isFileSystemAccessSupported: vi.fn(() => true),
   requestDirectoryAccess: vi.fn(),
-  getCurrentDirectoryHandle: jest.fn(() => null),
-  setDirectoryHandle: jest.fn(),
-  verifyDirectoryHandle: jest.fn(),
-  startAutoSave: jest.fn(),
-  stopAutoSave: jest.fn(),
-  performAutoSave: jest.fn(),
-  getLastSaveTimestamp: jest.fn(() => null),
-  cleanOldSaveFiles: jest.fn(),
-  loadAndImportLastSave: jest.fn(),
-  getStoredDirectoryName: jest.fn(() => null),
-  clearStoredDirectoryName: jest.fn()
+  getCurrentDirectoryHandle: vi.fn(() => null),
+  setDirectoryHandle: vi.fn(),
+  verifyDirectoryHandle: vi.fn(),
+  startAutoSave: vi.fn(),
+  stopAutoSave: vi.fn(),
+  performAutoSave: vi.fn(),
+  getLastSaveTimestamp: vi.fn(() => null),
+  cleanOldSaveFiles: vi.fn(),
+  loadAndImportLastSave: vi.fn(),
+  getStoredDirectoryName: vi.fn(() => null),
+  clearStoredDirectoryName: vi.fn()
 }))
 
 // Mock the settingsManager module
@@ -48,7 +47,7 @@ vi.mock('../utils/settingsManager', () => ({
         key === 'autoSave.directoryConfigured' ? value : false
     }
   })),
-  getSetting: jest.fn((key) => {
+  getSetting: vi.fn((key) => {
     if (key === 'autoSave.keepCount') return 10
     return undefined
   })
@@ -77,8 +76,7 @@ describe('Settings Component', () => {
   })
 
   test('shows warning when File System API is not supported', () => {
-    const { isFileSystemAccessSupported } = require('../utils/autoSaveFS')
-    isFileSystemAccessSupported.mockReturnValue(false)
+    autoSaveFS.isFileSystemAccessSupported.mockReturnValue(false)
 
     render(<Settings />)
     const alert = screen.getByRole('alert')

@@ -516,14 +516,14 @@ describe('Notes Component', () => {
   describe('Export functionality', () => {
     test('exports content as markdown file with new filename format', async () => {
       // Mock URL.createObjectURL and revokeObjectURL
-      global.URL.createObjectURL = jest.fn(() => 'blob:mock')
-      global.URL.revokeObjectURL = jest.fn()
+      global.URL.createObjectURL = vi.fn(() => 'blob:mock')
+      global.URL.revokeObjectURL = vi.fn()
 
       // Mock createElement to spy on the download link
       const originalCreateElement = document.createElement
-      const mockClick = jest.fn()
+      const mockClick = vi.fn()
       let downloadFilename = ''
-      document.createElement = jest.fn((tag) => {
+      document.createElement = vi.fn((tag) => {
         if (tag === 'a') {
           const element = originalCreateElement.call(document, tag)
           element.click = mockClick
@@ -603,12 +603,12 @@ describe('Notes Component', () => {
 
       // Mock FileReader
       const mockFileReader = {
-        readAsText: jest.fn(),
+        readAsText: vi.fn(),
         onload: null,
         result: fileContent
       }
 
-      global.FileReader = jest.fn(() => mockFileReader)
+      global.FileReader = function FileReader() { return mockFileReader }
 
       fireEvent.change(importInput, { target: { files: [file] } })
 
@@ -636,12 +636,12 @@ describe('Notes Component', () => {
       })
 
       const mockFileReader = {
-        readAsText: jest.fn(),
+        readAsText: vi.fn(),
         onload: null,
         result: fileContent
       }
 
-      global.FileReader = jest.fn(() => mockFileReader)
+      global.FileReader = function FileReader() { return mockFileReader }
 
       fireEvent.change(importInput, { target: { files: [file] } })
       mockFileReader.onload({ target: { result: fileContent } })
