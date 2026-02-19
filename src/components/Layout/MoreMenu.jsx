@@ -12,6 +12,7 @@ function MoreMenu({ isOpen, onClose, tabs, isActive, moreMenuRef }) {
     <nav
       ref={moreMenuRef}
       className='more-menu'
+      // biome-ignore lint/a11y/noRedundantRoles: explicit role required by Layout test assertion (toHaveAttribute)
       role='navigation'
       aria-label='Additional navigation options'
     >
