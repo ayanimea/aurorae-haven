@@ -69,14 +69,14 @@ export function useNotesState() {
   }, [])
 
   // Load first note on mount if available
+  // biome-ignore lint/correctness/useExhaustiveDependencies: notes[0]?.id is intentionally used instead of notes[0] to avoid re-loading when note content changes
   useEffect(() => {
     if (notes.length > 0 && !currentNoteId) {
       loadNote(notes[0])
     }
     // We depend on the first note's ID (not the full notes array) to detect meaningful changes.
     // This avoids re-loading when only note content changes, but captures note reordering/replacement.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notes[0]?.id, currentNoteId, notes.length, loadNote, notes[0]])
+  }, [notes[0]?.id, currentNoteId, notes.length, loadNote])
 
   // Memoize current note to avoid redundant array searches
   const currentNote = useMemo(

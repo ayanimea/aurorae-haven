@@ -114,12 +114,12 @@ vi.mock('../services/EventService', () => ({
   default: {
     getEventsForDate: vi.fn().mockResolvedValue([]),
     getEventsForWeek: vi.fn().mockResolvedValue([]),
-    getEventsForRange: jest.fn().mockResolvedValue([]),
-    getEventsForDays: jest.fn().mockResolvedValue([]),
-    createEvent: jest.fn(),
-    updateEvent: jest.fn(),
-    deleteEvent: jest.fn(),
-    clearTestData: jest.fn().mockResolvedValue(0)
+    getEventsForRange: vi.fn().mockResolvedValue([]),
+    getEventsForDays: vi.fn().mockResolvedValue([]),
+    createEvent: vi.fn(),
+    updateEvent: vi.fn(),
+    deleteEvent: vi.fn(),
+    clearTestData: vi.fn().mockResolvedValue(0)
   }
 }))
 
@@ -129,7 +129,7 @@ vi.mock('../utils/logger', () => ({
     log: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
-    info: jest.fn()
+    info: vi.fn()
   }))
 }))
 

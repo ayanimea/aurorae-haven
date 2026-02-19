@@ -1,4 +1,5 @@
 import React from 'react'
+import { vi } from 'vitest'
 
 const mockNavigate = vi.fn()
 

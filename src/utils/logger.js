@@ -45,6 +45,8 @@ function isLoggingEnabled() {
  */
 export function log(...args) {
   if (isLoggingEnabled()) {
+    // biome-ignore lint/suspicious/noConsole: logger.js is the designated console abstraction
+    console.log(...args)
   }
 }
 
@@ -55,6 +57,8 @@ export function log(...args) {
  */
 export function warn(...args) {
   if (isLoggingEnabled()) {
+    // biome-ignore lint/suspicious/noConsole: logger.js is the designated console abstraction
+    console.warn(...args)
   }
 }
 
@@ -64,6 +68,8 @@ export function warn(...args) {
  * @param {...any} args - Arguments to log
  */
 export function error(...args) {
+  // biome-ignore lint/suspicious/noConsole: logger.js is the designated console abstraction
+  console.error(...args)
 }
 
 /**
@@ -73,6 +79,8 @@ export function error(...args) {
  */
 export function info(...args) {
   if (isLoggingEnabled()) {
+    // biome-ignore lint/suspicious/noConsole: logger.js is the designated console abstraction
+    console.info(...args)
   }
 }
 

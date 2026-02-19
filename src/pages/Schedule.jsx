@@ -231,6 +231,7 @@ function Schedule() {
   // Currently measures on mount, view changes, and window resize
   // TODO: Consider ResizeObserver for more robust detection of toolbar height changes
   // (e.g., when date label length changes, isLoading state changes, or fonts load)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: view is intentionally included to re-measure toolbar when calendar view changes (day/week/month toolbars differ in height)
   useEffect(() => {
     const updateToolbarHeight = () => {
       if (toolbarRef.current) {
@@ -248,7 +249,7 @@ function Schedule() {
     // Re-measure on window resize (responsive toolbar height)
     window.addEventListener('resize', updateToolbarHeight)
     return () => window.removeEventListener('resize', updateToolbarHeight)
-  }, []) // Re-run when view changes as toolbar buttons may affect height
+  }, [view]) // Re-run when view changes as toolbar buttons may affect height
 
   // Cleanup success message timeout on unmount to prevent setState on unmounted component
   useEffect(() => {
@@ -447,14 +448,13 @@ function Schedule() {
       const allEvents = await EventService.getAllEvents()
 
       let successCount = 0
-      let _errorCount = 0
 
       for (const event of allEvents) {
         try {
           await EventService.deleteEvent(event.id)
           successCount++
         } catch (_err) {
-          _errorCount++
+          // Deletion failed for this event; continue with others
         }
       }
       await loadEvents()

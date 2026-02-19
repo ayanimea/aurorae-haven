@@ -399,7 +399,6 @@ function EventModal({
                 placeholder='Enter title'
                 disabled={isSubmitting}
                 required
-                aria-required='true'
                 maxLength={200}
                 ref={titleInputRef}
               />

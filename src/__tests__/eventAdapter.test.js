@@ -14,7 +14,7 @@ vi.mock('../utils/logger', () => ({
     log: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
-    info: jest.fn()
+    info: vi.fn()
   }))
 }))
 
