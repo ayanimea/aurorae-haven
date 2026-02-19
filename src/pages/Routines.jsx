@@ -36,11 +36,9 @@ function Routines() {
   const runner = useRoutineRunner(selectedRoutine)
 
   // Toast timeout ref to prevent race conditions
-  const toastTimeoutRef = React.useRef(null)
-
-  // Show toast notification
   const toastTimeoutRef = useRef(null)
 
+  // Show toast notification
   const showToastNotification = useCallback((message) => {
     // Clear any existing timeout to prevent race conditions
     if (toastTimeoutRef.current) {

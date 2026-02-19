@@ -4,7 +4,7 @@
  * Displays only routine templates and provides action buttons
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import PropTypes from 'prop-types'
 import {
   getAllTemplates,
