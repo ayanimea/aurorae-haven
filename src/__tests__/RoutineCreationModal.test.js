@@ -10,7 +10,7 @@ import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
 
 // Mock the LibrarySelector component
 vi.mock('../components/Routines/LibrarySelector', () => {
-  return function MockLibrarySelector({ onSelectTemplate }) {
+  return { default: function MockLibrarySelector({ onSelectTemplate }) {
     return (
       <div data-testid='library-selector'>
         <button
@@ -27,11 +27,12 @@ vi.mock('../components/Routines/LibrarySelector', () => {
       </div>
     )
   }
+  }
 })
 
 // Mock the RoutineEditor component
 vi.mock('../components/Routines/RoutineEditor', () => {
-  return function MockRoutineEditor({ onSave, onCancel }) {
+  return { default: function MockRoutineEditor({ onSave, onCancel }) {
     return (
       <div data-testid='routine-editor'>
         <button
@@ -48,6 +49,7 @@ vi.mock('../components/Routines/RoutineEditor', () => {
         <button onClick={onCancel}>Cancel Editor</button>
       </div>
     )
+  }
   }
 })
 

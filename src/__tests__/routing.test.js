@@ -10,50 +10,58 @@ import Home from '../pages/Home.jsx'
 
 // Mock all page components
 vi.mock('../pages/Home.jsx', () => {
-  return function MockHome() {
+  return { default: function MockHome() {
     return <div data-testid='home-page'>Home Page</div>
+  }
   }
 })
 
 vi.mock('../pages/Schedule', () => {
-  return function MockSchedule() {
+  return { default: function MockSchedule() {
     return <div data-testid='schedule-page'>Schedule Page</div>
+  }
   }
 })
 
 vi.mock('../pages/Notes', () => {
-  return function MockNotes() {
+  return { default: function MockNotes() {
     return <div data-testid='braindump-page'>Notes Page</div>
+  }
   }
 })
 
 vi.mock('../pages/Routines', () => {
-  return function MockRoutines() {
+  return { default: function MockRoutines() {
     return <div data-testid='routines-page'>Routines Page</div>
+  }
   }
 })
 
 vi.mock('../pages/Tasks', () => {
-  return function MockTasks() {
+  return { default: function MockTasks() {
     return <div data-testid='tasks-page'>Tasks Page</div>
+  }
   }
 })
 
 vi.mock('../pages/Habits', () => {
-  return function MockHabits() {
+  return { default: function MockHabits() {
     return <div data-testid='habits-page'>Habits Page</div>
+  }
   }
 })
 
 vi.mock('../pages/Stats', () => {
-  return function MockStats() {
+  return { default: function MockStats() {
     return <div data-testid='stats-page'>Stats Page</div>
+  }
   }
 })
 
 vi.mock('../pages/Settings', () => {
-  return function MockSettings() {
+  return { default: function MockSettings() {
     return <div data-testid='settings-page'>Settings Page</div>
+  }
   }
 })
 

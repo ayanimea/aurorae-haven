@@ -20,12 +20,13 @@ vi.mock('../utils/predefinedTemplates')
 vi.mock('../utils/templateInstantiation')
 vi.mock('../utils/templateMigration')
 vi.mock('../components/Library/TemplateCard', () => {
-  return function MockTemplateCard({ template }) {
+  return { default: function MockTemplateCard({ template }) {
     return <div data-testid={`template-${template.id}`}>{template.title}</div>
+  }
   }
 })
 vi.mock('../components/Library/TemplateEditor', () => {
-  return function MockTemplateEditor({ onSave, onClose, template }) {
+  return { default: function MockTemplateEditor({ onSave, onClose, template }) {
     return (
       <div data-testid='template-editor'>
         <button
@@ -48,9 +49,10 @@ vi.mock('../components/Library/TemplateEditor', () => {
       </div>
     )
   }
+  }
 })
 vi.mock('../components/Library/TemplateToolbar', () => {
-  return function MockTemplateToolbar({ onNewTemplate }) {
+  return { default: function MockTemplateToolbar({ onNewTemplate }) {
     return (
       <div data-testid='template-toolbar'>
         <button data-testid='new-template' onClick={onNewTemplate}>
@@ -59,15 +61,18 @@ vi.mock('../components/Library/TemplateToolbar', () => {
       </div>
     )
   }
+  }
 })
 vi.mock('../components/Library/FilterModal', () => {
-  return function MockFilterModal() {
+  return { default: function MockFilterModal() {
     return <div data-testid='filter-modal'>Filter Modal</div>
+  }
   }
 })
 vi.mock('../components/common/ConfirmModal', () => {
-  return function MockConfirmModal() {
+  return { default: function MockConfirmModal() {
     return <div data-testid='confirm-modal'>Confirm Modal</div>
+  }
   }
 })
 

@@ -6,8 +6,9 @@ import CustomToolbar from '../components/Schedule/CustomToolbar'
 
 // Mock Icon component
 vi.mock('../components/common/Icon', () => {
-  return function Icon({ name }) {
+  return { default: function Icon({ name }) {
     return <span data-testid={`icon-${name}`}>{name}</span>
+  }
   }
 })
 

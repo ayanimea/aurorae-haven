@@ -3,39 +3,43 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
+import EventService from '../services/EventService'
 
 // Mock FullCalendar to avoid ESM parsing issues
 vi.mock('@fullcalendar/react', () => {
-  return function FullCalendar(props) {
+  return { default: function FullCalendar(props) {
     return (
       <div className='fc' data-testid='fullcalendar'>
         <div className='fc-view'>{props.initialView}</div>
       </div>
     )
   }
+  }
 })
 
-vi.mock('@fullcalendar/timegrid', () => ({}))
-vi.mock('@fullcalendar/daygrid', () => ({}))
-vi.mock('@fullcalendar/interaction', () => ({}))
+vi.mock('@fullcalendar/timegrid', () => ({ default: {} }))
+vi.mock('@fullcalendar/daygrid', () => ({ default: {} }))
+vi.mock('@fullcalendar/interaction', () => ({ default: {} }))
 
 // Mock Icon component
 vi.mock('../components/common/Icon', () => {
-  return function Icon({ name }) {
+  return { default: function Icon({ name }) {
     return <span data-testid={`icon-${name}`}>{name}</span>
+  }
   }
 })
 
 // Mock EventModal component
 vi.mock('../components/Schedule/EventModal', () => {
-  return function EventModal() {
+  return { default: function EventModal() {
     return null
+  }
   }
 })
 
 // Mock CustomToolbar component
 vi.mock('../components/Schedule/CustomToolbar', () => {
-  return function CustomToolbar({
+  return { default: function CustomToolbar({
     date,
     view,
     views,
@@ -79,19 +83,22 @@ vi.mock('../components/Schedule/CustomToolbar', () => {
       </div>
     )
   }
+  }
 })
 
 // Mock CustomEvent component
 vi.mock('../components/Schedule/CustomEvent', () => {
-  return function CustomEvent({ event }) {
+  return { default: function CustomEvent({ event }) {
     return <div>{event.title}</div>
+  }
   }
 })
 
 // Mock ItemActionModal component
 vi.mock('../components/ItemActionModal', () => {
-  return function ItemActionModal() {
+  return { default: function ItemActionModal() {
     return null
+  }
   }
 })
 
@@ -121,8 +128,6 @@ vi.mock('../utils/logger', () => ({
 }))
 
 describe('Schedule Component with FullCalendar', () => {
-  const EventService = require('../services/EventService').default
-
   beforeEach(() => {
     // Mock Date to return a consistent time for testing
     jest.useFakeTimers()

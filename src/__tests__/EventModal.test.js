@@ -12,14 +12,15 @@ import EventModal from '../components/Schedule/EventModal'
 
 // Mock Icon component
 vi.mock('../components/common/Icon', () => {
-  return function Icon({ name }) {
+  return { default: function Icon({ name }) {
     return <span data-testid={`icon-${name}`}>{name}</span>
+  }
   }
 })
 
 // Mock Modal component
 vi.mock('../components/common/Modal', () => {
-  return function Modal({ isOpen, children, title, onClose }) {
+  return { default: function Modal({ isOpen, children, title, onClose }) {
     if (!isOpen) return null
     return (
       <div data-testid='modal'>
@@ -28,6 +29,7 @@ vi.mock('../components/common/Modal', () => {
         {children}
       </div>
     )
+  }
   }
 })
 
@@ -44,7 +46,7 @@ vi.mock('../utils/timeUtils', () => ({
 let lastSearchableEventSelectorProps = null
 vi.mock('../components/Schedule/SearchableEventSelector', () => {
   const React = require('react')
-  return function SearchableEventSelector(props) {
+  return { default: function SearchableEventSelector(props) {
     // Store props for test assertions
     lastSearchableEventSelectorProps = props
     const { onCreateNew, eventType } = props
@@ -60,6 +62,7 @@ vi.mock('../components/Schedule/SearchableEventSelector', () => {
         data-event-type={eventType === null ? 'null' : eventType}
       />
     )
+  }
   }
 })
 
