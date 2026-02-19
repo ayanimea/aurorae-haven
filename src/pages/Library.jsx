@@ -71,6 +71,7 @@ function Library() {
   }
 
   // Load templates on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect; showToastNotification is a local stable helper defined in this component
   useEffect(() => {
     const loadTemplates = async () => {
       if (!isIndexedDBAvailable()) {

@@ -101,6 +101,7 @@ function Habits() {
   }, [showNewHabitModal, selectedHabit])
 
   // Phase 5: TAB-HAB-30, TAB-HAB-31 - Keyboard Navigation
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleToggleCompletion is stable (memoized with useCallback); omitting it is intentional to avoid re-registering the listener on every render
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!habits.length) return
