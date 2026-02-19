@@ -265,7 +265,13 @@ function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
           }
         >
           <Icon name='check' />
-          {isSaving ? 'Creating...' : 'Create Routine'}
+          {isSaving
+            ? routine
+              ? 'Saving...'
+              : 'Creating...'
+            : routine
+              ? 'Save Routine'
+              : 'Create Routine'}
         </button>
         <button
           type='button'

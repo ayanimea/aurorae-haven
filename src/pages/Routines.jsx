@@ -281,14 +281,14 @@ function Routines() {
       // Instantiate the template to create a routine
       const result = await instantiateTemplate(template)
       logger.log('instantiateTemplate returned:', result)
-      
+
       // Validate result structure
       if (!result || result.type !== 'routine') {
         logger.error('instantiateTemplate returned unexpected result:', result)
         showToastNotification('Failed to create routine from template')
         return
       }
-      
+
       logger.log('Routine created with ID:', result.id)
 
       showToastNotification('Routine created from template')
