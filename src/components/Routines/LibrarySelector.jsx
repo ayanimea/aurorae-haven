@@ -121,13 +121,14 @@ function LibrarySelector({ onSelectTemplate }) {
       `Routine templates after type filter: ${routineTemplates.length}`
     )
 
-    // Apply search filter
+    // Apply search filter using filterTemplates utility
     let filtered = filterTemplates(routineTemplates, {
       type: 'routine',
       tags: [],
       durationMin: null,
       durationMax: null
     })
+
     logger.log(`Templates after filterTemplates: ${filtered.length}`)
 
     if (searchQuery.trim()) {

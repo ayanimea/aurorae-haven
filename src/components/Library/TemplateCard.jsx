@@ -146,7 +146,7 @@ function TemplateCard({
       <div className={clsx('template-actions', { visible: showActions })}>
         <button
           className='btn btn-sm'
-          onClick={onUse}
+          onClick={() => onUse(template)}
           aria-label='Use template'
           title='Use template'
         >
@@ -154,7 +154,7 @@ function TemplateCard({
         </button>
         <button
           className='btn btn-sm'
-          onClick={onEdit}
+          onClick={() => onEdit(template)}
           aria-label='Edit template'
           title='Edit template'
         >
@@ -162,7 +162,7 @@ function TemplateCard({
         </button>
         <button
           className='btn btn-sm'
-          onClick={onDuplicate}
+          onClick={() => onDuplicate(template)}
           aria-label='Duplicate template'
           title='Duplicate template'
         >
@@ -170,7 +170,7 @@ function TemplateCard({
         </button>
         <button
           className='btn btn-sm btn-danger'
-          onClick={onDelete}
+          onClick={() => onDelete(template)}
           aria-label='Delete template'
           title='Delete template'
         >
