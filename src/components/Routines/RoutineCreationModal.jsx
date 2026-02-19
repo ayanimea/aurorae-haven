@@ -1,6 +1,6 @@
 /**
  * Routine Creation Modal
- * Modal for creating routines with option to use templates from Library
+ * Modal for creating routines from scratch or from library templates
  */
 
 import React, { useState } from 'react'
@@ -8,14 +8,20 @@ import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
 import LibrarySelector from './LibrarySelector'
+import RoutineEditor from './RoutineEditor'
 
-function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
-  const [showLibrary, setShowLibrary] = useState(false)
+function RoutineCreationModal({
+  isOpen,
+  onClose,
+  onSelectTemplate,
+  onCreateRoutine
+}) {
+  const [view, setView] = useState('options') // 'options', 'library', 'editor'
   const [isCreating, setIsCreating] = useState(false)
 
   const handleClose = () => {
     // Reset state when closing
-    setShowLibrary(false)
+    setView('options')
     setIsCreating(false)
     onClose()
   }
@@ -26,9 +32,22 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
       await onSelectTemplate(template) // Wait for template instantiation and list reload
       handleClose()
     } finally {
-      // Always re-enable UI even if there was an error (parent handles error display)
       setIsCreating(false)
     }
+  }
+
+  const handleSaveRoutine = async (routineData) => {
+    setIsCreating(true)
+    try {
+      await onCreateRoutine(routineData)
+      handleClose()
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleBackToOptions = () => {
+    setView('options')
   }
 
   return (
@@ -38,15 +57,24 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
       title='Create New Routine'
       className='routine-creation-modal'
     >
-      {!showLibrary ? (
+      {view === 'options' && (
         <div className='routine-creation-options'>
           <p className='small' style={{ marginBottom: '16px' }}>
-            Choose a routine template from the library:
+            Create a new routine from scratch or choose a template:
           </p>
 
           <button
             className='btn btn-primary btn-block'
-            onClick={() => setShowLibrary(true)}
+            onClick={() => setView('editor')}
+            style={{ marginBottom: '12px' }}
+          >
+            <Icon name='plus' />
+            Create from Scratch
+          </button>
+
+          <button
+            className='btn btn-block'
+            onClick={() => setView('library')}
             style={{ marginBottom: '12px' }}
           >
             <Icon name='library' />
@@ -57,7 +85,9 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
             Cancel
           </button>
         </div>
-      ) : (
+      )}
+
+      {view === 'library' && (
         <div className='routine-library-selector'>
           <div
             style={{
@@ -69,7 +99,7 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
           >
             <button
               className='btn'
-              onClick={() => setShowLibrary(false)}
+              onClick={handleBackToOptions}
               aria-label='Back to options'
               disabled={isCreating}
             >
@@ -89,6 +119,28 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
           />
         </div>
       )}
+
+      {view === 'editor' && (
+        <div className='routine-editor-wrapper'>
+          <div style={{ marginBottom: '16px' }}>
+            <button
+              className='btn'
+              onClick={handleBackToOptions}
+              aria-label='Back to options'
+              disabled={isCreating}
+            >
+              <Icon name='chevronLeft' />
+              Back
+            </button>
+          </div>
+
+          <RoutineEditor
+            onSave={handleSaveRoutine}
+            onCancel={handleBackToOptions}
+            isSaving={isCreating}
+          />
+        </div>
+      )}
     </Modal>
   )
 }
@@ -96,7 +148,8 @@ function RoutineCreationModal({ isOpen, onClose, onSelectTemplate }) {
 RoutineCreationModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onSelectTemplate: PropTypes.func.isRequired
+  onSelectTemplate: PropTypes.func.isRequired,
+  onCreateRoutine: PropTypes.func.isRequired
 }
 
 export default RoutineCreationModal

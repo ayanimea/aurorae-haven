@@ -4,7 +4,8 @@ import { formatTime } from '../utils/routineRunner'
 import {
   exportRoutines,
   importRoutines,
-  getRoutines
+  getRoutines,
+  createRoutine
 } from '../utils/routinesManager'
 import { saveTemplate } from '../utils/templatesManager'
 import { instantiateTemplate } from '../utils/templateInstantiation'
@@ -282,6 +283,24 @@ function Routines() {
       logger.log('Routine list reload complete')
     } catch (error) {
       logger.error('Failed to create routine from template:', error)
+      showToastNotification('Failed to create routine: ' + error.message)
+    }
+  }
+
+  // Handle creating routine from scratch
+  const handleCreateRoutine = async (routineData) => {
+    try {
+      logger.log('Creating routine from scratch:', routineData.name)
+
+      const routineId = await createRoutine(routineData)
+      logger.log('Routine created with ID:', routineId)
+
+      showToastNotification('Routine created successfully')
+
+      // Reload the routine list to show the new routine
+      await loadAvailableRoutines()
+    } catch (error) {
+      logger.error('Failed to create routine:', error)
       showToastNotification('Failed to create routine: ' + error.message)
     }
   }
@@ -821,6 +840,7 @@ function Routines() {
         isOpen={showCreationModal}
         onClose={() => setShowCreationModal(false)}
         onSelectTemplate={handleSelectTemplate}
+        onCreateRoutine={handleCreateRoutine}
       />
     </>
   )

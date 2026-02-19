@@ -28,14 +28,38 @@ jest.mock('../components/Routines/LibrarySelector', () => {
   }
 })
 
+// Mock the RoutineEditor component
+jest.mock('../components/Routines/RoutineEditor', () => {
+  return function MockRoutineEditor({ onSave, onCancel }) {
+    return (
+      <div data-testid='routine-editor'>
+        <button
+          onClick={() =>
+            onSave({
+              name: 'New Routine',
+              steps: [{ label: 'Step 1', duration: 300 }],
+              tags: []
+            })
+          }
+        >
+          Save Routine
+        </button>
+        <button onClick={onCancel}>Cancel Editor</button>
+      </div>
+    )
+  }
+})
+
 describe('RoutineCreationModal', () => {
   const mockOnClose = jest.fn()
   const mockOnSelectTemplate = jest.fn().mockResolvedValue()
+  const mockOnCreateRoutine = jest.fn().mockResolvedValue()
 
   const defaultProps = {
     isOpen: true,
     onClose: mockOnClose,
-    onSelectTemplate: mockOnSelectTemplate
+    onSelectTemplate: mockOnSelectTemplate,
+    onCreateRoutine: mockOnCreateRoutine
   }
 
   beforeEach(() => {
@@ -56,8 +80,9 @@ describe('RoutineCreationModal', () => {
     it('shows initial options screen by default', () => {
       render(<RoutineCreationModal {...defaultProps} />)
       expect(
-        screen.getByText('Choose a routine template from the library:')
+        screen.getByText(/Create a new routine from scratch or choose a template/i)
       ).toBeInTheDocument()
+      expect(screen.getByText('Create from Scratch')).toBeInTheDocument()
       expect(screen.getByText('Browse Library')).toBeInTheDocument()
       expect(screen.getByText('Cancel')).toBeInTheDocument()
     })
@@ -86,7 +111,7 @@ describe('RoutineCreationModal', () => {
       fireEvent.click(backButton)
 
       expect(
-        screen.getByText('Choose a routine template from the library:')
+        screen.getByText(/Create a new routine from scratch or choose a template/i)
       ).toBeInTheDocument()
       expect(screen.queryByTestId('library-selector')).not.toBeInTheDocument()
     })
@@ -124,6 +149,57 @@ describe('RoutineCreationModal', () => {
 
       expect(mockOnClose).toHaveBeenCalled()
       expect(mockOnSelectTemplate).not.toHaveBeenCalled()
+      expect(mockOnCreateRoutine).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Create from Scratch Flow', () => {
+    it('switches to routine editor when Create from Scratch is clicked', () => {
+      render(<RoutineCreationModal {...defaultProps} />)
+
+      const createButton = screen.getByText('Create from Scratch')
+      fireEvent.click(createButton)
+
+      expect(screen.getByTestId('routine-editor')).toBeInTheDocument()
+      expect(screen.getByText('Back')).toBeInTheDocument()
+    })
+
+    it('calls onCreateRoutine and onClose when routine is saved', async () => {
+      render(<RoutineCreationModal {...defaultProps} />)
+
+      // Navigate to editor
+      const createButton = screen.getByText('Create from Scratch')
+      fireEvent.click(createButton)
+
+      // Save routine
+      const saveButton = screen.getByText('Save Routine')
+      fireEvent.click(saveButton)
+
+      await waitFor(() => {
+        expect(mockOnCreateRoutine).toHaveBeenCalledWith({
+          name: 'New Routine',
+          steps: [{ label: 'Step 1', duration: 300 }],
+          tags: []
+        })
+        expect(mockOnClose).toHaveBeenCalled()
+      })
+    })
+
+    it('goes back to options when Cancel Editor is clicked in routine editor', () => {
+      render(<RoutineCreationModal {...defaultProps} />)
+
+      // Navigate to editor
+      const createButton = screen.getByText('Create from Scratch')
+      fireEvent.click(createButton)
+
+      // Cancel
+      const cancelButton = screen.getByText('Cancel Editor')
+      fireEvent.click(cancelButton)
+
+      expect(
+        screen.getByText(/Create a new routine from scratch or choose a template/i)
+      ).toBeInTheDocument()
+      expect(screen.queryByTestId('routine-editor')).not.toBeInTheDocument()
     })
   })
 
