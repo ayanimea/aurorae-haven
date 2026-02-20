@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1227 KB compressed
+- ✅ Total size: 1224 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-20 07:09:00 UTC
+**Last Updated**: 2026-02-20 09:00:55 UTC
 **Source Branch**: eliminate-npm-reported-vulnerabilities
-**Source Commit**: 20bcae8
+**Source Commit**: 96d81e3
 
 ---
 
