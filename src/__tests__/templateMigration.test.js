@@ -46,7 +46,7 @@ vi.mock('../utils/logger', () => ({
 
 describe('templateMigration', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     // Clear localStorage before each test
     localStorage.clear()
   })
