@@ -295,7 +295,7 @@ async function createTarGz() {
 }
 
 /**
- * Alternative: Create a simple ZIP using built-in archiver
+ * Alternative: Create a simple ZIP using adm-zip
  * Fallback if tar command is not available
  */
 async function createSimpleArchive() {
@@ -397,7 +397,7 @@ async function createZipWithAdmZip(outputFile) {
 }
 
 /**
- * Create ZIP archive using archiver
+ * Create ZIP archive using adm-zip
  */
 async function createZip() {
   console.log('📦 Creating ZIP archive...')

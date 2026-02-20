@@ -228,7 +228,7 @@ function Layout({ children, onExport, onImport }) {
         <div className='planet' />
       </div>
       {/* TAB-NAV-20: <header> implicitly has role="banner"; explicit role attribute not needed */}
-      <header className='appbar' >
+      <header className='appbar'>
         <div className='inner'>
           {/* TAB-NAV-04 & TAB-NAV-05: Left Zone - Logo/Title */}
           <div className='navbar-left'>
@@ -247,7 +247,7 @@ function Layout({ children, onExport, onImport }) {
 
           {/* TAB-NAV-06: Center Zone - Primary Tabs (Desktop) */}
           {/* TAB-NAV-20 & TAB-NAV-21: <nav> implicitly has role="navigation"; role="tablist" remains on the inner div */}
-          <nav className='navbar-center' aria-label='Main' >
+          <nav className='navbar-center' aria-label='Main'>
             <div
               className='appnav'
               role='tablist'

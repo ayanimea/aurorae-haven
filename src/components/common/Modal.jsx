@@ -153,6 +153,7 @@ function Modal({
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
+    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard Escape is handled exclusively by the document-level listener in useEffect to avoid double-firing; overlay click is a supplemental pointer-only convenience
     <div
       className='modal-overlay'
       role='dialog'
