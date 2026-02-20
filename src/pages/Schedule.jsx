@@ -667,6 +667,16 @@ function Schedule() {
                 select={handleDateSelect}
                 eventMouseEnter={handleEventMouseEnter}
                 eventWillUnmount={handleEventWillUnmount}
+                eventDidMount={(info) => {
+                  const hour = info.event.start?.getHours() ?? 0
+                  if (hour < 12) {
+                    info.el.dataset.timezone = 'morning'
+                  } else if (hour < 18) {
+                    info.el.dataset.timezone = 'afternoon'
+                  } else {
+                    info.el.dataset.timezone = 'evening'
+                  }
+                }}
                 eventContent={(eventInfo) => (
                   <SolidEventCard
                     event={{

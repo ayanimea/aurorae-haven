@@ -167,26 +167,62 @@
   width: 100%;
   position: relative;
   z-index: 3;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  overflow: hidden;
 
-  /* Glass instead of matte */
+  /* Fallback for events without a timezone attribute */
   background: linear-gradient(
     to bottom,
     rgba(18, 28, 50, 0.85),
     rgba(12, 20, 38, 0.92)
   ) !important;
 
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-
-  border-radius: 12px;
-
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 10px 24px rgba(0, 0, 0, 0.45),
     0 0 12px rgba(100, 150, 255, 0.08);
 
   transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+/* ── Time-of-day coloured gradients ── */
+
+.fc-event[data-timezone="morning"] {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 195, 120, 0.35),
+    rgba(30, 35, 70, 0.85)
+  ) !important;
+
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(255, 190, 120, 0.20);
+}
+
+.fc-event[data-timezone="afternoon"] {
+  background: linear-gradient(
+    to bottom,
+    rgba(120, 180, 255, 0.35),
+    rgba(20, 32, 70, 0.88)
+  ) !important;
+
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(120, 180, 255, 0.20);
+}
+
+.fc-event[data-timezone="evening"] {
+  background: linear-gradient(
+    to bottom,
+    rgba(190, 130, 255, 0.40),
+    rgba(28, 18, 70, 0.90)
+  ) !important;
+
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(190, 130, 255, 0.25);
 }
 
 /* Subtle luminous top-edge highlight */
@@ -194,14 +230,14 @@
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   pointer-events: none;
   z-index: 0;
 
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.05),
-    transparent 40%
+    rgba(255, 255, 255, 0.06),
+    transparent 50%
   );
 }
 
@@ -570,19 +606,10 @@
     opacity: 0.9;
   }
 
-  /* Softer event cards on small screens */
+  /* Softer event card shadow on small screens — colour identity preserved */
   .fc-event {
-    background: linear-gradient(
-      to bottom,
-      rgba(18, 28, 50, 0.82),
-      rgba(12, 20, 38, 0.88)
-    ) !important;
-
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
-
     box-shadow:
-      0 6px 18px rgba(0, 0, 0, 0.45),
-      0 0 8px rgba(100, 150, 255, 0.05);
+      0 6px 18px rgba(0, 0, 0, 0.45);
   }
 
   /* Softer luminous top edge */
