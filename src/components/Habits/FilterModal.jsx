@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { CATEGORY_OPTIONS } from '../../utils/habitCategories'
 
@@ -189,21 +189,21 @@ function FilterModal({ isOpen, currentFilters, onApply, onClose }) {
             marginTop: '1.5rem'
           }}
         >
-          <button
+          <button type="button"
             className='btn-outline'
             onClick={handleReset}
             style={{ padding: '0.5rem 1rem' }}
           >
             Reset
           </button>
-          <button
+          <button type="button"
             className='btn-outline'
             onClick={onClose}
             style={{ padding: '0.5rem 1rem' }}
           >
             Cancel
           </button>
-          <button
+          <button type="button"
             className='btn-primary'
             onClick={handleApply}
             style={{ padding: '0.5rem 1rem' }}

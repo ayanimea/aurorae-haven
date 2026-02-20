@@ -1325,6 +1325,13 @@ _Section_: Tab Appearance
 
 **Total Specifications**: 39
 
+**Navigation Update (2026)**: The Library tab has been removed from the main navigation bar. The Library page is now accessible via:
+
+- Settings page (dedicated "Template Library" section with "Open Template Library" button)
+- Routines page (inline modal when creating new routines via "Add from Library" option)
+
+This change improves UX by integrating template selection directly into the routine creation workflow while maintaining full library access through Settings for template management.
+
 #### TAB-LIB-01
 
 **Requirement**: The Library screen shall present (top to bottom): a toolbar (Library Management Buttons) and a main panel of Template cards in a grid layout (desktop/tablet) or list layout (mobile).

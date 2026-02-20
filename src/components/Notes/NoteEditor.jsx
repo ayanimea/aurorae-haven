@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { handleEnterKey } from '../../utils/listContinuation'
@@ -98,7 +98,7 @@ function NoteEditor({
       <div className='card-h'>
         <div className='title-input-wrapper'>
           {!showNoteList && (
-            <button
+            <button type="button"
               className='btn btn-icon toggle-notes-btn'
               onClick={onToggleNoteList}
               aria-label='Show notes list'
@@ -152,7 +152,7 @@ function NoteEditor({
               aria-label='Import markdown file'
             />
           </label>
-          <button
+          <button type="button"
             className='btn'
             onClick={onExport}
             aria-label='Export'
@@ -161,7 +161,7 @@ function NoteEditor({
           >
             <Icon name='download' />
           </button>
-          <button
+          <button type="button"
             className='btn btn-delete'
             onClick={() => onDelete()}
             aria-label='Delete'
@@ -170,7 +170,7 @@ function NoteEditor({
           >
             <Icon name='trashAlt' />
           </button>
-          <button
+          <button type="button"
             className='btn'
             onClick={onNewNote}
             aria-label='New note'
@@ -178,7 +178,7 @@ function NoteEditor({
           >
             <Icon name='plus' />
           </button>
-          <button
+          <button type="button"
             className='btn'
             onClick={onLockToggle}
             aria-label={currentNote?.locked ? 'Unlock note' : 'Lock note'}
@@ -187,7 +187,7 @@ function NoteEditor({
           >
             <Icon name={currentNote?.locked ? 'lock' : 'unlock'} />
           </button>
-          <button
+          <button type="button"
             className='btn'
             onClick={onShowDetails}
             aria-label='Show note details'
@@ -242,7 +242,7 @@ function NoteEditor({
               aria-label='Markdown editor'
             />
           </div>
-          <button
+          <button type="button"
             className='resize-handle'
             onMouseDown={handleResizeStart}
             aria-label='Resize editor and preview'
@@ -271,6 +271,7 @@ function NoteEditor({
             <div
               ref={previewRef}
               className='preview'
+              role='region'
               dangerouslySetInnerHTML={{ __html: preview }}
               aria-label='Markdown preview'
             />

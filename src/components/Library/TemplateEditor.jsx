@@ -4,24 +4,36 @@
  * TAB-LIB-07, TAB-LIB-11
  */
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('TemplateEditor')
 
 /**
  * Convert a numeric string value to a number or null
- * @param {string} value - The value to convert
+ * @param {string|number} value - The value to convert
  * @returns {number|null} The converted number or null if empty
  */
 function convertToNumberOrNull(value) {
-  if (value && value !== '') {
-    const num = Number(value)
-    return isNaN(num) ? null : num
+  // Handle undefined, null, or empty string
+  if (value === undefined || value === null || value === '') {
+    return null
   }
-  return null
+
+  // If already a number, return it as-is
+  if (typeof value === 'number') {
+    return Number.isNaN(value) ? null : value
+  }
+
+  // Convert string to number
+  const num = Number(value)
+  return Number.isNaN(num) ? null : num
 }
 
-function TemplateEditor({ template, onSave, onClose }) {
+function TemplateEditor({ template, onSave, onClose, typeFilter }) {
+  logger.log('TemplateEditor opened with template:', template)
   const [formData, setFormData] = useState(() => {
     if (template) {
       return {
@@ -39,7 +51,7 @@ function TemplateEditor({ template, onSave, onClose }) {
       }
     }
     return {
-      type: 'task',
+      type: typeFilter || 'task',
       title: '',
       tags: [],
       category: '',
@@ -104,7 +116,12 @@ function TemplateEditor({ template, onSave, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (!validateForm()) return
+    logger.log('Form submitted with data:', formData)
+
+    if (!validateForm()) {
+      logger.warn('Form validation failed')
+      return
+    }
 
     // Convert numeric fields to numbers (or null if empty)
     const templateData = {
@@ -117,6 +134,7 @@ function TemplateEditor({ template, onSave, onClose }) {
       }))
     }
 
+    logger.log('Calling onSave with template data:', templateData)
     onSave(templateData)
   }
 
@@ -145,7 +163,7 @@ function TemplateEditor({ template, onSave, onClose }) {
           ...formData.steps,
           {
             label: stepInput.label,
-            duration: parseInt(stepInput.duration) || 0,
+            duration: parseInt(stepInput.duration, 10) || 0,
             description: stepInput.description
           }
         ]
@@ -168,6 +186,7 @@ function TemplateEditor({ template, onSave, onClose }) {
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes modal on click
     <div
       className='modal-overlay'
       onClick={handleOverlayClick}
@@ -186,7 +205,7 @@ function TemplateEditor({ template, onSave, onClose }) {
           <h2 id='editor-title'>
             {template ? 'Edit Template' : 'New Template'}
           </h2>
-          <button
+          <button type="button"
             className='btn-close'
             onClick={onClose}
             aria-label='Close editor'
@@ -205,12 +224,17 @@ function TemplateEditor({ template, onSave, onClose }) {
               onChange={(e) =>
                 setFormData({ ...formData, type: e.target.value })
               }
-              disabled={!!template}
+              disabled={!!typeFilter || !!template}
               required
             >
               <option value='task'>Task</option>
               <option value='routine'>Routine</option>
             </select>
+            {typeFilter && (
+              <small className='form-hint'>
+                Type is fixed to {typeFilter} in this context
+              </small>
+            )}
           </div>
 
           {/* Title */}
@@ -463,7 +487,8 @@ TemplateEditor.propTypes = {
     description: PropTypes.string
   }),
   onSave: PropTypes.func.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
+  typeFilter: PropTypes.oneOf(['task', 'routine'])
 }
 
 export default TemplateEditor

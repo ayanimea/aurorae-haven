@@ -43,7 +43,7 @@ export function parseListItem(line) {
     return {
       type: 'numbered',
       indent,
-      number: parseInt(number),
+      number: parseInt(number, 10),
       content,
       isEmpty: content.trim() === ''
     }

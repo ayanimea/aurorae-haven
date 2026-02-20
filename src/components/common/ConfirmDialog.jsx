@@ -4,7 +4,7 @@
  * Provides better UX with focus management, styling, and screen reader support
  */
 
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 
 function ConfirmDialog({
@@ -52,6 +52,7 @@ function ConfirmDialog({
 
   return (
     // Backdrop is presentational only; interaction handled via Escape key and dialog buttons
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes dialog on click
     <div
       className='modal-overlay'
       onClick={handleBackdropClick}

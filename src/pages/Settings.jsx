@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { getSettings, updateSetting } from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
@@ -18,6 +19,7 @@ import {
   reloadPageAfterDelay,
   IMPORT_SUCCESS_MESSAGE
 } from '../utils/importData'
+import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
 
 // Time constant
@@ -122,7 +124,7 @@ function Settings() {
     } finally {
       setIsConfiguring(false)
     }
-  }, [showMessage, setDirectoryName, setDirectoryHandleLost, setSettingsState])
+  }, [showMessage])
 
   const handleToggleAutoSave = useCallback(
     async (enabled) => {
@@ -331,7 +333,7 @@ function Settings() {
                     className='settings-input'
                     aria-describedby='save-directory-hint'
                   />
-                  <button
+                  <button type="button"
                     onClick={handleSelectDirectory}
                     disabled={isConfiguring}
                     className='settings-button settings-button-primary'
@@ -426,7 +428,7 @@ function Settings() {
                 role='group'
                 aria-label='Auto-save actions'
               >
-                <button
+                <button type="button"
                   onClick={handleManualSave}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-success'
@@ -435,7 +437,7 @@ function Settings() {
                 >
                   Save Now
                 </button>
-                <button
+                <button type="button"
                   onClick={handleLoadLastSave}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-info'
@@ -444,7 +446,7 @@ function Settings() {
                 >
                   Load Last Save
                 </button>
-                <button
+                <button type="button"
                   onClick={handleCleanOldFiles}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-warning'
@@ -503,6 +505,23 @@ function Settings() {
             <small id='24hour-format-hint' className='settings-checkbox-hint'>
               Display times in 24-hour format (e.g., 14:00 instead of 2:00 PM)
             </small>
+          </div>
+        </div>
+
+        {/* Template Library */}
+        <div className='settings-divider'>
+          <h3 className='settings-section-title'>Template Library</h3>
+          <p className='settings-placeholder-text'>
+            Manage reusable Task and Routine templates
+          </p>
+          <div className='settings-button-group' style={{ marginTop: '12px' }}>
+            <Link
+              to='/library'
+              className='settings-button settings-button-primary'
+            >
+              <Icon name='library' />
+              Open Template Library
+            </Link>
           </div>
         </div>
 

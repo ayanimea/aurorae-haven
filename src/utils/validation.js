@@ -190,10 +190,18 @@ export function validateTemplateData(template) {
     return { valid: false, errors }
   }
 
+  // Normalize type once for use throughout validation
+  const normalizedType =
+    template.type && typeof template.type === 'string'
+      ? template.type.trim().toLowerCase()
+      : ''
+
   // Validate required field: type
-  if (!template.type) {
+  if (template.type === undefined || template.type === null) {
     errors.push('Template type is required')
-  } else if (!VALID_TEMPLATE_TYPES.includes(template.type)) {
+  } else if (typeof template.type !== 'string') {
+    errors.push('Template type must be a string')
+  } else if (!VALID_TEMPLATE_TYPES.includes(normalizedType)) {
     errors.push(
       `Template type must be one of: ${VALID_TEMPLATE_TYPES.join(', ')} (found: ${template.type})`
     )
@@ -210,8 +218,8 @@ export function validateTemplateData(template) {
     errors.push('Template title cannot be empty')
   }
 
-  // Type-specific validation
-  if (template.type === 'routine') {
+  // Type-specific validation - use normalized type
+  if (normalizedType === 'routine') {
     // Validate steps for routine templates
     if (template.steps !== undefined && template.steps !== null) {
       if (!Array.isArray(template.steps)) {

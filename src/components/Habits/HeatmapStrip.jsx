@@ -1,4 +1,4 @@
-import React from 'react'
+
 import PropTypes from 'prop-types'
 import dayjs from 'dayjs'
 
@@ -69,6 +69,7 @@ function HeatmapStrip({ completions, vacationDates, daysToShow = 28 }) {
                 : 'none'
             }}
             title={`${date.format('MMM D')}: ${completion ? 'Completed' : vacation ? 'Vacation' : 'Not done'}`}
+            role='img'
             aria-label={`${date.format('MMMM D')}: ${completion ? 'Completed' : vacation ? 'Vacation day' : 'Not completed'}`}
           />
         )

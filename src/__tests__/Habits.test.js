@@ -1,3 +1,8 @@
+import { vi } from 'vitest'
+
+// Mock react-router-dom (uses src/__mocks__/react-router-dom.js)
+vi.mock('react-router-dom')
+
 import React from 'react'
 import {
   render,
@@ -14,16 +19,16 @@ import { createHabit, getHabits } from '../utils/habitsManager'
 import { clear, STORES } from '../utils/indexedDBManager'
 
 // Mock logger
-jest.mock('../utils/logger', () => ({
-  log: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  info: jest.fn(),
-  createLogger: jest.fn(() => ({
-    log: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    info: jest.fn()
+vi.mock('../utils/logger', () => ({
+  log: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  createLogger: vi.fn(() => ({
+    log: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn()
   }))
 }))
 
@@ -728,7 +733,7 @@ describe('Habits Component', () => {
       await new Promise((resolve) => setTimeout(resolve, 200))
 
       // Mock window.confirm
-      window.confirm = jest.fn(() => false)
+      window.confirm = vi.fn(() => false)
 
       await waitFor(
         () => {
@@ -765,7 +770,7 @@ describe('Habits Component', () => {
       await new Promise((resolve) => setTimeout(resolve, 200))
 
       // Mock window.confirm to return true
-      window.confirm = jest.fn(() => true)
+      window.confirm = vi.fn(() => true)
 
       await waitFor(
         () => {

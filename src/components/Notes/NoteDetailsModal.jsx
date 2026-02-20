@@ -1,4 +1,4 @@
-import React from 'react'
+
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -27,7 +27,7 @@ function NoteDetailsModal({ note, title, category, content, onClose }) {
       >
         <div className='modal-header'>
           <h2 id='details-modal-title'>Note Details</h2>
-          <button className='btn btn-icon' onClick={onClose} aria-label='Close'>
+          <button type="button" className='btn btn-icon' onClick={onClose} aria-label='Close'>
             <Icon name='x' />
           </button>
         </div>

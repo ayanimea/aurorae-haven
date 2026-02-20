@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 /**
  * Tests for EventService class
  * Validates event CRUD operations, date handling, and error management
@@ -8,12 +9,12 @@ import * as scheduleManager from '../utils/scheduleManager'
 import * as indexedDBManager from '../utils/indexedDBManager'
 
 // Mock dependencies
-jest.mock('../utils/scheduleManager')
-jest.mock('../utils/indexedDBManager')
-jest.mock('../utils/logger', () => ({
+vi.mock('../utils/scheduleManager')
+vi.mock('../utils/indexedDBManager')
+vi.mock('../utils/logger', () => ({
   default: {
-    error: jest.fn(),
-    warn: jest.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
     info: jest.fn(),
     debug: jest.fn(),
     log: jest.fn(),

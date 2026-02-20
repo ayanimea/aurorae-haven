@@ -1,17 +1,25 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
 import { formatTime } from '../utils/routineRunner'
-import { Link } from 'react-router-dom'
-import { exportRoutines, importRoutines } from '../utils/routinesManager'
+import {
+  exportRoutines,
+  importRoutines,
+  getRoutines,
+  createRoutine
+} from '../utils/routinesManager'
 import { saveTemplate } from '../utils/templatesManager'
+import { instantiateTemplate } from '../utils/templateInstantiation'
 import { createLogger } from '../utils/logger'
 import ConfirmModal from '../components/common/ConfirmModal'
 import Icon from '../components/common/Icon'
+import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
 
 const logger = createLogger('Routines')
 
 function Routines() {
   const [selectedRoutine, setSelectedRoutine] = useState(null)
+  const [availableRoutines, setAvailableRoutines] = useState([])
+  const [loadingRoutines, setLoadingRoutines] = useState(true)
   const [toastMessage, setToastMessage] = useState('')
   const [showToast, setShowToast] = useState(false)
   const fileInputRef = useRef(null)
@@ -19,15 +27,65 @@ function Routines() {
   // TAB-RTN-18: Cancel confirmation modal state
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
+  // Routine creation modal state
+  const [showCreationModal, setShowCreationModal] = useState(false)
+
   // TAB-RTN-45: Reduced motion detection
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   const runner = useRoutineRunner(selectedRoutine)
 
+  // Toast timeout ref to prevent race conditions
+  const toastTimeoutRef = useRef(null)
+
+  // Show toast notification
+  const showToastNotification = useCallback((message) => {
+    // Clear any existing timeout to prevent race conditions
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current)
+      toastTimeoutRef.current = null
+    }
+    setToastMessage(message)
+    setShowToast(true)
+    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 3000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current)
+        toastTimeoutRef.current = null
+      }
+    }
+  }, [])
+
+  const loadAvailableRoutines = useCallback(async () => {
+    try {
+      setLoadingRoutines(true)
+      const routines = await getRoutines({ sortBy: 'name', order: 'asc' })
+      logger.log(`Loaded ${routines.length} routines from getRoutines()`)
+      logger.log('Routine IDs:', routines.map((r) => r.id).join(', '))
+      logger.log(
+        'Routine names:',
+        routines.map((r) => r.name || r.title).join(', ')
+      )
+      setAvailableRoutines(routines)
+    } catch (error) {
+      logger.error('Failed to load routines:', error)
+      showToastNotification('Failed to load routines')
+    } finally {
+      setLoadingRoutines(false)
+    }
+  }, [showToastNotification])
+
+  // Load available routines on mount
+  useEffect(() => {
+    loadAvailableRoutines()
+  }, [loadAvailableRoutines])
+
   // TAB-RTN-45: Detect reduced motion preference
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPrefersReducedMotion(mediaQuery.matches)
 
     const handleChange = (e) => setPrefersReducedMotion(e.matches)
@@ -155,13 +213,6 @@ function Routines() {
     }
   }, [selectedRoutine, runner])
 
-  // Show toast notification
-  const showToastNotification = (message) => {
-    setToastMessage(message)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }
-
   // Handle routine data export - TAB-RTN-47
   const handleExportRoutines = async () => {
     try {
@@ -231,9 +282,54 @@ function Routines() {
     }
   }
 
-  // Handle routine selection (would come from Library via state/context in production)
-  // For now, user needs to go to Library to select a routine
-  // In future, could open a modal to select from available routines
+  // Handle template selection from modal
+  const handleSelectTemplate = async (template) => {
+    try {
+      logger.log('Selected template:', template.title)
+      logger.log('Template object:', template)
+
+      // Instantiate the template to create a routine
+      const result = await instantiateTemplate(template)
+      logger.log('instantiateTemplate returned:', result)
+
+      // Validate result structure
+      if (!result || result.type !== 'routine') {
+        logger.error('instantiateTemplate returned unexpected result:', result)
+        showToastNotification('Failed to create routine from template')
+        return
+      }
+
+      logger.log('Routine created with ID:', result.id)
+
+      showToastNotification('Routine created from template')
+
+      // Reload the routine list to show the new routine
+      logger.log('Reloading available routines...')
+      await loadAvailableRoutines()
+      logger.log('Routine list reload complete')
+    } catch (error) {
+      logger.error('Failed to create routine from template:', error)
+      showToastNotification('Failed to create routine: ' + error.message)
+    }
+  }
+
+  // Handle creating routine from scratch
+  const handleCreateRoutine = async (routineData) => {
+    try {
+      logger.log('Creating routine from scratch:', routineData.name)
+
+      const routineId = await createRoutine(routineData)
+      logger.log('Routine created with ID:', routineId)
+
+      showToastNotification('Routine created successfully')
+
+      // Reload the routine list to show the new routine
+      await loadAvailableRoutines()
+    } catch (error) {
+      logger.error('Failed to create routine:', error)
+      showToastNotification('Failed to create routine: ' + error.message)
+    }
+  }
 
   return (
     <>
@@ -248,7 +344,7 @@ function Routines() {
               alignItems: 'center'
             }}
           >
-            <button
+            <button type="button"
               className='btn'
               onClick={handleExportRoutines}
               aria-label='Export all routine data'
@@ -256,7 +352,7 @@ function Routines() {
               <Icon name='download' />
               Export Routines
             </button>
-            <button
+            <button type="button"
               className='btn'
               onClick={() => fileInputRef.current?.click()}
               aria-label='Import routine data'
@@ -359,7 +455,7 @@ function Routines() {
                 </div>
                 {/* TAB-RTN-11: Controls with accessible labels */}
                 <div className='controls'>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={runner.complete}
                     aria-label='Complete current step'
@@ -368,7 +464,7 @@ function Routines() {
                     <Icon name='check' />
                     Complete
                   </button>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={runner.togglePause}
                     aria-label={
@@ -378,7 +474,7 @@ function Routines() {
                     <Icon name={runner.state.isPaused ? 'play' : 'pause'} />
                     {runner.state.isPaused ? 'Resume' : 'Pause'}
                   </button>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={() => runner.skip()}
                     aria-label='Skip current step'
@@ -387,7 +483,7 @@ function Routines() {
                     <Icon name='skip' />
                     Skip
                   </button>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={handleCancelRoutine}
                     aria-label='Cancel routine'
@@ -426,31 +522,126 @@ function Routines() {
         </div>
       )}
 
-      {/* No routine selected - prompt to select from Library */}
+      {/* No routine running - show available routines list */}
       {!runner.state || !runner.state.isRunning ? (
         <div className='card'>
+          <div className='card-h'>
+            <strong>Available Routines</strong>
+            <button type="button"
+              className='btn btn-primary'
+              onClick={() => setShowCreationModal(true)}
+            >
+              <Icon name='plus' />
+              Create New Routine
+            </button>
+          </div>
           <div className='card-b'>
-            <div className='empty-state'>
-              <svg
-                className='icon'
-                viewBox='0 0 24 24'
-                style={{ width: '48px', height: '48px', opacity: 0.5 }}
-              >
-                <circle cx='12' cy='12' r='10' />
-                <path d='M12 8v4M12 16h.01' />
-              </svg>
-              <p className='empty-state-text'>No routine running</p>
-              <p
-                className='small'
-                style={{ marginTop: '8px', marginBottom: '16px' }}
-              >
-                Select a routine from the Library to get started
-              </p>
-              <Link to='/library' className='btn btn-primary'>
-                <Icon name='file' />
-                Browse Routines
-              </Link>
-            </div>
+            {loadingRoutines ? (
+              <div style={{ textAlign: 'center', padding: '24px' }}>
+                <Icon name='loader' className='icon-spin' />
+                <p className='small'>Loading routines...</p>
+              </div>
+            ) : availableRoutines.length === 0 ? (
+              <div className='empty-state'>
+                <svg
+                  className='icon'
+                  viewBox='0 0 24 24'
+                  style={{ width: '48px', height: '48px', opacity: 0.5 }}
+                >
+                  <title>No routines yet</title>
+                  <circle cx='12' cy='12' r='10' />
+                  <path d='M12 8v4M12 16h.01' />
+                </svg>
+                <p className='empty-state-text'>No routines yet</p>
+                <p
+                  className='small'
+                  style={{ marginTop: '8px', marginBottom: '16px' }}
+                >
+                  Create your first routine to get started
+                </p>
+                <button type="button"
+                  className='btn btn-primary'
+                  onClick={() => setShowCreationModal(true)}
+                >
+                  <Icon name='plus' />
+                  Create New Routine
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {availableRoutines.map((routine) => (
+                  <div
+                    key={routine.id}
+                    className='panel'
+                    style={{
+                      width: '100%'
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div
+                        style={{
+                          flex: 1,
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setSelectedRoutine(routine)}
+                        role='button'
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setSelectedRoutine(routine)
+                          }
+                        }}
+                        aria-label={`View routine: ${routine.name || routine.title}`}
+                      >
+                        <div className='step-title'>
+                          {routine.name || routine.title}
+                        </div>
+                        {routine.steps && routine.steps.length > 0 && (
+                          <div className='small dim'>
+                            {routine.steps.length} steps
+                            {routine.estimatedDuration &&
+                              ` · ${formatTime(routine.estimatedDuration)}`}
+                          </div>
+                        )}
+                        {routine.tags && routine.tags.length > 0 && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '4px',
+                              marginTop: '4px'
+                            }}
+                          >
+                            {routine.tags.map((tag, i) => (
+                              <span key={i} className='tag'>
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button type="button"
+                        className='btn btn-primary'
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedRoutine(routine)
+                        }}
+                        aria-label={`Start ${routine.name || routine.title}`}
+                      >
+                        <Icon name='play' />
+                        Start
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ) : null}
@@ -490,7 +681,7 @@ function Routines() {
               >
                 🎉 Routine Complete!
               </h2>
-              <button
+              <button type="button"
                 className='btn'
                 onClick={() => {
                   runner.reset()
@@ -608,7 +799,7 @@ function Routines() {
                   justifyContent: 'space-between'
                 }}
               >
-                <button
+                <button type="button"
                   className='btn'
                   onClick={handleSaveAsTemplate}
                   aria-label='Save routine as template'
@@ -617,7 +808,7 @@ function Routines() {
                   Save as Template
                 </button>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
+                  <button type="button"
                     className='btn'
                     onClick={() => {
                       runner.reset()
@@ -626,7 +817,7 @@ function Routines() {
                   >
                     Close
                   </button>
-                  <button
+                  <button type="button"
                     className='btn btn-primary'
                     onClick={() => {
                       runner.reset()
@@ -674,6 +865,14 @@ function Routines() {
           onClose={() => setShowCancelConfirm(false)}
         />
       )}
+
+      {/* Routine Creation Modal */}
+      <RoutineCreationModal
+        isOpen={showCreationModal}
+        onClose={() => setShowCreationModal(false)}
+        onSelectTemplate={handleSelectTemplate}
+        onCreateRoutine={handleCreateRoutine}
+      />
     </>
   )
 }

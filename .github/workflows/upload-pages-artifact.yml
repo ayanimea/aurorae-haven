@@ -135,19 +135,15 @@ jobs:
           npm run lint
           echo "✓ All code passes linting checks with zero warnings"
 
-      - name: Remove Jest cache directories
+      - name: Clear Vitest cache
         run: |
-          echo "🧹 Removing Jest cache for fresh CI run..."
-          # Remove common Jest cache locations
-          rm -rf /tmp/jest_* || true
-          rm -rf .jest-cache || true
-          rm -rf node_modules/.cache/jest || true
-          # Clear Jest's cache via CLI
-          npm test -- --clearCache || true
-          echo "✓ Jest cache cleared"
+          echo "🧹 Removing Vitest cache for fresh CI run..."
+          rm -rf node_modules/.vite || true
+          rm -rf node_modules/.vitest || true
+          echo "✓ Vitest cache cleared"
 
       - name: Run tests
-        run: npm test -- --coverage --watchAll=false
+        run: npm test -- --coverage
         env:
           CI: true
 

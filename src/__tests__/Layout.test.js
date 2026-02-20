@@ -53,7 +53,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
         </Layout>
       )
 
-      // Check all primary tabs exist
+      // Check all primary tabs exist (Library removed from main navigation)
       expect(screen.getByRole('tab', { name: /^tasks$/i })).toBeInTheDocument()
       expect(
         screen.getByRole('tab', { name: /^routines$/i })
@@ -65,9 +65,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       expect(
         screen.getByRole('tab', { name: /brain[\s\u00A0]dump/i })
       ).toBeInTheDocument()
-      expect(
-        screen.getByRole('tab', { name: /^library$/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: /^stats$/i })).toBeInTheDocument()
       expect(
         screen.getByRole('tab', { name: /^settings$/i })
       ).toBeInTheDocument()
@@ -136,7 +134,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       )
 
       const tabs = screen.getAllByRole('tab')
-      expect(tabs).toHaveLength(8)
+      expect(tabs).toHaveLength(7) // Library removed from main navigation
     })
 
     test('tabs have proper structure with icons and text', () => {
@@ -398,14 +396,13 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
           name: /mobile navigation menu/i
         })
 
-        // Mobile menu items are links, not menuitems (accessibility fix)
+        // Mobile menu items are links, not menuitems (Library removed from main navigation)
         const expectedNavItems = [
           /tasks/i,
           /routines/i,
           /brain[\s\u00A0]dump/i, // support both regular and non-breaking space
           /habits/i,
           /schedule/i,
-          /library/i,
           /stats/i,
           /settings/i
         ]
@@ -623,8 +620,8 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
           name: /additional navigation options/i
         })
 
-        // MoreMenu should have Library, Stats, and Settings (secondary tabs)
-        const expectedTabs = [/library/i, /stats/i, /settings/i]
+        // MoreMenu should have Stats and Settings (secondary tabs, Library removed)
+        const expectedTabs = [/stats/i, /settings/i]
 
         expectedTabs.forEach((pattern) => {
           const link = within(moreMenu).getByRole('link', { name: pattern })
@@ -647,8 +644,8 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
         expect(moreButton).toHaveAttribute('aria-expanded', 'true')
       })
 
-      const libraryLink = screen.getByRole('link', { name: /library/i })
-      fireEvent.click(libraryLink)
+      const statsLink = screen.getByRole('link', { name: /stats/i })
+      fireEvent.click(statsLink)
 
       await waitFor(() => {
         expect(moreButton).toHaveAttribute('aria-expanded', 'false')
@@ -779,13 +776,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
         const moreMenu = screen.getByRole('navigation', {
           name: /additional navigation options/i
         })
-        // Verify all secondary tabs exist with correct paths
-        const libraryLink = within(moreMenu).getByRole('link', {
-          name: /library/i
-        })
-        expect(libraryLink).toBeInTheDocument()
-        expect(libraryLink).toHaveAttribute('href', '/library')
-
+        // Verify all secondary tabs exist with correct paths (Library removed)
         const statsLink = within(moreMenu).getByRole('link', { name: /stats/i })
         expect(statsLink).toHaveAttribute('href', '/stats')
 

@@ -259,6 +259,8 @@ export async function updateTemplate(templateId, updates) {
     throw new Error('IndexedDB not available')
   }
 
+  logger.log(`Updating template ${templateId}`, { updates })
+
   try {
     const db = await getDBConnection()
     return new Promise((resolve, reject) => {
@@ -267,13 +269,19 @@ export async function updateTemplate(templateId, updates) {
 
       const getRequest = store.get(templateId)
 
-      getRequest.onerror = () => reject(getRequest.error)
+      getRequest.onerror = () => {
+        logger.error(`Failed to get template ${templateId}:`, getRequest.error)
+        reject(getRequest.error)
+      }
       getRequest.onsuccess = () => {
         const existing = getRequest.result
         if (!existing) {
+          logger.error(`Template ${templateId} not found in IndexedDB`)
           reject(new Error('Template not found'))
           return
         }
+
+        logger.log(`Existing template:`, existing)
 
         const updated = updateMetadata({
           ...existing,
@@ -281,18 +289,36 @@ export async function updateTemplate(templateId, updates) {
           id: templateId // Ensure ID doesn't change
         })
 
+        logger.log(`Updated template (before validation):`, updated)
+
         // Validate the updated template data
         const validation = validateTemplateData(updated)
         if (!validation.valid) {
+          logger.error(
+            `Validation failed for template ${templateId}:`,
+            validation.errors
+          )
+          logger.log(`Template data that failed validation:`, updated)
           reject(
             new Error(`Invalid template data: ${validation.errors.join('; ')}`)
           )
           return
         }
 
+        logger.log(`Validation passed, saving template ${templateId}`)
+
         const putRequest = store.put(updated)
-        putRequest.onerror = () => reject(putRequest.error)
-        putRequest.onsuccess = () => resolve()
+        putRequest.onerror = () => {
+          logger.error(
+            `Failed to save template ${templateId}:`,
+            putRequest.error
+          )
+          reject(putRequest.error)
+        }
+        putRequest.onsuccess = () => {
+          logger.log(`Successfully updated template ${templateId}`)
+          resolve()
+        }
       }
 
       // Note: DB connection is kept open for reuse
@@ -388,12 +414,14 @@ export function filterTemplates(templates, filters) {
     // Duration range (for routines)
     if (
       filters.durationMin !== undefined &&
+      filters.durationMin !== null &&
       template.estimatedDuration < filters.durationMin
     ) {
       return false
     }
     if (
       filters.durationMax !== undefined &&
+      filters.durationMax !== null &&
       template.estimatedDuration > filters.durationMax
     ) {
       return false

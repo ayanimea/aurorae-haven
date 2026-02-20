@@ -3,6 +3,7 @@
  * Tests template creation and list updates
  */
 
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
@@ -10,61 +11,73 @@ import Library from '../pages/Library'
 import * as templatesManager from '../utils/templatesManager'
 import * as indexedDBManager from '../utils/indexedDBManager'
 import * as predefinedTemplates from '../utils/predefinedTemplates'
+import * as templateMigration from '../utils/templateMigration'
 
 // Mock the modules
-jest.mock('../utils/templatesManager')
-jest.mock('../utils/indexedDBManager')
-jest.mock('../utils/predefinedTemplates')
-jest.mock('../utils/templateInstantiation')
-jest.mock('../components/Library/TemplateCard', () => {
-  return function MockTemplateCard({ template }) {
-    return <div data-testid={`template-${template.id}`}>{template.title}</div>
+vi.mock('../utils/templatesManager')
+vi.mock('../utils/indexedDBManager')
+vi.mock('../utils/predefinedTemplates')
+vi.mock('../utils/templateInstantiation')
+vi.mock('../utils/templateMigration')
+vi.mock('../components/Library/TemplateCard', () => {
+  return {
+    default: function MockTemplateCard({ template }) {
+      return <div data-testid={`template-${template.id}`}>{template.title}</div>
+    }
   }
 })
-jest.mock('../components/Library/TemplateEditor', () => {
-  return function MockTemplateEditor({ onSave, onClose, template }) {
-    return (
-      <div data-testid='template-editor'>
-        <button
-          data-testid='save-template'
-          onClick={() =>
-            onSave({
-              type: 'task',
-              title: template ? 'Updated Template' : 'New Template',
-              tags: [],
-              category: 'Test',
-              quadrant: 'urgent_important'
-            })
-          }
-        >
-          Save
-        </button>
-        <button data-testid='close-editor' onClick={onClose}>
-          Close
-        </button>
-      </div>
-    )
+vi.mock('../components/Library/TemplateEditor', () => {
+  return {
+    default: function MockTemplateEditor({ onSave, onClose, template }) {
+      return (
+        <div data-testid='template-editor'>
+          <button
+            data-testid='save-template'
+            onClick={() =>
+              onSave({
+                type: 'task',
+                title: template ? 'Updated Template' : 'New Template',
+                tags: [],
+                category: 'Test',
+                quadrant: 'urgent_important'
+              })
+            }
+          >
+            Save
+          </button>
+          <button data-testid='close-editor' onClick={onClose}>
+            Close
+          </button>
+        </div>
+      )
+    }
   }
 })
-jest.mock('../components/Library/TemplateToolbar', () => {
-  return function MockTemplateToolbar({ onNewTemplate }) {
-    return (
-      <div data-testid='template-toolbar'>
-        <button data-testid='new-template' onClick={onNewTemplate}>
-          New Template
-        </button>
-      </div>
-    )
+vi.mock('../components/Library/TemplateToolbar', () => {
+  return {
+    default: function MockTemplateToolbar({ onNewTemplate }) {
+      return (
+        <div data-testid='template-toolbar'>
+          <button data-testid='new-template' onClick={onNewTemplate}>
+            New Template
+          </button>
+        </div>
+      )
+    }
   }
 })
-jest.mock('../components/Library/FilterModal', () => {
-  return function MockFilterModal() {
-    return <div data-testid='filter-modal'>Filter Modal</div>
+vi.mock('../components/Library/FilterModal', () => {
+  return {
+    default: function MockFilterModal() {
+      return <div data-testid='filter-modal'>Filter Modal</div>
+    }
   }
 })
-jest.mock('../components/common/ConfirmModal', () => {
-  return function MockConfirmModal() {
-    return <div data-testid='confirm-modal'>Confirm Modal</div>
+vi.mock('../components/common/ConfirmModal', () => {
+  return {
+    default: function MockConfirmModal() {
+      return <div data-testid='confirm-modal'>Confirm Modal</div>
+    }
   }
 })
 
@@ -79,6 +92,11 @@ describe('Library Page', () => {
     predefinedTemplates.seedPredefinedTemplates.mockResolvedValue({
       added: 0,
       skipped: 0
+    })
+    templateMigration.needsTemplateMigration.mockResolvedValue(false)
+    templateMigration.fixCorruptedTemplateTypes.mockResolvedValue({
+      fixed: 0,
+      errors: []
     })
     templatesManager.getAllTemplates.mockResolvedValue([])
     templatesManager.saveTemplate.mockResolvedValue('new-template-id')
@@ -257,5 +275,53 @@ describe('Library Page', () => {
     // Note: We can't test this directly without remounting, so let's just verify
     // that the TemplateEditor component handles conversion
     // This is more of a documentation test showing the issue exists
+  })
+
+  test('should show toast notification when templates are migrated', async () => {
+    // Arrange - Migration is needed and will fix 3 templates
+    templateMigration.needsTemplateMigration.mockResolvedValue(true)
+    templateMigration.fixCorruptedTemplateTypes.mockResolvedValue({
+      fixed: 3,
+      errors: []
+    })
+    templatesManager.getAllTemplates.mockResolvedValue([])
+
+    // Act
+    render(<Library />)
+
+    // Assert - Wait for migration to complete and toast to appear
+    await waitFor(() => {
+      expect(templateMigration.needsTemplateMigration).toHaveBeenCalled()
+      expect(templateMigration.fixCorruptedTemplateTypes).toHaveBeenCalled()
+    })
+
+    // Verify toast message appears (checking in the document)
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Fixed 3 templates with incorrect types/)
+      ).toBeInTheDocument()
+    })
+  })
+
+  test('should not show toast when migration finds no issues', async () => {
+    // Arrange - Migration check returns false (no issues)
+    templateMigration.needsTemplateMigration.mockResolvedValue(false)
+    templatesManager.getAllTemplates.mockResolvedValue([])
+
+    // Act
+    render(<Library />)
+
+    // Wait for component to fully load
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Loading your template library...')
+      ).not.toBeInTheDocument()
+    })
+
+    // Assert - fixCorruptedTemplateTypes should NOT be called
+    expect(templateMigration.fixCorruptedTemplateTypes).not.toHaveBeenCalled()
+
+    // Verify no toast appears
+    expect(screen.queryByText(/Fixed.*templates/)).not.toBeInTheDocument()
   })
 })

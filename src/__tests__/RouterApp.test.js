@@ -3,6 +3,7 @@
  * Tests export/import handlers and PUBLIC_URL configuration
  */
 
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
@@ -10,7 +11,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 const mockExportJSON = jest.fn()
 const mockImportJSON = jest.fn()
 
-jest.mock('../utils/dataManager', () => ({
+vi.mock('../utils/dataManager', () => ({
   exportJSON: mockExportJSON,
   importJSON: mockImportJSON
 }))

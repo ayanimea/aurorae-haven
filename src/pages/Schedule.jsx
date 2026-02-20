@@ -61,7 +61,7 @@ Ask for clarification or preserve the existing structure.
  * Manages routines, tasks, meetings, and habits with a clean, accessible interface
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -95,7 +95,6 @@ import '../components/ErrorBoundary.css'
 // code-split chunks; the guard only controls whether they are requested at runtime.
 // This reduces initial bundle size but does NOT remove dev-only code from production.
 
-/* eslint-disable no-console */
 // Console statements are intentionally used throughout this file for production debugging
 // and error handling. They replaced a custom logger utility that was causing issues in
 // production builds where Vite's minification was removing the logger module entirely,
@@ -149,11 +148,7 @@ function Schedule() {
         if (typeof updatedValue === 'boolean') {
           setUse24HourFormat(updatedValue)
         }
-      } catch (err) {
-        console.error(
-          'Failed to sync 24-hour format from settings (storage):',
-          err
-        )
+      } catch (_err) {
       }
     }
 
@@ -165,11 +160,7 @@ function Schedule() {
         if (typeof updatedValue === 'boolean') {
           setUse24HourFormat(updatedValue)
         }
-      } catch (err) {
-        console.error(
-          'Failed to sync 24-hour format from settings (custom event):',
-          err
-        )
+      } catch (_err) {
       }
     }
 
@@ -189,7 +180,8 @@ function Schedule() {
           setFloatingDevButtons(() => module.default)
         })
         .catch((err) => {
-          console.error('Failed to load FloatingDevButtons:', err)
+          // biome-ignore lint/suspicious/noConsole: dev-only chunk-load failure, logger not available here
+          console.error('[Schedule] FloatingDevButtons failed to load:', err)
         })
     }
   }, [])
@@ -224,8 +216,7 @@ function Schedule() {
       }
 
       setEvents(loadedEvents)
-    } catch (err) {
-      console.error('Failed to load events:', err)
+    } catch (_err) {
       setError('Failed to load events. Please try again.')
     } finally {
       setIsLoading(false)
@@ -242,6 +233,7 @@ function Schedule() {
   // Currently measures on mount, view changes, and window resize
   // TODO: Consider ResizeObserver for more robust detection of toolbar height changes
   // (e.g., when date label length changes, isLoading state changes, or fonts load)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: view is intentionally included to re-measure toolbar when calendar view changes (day/week/month toolbars differ in height)
   useEffect(() => {
     const updateToolbarHeight = () => {
       if (toolbarRef.current) {
@@ -274,7 +266,6 @@ function Schedule() {
   // Event handlers
   const handleEventContextMenu = useCallback((event, x, y) => {
     try {
-      console.log('Event context menu:', event, x, y)
       const originalEvent = event.resource?.originalEvent || event
       if (originalEvent) {
         setEventToDelete({
@@ -285,10 +276,8 @@ function Schedule() {
         })
         setShowActionModal(true)
       } else {
-        console.warn('Context menu triggered but no originalEvent found')
       }
-    } catch (err) {
-      console.error('[Schedule] Error handling context menu:', err)
+    } catch (_err) {
     }
   }, [])
 
@@ -306,18 +295,15 @@ function Schedule() {
         (typeof eventData.id === 'string' || typeof eventData.id === 'number')
 
       if (isUpdate) {
-        console.log('Updating event:', eventData.id)
         await EventService.updateEvent(eventData)
       } else {
-        console.log('Creating new event')
         await EventService.createEvent(eventData)
       }
 
       await loadEvents()
       setIsModalOpen(false)
       setSelectedEvent(null)
-    } catch (err) {
-      console.error('[Schedule] Failed to save event:', err)
+    } catch (_err) {
       setError('Failed to save event. Please try again.')
     }
   }
@@ -327,15 +313,12 @@ function Schedule() {
     if (!eventId) {
       throw new Error('Event ID is required for deletion')
     }
-
-    console.log('Deleting event:', eventId)
     await EventService.deleteEvent(eventId)
     await loadEvents()
   }
 
   const handleDeleteEvent = async () => {
     if (!eventToDelete) {
-      console.warn('handleDeleteEvent called with no eventToDelete')
       return
     }
 
@@ -343,34 +326,25 @@ function Schedule() {
       await deleteEventById(eventToDelete.id)
       setShowActionModal(false)
       setEventToDelete(null)
-    } catch (err) {
-      console.error('[Schedule] Failed to delete event:', err)
+    } catch (_err) {
       setError('Failed to delete event. Please try again.')
     }
   }
 
   const handleDeleteFromModal = async (eventId) => {
-    try {
-      await deleteEventById(eventId)
-    } catch (err) {
-      console.error('[Schedule] Failed to delete event from modal:', err)
-      throw err
-    }
+    await deleteEventById(eventId)
   }
 
   const handleEditEvent = () => {
     try {
       if (eventToDelete) {
-        console.log('Editing event:', eventToDelete.id)
         setSelectedEvent(eventToDelete)
         setSelectedEventType(eventToDelete.type)
         setShowActionModal(false)
         setIsModalOpen(true)
       } else {
-        console.warn('handleEditEvent called with no eventToDelete')
       }
-    } catch (err) {
-      console.error('[Schedule] Error handling edit event:', err)
+    } catch (_err) {
       setError('Failed to edit event. Please try again.')
     }
   }
@@ -382,19 +356,16 @@ function Schedule() {
       setSelectedEventType(null)
       // Clear any errors when closing modal
       setError('')
-    } catch (err) {
-      console.error('[Schedule] Error closing modal:', err)
+    } catch (_err) {
     }
   }
 
   const handleScheduleEvent = (eventType) => {
     try {
-      console.log('Schedule event button clicked:', eventType)
       setSelectedEventType(eventType)
       setSelectedEvent(null)
       setIsModalOpen(true)
-    } catch (err) {
-      console.error('[Schedule] Error handling schedule event:', err)
+    } catch (_err) {
       setError('Failed to open event creation. Please try again.')
     }
   }
@@ -404,7 +375,6 @@ function Schedule() {
    */
   const handlePopulateFakeData = useCallback(async () => {
     if (!isDevelopment()) {
-      console.warn('Fake data population only available in development mode')
       return
     }
 
@@ -412,14 +382,10 @@ function Schedule() {
       setIsLoading(true)
       setError('')
       setSuccessMessage('')
-
-      console.log('Generating fake events...')
       // Dynamic import reduces initial bundle size but doesn't eliminate code from production
       // (runtime guard still allows bundler to create a separate chunk)
       const { generateFakeEvents } = await import('../utils/fakeDataGenerator')
       const fakeEvents = generateFakeEvents(new Date(), 14) // 2 weeks of data
-
-      console.log(`Creating ${fakeEvents.length} fake events...`)
       let successCount = 0
       let errorCount = 0
 
@@ -427,13 +393,10 @@ function Schedule() {
         try {
           await EventService.createEvent(eventData)
           successCount++
-        } catch (err) {
-          console.error('Failed to create fake event:', err)
+        } catch (_err) {
           errorCount++
         }
       }
-
-      console.log(`Created ${successCount} events (${errorCount} errors)`)
       await loadEvents()
 
       if (successCount === 0) {
@@ -454,8 +417,7 @@ function Schedule() {
           successMessageTimeoutRef.current = null
         }, 3000)
       }
-    } catch (err) {
-      console.error('[Schedule] Error populating fake data:', err)
+    } catch (_err) {
       setError('Failed to populate fake data. Please try again.')
     } finally {
       setIsLoading(false)
@@ -467,7 +429,6 @@ function Schedule() {
    */
   const handleClearAllEvents = async () => {
     if (!isDevelopment()) {
-      console.warn('Clear all events only available in development mode')
       return
     }
 
@@ -485,26 +446,19 @@ function Schedule() {
       setIsLoading(true)
       setError('')
 
-      console.log('Clearing all events...')
-
       // Get all events first
       const allEvents = await EventService.getAllEvents()
-      console.log(`Found ${allEvents.length} events to delete`)
 
       let successCount = 0
-      let errorCount = 0
 
       for (const event of allEvents) {
         try {
           await EventService.deleteEvent(event.id)
           successCount++
-        } catch (err) {
-          console.error('Failed to delete event:', err)
-          errorCount++
+        } catch (_err) {
+          // Deletion failed for this event; continue with others
         }
       }
-
-      console.log(`Deleted ${successCount} events (${errorCount} errors)`)
       await loadEvents()
 
       if (successCount > 0) {
@@ -526,8 +480,7 @@ function Schedule() {
           successMessageTimeoutRef.current = null
         }, 3000)
       }
-    } catch (err) {
-      console.error('[Schedule] Error clearing all events:', err)
+    } catch (_err) {
       setError('Failed to clear events. Please try again.')
     } finally {
       setIsLoading(false)
@@ -657,11 +610,6 @@ function Schedule() {
   // Prevents memory leaks if component unmounts before eventWillUnmount fires
   useEffect(() => {
     return () => {
-      // Note: WeakMap doesn't support iteration, but handlers will be garbage collected
-      // when their associated DOM elements are removed
-      console.log(
-        '[Schedule] Component unmounting, context menu handlers will be garbage collected'
-      )
     }
   }, [])
 
@@ -771,7 +719,7 @@ function Schedule() {
           {error && (
             <div className='error-message' role='alert'>
               {error}
-              <button
+              <button type="button"
                 onClick={() => setError('')}
                 className='error-dismiss'
                 aria-label='Dismiss error'
@@ -784,7 +732,7 @@ function Schedule() {
           {successMessage && (
             <div className='success-message' role='status'>
               {successMessage}
-              <button
+              <button type="button"
                 onClick={() => setSuccessMessage('')}
                 className='success-dismiss'
                 aria-label='Dismiss message'

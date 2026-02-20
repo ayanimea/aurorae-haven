@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import PropTypes from 'prop-types'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
@@ -206,7 +206,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
             </span>
           )}
         </div>
-        <button
+        <button type="button"
           onClick={onClose}
           style={{
             background: 'transparent',
@@ -365,7 +365,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           }}
         >
           <strong>Vacation Mode</strong>
-          <button
+          <button type="button"
             onClick={() => setShowVacationMode(!showVacationMode)}
             style={{
               padding: '0.5rem 1rem',
@@ -452,7 +452,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   }}
                 />
               </div>
-              <button
+              <button type="button"
                 onClick={handleSetVacation}
                 disabled={!vacationStart || !vacationEnd}
                 style={{
@@ -482,7 +482,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   {vacationDates.length} vacation{' '}
                   {vacationDates.length === 1 ? 'day' : 'days'} set
                 </p>
-                <button
+                <button type="button"
                   onClick={handleClearVacation}
                   style={{
                     padding: '0.375rem 0.75rem',
@@ -505,7 +505,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
 
       {/* Brain Dump Link - TAB-HAB-29 */}
       <div className='card-b' style={{ marginBottom: '1.5rem' }}>
-        <button
+        <button type="button"
           onClick={() => {
             // Create a Brain Dump note with habit context
             const habitInfo = `# ${habit.name}\n\n**Current Streak:** ${habit.streak || 0} days 🔥\n**Best Streak:** ${habit.longestStreak || 0} days ⭐\n**Total XP:** ${habit.xp || 0} ✨\n\n---\n\n*Write your thoughts about this habit here...*\n`
@@ -570,7 +570,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
               <option value='30'>Last 30 days</option>
               <option value='90'>Last 90 days</option>
             </select>
-            <button
+            <button type="button"
               onClick={() => handleExport('csv')}
               disabled={completions.length === 0}
               style={{
@@ -587,7 +587,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
             >
               CSV
             </button>
-            <button
+            <button type="button"
               onClick={() => handleExport('markdown')}
               disabled={completions.length === 0}
               style={{

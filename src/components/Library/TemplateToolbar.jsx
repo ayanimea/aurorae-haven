@@ -4,7 +4,7 @@
  * TAB-LIB-03, TAB-LIB-04, TAB-LIB-05, TAB-LIB-06
  */
 
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import Icon from '../common/Icon'
@@ -37,7 +37,7 @@ function TemplateToolbar({
     <div className='library-toolbar'>
       {/* Primary actions */}
       <div className='toolbar-primary'>
-        <button
+        <button type="button"
           className='btn btn-primary'
           onClick={onNewTemplate}
           aria-label='Create new template'
@@ -46,7 +46,7 @@ function TemplateToolbar({
           <span>New Template</span>
         </button>
 
-        <button
+        <button type="button"
           className='btn'
           onClick={handleImportClick}
           aria-label='Import templates'
@@ -63,7 +63,7 @@ function TemplateToolbar({
           aria-label='Choose template file to import'
         />
 
-        <button
+        <button type="button"
           className='btn'
           onClick={onExport}
           aria-label='Export all templates'
@@ -86,7 +86,7 @@ function TemplateToolbar({
           />
         </div>
 
-        <button
+        <button type="button"
           className='btn'
           onClick={onFilter}
           aria-label='Filter templates'
@@ -108,7 +108,7 @@ function TemplateToolbar({
         </select>
 
         <div className='view-toggle' role='group' aria-label='View mode'>
-          <button
+          <button type="button"
             className={clsx('btn', 'btn-icon', { active: viewMode === 'grid' })}
             onClick={() => onViewModeChange('grid')}
             aria-label='Grid view'
@@ -116,7 +116,7 @@ function TemplateToolbar({
           >
             <Icon name='grid' />
           </button>
-          <button
+          <button type="button"
             className={clsx('btn', 'btn-icon', { active: viewMode === 'list' })}
             onClick={() => onViewModeChange('list')}
             aria-label='List view'

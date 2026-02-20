@@ -1,127 +1,139 @@
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
+import EventService from '../services/EventService'
 
 // Mock FullCalendar to avoid ESM parsing issues
-jest.mock('@fullcalendar/react', () => {
-  return function FullCalendar(props) {
-    return (
-      <div className='fc' data-testid='fullcalendar'>
-        <div className='fc-view'>{props.initialView}</div>
-      </div>
-    )
+vi.mock('@fullcalendar/react', () => {
+  return {
+    default: function FullCalendar(props) {
+      return (
+        <div className='fc' data-testid='fullcalendar'>
+          <div className='fc-view'>{props.initialView}</div>
+        </div>
+      )
+    }
   }
 })
 
-jest.mock('@fullcalendar/timegrid', () => ({}))
-jest.mock('@fullcalendar/daygrid', () => ({}))
-jest.mock('@fullcalendar/interaction', () => ({}))
+vi.mock('@fullcalendar/timegrid', () => ({ default: {} }))
+vi.mock('@fullcalendar/daygrid', () => ({ default: {} }))
+vi.mock('@fullcalendar/interaction', () => ({ default: {} }))
 
 // Mock Icon component
-jest.mock('../components/common/Icon', () => {
-  return function Icon({ name }) {
-    return <span data-testid={`icon-${name}`}>{name}</span>
+vi.mock('../components/common/Icon', () => {
+  return {
+    default: function Icon({ name }) {
+      return <span data-testid={`icon-${name}`}>{name}</span>
+    }
   }
 })
 
 // Mock EventModal component
-jest.mock('../components/Schedule/EventModal', () => {
-  return function EventModal() {
-    return null
+vi.mock('../components/Schedule/EventModal', () => {
+  return {
+    default: function EventModal() {
+      return null
+    }
   }
 })
 
 // Mock CustomToolbar component
-jest.mock('../components/Schedule/CustomToolbar', () => {
-  return function CustomToolbar({
-    date,
-    view,
-    views,
-    onNavigate,
-    onView,
-    onScheduleEvent,
-    EVENT_TYPES
-  }) {
-    return (
-      <div className='calendar-toolbar'>
-        <div className='toolbar-left'>
-          <h2>Schedule</h2>
-          <p className='date-display'>
-            {date.toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric'
-            })}
-          </p>
+vi.mock('../components/Schedule/CustomToolbar', () => {
+  return {
+    default: function CustomToolbar({
+      date,
+      view,
+      views,
+      onNavigate,
+      onView,
+      onScheduleEvent,
+      EVENT_TYPES
+    }) {
+      return (
+        <div className='calendar-toolbar'>
+          <div className='toolbar-left'>
+            <h2>Schedule</h2>
+            <p className='date-display'>
+              {date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              })}
+            </p>
+          </div>
+          <div className='toolbar-center'>
+            <button onClick={() => onNavigate('PREV')}>Previous</button>
+            <button onClick={() => onNavigate('TODAY')}>Today</button>
+            <button onClick={() => onNavigate('NEXT')}>Next</button>
+            <select value={view} onChange={(e) => onView(e.target.value)}>
+              {views.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className='toolbar-right'>
+            <button
+              onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}
+              aria-label='Schedule an event'
+            >
+              + Schedule
+            </button>
+          </div>
         </div>
-        <div className='toolbar-center'>
-          <button onClick={() => onNavigate('PREV')}>Previous</button>
-          <button onClick={() => onNavigate('TODAY')}>Today</button>
-          <button onClick={() => onNavigate('NEXT')}>Next</button>
-          <select value={view} onChange={(e) => onView(e.target.value)}>
-            {views.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className='toolbar-right'>
-          <button
-            onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}
-            aria-label='Schedule an event'
-          >
-            + Schedule
-          </button>
-        </div>
-      </div>
-    )
+      )
+    }
   }
 })
 
 // Mock CustomEvent component
-jest.mock('../components/Schedule/CustomEvent', () => {
-  return function CustomEvent({ event }) {
-    return <div>{event.title}</div>
+vi.mock('../components/Schedule/CustomEvent', () => {
+  return {
+    default: function CustomEvent({ event }) {
+      return <div>{event.title}</div>
+    }
   }
 })
 
 // Mock ItemActionModal component
-jest.mock('../components/ItemActionModal', () => {
-  return function ItemActionModal() {
-    return null
+vi.mock('../components/ItemActionModal', () => {
+  return {
+    default: function ItemActionModal() {
+      return null
+    }
   }
 })
 
 // Mock EventService
-jest.mock('../services/EventService', () => ({
+vi.mock('../services/EventService', () => ({
   __esModule: true,
   default: {
-    getEventsForDate: jest.fn().mockResolvedValue([]),
-    getEventsForWeek: jest.fn().mockResolvedValue([]),
-    getEventsForRange: jest.fn().mockResolvedValue([]),
-    getEventsForDays: jest.fn().mockResolvedValue([]),
-    createEvent: jest.fn(),
-    updateEvent: jest.fn(),
-    deleteEvent: jest.fn(),
-    clearTestData: jest.fn().mockResolvedValue(0)
+    getEventsForDate: vi.fn().mockResolvedValue([]),
+    getEventsForWeek: vi.fn().mockResolvedValue([]),
+    getEventsForRange: vi.fn().mockResolvedValue([]),
+    getEventsForDays: vi.fn().mockResolvedValue([]),
+    createEvent: vi.fn(),
+    updateEvent: vi.fn(),
+    deleteEvent: vi.fn(),
+    clearTestData: vi.fn().mockResolvedValue(0)
   }
 }))
 
 // Mock logger
-jest.mock('../utils/logger', () => ({
-  createLogger: jest.fn(() => ({
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    info: jest.fn()
+vi.mock('../utils/logger', () => ({
+  createLogger: vi.fn(() => ({
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn()
   }))
 }))
 
 describe('Schedule Component with FullCalendar', () => {
-  const EventService = require('../services/EventService').default
-
   beforeEach(() => {
     // Mock Date to return a consistent time for testing
     jest.useFakeTimers()

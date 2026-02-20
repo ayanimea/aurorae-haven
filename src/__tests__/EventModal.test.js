@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import React from 'react'
 import {
   render,
@@ -10,55 +11,61 @@ import '@testing-library/jest-dom'
 import EventModal from '../components/Schedule/EventModal'
 
 // Mock Icon component
-jest.mock('../components/common/Icon', () => {
-  return function Icon({ name }) {
-    return <span data-testid={`icon-${name}`}>{name}</span>
+vi.mock('../components/common/Icon', () => {
+  return {
+    default: function Icon({ name }) {
+      return <span data-testid={`icon-${name}`}>{name}</span>
+    }
   }
 })
 
 // Mock Modal component
-jest.mock('../components/common/Modal', () => {
-  return function Modal({ isOpen, children, title, onClose }) {
-    if (!isOpen) return null
-    return (
-      <div data-testid='modal'>
-        <h2>{title}</h2>
-        <button onClick={onClose}>Close</button>
-        {children}
-      </div>
-    )
+vi.mock('../components/common/Modal', () => {
+  return {
+    default: function Modal({ isOpen, children, title, onClose }) {
+      if (!isOpen) return null
+      return (
+        <div data-testid='modal'>
+          <h2>{title}</h2>
+          <button onClick={onClose}>Close</button>
+          {children}
+        </div>
+      )
+    }
   }
 })
 
 // Mock getCurrentDateISO to return consistent date for testing
-jest.mock('../utils/timeUtils', () => ({
-  getCurrentDateISO: jest.fn(() => '2025-09-16'),
-  getCurrentTimeHHMM: jest.fn(() => '09:00'),
-  getCurrentTimePlusMinutes: jest.fn(() => '10:00')
+vi.mock('../utils/timeUtils', () => ({
+  getCurrentDateISO: vi.fn(() => '2025-09-16'),
+  getCurrentTimeHHMM: vi.fn(() => '09:00'),
+  getCurrentTimePlusMinutes: vi.fn(() => '10:00')
 }))
 
 // Mock SearchableEventSelector to automatically trigger create new
 // This simulates the user clicking "Create New" button immediately
 // Store the last props passed to the mock for test verification
 let lastSearchableEventSelectorProps = null
-jest.mock('../components/Schedule/SearchableEventSelector', () => {
+vi.mock('../components/Schedule/SearchableEventSelector', () => {
   const React = require('react')
-  return function SearchableEventSelector(props) {
-    // Store props for test assertions
-    lastSearchableEventSelectorProps = props
-    const { onCreateNew, eventType } = props
-    // Automatically call onCreateNew to show the form
-    React.useEffect(() => {
-      if (onCreateNew) {
-        onCreateNew()
-      }
-    }, [onCreateNew])
-    return (
-      <div
-        data-testid='searchable-event-selector'
-        data-event-type={eventType === null ? 'null' : eventType}
-      />
-    )
+  return {
+    default: function SearchableEventSelector(props) {
+      // Store props for test assertions
+      lastSearchableEventSelectorProps = props
+      const { onCreateNew, eventType } = props
+      // Automatically call onCreateNew to show the form
+      React.useEffect(() => {
+        if (onCreateNew) {
+          onCreateNew()
+        }
+      }, [onCreateNew])
+      return (
+        <div
+          data-testid='searchable-event-selector'
+          data-event-type={eventType === null ? 'null' : eventType}
+        />
+      )
+    }
   }
 })
 
