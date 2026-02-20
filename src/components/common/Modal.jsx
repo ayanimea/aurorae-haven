@@ -160,7 +160,6 @@ function Modal({
       aria-labelledby={title ? titleId : undefined}
       aria-describedby={bodyId}
       onClick={closeOnOverlayClick ? onClose : undefined}
-      onKeyDown={(e) => { if (e.key === 'Escape' && closeOnOverlayClick) onClose() }}
     >
       <FocusLock returnFocus>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
