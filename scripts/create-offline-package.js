@@ -311,10 +311,9 @@ async function createSimpleArchive() {
     mkdirSync(OUTPUT_DIR, { recursive: true })
   }
 
-  const outputFile = join(OUTPUT_DIR, `aurorae-haven-offline-v${VERSION}.tar`)
+  const outputFile = join(OUTPUT_DIR, `aurorae-haven-offline-v${VERSION}.zip`)
 
   console.log(`  → Creating archive: ${outputFile}`)
-  console.log('  ℹ️  Note: Compression not available, using uncompressed tar')
 
   // Create README for the offline package and write it to disk so addLocalFolder picks it up
   const readmeContent = await generateReadme()
@@ -324,7 +323,7 @@ async function createSimpleArchive() {
 
   // Try to create ZIP with adm-zip
   try {
-    return await createZipWithAdmZip(outputFile.replace('.tar', '.zip'))
+    return await createZipWithAdmZip(outputFile)
   } catch (error) {
     console.warn('⚠️  adm-zip not available, using basic method:', error.message)
   }

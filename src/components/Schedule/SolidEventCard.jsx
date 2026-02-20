@@ -30,7 +30,7 @@ function SolidEventCard({ event, onContextMenu }) {
 
   // Log warning for invalid event types to detect data corruption or injection attempts
   if (rawEventType && !VALID_EVENT_TYPES.includes(rawEventType)) {
-    logger.warn(`Invalid event type "${rawEventType}" detected, falling back to "task"`)
+    logger.error(`Invalid event type "${rawEventType}" detected, falling back to "task"`)
   }
 
   const prepTime = resource?.preparationTime || 0

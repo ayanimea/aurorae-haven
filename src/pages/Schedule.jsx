@@ -180,6 +180,8 @@ function Schedule() {
           setFloatingDevButtons(() => module.default)
         })
         .catch((err) => {
+          // biome-ignore lint/suspicious/noConsole: dev-only chunk-load failure, logger not available here
+          console.error('[Schedule] FloatingDevButtons failed to load:', err)
         })
     }
   }, [])
