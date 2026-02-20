@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import {
   getAllTemplates,
   getTemplate,
@@ -16,8 +17,8 @@ import * as indexedDBManager from '../utils/indexedDBManager'
 import { v4 as uuidv4 } from 'uuid'
 
 // Mock dependencies
-jest.mock('../utils/indexedDBManager')
-jest.mock('uuid')
+vi.mock('../utils/indexedDBManager')
+vi.mock('uuid')
 
 describe('templatesManager', () => {
   let mockDB

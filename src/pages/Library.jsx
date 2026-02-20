@@ -3,7 +3,7 @@
  * Manages reusable Task and Routine templates
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   getAllTemplates,
   saveTemplate,
@@ -63,14 +63,15 @@ function Library() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState(null)
 
-  // Toast notification helper
-  const showToastNotification = (message) => {
+  // Toast notification helper — stable via useCallback so mount-only effect dep array is accurate
+  const showToastNotification = useCallback((message) => {
     setToastMessage(message)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
-  }
+  }, [])
 
   // Load templates on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect; logger and setState functions are stable references
   useEffect(() => {
     const loadTemplates = async () => {
       if (!isIndexedDBAvailable()) {

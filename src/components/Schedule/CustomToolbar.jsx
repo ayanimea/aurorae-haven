@@ -3,7 +3,6 @@
  * Matches existing Schedule UI styling and functionality
  */
 
-import React from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../../components/common/Icon'
 import { format, isSameDay } from 'date-fns'

@@ -4,7 +4,7 @@
  * Displays only routine templates and provides action buttons
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import PropTypes from 'prop-types'
 import {
   getAllTemplates,
@@ -313,7 +313,7 @@ function LibrarySelector({ onSelectTemplate }) {
           <option value='recentlyCreated'>Recently Created</option>
         </select>
 
-        <button
+        <button type="button"
           className='btn btn-primary'
           onClick={handleNewTemplate}
           aria-label='Create new routine template'
@@ -337,7 +337,7 @@ function LibrarySelector({ onSelectTemplate }) {
               ? 'No routines match your search'
               : 'No routine templates yet'}
           </p>
-          <button
+          <button type="button"
             className='btn btn-primary'
             onClick={handleNewTemplate}
             style={{ marginTop: '12px' }}

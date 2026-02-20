@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
@@ -99,6 +99,7 @@ function ConfirmModal({
   if (!isOpen) return null
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes dialog on click
     <div
       className='modal-overlay'
       role='presentation'

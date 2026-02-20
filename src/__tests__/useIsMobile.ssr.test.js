@@ -1,57 +1,61 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
+
+import { vi, describe, test, expect, beforeEach } from 'vitest'
 
 // SSR (Server-Side Rendering) tests for useIsMobile hook
 // These tests run in a pure Node.js environment without jsdom
 
+// Capture useState calls to verify SSR-safe initialisation
+// vi.hoisted ensures this is available inside the vi.mock factory (which is hoisted)
+const mockHookState = vi.hoisted(() => ({
+  lastInitialValue: undefined,
+  setter: null
+}))
+
+// Mock React hooks so the hook can be called outside a component tree
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useState: (initialValue) => {
+      const resolved =
+        typeof initialValue === 'function' ? initialValue() : initialValue
+      mockHookState.lastInitialValue = resolved
+      mockHookState.setter = vi.fn()
+      return [resolved, mockHookState.setter]
+    },
+    useEffect: vi.fn()
+  }
+})
+
 describe('useIsMobile - SSR Tests', () => {
-  // Clean up global before each test
+  // Clean up global before each test and reset module cache
   beforeEach(() => {
     // Ensure window is truly undefined in Node environment
     if (typeof global.window !== 'undefined') {
       delete global.window
     }
+    vi.resetModules()
   })
 
-  test('returns false when window is undefined (SSR environment)', () => {
-    // Import the hook in Node environment where window is undefined
-    const { useIsMobile } = require('../hooks/useIsMobile')
+  test('returns false when window is undefined (SSR environment)', async () => {
+    const { useIsMobile } = await import('../hooks/useIsMobile')
 
-    // Mock useState and useEffect from React
-    const React = require('react')
-    let stateValue = null
-    jest.spyOn(React, 'useState').mockImplementation((initialValue) => {
-      // Call the initializer function if provided
-      stateValue =
-        typeof initialValue === 'function' ? initialValue() : initialValue
-      return [stateValue, jest.fn()]
-    })
-    jest.spyOn(React, 'useEffect').mockImplementation(() => {})
-
-    // Call the hook
+    // The hook's useState initializer checks typeof window === 'undefined' → returns false
     const result = useIsMobile()
 
-    // Should return false in SSR environment (no window)
     expect(result).toBe(false)
     expect(typeof window).toBe('undefined')
+    expect(mockHookState.lastInitialValue).toBe(false)
   })
 
-  test('handles SSR initialization without crashing', () => {
-    // Import the hook
-    const { useIsMobile } = require('../hooks/useIsMobile')
-
+  test('handles SSR initialization without crashing', async () => {
     // Ensure window doesn't exist
     expect(typeof window).toBe('undefined')
 
-    // Mock React hooks
-    const React = require('react')
-    jest.spyOn(React, 'useState').mockImplementation((initialValue) => {
-      const value =
-        typeof initialValue === 'function' ? initialValue() : initialValue
-      return [value, jest.fn()]
-    })
-    jest.spyOn(React, 'useEffect').mockImplementation(() => {})
+    const { useIsMobile } = await import('../hooks/useIsMobile')
 
     // Should not throw when called in SSR
     expect(() => {

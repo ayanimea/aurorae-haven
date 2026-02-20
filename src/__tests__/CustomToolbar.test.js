@@ -1,12 +1,15 @@
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import CustomToolbar from '../components/Schedule/CustomToolbar'
 
 // Mock Icon component
-jest.mock('../components/common/Icon', () => {
-  return function Icon({ name }) {
-    return <span data-testid={`icon-${name}`}>{name}</span>
+vi.mock('../components/common/Icon', () => {
+  return {
+    default: function Icon({ name }) {
+      return <span data-testid={`icon-${name}`}>{name}</span>
+    }
   }
 })
 

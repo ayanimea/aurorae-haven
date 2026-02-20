@@ -4,7 +4,7 @@
  * TAB-LIB-05
  */
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -34,6 +34,7 @@ function FilterModal({ filters, onFilterChange, onClose }) {
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes modal on click
     <div
       className='modal-overlay'
       onClick={handleOverlayClick}
@@ -50,7 +51,7 @@ function FilterModal({ filters, onFilterChange, onClose }) {
       >
         <div className='modal-header'>
           <h2 id='filter-title'>Filter Templates</h2>
-          <button
+          <button type="button"
             className='btn-close'
             onClick={onClose}
             aria-label='Close filter'
@@ -91,7 +92,7 @@ function FilterModal({ filters, onFilterChange, onClose }) {
                   setLocalFilters({
                     ...localFilters,
                     durationMin: e.target.value
-                      ? parseInt(e.target.value)
+                      ? parseInt(e.target.value, 10)
                       : null
                   })
                 }
@@ -106,7 +107,7 @@ function FilterModal({ filters, onFilterChange, onClose }) {
                   setLocalFilters({
                     ...localFilters,
                     durationMax: e.target.value
-                      ? parseInt(e.target.value)
+                      ? parseInt(e.target.value, 10)
                       : null
                   })
                 }

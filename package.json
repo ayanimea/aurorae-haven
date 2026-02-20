@@ -14,10 +14,10 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "test": "jest --coverage",
-    "test:export": "jest src/__tests__/dataManager.test.js --testNamePattern='should export aurorae_tasks|should export brainDumpEntries'",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
-    "lint:md": "markdownlint '**/*.md' -i node_modules",
+    "test": "vitest run",
+    "test:export": "vitest run src/__tests__/dataManager.test.js -t 'should export aurorae_tasks|should export brainDumpEntries'",
+    "lint": "biome lint .",
+    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#package-lock.json'",
     "lint:css": "stylelint \"**/*.{css,scss}\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -55,47 +55,34 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.28.6",
-    "@babel/preset-react": "^7.27.1",
-    "@eslint/js": "^9.37.0",
+    "@biomejs/biome": "^2.4.2",
     "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/coverage-v8": "^4.0.18",
+    "adm-zip": "^0.5.16",
     "ajv": "^8.18.0",
-    "archiver": "^7.0.1",
-    "babel-jest": "^30.2.0",
     "cross-env": "^10.1.0",
-    "eslint": "^9.9.0",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.1",
     "fake-indexeddb": "^6.2.2",
-    "identity-obj-proxy": "^3.0.0",
-    "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0",
-    "markdownlint-cli": "^0.47.0",
+    "jsdom": "^28.0.0",
+    "markdownlint-cli2": "^0.21.0",
     "prettier": "^3.8.0",
     "stylelint": "^17.0.0",
     "vite": "^7.1.9",
-    "vite-plugin-pwa": "^1.0.3"
+    "vite-plugin-pwa": "^1.0.3",
+    "vitest": "^4.0.18"
   },
   "overrides": {
     "glob": "^13.0.1",
     "source-map": "^0.7.4",
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.5",
     "magic-string": "^0.30.19",
-    "jsdom": "^28.0.0",
+    "filelist": {
+      "minimatch": "^10.2.1"
+    },
     "workbox-build": {
       "source-map": "^0.7.4"
-    },
-    "babel-jest": {
-      "test-exclude": "7.0.1",
-      "babel-plugin-istanbul": {
-        "@istanbuljs/load-nyc-config": {
-          "js-yaml": "^3.14.2"
-        }
-      }
     }
   },
   "browserslist": {

@@ -3,50 +3,55 @@
  * Validates routine creation workflow, library integration, and state management
  */
 
+import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
 
 // Mock the LibrarySelector component
-jest.mock('../components/Routines/LibrarySelector', () => {
-  return function MockLibrarySelector({ onSelectTemplate }) {
-    return (
-      <div data-testid='library-selector'>
-        <button
-          onClick={() =>
-            onSelectTemplate({
-              id: 'test-template',
-              title: 'Test Template',
-              type: 'routine'
-            })
-          }
-        >
-          Select Template
-        </button>
-      </div>
-    )
+vi.mock('../components/Routines/LibrarySelector', () => {
+  return {
+    default: function MockLibrarySelector({ onSelectTemplate }) {
+      return (
+        <div data-testid='library-selector'>
+          <button
+            onClick={() =>
+              onSelectTemplate({
+                id: 'test-template',
+                title: 'Test Template',
+                type: 'routine'
+              })
+            }
+          >
+            Select Template
+          </button>
+        </div>
+      )
+    }
   }
 })
 
 // Mock the RoutineEditor component
-jest.mock('../components/Routines/RoutineEditor', () => {
-  return function MockRoutineEditor({ onSave, onCancel }) {
-    return (
-      <div data-testid='routine-editor'>
-        <button
-          onClick={() =>
-            onSave({
-              name: 'New Routine',
-              steps: [{ label: 'Step 1', duration: 300 }],
-              tags: []
-            })
-          }
-        >
-          Save Routine
-        </button>
-        <button onClick={onCancel}>Cancel Editor</button>
-      </div>
-    )
+vi.mock('../components/Routines/RoutineEditor', () => {
+  return {
+    default: function MockRoutineEditor({ onSave, onCancel }) {
+      return (
+        <div data-testid='routine-editor'>
+          <button
+            onClick={() =>
+              onSave({
+                name: 'New Routine',
+                steps: [{ label: 'Step 1', duration: 300 }],
+                tags: []
+              })
+            }
+          >
+            Save Routine
+          </button>
+          <button onClick={onCancel}>Cancel Editor</button>
+        </div>
+      )
+    }
   }
 })
 

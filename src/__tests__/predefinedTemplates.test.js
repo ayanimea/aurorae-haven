@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import {
   getPredefinedTemplates,
   getPredefinedTasks,
@@ -8,7 +9,7 @@ import {
 import * as templatesManager from '../utils/templatesManager'
 
 // Mock the templates manager
-jest.mock('../utils/templatesManager')
+vi.mock('../utils/templatesManager')
 
 describe('Predefined Templates', () => {
   beforeEach(() => {

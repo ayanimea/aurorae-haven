@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -92,24 +92,27 @@ function TaskItem({
           aria-label='Edit task text'
         />
       ) : (
-        <span
-          className='task-text'
-          onDoubleClick={() => onEdit(quadrant, task)}
-        >
-          {task.text}
-        </span>
+        <>
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: onDoubleClick is a power-user shortcut; primary edit interaction is via the accessible Edit button */}
+          <span
+            className='task-text'
+            onDoubleClick={() => onEdit(quadrant, task)}
+          >
+            {task.text}
+          </span>
+        </>
       )}
       <div className='task-actions'>
         {isEditing ? (
           <>
-            <button
+            <button type="button"
               className='btn-save'
               onClick={onSaveEdit}
               aria-label='Save task'
             >
               <Icon name='check' />
             </button>
-            <button
+            <button type="button"
               className='btn-cancel'
               onClick={onCancelEdit}
               aria-label='Cancel editing'
@@ -119,14 +122,14 @@ function TaskItem({
           </>
         ) : (
           <>
-            <button
+            <button type="button"
               className='btn-edit'
               onClick={() => onEdit(quadrant, task)}
               aria-label={`Edit task "${task.text}"`}
             >
               <Icon name='edit' />
             </button>
-            <button
+            <button type="button"
               className='btn-delete'
               onClick={() => onDelete(quadrant, task.id)}
               aria-label={`Delete task "${task.text}"`}

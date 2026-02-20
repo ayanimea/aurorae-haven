@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 /**
  * Tests for ItemActionModal component
  * Validates modal rendering, focus management, keyboard navigation, and accessibility
@@ -8,8 +9,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ItemActionModal from '../components/ItemActionModal'
 
 // Mock dependencies
-jest.mock('../utils/positionUtils', () => ({
-  adjustMenuPosition: jest.fn((x, y) => ({ x, y }))
+vi.mock('../utils/positionUtils', () => ({
+  adjustMenuPosition: vi.fn((x, y) => ({ x, y }))
 }))
 
 import { adjustMenuPosition } from '../utils/positionUtils'

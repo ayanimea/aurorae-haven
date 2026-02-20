@@ -1,0 +1,85 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+  "files": {
+    "includes": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/__tests__",
+      "!src/__mocks__",
+      "!src/**/*.test.js",
+      "!src/**/*.test.jsx"
+    ]
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "assist": {
+    "enabled": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error",
+        "noUnusedFunctionParameters": "off",
+        "useExhaustiveDependencies": "warn"
+      },
+      "suspicious": {
+        "noConsole": "warn",
+        "noArrayIndexKey": "off",
+        "noAssignInExpressions": "off",
+        "noPrototypeBuiltins": "off",
+        "noControlCharactersInRegex": "off",
+        "noGlobalIsNan": "off"
+      },
+      "complexity": {
+        "noImportantStyles": "off",
+        "useOptionalChain": "off",
+        "useArrowFunction": "off",
+        "noUselessUndefinedInitialization": "off"
+      },
+      "style": {
+        "useTemplate": "off",
+        "useConst": "off",
+        "useExponentiationOperator": "off",
+        "noDefaultExport": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
+      "a11y": {
+        "useSemanticElements": "off"
+      }
+    }
+  },
+  "javascript": {
+    "globals": [
+      "window",
+      "document",
+      "navigator",
+      "console",
+      "localStorage",
+      "sessionStorage",
+      "setTimeout",
+      "clearTimeout",
+      "setInterval",
+      "clearInterval",
+      "requestAnimationFrame",
+      "cancelAnimationFrame",
+      "Blob",
+      "URL",
+      "fetch",
+      "FormData",
+      "FileReader",
+      "alert",
+      "confirm",
+      "prompt",
+      "MutationObserver",
+      "process",
+      "Element",
+      "CustomEvent",
+      "__DEV__"
+    ]
+  }
+}

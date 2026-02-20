@@ -1,36 +1,36 @@
-/**
- * Tests for Settings component
- * Tests basic rendering and accessibility features
- */
+import { vi } from 'vitest'
 
-import React from 'react'
+// Mock react-router-dom (uses src/__mocks__/react-router-dom.js)
+vi.mock('react-router-dom')
+
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Settings from '../pages/Settings'
+import * as autoSaveFS from '../utils/autoSaveFS'
 
 // Mock CSS imports
-jest.mock('../assets/styles/settings.css', () => ({}))
+vi.mock('../assets/styles/settings.css', () => ({}))
 
 // Mock the autoSaveFS module
-jest.mock('../utils/autoSaveFS', () => ({
-  isFileSystemAccessSupported: jest.fn(() => true),
-  requestDirectoryAccess: jest.fn(),
-  getCurrentDirectoryHandle: jest.fn(() => null),
-  setDirectoryHandle: jest.fn(),
-  verifyDirectoryHandle: jest.fn(),
-  startAutoSave: jest.fn(),
-  stopAutoSave: jest.fn(),
-  performAutoSave: jest.fn(),
-  getLastSaveTimestamp: jest.fn(() => null),
-  cleanOldSaveFiles: jest.fn(),
-  loadAndImportLastSave: jest.fn(),
-  getStoredDirectoryName: jest.fn(() => null),
-  clearStoredDirectoryName: jest.fn()
+vi.mock('../utils/autoSaveFS', () => ({
+  isFileSystemAccessSupported: vi.fn(() => true),
+  requestDirectoryAccess: vi.fn(),
+  getCurrentDirectoryHandle: vi.fn(() => null),
+  setDirectoryHandle: vi.fn(),
+  verifyDirectoryHandle: vi.fn(),
+  startAutoSave: vi.fn(),
+  stopAutoSave: vi.fn(),
+  performAutoSave: vi.fn(),
+  getLastSaveTimestamp: vi.fn(() => null),
+  cleanOldSaveFiles: vi.fn(),
+  loadAndImportLastSave: vi.fn(),
+  getStoredDirectoryName: vi.fn(() => null),
+  clearStoredDirectoryName: vi.fn()
 }))
 
 // Mock the settingsManager module
-jest.mock('../utils/settingsManager', () => ({
-  getSettings: jest.fn(() => ({
+vi.mock('../utils/settingsManager', () => ({
+  getSettings: vi.fn(() => ({
     autoSave: {
       enabled: false,
       intervalMinutes: 5,
@@ -38,7 +38,7 @@ jest.mock('../utils/settingsManager', () => ({
       directoryConfigured: false
     }
   })),
-  updateSetting: jest.fn((key, value) => ({
+  updateSetting: vi.fn((key, value) => ({
     autoSave: {
       enabled: key === 'autoSave.enabled' ? value : false,
       intervalMinutes: key === 'autoSave.intervalMinutes' ? value : 5,
@@ -47,15 +47,15 @@ jest.mock('../utils/settingsManager', () => ({
         key === 'autoSave.directoryConfigured' ? value : false
     }
   })),
-  getSetting: jest.fn((key) => {
+  getSetting: vi.fn((key) => {
     if (key === 'autoSave.keepCount') return 10
     return undefined
   })
 }))
 
 // Mock the importData module
-jest.mock('../utils/importData', () => ({
-  reloadPageAfterDelay: jest.fn(),
+vi.mock('../utils/importData', () => ({
+  reloadPageAfterDelay: vi.fn(),
   IMPORT_SUCCESS_MESSAGE: 'Data imported successfully'
 }))
 
@@ -76,8 +76,7 @@ describe('Settings Component', () => {
   })
 
   test('shows warning when File System API is not supported', () => {
-    const { isFileSystemAccessSupported } = require('../utils/autoSaveFS')
-    isFileSystemAccessSupported.mockReturnValue(false)
+    autoSaveFS.isFileSystemAccessSupported.mockReturnValue(false)
 
     render(<Settings />)
     const alert = screen.getByRole('alert')

@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import {
   getAllTasks,
   searchRoutinesAndTasks,
@@ -9,24 +10,24 @@ import { getAllTemplates } from '../utils/templatesManager'
 import { getPredefinedTemplates } from '../utils/predefinedTemplates'
 
 // Mock dependencies
-jest.mock('../utils/routinesManager', () => ({
-  getRoutines: jest.fn(),
-  createRoutine: jest.fn()
+vi.mock('../utils/routinesManager', () => ({
+  getRoutines: vi.fn(),
+  createRoutine: vi.fn()
 }))
 
-jest.mock('../utils/templatesManager', () => ({
-  getAllTemplates: jest.fn()
+vi.mock('../utils/templatesManager', () => ({
+  getAllTemplates: vi.fn()
 }))
 
-jest.mock('../utils/predefinedTemplates', () => ({
-  getPredefinedTemplates: jest.fn()
+vi.mock('../utils/predefinedTemplates', () => ({
+  getPredefinedTemplates: vi.fn()
 }))
 
-jest.mock('../utils/logger', () => ({
+vi.mock('../utils/logger', () => ({
   createLogger: () => ({
-    error: jest.fn(),
-    log: jest.fn(),
-    info: jest.fn()
+    error: vi.fn(),
+    log: vi.fn(),
+    info: vi.fn()
   })
 }))
 

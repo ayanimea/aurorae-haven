@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   getHabits,
   toggleHabitToday,
@@ -101,6 +101,7 @@ function Habits() {
   }, [showNewHabitModal, selectedHabit])
 
   // Phase 5: TAB-HAB-30, TAB-HAB-31 - Keyboard Navigation
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleToggleCompletion is stable (memoized with useCallback); omitting it is intentional to avoid re-registering the listener on every render
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!habits.length) return
@@ -345,6 +346,7 @@ function Habits() {
             width='120'
             height='120'
           >
+            <title>Daily habit completion</title>
             <circle
               cx='60'
               cy='60'
@@ -413,7 +415,7 @@ function Habits() {
             <option value='lastDone'>Sort: Last Done</option>
           </select>
 
-          <button
+          <button type="button"
             onClick={() => setShowFilterModal(true)}
             className='btn btn-secondary'
             aria-label='Filter habits'
@@ -432,12 +434,13 @@ function Habits() {
                   background: 'var(--mint)',
                   border: '2px solid var(--bg)'
                 }}
+                role='img'
                 aria-label='Filters active'
               />
             )}
           </button>
 
-          <button
+          <button type="button"
             onClick={() => setShowNewHabitModal(true)}
             className='btn btn-primary'
           >
@@ -514,6 +517,7 @@ function Habits() {
                           backgroundColor: categoryColor,
                           marginRight: '8px'
                         }}
+                        role='img'
                         aria-label={`Category: ${habit.category}`}
                       />
                     )}
@@ -554,7 +558,7 @@ function Habits() {
                     className='swipe-actions'
                     style={{ marginTop: '8px', display: 'flex', gap: '8px' }}
                   >
-                    <button
+                    <button type="button"
                       onClick={(e) => {
                         e.stopPropagation()
                         handlePauseHabit(habit.id)
@@ -564,7 +568,7 @@ function Habits() {
                     >
                       {habit.paused ? 'Resume' : 'Pause'}
                     </button>
-                    <button
+                    <button type="button"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleDeleteHabit(habit.id)
@@ -584,6 +588,7 @@ function Habits() {
 
       {/* New Habit Modal - TAB-HAB-11 */}
       {showNewHabitModal && (
+        // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes modal on click
         <div
           className='modal-overlay'
           onClick={(e) => {

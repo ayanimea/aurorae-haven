@@ -4,7 +4,7 @@
  * TAB-LIB-08, TAB-LIB-09, TAB-LIB-10
  */
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import { createLogger } from '../../utils/logger'
@@ -52,6 +52,7 @@ function TemplateCard({
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: mouse hover effects to show/hide action buttons
     <div
       className={clsx('template-card', { pinned: template.pinned })}
       role={viewMode === 'grid' ? 'gridcell' : 'listitem'}
@@ -131,7 +132,6 @@ function TemplateCard({
         {template.type === 'routine' && template.estimatedDuration && (
           <div
             className='template-duration small'
-            aria-label={`Duration: ${formatDurationVerbose(template.estimatedDuration)}`}
           >
             <span aria-hidden='true'>⏱️</span>{' '}
             {formatDurationVerbose(template.estimatedDuration)}
@@ -145,7 +145,7 @@ function TemplateCard({
 
       {/* Template actions */}
       <div className={clsx('template-actions', { visible: showActions })}>
-        <button
+        <button type="button"
           className='btn btn-sm'
           onClick={() => onUse(template)}
           aria-label='Use template'
@@ -153,7 +153,7 @@ function TemplateCard({
         >
           Use
         </button>
-        <button
+        <button type="button"
           className='btn btn-sm'
           onClick={() => onEdit(template)}
           aria-label='Edit template'
@@ -161,7 +161,7 @@ function TemplateCard({
         >
           Edit
         </button>
-        <button
+        <button type="button"
           className='btn btn-sm'
           onClick={() => onDuplicate(template)}
           aria-label='Duplicate template'
@@ -170,7 +170,7 @@ function TemplateCard({
           Duplicate
         </button>
         {showDelete && (
-          <button
+          <button type="button"
             className='btn btn-sm btn-danger'
             onClick={() => onDelete(template)}
             aria-label='Delete template'
@@ -179,7 +179,7 @@ function TemplateCard({
             Delete
           </button>
         )}
-        <button
+        <button type="button"
           className='btn btn-sm'
           onClick={handleExport}
           aria-label='Export template'

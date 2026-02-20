@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
@@ -139,7 +139,7 @@ function EventModal({
       }
       setError('')
     }
-  }, [isOpen, eventType, initialData, validatedEventType])
+  }, [isOpen, initialData, validatedEventType])
 
   // Focus management - auto-focus title input when modal opens
   useEffect(() => {
@@ -399,7 +399,6 @@ function EventModal({
                 placeholder='Enter title'
                 disabled={isSubmitting}
                 required
-                aria-required='true'
                 maxLength={200}
                 ref={titleInputRef}
               />
@@ -416,7 +415,6 @@ function EventModal({
                 onChange={(e) => handleChange('day', e.target.value)}
                 disabled={isSubmitting}
                 required
-                aria-required='true'
               />
             </div>
 
@@ -432,7 +430,6 @@ function EventModal({
                   onChange={(e) => handleChange('startTime', e.target.value)}
                   disabled={isSubmitting}
                   required
-                  aria-required='true'
                 />
               </div>
 
@@ -447,7 +444,6 @@ function EventModal({
                   onChange={(e) => handleChange('endTime', e.target.value)}
                   disabled={isSubmitting}
                   required
-                  aria-required='true'
                 />
               </div>
             </div>

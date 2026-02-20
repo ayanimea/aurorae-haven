@@ -1,4 +1,4 @@
-import React from 'react'
+
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { getUniqueCategories } from '../../utils/notes/noteFilters'
@@ -37,7 +37,7 @@ function FilterModal({ notes, filterOptions, onFilterChange, onClose }) {
       >
         <div className='modal-header'>
           <h2 id='filter-modal-title'>Filter Notes</h2>
-          <button className='btn btn-icon' onClick={onClose} aria-label='Close'>
+          <button type="button" className='btn btn-icon' onClick={onClose} aria-label='Close'>
             <Icon name='x' />
           </button>
         </div>
@@ -127,10 +127,10 @@ function FilterModal({ notes, filterOptions, onFilterChange, onClose }) {
           )}
 
           <div className='filter-actions'>
-            <button className='btn' onClick={handleClearFilters}>
+            <button type="button" className='btn' onClick={handleClearFilters}>
               Clear Filters
             </button>
-            <button className='btn' onClick={onClose}>
+            <button type="button" className='btn' onClick={onClose}>
               Apply
             </button>
           </div>

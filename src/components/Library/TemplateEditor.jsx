@@ -4,7 +4,7 @@
  * TAB-LIB-07, TAB-LIB-11
  */
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { createLogger } from '../../utils/logger'
@@ -163,7 +163,7 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
           ...formData.steps,
           {
             label: stepInput.label,
-            duration: parseInt(stepInput.duration) || 0,
+            duration: parseInt(stepInput.duration, 10) || 0,
             description: stepInput.description
           }
         ]
@@ -186,6 +186,7 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay closes modal on click
     <div
       className='modal-overlay'
       onClick={handleOverlayClick}
@@ -204,7 +205,7 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
           <h2 id='editor-title'>
             {template ? 'Edit Template' : 'New Template'}
           </h2>
-          <button
+          <button type="button"
             className='btn-close'
             onClick={onClose}
             aria-label='Close editor'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import Icon from '../common/Icon'
@@ -31,6 +31,7 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
   })
 
   // Load subscriptions when modal opens
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadSubscriptions is a const defined below in the same component scope; safe because useEffect runs after full render, and listing it would cause an infinite loop since it's not wrapped in useCallback
   useEffect(() => {
     if (isOpen) {
       loadSubscriptions()
@@ -282,11 +283,13 @@ function CalendarSubscriptionModal({ isOpen, onClose }) {
                     <div
                       className='calendar-subscription-color'
                       style={{ backgroundColor: sub.color }}
+                      role='img'
                       aria-label={`Color indicator for ${sub.name}`}
                     />
                     <h4 className='calendar-subscription-name'>{sub.name}</h4>
                     <span
                       className={`calendar-subscription-status ${sub.enabled ? 'enabled' : 'disabled'}`}
+                      role='status'
                       aria-label={`Status: ${sub.enabled ? 'Enabled' : 'Disabled'}`}
                     >
                       {sub.enabled ? 'Enabled' : 'Disabled'}

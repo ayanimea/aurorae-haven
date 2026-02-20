@@ -3,7 +3,6 @@
  * Displays events with type-specific styling
  */
 
-import React from 'react'
 import PropTypes from 'prop-types'
 import { VALID_EVENT_TYPES } from '../../utils/scheduleConstants'
 

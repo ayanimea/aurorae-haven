@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { flushSync } from 'react-dom'
 import { marked } from 'marked'
 import markedKatex from 'marked-katex-extension'

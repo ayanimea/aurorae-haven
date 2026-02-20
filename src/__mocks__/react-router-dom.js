@@ -1,6 +1,7 @@
 import React from 'react'
+import { vi } from 'vitest'
 
-const mockNavigate = jest.fn()
+const mockNavigate = vi.fn()
 
 export const BrowserRouter = ({ children, basename }) => {
   return (
@@ -61,4 +62,4 @@ export const useLocation = () => ({
 
 export const useParams = () => ({})
 
-export const useSearchParams = () => [new URLSearchParams(), jest.fn()]
+export const useSearchParams = () => [new URLSearchParams(), vi.fn()]
