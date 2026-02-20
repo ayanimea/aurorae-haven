@@ -316,15 +316,15 @@ async function createSimpleArchive() {
   console.log(`  → Creating archive: ${outputFile}`)
   console.log('  ℹ️  Note: Compression not available, using uncompressed tar')
 
-  // Create README for the offline package
+  // Create README for the offline package and write it to disk so addLocalFolder picks it up
   const readmeContent = await generateReadme()
+  const { writeFileSync } = await import('fs')
+  writeFileSync(join(DIST_OFFLINE_DIR, 'README.md'), readmeContent)
+  console.log('  → Added README.md to package')
 
   // Try to create ZIP with adm-zip
   try {
-    return await createZipWithAdmZip(
-      outputFile.replace('.tar', '.zip'),
-      readmeContent
-    )
+    return await createZipWithAdmZip(outputFile.replace('.tar', '.zip'))
   } catch (error) {
     console.warn('⚠️  adm-zip not available, using basic method:', error.message)
   }
