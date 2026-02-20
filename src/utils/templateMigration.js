@@ -23,6 +23,40 @@ const logger = createLogger('TemplateMigration')
 const MIGRATION_FLAG_KEY = 'aurorae_templates_migrated_v1'
 
 /**
+ * Safe localStorage helpers – localStorage can throw SecurityError in
+ * restricted environments (e.g. Safari private mode, storage disabled).
+ * These wrappers treat storage failures as a no-op so migrations degrade
+ * gracefully rather than crashing.
+ */
+function safeLocalStorageGet(key) {
+  try {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null
+  } catch {
+    return null
+  }
+}
+
+function safeLocalStorageSet(key, value) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value)
+    }
+  } catch {
+    // Ignore storage errors – migration will re-run on next load
+  }
+}
+
+function safeLocalStorageRemove(key) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key)
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+/**
  * Diagnostic: Check if any templates have incorrect types
  *
  * Note: This only checks predefined templates. Custom user-created templates
@@ -120,7 +154,7 @@ export async function fixCorruptedTemplateTypes() {
     if (diagnosis.corrupted.length === 0) {
       logger.log('No corrupted templates found. Nothing to fix.')
       // Set flag to avoid future checks
-      localStorage.setItem(MIGRATION_FLAG_KEY, 'true')
+      safeLocalStorageSet(MIGRATION_FLAG_KEY, 'true')
       return results
     }
 
@@ -176,7 +210,7 @@ export async function fixCorruptedTemplateTypes() {
 
     // Set flag to avoid future checks if all fixes succeeded
     if (results.errors.length === 0) {
-      localStorage.setItem(MIGRATION_FLAG_KEY, 'true')
+      safeLocalStorageSet(MIGRATION_FLAG_KEY, 'true')
     }
 
     return results
@@ -198,7 +232,7 @@ export async function fixCorruptedTemplateTypes() {
 export async function needsTemplateMigration() {
   try {
     // Quick check: if migration was already done, skip
-    const migrationComplete = localStorage.getItem(MIGRATION_FLAG_KEY)
+    const migrationComplete = safeLocalStorageGet(MIGRATION_FLAG_KEY)
     if (migrationComplete === 'true') {
       return false
     }
@@ -217,5 +251,5 @@ export async function needsTemplateMigration() {
  * @internal
  */
 export function resetMigrationFlag() {
-  localStorage.removeItem(MIGRATION_FLAG_KEY)
+  safeLocalStorageRemove(MIGRATION_FLAG_KEY)
 }

@@ -16,15 +16,17 @@ These directories contained code that triggered numerous linting errors (1000+ e
 
 ## Solution
 
-Updated `biome.json` to add these directories to the ignore list:
+Updated `biome.json` to use a `files.includes` allowlist, scoping linting to source files only and excluding generated/test directories:
 
 ```json
 {
   "files": {
-    "ignore": [
-      "playwright-report/**",
-      "test-results/**",
-      "e2e/**"
+    "includes": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/__tests__",
+      "!src/__mocks__",
+      "!src/**/*.test.js",
+      "!src/**/*.test.jsx"
     ]
   }
 }
