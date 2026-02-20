@@ -386,6 +386,9 @@ function LibrarySelector({ onSelectTemplate }) {
       {/* Toast notification */}
       {showToast && (
         <div
+          role='status'
+          aria-live='polite'
+          aria-atomic='true'
           style={{
             position: 'fixed',
             bottom: '20px',
