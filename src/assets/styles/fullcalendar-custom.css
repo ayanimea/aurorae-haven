@@ -309,7 +309,7 @@
 
 /* ===== TimeBands Integration ===== */
 
-/* Base .schedule-bands-container styling and time-band visuals
+/* Base .schedule-bands styling and time-band visuals
  * live in TimeBands.css. This file focuses on integrating those
  * bands with FullCalendar (e.g. layering, alignment, and any
  * calendar-specific responsive tweaks).
@@ -322,9 +322,26 @@
  * 2: Event cards (normal)
  * 2: Current-time indicator
  * 2: Grid lines
- * 1: Time-of-day bands
- * 0: Decorative background
+ * 0: Time-of-day bands (behind .fc via DOM order within same stack level)
+ * -: Decorative background
  */
+
+/* .schedule-calendar-container is the positioned parent for TimeBands.
+ * TimeBands (.schedule-bands) has position: absolute; z-index: 0.
+ * .fc (with backdrop-filter → stacking context) comes later in the DOM,
+ * so it renders on top of the bands within the same z-index: 0 / auto level. */
+.schedule-calendar-container {
+  position: relative;
+}
+
+/* Remove any background coloring from time grid rows and slots.
+ * Time-of-day context is provided exclusively by the TimeBands layer,
+ * not by row-level backgrounds. */
+.fc-timegrid-slots td,
+.fc-timegrid-slots tr,
+.fc-timegrid-slot {
+  background: none !important;
+}
 
 /* ===== Toolbar Styling ===== */
 

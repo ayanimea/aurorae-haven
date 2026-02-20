@@ -106,9 +106,6 @@ function Schedule() {
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
 
-  // Toolbar ref for dynamic height measurement (aligns time-of-day bands)
-  const toolbarRef = useRef(null)
-
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
 
@@ -227,31 +224,6 @@ function Schedule() {
   useEffect(() => {
     loadEvents()
   }, [loadEvents])
-
-  // Dynamically measure and sync toolbar height with TimeBands CSS variable
-  // This ensures time-of-day bands align with the time grid after layout changes
-  // Currently measures on mount, view changes, and window resize
-  // TODO: Consider ResizeObserver for more robust detection of toolbar height changes
-  // (e.g., when date label length changes, isLoading state changes, or fonts load)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: view is intentionally included to re-measure toolbar when calendar view changes (day/week/month toolbars differ in height)
-  useEffect(() => {
-    const updateToolbarHeight = () => {
-      if (toolbarRef.current) {
-        const height = toolbarRef.current.offsetHeight
-        document.documentElement.style.setProperty(
-          '--toolbar-height',
-          `${height}px`
-        )
-      }
-    }
-
-    // Measure on mount and view changes (toolbar may resize)
-    updateToolbarHeight()
-
-    // Re-measure on window resize (responsive toolbar height)
-    window.addEventListener('resize', updateToolbarHeight)
-    return () => window.removeEventListener('resize', updateToolbarHeight)
-  }, [view]) // Re-run when view changes as toolbar buttons may affect height
 
   // Cleanup success message timeout on unmount to prevent setState on unmounted component
   useEffect(() => {
@@ -618,11 +590,8 @@ function Schedule() {
       <div className='page page-schedule'>
         <div className='schedule-container'>
           <div className='schedule-wrapper'>
-            {/* Only render time-of-day bands for time grid views (not month view) */}
-            {(view === 'day' || view === 'week') && <TimeBands />}
-
-            {/* Custom Toolbar - Wrapped for dynamic height measurement */}
-            <div ref={toolbarRef}>
+            {/* Custom Toolbar */}
+            <div>
               <CustomToolbar
                 date={date}
                 view={getFullCalendarView(view)}
@@ -655,9 +624,16 @@ function Schedule() {
               />
             </div>
 
-            {/* FullCalendar - Wrapped for aria-label support */}
-            <div role='region' aria-label='Event calendar'>
-              <FullCalendar
+            {/* Calendar area: TimeBands + FullCalendar wrapped in a positioned container
+                 so bands (z-index: 0, position: absolute) sit behind .fc which renders
+                 on top via DOM order within the same stack level. */}
+            <div className='schedule-calendar-container'>
+              {/* Only render time-of-day bands for time grid views (not month view) */}
+              {(view === 'day' || view === 'week') && <TimeBands />}
+
+              {/* FullCalendar - Wrapped for aria-label support */}
+              <div role='region' aria-label='Event calendar'>
+                <FullCalendar
                 ref={calendarRef}
                 plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
                 initialView={getFullCalendarView(view)}
@@ -706,7 +682,8 @@ function Schedule() {
                     }}
                   />
                 )}
-              />
+                />
+              </div>
             </div>
           </div>
 
