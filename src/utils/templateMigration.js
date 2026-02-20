@@ -20,11 +20,6 @@ const logger = createLogger('TemplateMigration')
 //     const NEW_MIGRATION_FLAG_KEY = 'aurorae_templates_migrated_v2'
 // - Older flags must remain stable so that users who already completed v1
 //   are not incorrectly treated as having completed later migrations.
-// LocalStorage key for migration completion flag.
-// NOTE: This flag is versioned (v1) to represent the first template-type migration.
-// If you introduce a new template migration in the future, DO NOT change or reuse this key.
-// Instead, create a new versioned flag (e.g., 'aurorae_templates_migrated_v2').
-// Older flags must remain stable so users who completed v1 aren't treated as needing later migrations.
 const MIGRATION_FLAG_KEY = 'aurorae_templates_migrated_v1'
 
 /**
