@@ -22,20 +22,20 @@
  */
 
 :root {
-  /* Time-of-day atmospheres - Calibrated for nebula glow base layer */
-  /* Morning: warm amber/golden — gentle activation */
-  --morning-top: rgba(255, 215, 150, 0.25);
-  --morning-mid: rgba(245, 192, 111, 0.10);
+  /* Time-of-day atmospheres - More luminous top stops for glass-over-nebula feel */
+  /* Morning: warm golden — gentle activation */
+  --morning-top: rgba(255, 220, 160, 0.28);
+  --morning-mid: rgba(245, 192, 111, 0.12);
   --morning-bottom: rgba(245, 192, 111, 0.02);
 
-  /* Afternoon: cool sky blue — focused daylight, distinct hue shift at 12:00 */
-  --afternoon-top: rgba(160, 210, 255, 0.22);
-  --afternoon-mid: rgba(147, 197, 253, 0.08);
+  /* Afternoon: sky blue — focused daylight, distinct hue shift at 12:00 */
+  --afternoon-top: rgba(170, 215, 255, 0.26);
+  --afternoon-mid: rgba(147, 197, 253, 0.10);
   --afternoon-bottom: rgba(147, 197, 253, 0.02);
 
-  /* Evening: purple/violet — calm wind-down, distinct hue shift at 18:00 */
-  --evening-top: rgba(190, 150, 255, 0.28);
-  --evening-mid: rgba(167, 139, 250, 0.12);
+  /* Evening: violet — calm wind-down, distinct hue shift at 18:00 */
+  --evening-top: rgba(200, 150, 255, 0.32);
+  --evening-mid: rgba(167, 139, 250, 0.14);
   --evening-bottom: rgba(167, 139, 250, 0.03);
 
   /* Night: deep navy — low stimulation rest, clearly darker zone */
