@@ -298,7 +298,7 @@ export async function updateTemplate(templateId, updates) {
             `Validation failed for template ${templateId}:`,
             validation.errors
           )
-          logger.error(`Template data that failed validation:`, updated)
+          logger.log(`Template data that failed validation:`, updated)
           reject(
             new Error(`Invalid template data: ${validation.errors.join('; ')}`)
           )
