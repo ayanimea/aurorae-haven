@@ -157,16 +157,60 @@
   padding: 2px; /* Small padding for visual separation */
 }
 
-/* Inner wrappers - let SolidEventCard handle all styling */
+/* Event card wrapper — glass panel aesthetic.
+ * Background/border/::before apply here as a fallback layer; the primary
+ * visual glass surface is rendered by .solid-event-card inside. */
 .fc-event {
-  border: none;
-  background: none;
   padding: 0;
   margin: 0;
   height: 100%;
   width: 100%;
   position: relative;
   z-index: 3;
+
+  /* Glass instead of matte */
+  background: linear-gradient(
+    to bottom,
+    rgba(18, 28, 50, 0.85),
+    rgba(12, 20, 38, 0.92)
+  ) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+
+  border-radius: 12px;
+
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(100, 150, 255, 0.08);
+
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+/* Subtle luminous top-edge highlight */
+.fc-event::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 0;
+
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05),
+    transparent 40%
+  );
+}
+
+.fc-event:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.5),
+    0 0 18px rgba(140, 180, 255, 0.15);
 }
 
 .fc-event-main {
