@@ -210,10 +210,13 @@
 .fc-timegrid-now-indicator-line {
   border-color: var(--accent);
   border-width: 2px;
+  position: relative;
+  z-index: 2;
 }
 
 .fc-timegrid-now-indicator-arrow {
   border-top-color: var(--accent);
+  z-index: 2;
 }
 
 /* ===== Selection & Interaction ===== */

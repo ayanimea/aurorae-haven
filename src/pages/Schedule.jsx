@@ -639,6 +639,7 @@ function Schedule() {
                 initialView={getFullCalendarView(view)}
                 initialDate={date}
                 events={fullCalendarEvents}
+                nowIndicator={true}
                 slotMinTime={slotMinTime}
                 slotMaxTime={slotMaxTime}
                 slotDuration='00:15:00'
