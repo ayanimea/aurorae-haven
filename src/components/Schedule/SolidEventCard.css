@@ -167,3 +167,26 @@
     font-size: 0.75rem;
   }
 }
+
+/* Softer event card glass on narrow screens */
+@media (max-width: 768px) {
+  .solid-event-card {
+    background: linear-gradient(
+      to bottom,
+      rgba(18, 28, 50, 0.82),
+      rgba(12, 20, 38, 0.88)
+    );
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.45),
+      0 0 8px rgba(100, 150, 255, 0.05);
+  }
+
+  .solid-event-card::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.04),
+      transparent 45%
+    );
+  }
+}

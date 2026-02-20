@@ -552,6 +552,50 @@
   .fc-timegrid-slot {
     /* Maintain minute-based scaling on mobile (slightly reduced from default) */
     height: calc(var(--minute-unit, 1.2px) * 12.5);
+    /* Slightly reduce grid visibility on small screens */
+    border-top: 1px solid rgba(255, 255, 255, 0.045) !important;
+  }
+
+  /* ── Mobile aesthetic refinement ── */
+
+  /* Reduce internal nebula glow intensity */
+  .schedule-calendar-container::before {
+    opacity: 0.7;
+  }
+
+  /* Slightly soften semantic band strength */
+  .schedule-band.morning,
+  .schedule-band.afternoon,
+  .schedule-band.evening {
+    opacity: 0.9;
+  }
+
+  /* Softer event cards on small screens */
+  .fc-event {
+    background: linear-gradient(
+      to bottom,
+      rgba(18, 28, 50, 0.82),
+      rgba(12, 20, 38, 0.88)
+    ) !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.45),
+      0 0 8px rgba(100, 150, 255, 0.05);
+  }
+
+  /* Softer luminous top edge */
+  .fc-event::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.04),
+      transparent 45%
+    );
+  }
+
+  .fc-timegrid-slot-minor {
+    border-top: 1px solid rgba(255, 255, 255, 0.02) !important;
   }
 }
 
