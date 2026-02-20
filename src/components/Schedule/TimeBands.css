@@ -4,41 +4,43 @@
  *
  * Rules:
  * - Bands provide context, not emphasis
- * - z-index: 0 (behind .fc which renders on top via DOM order and backdrop-filter stacking context)
+ * - z-index: 0 — bands are behind .fc which renders on top via DOM order
  * - pointer-events: none (don't interfere with interactions)
  * - Full-width horizontal bands, absolutely positioned within .schedule-calendar-container
- * - Soft gradients (no sharp edges)
+ * - Soft gradients (no sharp edges); adjacent bands fade at boundaries
  * - No borders
- * - Low opacity (≤15%)
  *
  * Percentages represent proportions of the visible range 07:00–24:00 (17 hours):
  *   Morning   07:00–12:00  5h / 17h ≈ 29.41%  → top: 0%,      height: 29.41%
  *   Afternoon 12:00–18:00  6h / 17h ≈ 35.29%  → top: 29.41%,  height: 35.29%
  *   Evening   18:00–23:00  5h / 17h ≈ 29.41%  → top: 64.70%,  height: 29.41%
  *   Night     23:00–24:00  1h / 17h ≈  5.89%  → top: 94.11%,  height:  5.89%
+ *
+ * Opacity rationale: bands render against .schedule-calendar-container's solid dark
+ * isolation surface (~92% opacity), not the global background. Values are calibrated
+ * so hue/luminance shifts at 12:00 and 18:00 remain perceptible in grayscale.
  */
 
 :root {
-  /* Time-of-day atmospheres - Canonical values from specification */
-  /* Perceptible but subtle gradients for temporal orientation */
-  /* Morning: warm orange/amber tones for gentle activation */
-  --morning-top: rgba(245, 192, 111, 0.14);
-  --morning-mid: rgba(245, 192, 111, 0.06);
-  --morning-bottom: rgba(245, 192, 111, 0.02);
+  /* Time-of-day atmospheres - Calibrated for dark isolation surface */
+  /* Morning: warm amber/orange — gentle activation, slightly lighter zone */
+  --morning-top: rgba(245, 192, 111, 0.30);
+  --morning-mid: rgba(245, 192, 111, 0.14);
+  --morning-bottom: rgba(245, 192, 111, 0.03);
 
-  /* Afternoon: cool blue tones for focused daylight */
-  --afternoon-top: rgba(147, 197, 253, 0.12);
-  --afternoon-mid: rgba(147, 197, 253, 0.05);
-  --afternoon-bottom: rgba(147, 197, 253, 0.02);
+  /* Afternoon: cool blue — focused daylight, distinct hue shift at 12:00 */
+  --afternoon-top: rgba(147, 197, 253, 0.26);
+  --afternoon-mid: rgba(147, 197, 253, 0.12);
+  --afternoon-bottom: rgba(147, 197, 253, 0.03);
 
-  /* Evening: purple/violet tones for calm wind-down */
-  --evening-top: rgba(167, 139, 250, 0.14);
-  --evening-mid: rgba(167, 139, 250, 0.06);
-  --evening-bottom: rgba(167, 139, 250, 0.02);
+  /* Evening: purple/violet — calm wind-down, distinct hue shift at 18:00 */
+  --evening-top: rgba(167, 139, 250, 0.32);
+  --evening-mid: rgba(167, 139, 250, 0.16);
+  --evening-bottom: rgba(167, 139, 250, 0.03);
 
-  /* Night: deep navy for low stimulation rest */
-  --night-top: rgba(15, 23, 42, 0.55);
-  --night-bottom: rgba(15, 23, 42, 0.35);
+  /* Night: deep navy — low stimulation rest, clearly darker zone */
+  --night-top: rgba(15, 23, 42, 0.72);
+  --night-bottom: rgba(15, 23, 42, 0.52);
 }
 
 .schedule-bands {

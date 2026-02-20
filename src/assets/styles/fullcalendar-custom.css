@@ -38,9 +38,11 @@
 /* ===== FullCalendar Base Overrides ===== */
 
 .fc {
-  background: rgba(16, 20, 44, 0.25);
-  backdrop-filter: blur(12px) saturate(120%);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  /* Transparent background — the .schedule-calendar-container dark surface shows through,
+   * keeping the calendar visually isolated from the global background.
+   * backdrop-filter removed: it would blur the TimeBands rendered behind this element,
+   * destroying discrete band edges and turning them into an indistinct atmospheric smear. */
+  background: transparent;
   border: 1px solid var(--fc-border-color);
   border-radius: 12px;
   padding: 16px;
@@ -315,23 +317,32 @@
  * calendar-specific responsive tweaks).
  */
 
-/* Z-index hierarchy (from top to bottom):
+/* Z-index hierarchy within .schedule-calendar-container stacking context (from top to bottom):
  * 1000: Modals and overlays
- * 10: Toolbar
+ * 10: Toolbar (sibling, above container)
  * 3: Event cards (on hover)
  * 2: Event cards (normal)
  * 2: Current-time indicator
- * 2: Grid lines
- * 0: Time-of-day bands (behind .fc via DOM order within same stack level)
- * -: Decorative background
+ * auto: Grid lines (.fc — transparent, sits above bands by DOM order)
+ * 0: Time-of-day bands (.schedule-bands — absolute, behind .fc)
+ * -: .schedule-calendar-container dark isolation surface
+ * -: Global cosmic background (blocked by isolation surface)
  */
 
 /* .schedule-calendar-container is the positioned parent for TimeBands.
+ * It provides:
+ *   - Dark isolation surface: blocks the global cosmic background from competing
+ *     with the subtle band colours; gives bands a predictable neutral base to render against
+ *   - Stacking context (isolation: isolate): confines z-index stack to this subtree
+ *   - overflow: hidden: clips bands to the rounded corners
  * TimeBands (.schedule-bands) has position: absolute; z-index: 0.
- * .fc (with backdrop-filter → stacking context) comes later in the DOM,
- * so it renders on top of the bands within the same z-index: 0 / auto level. */
+ * .fc (background: transparent) comes later in the DOM, so it renders on top of the bands. */
 .schedule-calendar-container {
   position: relative;
+  isolation: isolate;
+  background: rgba(10, 14, 36, 0.92);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 /* Remove any background coloring from time grid rows and slots.
