@@ -27,17 +27,10 @@
   width: 100%;
   min-height: calc(var(--minute-unit, 1.2px) * 15);
 
-  /* Glass surface — semi-transparent gradient instead of flat matte */
-  background: linear-gradient(
-    to bottom,
-    rgba(18, 28, 50, 0.85),
-    rgba(12, 20, 38, 0.92)
-  );
+  /* Transparent so .fc-event[data-timezone] gradient shows through */
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--event-radius);
-
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 
   padding: var(--event-padding-v) var(--event-padding-h);
 
@@ -168,18 +161,12 @@
   }
 }
 
-/* Softer event card glass on narrow screens */
+/* Softer event card on narrow screens — keep transparent, just reduce shadow */
 @media (max-width: 768px) {
   .solid-event-card {
-    background: linear-gradient(
-      to bottom,
-      rgba(18, 28, 50, 0.82),
-      rgba(12, 20, 38, 0.88)
-    );
     border-color: rgba(255, 255, 255, 0.06);
     box-shadow:
-      0 6px 18px rgba(0, 0, 0, 0.45),
-      0 0 8px rgba(100, 150, 255, 0.05);
+      0 6px 18px rgba(0, 0, 0, 0.45);
   }
 
   .solid-event-card::before {
