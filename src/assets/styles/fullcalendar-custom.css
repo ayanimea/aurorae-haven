@@ -59,7 +59,11 @@
 
 /* ===== Time Grid View ===== */
 
-.fc-timegrid {
+/* Ensure grid containers are fully transparent — band layer must show through */
+.fc-timegrid,
+.fc-timegrid-slots,
+.fc-timegrid-cols {
+  background: transparent !important;
   border-color: var(--fc-border-color);
 }
 
@@ -68,24 +72,37 @@
   border-color: var(--fc-border-color);
 }
 
-/* Time slot sizing
- * Derived from --minute-unit for dynamic scaling based on slotDuration.
+/* Time slot sizing and major hour line styling
+ * height derived from --minute-unit for dynamic scaling based on slotDuration.
  * For 15-min slots, this gives calc(var(--minute-unit) * 15) per slot.
- * This ensures proportional scaling across viewports per schedule.css (lines 60-71).
+ * border-top set to soft structural-only value (must not overpower bands).
  */
 .fc-timegrid-slot {
   height: calc(var(--minute-unit, 1.2px) * 15);
   border-color: var(--fc-border-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.055) !important;
+  background: none !important;
 }
 
-/* Hour lines - more prominent */
+/* Minor slot lines (quarter/half-hour) — almost invisible */
+.fc-timegrid-slot-minor {
+  border-top: 1px solid rgba(255, 255, 255, 0.025) !important;
+  background: none !important;
+}
+
+/* Hour lines - more prominent (data-time selector for specificity on :00:00) */
 .fc-timegrid-slot-lane[data-time$=':00:00'] {
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
 }
 
 /* Half-hour and quarter-hour lines - subtle */
 .fc-timegrid-slot-lane {
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(255, 255, 255, 0.025);
+}
+
+/* Slight global softening so bands breathe through the grid */
+.fc-timegrid-slots {
+  opacity: 0.88;
 }
 
 .fc-timegrid-slot-label {
