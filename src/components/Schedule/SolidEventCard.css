@@ -89,11 +89,13 @@
 /* Event title - prominent */
 .event-title {
   display: block;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
   line-height: 1.4; /* Explicit line-height to ensure height > 0 */
+  letter-spacing: 0.02em;
   margin-bottom: 0.25rem;
   color: var(--event-text);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.18);
   flex-shrink: 0; /* Prevent flex container from collapsing */
   min-height: 1.4em; /* Ensure minimum visible height */
   overflow: visible; /* Don't collapse with overflow */

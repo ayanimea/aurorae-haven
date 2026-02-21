@@ -154,8 +154,9 @@
 
 .fc-col-header-cell-cushion {
   font-size: 1.1rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.12em;
   font-weight: 500;
+  text-transform: uppercase;
   color: rgba(255, 255, 255, 0.85);
 }
 
@@ -225,6 +226,7 @@
     rgba(255, 165, 85, 0.85) 50%,
     rgba(60, 30, 90, 0.98) 100%
   ) !important;
+  filter: saturate(0.9);
 }
 
 .fc-event[data-timezone="afternoon"] {
@@ -234,6 +236,7 @@
     rgba(80, 150, 255, 0.85) 55%,
     rgba(30, 40, 90, 0.99) 100%
   ) !important;
+  filter: saturate(1.15);
 }
 
 .fc-event[data-timezone="evening"] {
@@ -243,6 +246,7 @@
     rgba(170, 95, 255, 0.88) 55%,
     rgba(35, 20, 80, 1) 100%
   ) !important;
+  filter: saturate(1.1) brightness(0.92);
 }
 
 /* Subtle luminous top-edge highlight */
@@ -505,6 +509,12 @@
       transparent 65%
     );
   opacity: 0.9;
+  animation: nebulaBreath 24s ease-in-out infinite alternate;
+}
+
+@keyframes nebulaBreath {
+  from { opacity: 0.8; }
+  to   { opacity: 0.98; }
 }
 
 /* Remove any background coloring from time grid rows and slots.
