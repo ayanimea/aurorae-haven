@@ -59,7 +59,9 @@
 
 /* ===== Time Grid View ===== */
 
-/* Ensure grid containers are fully transparent — band layer must show through */
+/* Ensure grid containers are fully transparent — starfield and band layer must show through */
+.fc-scrollgrid,
+.fc-view-harness,
 .fc-timegrid,
 .fc-timegrid-slots,
 .fc-timegrid-cols {
@@ -73,26 +75,10 @@
   color: rgba(255, 255, 255, 0.45);
 }
 
-/* Atmospheric time background — soft radial diffusion mimicking
- * temperature change across the day. Very low opacity (0.06–0.09)
- * so it blends with the TimeBands layer without competing. */
+/* Timegrid body — fully transparent; atmospheric feel comes from .schedule-calendar-container
+ * ::before nebula glows and TimeBands layer, not from nested grid overlays. */
 .fc-timegrid-body {
-  background:
-    radial-gradient(
-      ellipse 80% 18% at 60% 8%,
-      rgba(255, 185, 100, 0.055),
-      transparent 100%
-    ),
-    radial-gradient(
-      ellipse 70% 20% at 40% 50%,
-      rgba(100, 165, 255, 0.025),
-      transparent 100%
-    ),
-    radial-gradient(
-      ellipse 90% 30% at 55% 88%,
-      rgba(170, 90, 255, 0.11),
-      transparent 100%
-    );
+  background: transparent !important;
 }
 
 /* Time slot sizing and major hour line styling

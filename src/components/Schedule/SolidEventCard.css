@@ -9,7 +9,7 @@
   /* Event card colors */
   --event-bg: rgba(18, 28, 50, 0.85);
   --event-border: rgba(255, 255, 255, 0.08);
-  --event-text: #e6edf3;
+  --event-text: rgba(255, 255, 255, 0.92);
   --event-text-dim: rgba(230, 237, 243, 0.7);
 
   /* Event card measurements */
@@ -95,7 +95,7 @@
   letter-spacing: 0.02em;
   margin-bottom: 0.25rem;
   color: var(--event-text);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.18);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 255, 255, 0.10);
   flex-shrink: 0; /* Prevent flex container from collapsing */
   min-height: 1.4em; /* Ensure minimum visible height */
   overflow: visible; /* Don't collapse with overflow */
