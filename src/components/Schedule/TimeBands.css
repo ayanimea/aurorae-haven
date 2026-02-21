@@ -4,7 +4,8 @@
  *
  * Rules:
  * - Bands provide context, not emphasis
- * - z-index: 1 — above the ::before nebula glow layer on .schedule-calendar-container
+ * - z-index: 0 — same level as ::before nebula; DOM order ensures bands paint on top
+ *   of the pseudo-element. .fc grid (z-index: 1) explicitly renders above both.
  * - pointer-events: none (don't interfere with interactions)
  * - Full-width horizontal bands, absolutely positioned within .schedule-calendar-container
  * - Soft gradients (no sharp edges); adjacent bands fade at boundaries
@@ -43,13 +44,13 @@
   --night-bottom: rgba(15, 23, 42, 0.52);
 }
 
-/* z-index: 1 — above the ::before nebula glow layer (z-index: 0) on
- * .schedule-calendar-container, below the transparent .fc which sits
- * on top via DOM order within the isolation stacking context. */
+/* z-index: 0 — above the ::before nebula glow layer (DOM order ensures bands paint
+ * after the pseudo-element within the same z-index level) and below the .fc grid
+ * which carries z-index: 1, keeping the required band → grid → event stacking order. */
 .schedule-bands {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 0;
   pointer-events: none;
   overflow: hidden;
 }

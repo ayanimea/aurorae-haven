@@ -39,11 +39,16 @@
 
 .fc {
   /* Transparent, borderless — the container is the only visible surface.
-   * Removing border + padding eliminates the nested-panel visual artefact. */
+   * Removing border + padding eliminates the nested-panel visual artefact.
+   * position: relative + z-index: 1 puts the grid explicitly above the
+   * time-of-day bands (.schedule-bands at z-index: 0) so grid lines reliably
+   * render in front of band colours. */
   background: transparent;
   border: none;
   border-radius: 0;
   padding: 0;
+  position: relative;
+  z-index: 1;
   color: var(--text);
 }
 
@@ -170,11 +175,17 @@
 
 /* ===== Events ===== */
 
-/* Ensure event cards respect documented z-index hierarchy and sit above time bands */
-.fc-event,
+/* Ensure .fc-event-main sits in the same stacking context as its parent card */
 .fc-event-main {
   position: relative;
   z-index: 2;
+  padding: 0;
+  background: none;
+  color: inherit;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* FullCalendar's positioned event container - must fill the time slot */
@@ -275,16 +286,6 @@
   box-shadow:
     0 16px 48px rgba(0, 0, 0, 0.55),
     0 0 40px rgba(255, 255, 255, 0.06);
-}
-
-.fc-event-main {
-  padding: 0;
-  background: none;
-  color: inherit;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 /* Hide default FC event title/time since SolidEventCard renders them */
@@ -454,9 +455,9 @@
  * 3: Event cards (on hover)
  * 2: Event cards (normal)
  * 2: Current-time indicator
- * auto: Grid lines (.fc — transparent, sits above bands by DOM order)
- * 1: Time-of-day bands (.schedule-bands)
- * 0: Nebula glow layer (::before pseudo-element)
+ * 1: .fc transparent grid (position: relative; z-index: 1 — above time-of-day bands)
+ * 0: Time-of-day bands (.schedule-bands — same z-index as ::before; DOM order wins)
+ * 0: Nebula glow layer (::before pseudo-element — painted before child elements)
  * -: .schedule-calendar-container dark isolation surface
  * -: Global cosmic background (blocked by isolation surface)
  */
@@ -470,9 +471,9 @@
  *   isolation: isolate + overflow: hidden confine the z-index stack and clip to border-radius
  *
  * Stacking order inside (z-index, bottom → top):
- *   0: ::before nebula radial glows
- *   1: .schedule-bands (semantic time-of-day zones)
- *   auto: .fc transparent grid (DOM order above bands)
+ *   0: ::before nebula radial glows (painted before child elements at same z-index)
+ *   0: .schedule-bands (semantic time-of-day zones; DOM order above ::before)
+ *   1: .fc transparent grid (explicit z-index: 1, above bands)
  *   3: .fc-event cards
  */
 .schedule-calendar-container {

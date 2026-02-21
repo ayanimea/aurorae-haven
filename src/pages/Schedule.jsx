@@ -634,68 +634,68 @@ function Schedule() {
               {/* FullCalendar - Wrapped for aria-label support */}
               <div role='region' aria-label='Event calendar'>
                 <FullCalendar
-                ref={calendarRef}
-                plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-                initialView={getFullCalendarView(view)}
-                initialDate={date}
-                events={fullCalendarEvents}
-                nowIndicator={true}
-                slotMinTime={slotMinTime}
-                slotMaxTime={slotMaxTime}
-                slotDuration='00:15:00'
-                slotLabelInterval='01:00:00'
-                allDaySlot={false}
-                headerToolbar={false}
-                height='auto'
-                expandRows={true}
-                slotLabelFormat={{
-                  hour: use24HourFormat ? '2-digit' : 'numeric',
-                  minute: '2-digit',
-                  hour12: !use24HourFormat,
-                  meridiem: use24HourFormat ? false : 'short'
-                }}
-                eventTimeFormat={{
-                  hour: use24HourFormat ? '2-digit' : 'numeric',
-                  minute: '2-digit',
-                  hour12: !use24HourFormat
-                }}
-                firstDay={1}
-                selectable={true}
-                selectMirror={true}
-                editable={false}
-                eventClick={handleEventClick}
-                select={handleDateSelect}
-                eventMouseEnter={handleEventMouseEnter}
-                eventWillUnmount={handleEventWillUnmount}
-                eventDidMount={(info) => {
-                  if (!info.event.start) return
-                  const hour = info.event.start.getHours()
-                  if (hour < 7 || hour >= 23) {
-                    info.el.dataset.timezone = 'night'
-                  } else if (hour < 12) {
-                    info.el.dataset.timezone = 'morning'
-                  } else if (hour < 18) {
-                    info.el.dataset.timezone = 'afternoon'
-                  } else {
-                    info.el.dataset.timezone = 'evening'
-                  }
-                }}
-                eventContent={(eventInfo) => (
-                  <SolidEventCard
-                    event={{
-                      ...eventInfo.event,
-                      title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
-                      resource: {
-                        type: eventInfo.event.extendedProps?.type,
-                        originalEvent:
-                          eventInfo.event.extendedProps?.originalEvent,
-                        preparationTime:
-                          eventInfo.event.extendedProps?.preparationTime,
-                        travelTime: eventInfo.event.extendedProps?.travelTime
-                      }
-                    }}
-                  />
-                )}
+                  ref={calendarRef}
+                  plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+                  initialView={getFullCalendarView(view)}
+                  initialDate={date}
+                  events={fullCalendarEvents}
+                  nowIndicator={true}
+                  slotMinTime={slotMinTime}
+                  slotMaxTime={slotMaxTime}
+                  slotDuration='00:15:00'
+                  slotLabelInterval='01:00:00'
+                  allDaySlot={false}
+                  headerToolbar={false}
+                  height='auto'
+                  expandRows={true}
+                  slotLabelFormat={{
+                    hour: use24HourFormat ? '2-digit' : 'numeric',
+                    minute: '2-digit',
+                    hour12: !use24HourFormat,
+                    meridiem: use24HourFormat ? false : 'short'
+                  }}
+                  eventTimeFormat={{
+                    hour: use24HourFormat ? '2-digit' : 'numeric',
+                    minute: '2-digit',
+                    hour12: !use24HourFormat
+                  }}
+                  firstDay={1}
+                  selectable={true}
+                  selectMirror={true}
+                  editable={false}
+                  eventClick={handleEventClick}
+                  select={handleDateSelect}
+                  eventMouseEnter={handleEventMouseEnter}
+                  eventWillUnmount={handleEventWillUnmount}
+                  eventDidMount={(info) => {
+                    if (!info.event.start) return
+                    const hour = info.event.start.getHours()
+                    if (hour < 7 || hour >= 23) {
+                      info.el.dataset.timezone = 'night'
+                    } else if (hour < 12) {
+                      info.el.dataset.timezone = 'morning'
+                    } else if (hour < 18) {
+                      info.el.dataset.timezone = 'afternoon'
+                    } else {
+                      info.el.dataset.timezone = 'evening'
+                    }
+                  }}
+                  eventContent={(eventInfo) => (
+                    <SolidEventCard
+                      event={{
+                        ...eventInfo.event,
+                        title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
+                        resource: {
+                          type: eventInfo.event.extendedProps?.type,
+                          originalEvent:
+                            eventInfo.event.extendedProps?.originalEvent,
+                          preparationTime:
+                            eventInfo.event.extendedProps?.preparationTime,
+                          travelTime: eventInfo.event.extendedProps?.travelTime
+                        }
+                      }}
+                    />
+                  )}
                 />
               </div>
             </div>
