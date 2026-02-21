@@ -65,7 +65,10 @@
 .fc-timegrid,
 .fc-timegrid-slots,
 .fc-timegrid-cols,
-.fc-col-header {
+.fc-col-header,
+.fc-scrollgrid-section-header,
+.fc-scrollgrid-section-header > td,
+.fc-scrollgrid-section-header > th {
   background: transparent !important;
   border-color: var(--fc-border-color);
 }
