@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1226 KB compressed
+- ✅ Total size: 1223 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-21 08:15:11 UTC
+**Last Updated**: 2026-02-21 08:24:31 UTC
 **Source Branch**: fix-schedule-ui-layering
-**Source Commit**: c353b8a
+**Source Commit**: 7f86ff8
 
 ---
 
