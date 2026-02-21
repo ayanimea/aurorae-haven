@@ -70,6 +70,29 @@
 .fc-timegrid-axis {
   background: rgba(16, 20, 44, 0.35);
   border-color: var(--fc-border-color);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Atmospheric time background — soft radial diffusion mimicking
+ * temperature change across the day. Very low opacity (0.06–0.09)
+ * so it blends with the TimeBands layer without competing. */
+.fc-timegrid-body {
+  background:
+    radial-gradient(
+      circle at 50% 18%,
+      rgba(255, 190, 110, 0.07),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(100, 170, 255, 0.06),
+      transparent 70%
+    ),
+    radial-gradient(
+      circle at 50% 85%,
+      rgba(190, 110, 255, 0.09),
+      transparent 70%
+    );
 }
 
 /* Time slot sizing and major hour line styling
@@ -116,13 +139,24 @@
   background: transparent;
 }
 
-/* Day header */
+/* Day header — translucent glass */
 .fc-col-header-cell {
-  background: rgba(16, 20, 44, 0.35);
-  border-color: var(--fc-border-color);
-  padding: 8px;
-  font-weight: 600;
-  color: var(--accent);
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.03)
+  ) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.fc-col-header-cell-cushion {
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ===== Day Grid View (Month) ===== */
@@ -177,7 +211,7 @@
   background: none !important;
 
   box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.45);
+    0 12px 28px rgba(0, 0, 0, 0.45);
 
   transition: box-shadow 0.25s ease, transform 0.2s ease;
 }
@@ -188,36 +222,27 @@
   background: radial-gradient(
     circle at 25% 20%,
     rgba(255, 200, 120, 0.95),
-    rgba(255, 165, 85, 0.85) 45%,
-    rgba(60, 30, 90, 0.95) 100%
+    rgba(255, 165, 85, 0.85) 50%,
+    rgba(60, 30, 90, 0.98) 100%
   ) !important;
-
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 .fc-event[data-timezone="afternoon"] {
   background: radial-gradient(
     circle at 30% 25%,
     rgba(110, 190, 255, 0.95),
-    rgba(80, 150, 255, 0.85) 50%,
-    rgba(30, 40, 90, 0.98) 100%
+    rgba(80, 150, 255, 0.85) 55%,
+    rgba(30, 40, 90, 0.99) 100%
   ) !important;
-
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 .fc-event[data-timezone="evening"] {
   background: radial-gradient(
     circle at 30% 20%,
     rgba(200, 120, 255, 0.98),
-    rgba(170, 95, 255, 0.88) 50%,
+    rgba(170, 95, 255, 0.88) 55%,
     rgba(35, 20, 80, 1) 100%
   ) !important;
-
-  box-shadow:
-    0 14px 32px rgba(0, 0, 0, 0.5);
 }
 
 /* Subtle luminous top-edge highlight */
@@ -231,7 +256,7 @@
 
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.05),
     transparent 55%
   );
 }
