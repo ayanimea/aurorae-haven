@@ -147,6 +147,9 @@
   font-weight: 500;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.85);
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.55),
+    0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 /* ===== Day Grid View (Month) ===== */
@@ -195,6 +198,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18) !important;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  will-change: backdrop-filter;
   overflow: hidden;
 
   /* No base background — colour comes from [data-timezone] rules */
@@ -516,6 +520,13 @@
 @keyframes nebulaBreath {
   from { opacity: 0.8; }
   to   { opacity: 0.98; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schedule-calendar-container::before {
+    animation: none;
+    opacity: 0.9;
+  }
 }
 
 /* Remove any background coloring from time grid rows and slots.

@@ -14,9 +14,9 @@ const tasks = [
 test('desktop', async ({ page }) => {
   await page.addInitScript((t) => { localStorage.setItem('aurorae_tasks', JSON.stringify(t)); }, tasks);
   await page.goto('/aurorae-haven/');
-  await page.waitForTimeout(1200);
+  await page.waitForLoadState('networkidle');
   try { await page.click('text=Schedule', { timeout: 3000 }); } catch {}
-  await page.waitForTimeout(2500);
+  await page.waitForSelector('.fc-timegrid-slot', { timeout: 5000 }).catch(() => {});
   await page.screenshot({ path: '/tmp/schedule_desktop.png', fullPage: false });
 });
 
@@ -25,9 +25,9 @@ test('mobile', async ({ browser }) => {
   const page = await ctx.newPage();
   await page.addInitScript((t) => { localStorage.setItem('aurorae_tasks', JSON.stringify(t)); }, tasks);
   await page.goto('http://localhost:4173/aurorae-haven/');
-  await page.waitForTimeout(1200);
+  await page.waitForLoadState('networkidle');
   try { await page.click('text=Schedule', { timeout: 3000 }); } catch {}
-  await page.waitForTimeout(2500);
+  await page.waitForSelector('.fc-timegrid-slot', { timeout: 5000 }).catch(() => {});
   await page.screenshot({ path: '/tmp/schedule_mobile.png', fullPage: false });
   await ctx.close();
 });
