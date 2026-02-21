@@ -669,7 +669,9 @@ function Schedule() {
                 eventWillUnmount={handleEventWillUnmount}
                 eventDidMount={(info) => {
                   const hour = info.event.start?.getHours() ?? 0
-                  if (hour < 12) {
+                  if (hour < 7 || hour >= 23) {
+                    info.el.dataset.timezone = 'night'
+                  } else if (hour < 12) {
                     info.el.dataset.timezone = 'morning'
                   } else if (hour < 18) {
                     info.el.dataset.timezone = 'afternoon'

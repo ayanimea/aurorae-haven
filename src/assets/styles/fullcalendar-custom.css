@@ -239,6 +239,16 @@
   filter: saturate(1.1) brightness(0.92);
 }
 
+.fc-event[data-timezone="night"] {
+  background: radial-gradient(
+    circle at 35% 15%,
+    rgba(130, 190, 255, 0.65),
+    rgba(60, 110, 220, 0.8) 45%,
+    rgba(5, 10, 35, 1) 100%
+  ) !important;
+  filter: saturate(1.05) brightness(0.85);
+}
+
 /* Subtle luminous top-edge highlight */
 .fc-event::before {
   content: "";
