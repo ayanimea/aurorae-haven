@@ -64,7 +64,8 @@
 .fc-view-harness,
 .fc-timegrid,
 .fc-timegrid-slots,
-.fc-timegrid-cols {
+.fc-timegrid-cols,
+.fc-col-header {
   background: transparent !important;
   border-color: var(--fc-border-color);
 }
