@@ -24,19 +24,19 @@
 :root {
   /* Time-of-day atmospheres - More luminous top stops for glass-over-nebula feel */
   /* Morning: warm golden — gentle activation */
-  --morning-top: rgba(255, 220, 160, 0.28);
-  --morning-mid: rgba(245, 192, 111, 0.12);
-  --morning-bottom: rgba(245, 192, 111, 0.02);
+  --morning-top: rgba(255, 220, 160, 0.17);
+  --morning-mid: rgba(245, 192, 111, 0.07);
+  --morning-bottom: rgba(245, 192, 111, 0.01);
 
   /* Afternoon: sky blue — focused daylight, distinct hue shift at 12:00 */
-  --afternoon-top: rgba(170, 215, 255, 0.26);
-  --afternoon-mid: rgba(147, 197, 253, 0.10);
-  --afternoon-bottom: rgba(147, 197, 253, 0.02);
+  --afternoon-top: rgba(170, 215, 255, 0.16);
+  --afternoon-mid: rgba(147, 197, 253, 0.06);
+  --afternoon-bottom: rgba(147, 197, 253, 0.01);
 
   /* Evening: violet — calm wind-down, distinct hue shift at 18:00 */
-  --evening-top: rgba(200, 150, 255, 0.32);
-  --evening-mid: rgba(167, 139, 250, 0.14);
-  --evening-bottom: rgba(167, 139, 250, 0.03);
+  --evening-top: rgba(200, 150, 255, 0.19);
+  --evening-mid: rgba(167, 139, 250, 0.08);
+  --evening-bottom: rgba(167, 139, 250, 0.02);
 
   /* Night: deep navy — low stimulation rest, clearly darker zone */
   --night-top: rgba(15, 23, 42, 0.72);
