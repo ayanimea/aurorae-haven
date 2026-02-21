@@ -24,7 +24,7 @@ test('mobile', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   await page.addInitScript((t) => { localStorage.setItem('aurorae_tasks', JSON.stringify(t)); }, tasks);
-  await page.goto('http://localhost:4173/aurorae-haven/');
+  await page.goto('/aurorae-haven/');
   await page.waitForLoadState('networkidle');
   try { await page.click('text=Schedule', { timeout: 3000 }); } catch {}
   await page.waitForSelector('.fc-timegrid-slot', { timeout: 5000 }).catch(() => {});

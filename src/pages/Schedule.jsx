@@ -668,7 +668,8 @@ function Schedule() {
                 eventMouseEnter={handleEventMouseEnter}
                 eventWillUnmount={handleEventWillUnmount}
                 eventDidMount={(info) => {
-                  const hour = info.event.start?.getHours() ?? 0
+                  if (!info.event.start) return
+                  const hour = info.event.start.getHours()
                   if (hour < 7 || hour >= 23) {
                     info.el.dataset.timezone = 'night'
                   } else if (hour < 12) {
