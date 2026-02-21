@@ -79,19 +79,19 @@
 .fc-timegrid-body {
   background:
     radial-gradient(
-      circle at 50% 18%,
-      rgba(255, 190, 110, 0.07),
-      transparent 60%
+      ellipse 80% 18% at 60% 8%,
+      rgba(255, 185, 100, 0.055),
+      transparent 100%
     ),
     radial-gradient(
-      circle at 50% 50%,
-      rgba(100, 170, 255, 0.06),
-      transparent 70%
+      ellipse 70% 20% at 40% 50%,
+      rgba(100, 165, 255, 0.025),
+      transparent 100%
     ),
     radial-gradient(
-      circle at 50% 85%,
-      rgba(190, 110, 255, 0.09),
-      transparent 70%
+      ellipse 90% 30% at 55% 88%,
+      rgba(170, 90, 255, 0.11),
+      transparent 100%
     );
 }
 
@@ -139,17 +139,13 @@
   background: transparent;
 }
 
-/* Day header — translucent glass */
+/* Day header — transparent, text floats in space */
 .fc-col-header-cell {
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.03)
-  ) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  background: transparent !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .fc-col-header-cell-cushion {
@@ -212,7 +208,8 @@
   background: none !important;
 
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.45);
+    0 4px 18px rgba(0, 0, 0, 0.28),
+    0 1px 4px rgba(0, 0, 0, 0.18);
 
   transition: box-shadow 0.25s ease, transform 0.2s ease;
 }
@@ -269,8 +266,8 @@
   transform: translateY(-1px);
 
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.5),
-    0 0 18px rgba(140, 180, 255, 0.15);
+    0 6px 24px rgba(0, 0, 0, 0.35),
+    0 0 12px rgba(140, 180, 255, 0.08);
 }
 
 .fc-event-main {
@@ -473,7 +470,7 @@
 .schedule-calendar-container {
   position: relative;
   isolation: isolate;
-  background: rgba(8, 14, 32, 0.45);
+  background: rgba(8, 14, 32, 0.35);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-radius: 12px;
