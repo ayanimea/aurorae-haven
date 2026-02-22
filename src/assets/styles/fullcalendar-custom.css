@@ -492,7 +492,7 @@
 
 /* Nebula glow layer — stronger radial gradients at higher opacity to restore
  * the cosmic vibrancy seen in the approved mockup.
- * Sits below time-of-day bands (z-index: 0 < bands z-index: 1). */
+ * Sits below time-of-day bands (same z-index: 0; DOM order determines stacking). */
 .schedule-calendar-container::before {
   content: '';
   position: absolute;
