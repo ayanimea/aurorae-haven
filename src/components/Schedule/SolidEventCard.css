@@ -154,9 +154,9 @@
 }
 
 /* Softer event card on narrow screens — keep transparent, just reduce shadow */
+/* Note: border is handled by the parent .fc-event wrapper; no border-color set here */
 @media (max-width: 768px) {
   .solid-event-card {
-    border-color: rgba(255, 255, 255, 0.06);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   }
 
