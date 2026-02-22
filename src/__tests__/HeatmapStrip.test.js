@@ -20,11 +20,10 @@ describe('HeatmapStrip Component', () => {
     const cells = container.querySelectorAll('[aria-label]')
     const todayCell = cells[cells.length - 1]
 
-    // In jsdom v28, hex colors are converted to rgb()
     // Check the actual style attribute - border should contain the mint color
     const styleAttr = todayCell.getAttribute('style')
     expect(styleAttr).toContain('border')
-    expect(styleAttr).toMatch(/border:.*rgb\(134, 245, 224\)|border:.*#86f5e0/)
+    expect(styleAttr).toMatch(/border:.*var\(--mint\)|border:.*rgb\(134, 245, 224\)|border:.*#86f5e0/)
   })
 
   test('shows completed days in mint color', () => {
@@ -36,7 +35,7 @@ describe('HeatmapStrip Component', () => {
     const cells = container.querySelectorAll('[aria-label]')
     const completedCell = cells[cells.length - 1] // Today is last cell
 
-    expect(completedCell).toHaveStyle({ backgroundColor: '#86f5e0' })
+    expect(completedCell).toHaveStyle({ backgroundColor: 'var(--mint)' })
   })
 
   test('shows incomplete days in dark color', () => {
@@ -92,9 +91,9 @@ describe('HeatmapStrip Component', () => {
     // 7 days ago should be at index 20 (28 days total, starting from 27 days ago at index 0)
     // When i=7 in the loop, we get today.subtract(7) which is 7 days ago
     // This is the 21st element pushed (0-indexed at 20)
-    expect(cells[20]).toHaveStyle({ backgroundColor: '#86f5e0' })
+    expect(cells[20]).toHaveStyle({ backgroundColor: 'var(--mint)' })
     // Today should be last cell (index 27)
-    expect(cells[27]).toHaveStyle({ backgroundColor: '#86f5e0' })
+    expect(cells[27]).toHaveStyle({ backgroundColor: 'var(--mint)' })
   })
 
   test('renders with proper accessibility', () => {

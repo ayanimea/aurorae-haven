@@ -234,7 +234,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           <div>
             <div
               className='small'
-              style={{ color: '#a9b1e0', marginBottom: '0.25rem' }}
+              style={{ color: 'var(--dim)', marginBottom: '0.25rem' }}
             >
               Current Streak
             </div>
@@ -245,7 +245,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           <div>
             <div
               className='small'
-              style={{ color: '#a9b1e0', marginBottom: '0.25rem' }}
+              style={{ color: 'var(--dim)', marginBottom: '0.25rem' }}
             >
               Best Streak
             </div>
@@ -256,7 +256,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           <div>
             <div
               className='small'
-              style={{ color: '#a9b1e0', marginBottom: '0.25rem' }}
+              style={{ color: 'var(--dim)', marginBottom: '0.25rem' }}
             >
               Total Completions
             </div>
@@ -265,7 +265,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           <div>
             <div
               className='small'
-              style={{ color: '#a9b1e0', marginBottom: '0.25rem' }}
+              style={{ color: 'var(--dim)', marginBottom: '0.25rem' }}
             >
               XP Earned
             </div>
@@ -292,10 +292,10 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                     backgroundColor: day.isVacation
                       ? '#3d4263'
                       : day.isCompleted
-                        ? '#86f5e0'
+                        ? 'var(--mint)'
                         : '#1a1d2e',
                     border: day.isToday
-                      ? '2px solid #86f5e0'
+                      ? '2px solid var(--mint)'
                       : '1px solid #2a2e47',
                     backgroundImage: day.isVacation
                       ? 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)'
@@ -321,7 +321,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                 width: '12px',
                 height: '12px',
                 borderRadius: '2px',
-                backgroundColor: '#86f5e0'
+                backgroundColor: 'var(--mint)'
               }}
             />
             <span className='small'>Completed</span>
@@ -369,8 +369,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
             onClick={() => setShowVacationMode(!showVacationMode)}
             style={{
               padding: '0.5rem 1rem',
-              background: showVacationMode ? '#2a2e47' : '#86f5e0',
-              color: showVacationMode ? '#a9b1e0' : '#0e1117',
+              background: showVacationMode ? '#2a2e47' : 'var(--mint)',
+              color: showVacationMode ? 'var(--dim)' : '#0e1117',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
@@ -389,7 +389,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           >
             <p
               className='small'
-              style={{ color: '#a9b1e0', marginBottom: '0.5rem' }}
+              style={{ color: 'var(--dim)', marginBottom: '0.5rem' }}
             >
               Vacation days preserve your streak without requiring completion.
             </p>
@@ -401,7 +401,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   style={{
                     display: 'block',
                     marginBottom: '0.25rem',
-                    color: '#a9b1e0'
+                    color: 'var(--dim)'
                   }}
                 >
                   Start Date
@@ -430,7 +430,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   style={{
                     display: 'block',
                     marginBottom: '0.25rem',
-                    color: '#a9b1e0'
+                    color: 'var(--dim)'
                   }}
                 >
                   End Date
@@ -458,8 +458,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                 style={{
                   padding: '0.5rem 1rem',
                   background:
-                    !vacationStart || !vacationEnd ? '#2a2e47' : '#86f5e0',
-                  color: !vacationStart || !vacationEnd ? '#a9b1e0' : '#0e1117',
+                    !vacationStart || !vacationEnd ? '#2a2e47' : 'var(--mint)',
+                  color: !vacationStart || !vacationEnd ? 'var(--dim)' : '#0e1117',
                   border: 'none',
                   borderRadius: '8px',
                   cursor:
@@ -477,7 +477,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
               <div style={{ marginTop: '0.5rem' }}>
                 <p
                   className='small'
-                  style={{ color: '#a9b1e0', marginBottom: '0.5rem' }}
+                  style={{ color: 'var(--dim)', marginBottom: '0.5rem' }}
                 >
                   {vacationDates.length} vacation{' '}
                   {vacationDates.length === 1 ? 'day' : 'days'} set
@@ -487,8 +487,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   style={{
                     padding: '0.375rem 0.75rem',
                     background: 'transparent',
-                    color: '#ff6b6b',
-                    border: '1px solid #ff6b6b',
+                    color: 'var(--error)',
+                    border: '1px solid var(--error)',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     fontSize: '0.75rem',
@@ -534,7 +534,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
         </button>
         <p
           className='small'
-          style={{ color: '#a9b1e0', marginTop: '0.5rem', textAlign: 'center' }}
+          style={{ color: 'var(--dim)', marginTop: '0.5rem', textAlign: 'center' }}
         >
           Create a note about this habit with your current stats
         </p>
@@ -576,7 +576,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
               style={{
                 padding: '0.375rem 0.75rem',
                 background: completions.length === 0 ? '#2a2e47' : '#4a7dff',
-                color: completions.length === 0 ? '#a9b1e0' : '#e6e9f2',
+                color: completions.length === 0 ? 'var(--dim)' : '#e6e9f2',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: completions.length === 0 ? 'not-allowed' : 'pointer',
@@ -593,7 +593,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
               style={{
                 padding: '0.375rem 0.75rem',
                 background: completions.length === 0 ? '#2a2e47' : '#4a7dff',
-                color: completions.length === 0 ? '#a9b1e0' : '#e6e9f2',
+                color: completions.length === 0 ? 'var(--dim)' : '#e6e9f2',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: completions.length === 0 ? 'not-allowed' : 'pointer',
@@ -608,7 +608,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
         </div>
 
         {completions.length === 0 ? (
-          <p className='small' style={{ color: '#a9b1e0' }}>
+          <p className='small' style={{ color: 'var(--dim)' }}>
             No completions yet. Start your streak today!
           </p>
         ) : (
@@ -628,7 +628,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                 }}
               >
                 <span>{dayjs(completion.date).format('MMM D, YYYY')}</span>
-                <span className='small' style={{ color: '#86f5e0' }}>
+                <span className='small' style={{ color: 'var(--mint)' }}>
                   ✓ Completed
                 </span>
               </div>

@@ -61,40 +61,6 @@
   opacity: 0.7;
 }
 
-.error-notification {
-  position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 99, 99, 0.95);
-  color: #fff;
-  padding: 14px 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 140, 140, 0.4);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: var(--z-toast);
-  max-width: 90%;
-  text-align: center;
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .error-notification {
-    animation: none;
-  }
-}
-
 .eisenhower-matrix {
   display: grid;
   /* Fixed 2x2 grid layout */

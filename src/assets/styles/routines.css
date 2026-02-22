@@ -188,19 +188,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-.details-list {
-  display: grid;
-  gap: 8px;
-}
-.detail-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-}
-
 /* ===== Mobile/Tablet Responsiveness ===== */
 
 /* TAB-RTN-38: Sticky bottom control bar for mobile */

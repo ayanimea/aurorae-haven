@@ -165,7 +165,7 @@
 }
 
 .context-menu-item-danger {
-  color: #ff6b6b;
+  color: var(--error);
 }
 
 .context-menu-item-danger:hover {
