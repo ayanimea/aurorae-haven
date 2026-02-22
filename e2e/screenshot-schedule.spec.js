@@ -1,9 +1,11 @@
 import { test } from '@playwright/test'
 
-// Visual regression reference for Schedule time-of-day atmosphere.
-// Events are not seeded here because Schedule reads from IndexedDB via
-// EventService, not from localStorage. Add events through the UI before
-// running this test to capture event-card gradient styling.
+// Visual regression reference — manual/local-only.
+// These tests capture screenshots of the Schedule time-of-day atmosphere
+// for visual comparison; they make no programmatic assertions and are
+// intentionally skipped in CI. Run locally after adding events through
+// the UI (Schedule reads from IndexedDB via EventService, not localStorage).
+test.skip(!!process.env.CI, 'Screenshot-only visual reference — skipped in CI')
 
 test('desktop', async ({ page }, testInfo) => {
   await page.goto('/aurorae-haven/')

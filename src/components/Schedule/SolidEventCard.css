@@ -160,11 +160,6 @@
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   }
 
-  .solid-event-card::before {
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.04),
-      transparent 45%
-    );
-  }
+  /* Note: Top-edge highlight is provided by .fc-event::before only.
+   * No ::before rule defined here to avoid duplicate luminous layers. */
 }

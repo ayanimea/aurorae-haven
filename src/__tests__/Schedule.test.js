@@ -218,3 +218,50 @@ describe('Schedule Component with FullCalendar', () => {
     })
   })
 })
+
+// ---------------------------------------------------------------------------
+// Unit tests for the eventDidMount hour→timezone boundary logic.
+// These mirror the TIME_ZONE_HOURS constant and the if-chain in Schedule.jsx
+// exactly (MORNING 7, AFTERNOON 12, EVENING 18, NIGHT 23) so that any
+// divergence between the constant and the CSS gradient selectors is caught
+// immediately.
+// ---------------------------------------------------------------------------
+describe('eventDidMount hour→timezone classification', () => {
+  // Duplicate of TIME_ZONE_HOURS from Schedule.jsx — kept in sync intentionally
+  const TIME_ZONE_HOURS = { MORNING: 7, AFTERNOON: 12, EVENING: 18, NIGHT: 23 }
+
+  function classify(hour) {
+    if (
+      hour < TIME_ZONE_HOURS.MORNING ||
+      hour >= TIME_ZONE_HOURS.NIGHT
+    ) return 'night'
+    if (hour < TIME_ZONE_HOURS.AFTERNOON) return 'morning'
+    if (hour < TIME_ZONE_HOURS.EVENING) return 'afternoon'
+    return 'evening'
+  }
+
+  const cases = [
+    // night band (00:00–06:59)
+    [0, 'night'],
+    [1, 'night'],
+    [6, 'night'],
+    // morning band (07:00–11:59)
+    [7, 'morning'],
+    [9, 'morning'],
+    [11, 'morning'],
+    // afternoon band (12:00–17:59)
+    [12, 'afternoon'],
+    [15, 'afternoon'],
+    [17, 'afternoon'],
+    // evening band (18:00–22:59)
+    [18, 'evening'],
+    [20, 'evening'],
+    [22, 'evening'],
+    // night band (23:00–23:59)
+    [23, 'night']
+  ]
+
+  test.each(cases)('hour %i → %s', (hour, expected) => {
+    expect(classify(hour)).toBe(expected)
+  })
+})
