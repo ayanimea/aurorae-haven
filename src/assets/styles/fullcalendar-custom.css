@@ -232,7 +232,6 @@
     rgba(255, 165, 85, 0.85) 50%,
     rgba(60, 30, 90, 0.98) 100%
   ) !important;
-  filter: saturate(0.9);
 }
 
 .fc-event[data-timezone='afternoon'] {
@@ -242,27 +241,26 @@
     rgba(80, 150, 255, 0.85) 55%,
     rgba(30, 40, 90, 0.99) 100%
   ) !important;
-  filter: saturate(1.15);
 }
 
+/* brightness(0.92) baked into RGB values to avoid filter applying to card text */
 .fc-event[data-timezone='evening'] {
   background: radial-gradient(
     circle at 30% 20%,
-    rgba(200, 120, 255, 0.98),
-    rgba(170, 95, 255, 0.88) 55%,
-    rgba(35, 20, 80, 1) 100%
+    rgba(184, 110, 235, 0.98),
+    rgba(156, 87, 235, 0.88) 55%,
+    rgba(32, 18, 74, 1) 100%
   ) !important;
-  filter: saturate(1.1) brightness(0.92);
 }
 
+/* brightness(0.93) baked into RGB values to avoid filter applying to card text */
 .fc-event[data-timezone='night'] {
   background: radial-gradient(
     circle at 35% 15%,
-    rgba(130, 190, 255, 0.65),
-    rgba(60, 110, 220, 0.8) 45%,
-    rgba(10, 15, 45, 1) 100%
+    rgba(121, 177, 237, 0.65),
+    rgba(56, 102, 205, 0.8) 45%,
+    rgba(9, 14, 42, 1) 100%
   ) !important;
-  filter: saturate(1.05) brightness(0.93);
 }
 
 /* Subtle luminous top-edge highlight */

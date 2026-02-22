@@ -84,7 +84,7 @@ import {
   toFullCalendarEvents,
   createEventFromSlot
 } from '../utils/eventAdapter'
-import { EVENT_TYPES } from '../utils/scheduleConstants'
+import { EVENT_TYPES, TIME_ZONE_HOURS } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
 import '../assets/styles/fullcalendar-custom.css'
@@ -103,9 +103,6 @@ import '../components/ErrorBoundary.css'
 // See commit 511b225 for the migration from custom logger to console methods.
 
 function Schedule() {
-  // Time-of-day classification boundaries (hour of day, matches TimeBands.jsx and schedule-ui-spec.md)
-  const TIME_ZONE_HOURS = { MORNING: 7, AFTERNOON: 12, EVENING: 18, NIGHT: 23 }
-
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
 
