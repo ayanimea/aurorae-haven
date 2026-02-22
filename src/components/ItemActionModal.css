@@ -197,3 +197,15 @@
     width: 100%;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .item-action-context-menu,
+  .item-action-modal {
+    animation: none;
+  }
+
+  .item-action-close,
+  .item-action-btn {
+    transition: none;
+  }
+}

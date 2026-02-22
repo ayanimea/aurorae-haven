@@ -7,7 +7,8 @@
 
 :root {
   /* ===== SPACING SCALE ===== */
-  /* Used for margins, padding, gaps */
+  /* NOTE: Not yet adopted — codebase currently uses inline px/rem values.
+   * Use these tokens for all new spacing work to move toward a consistent scale. */
   --space-2xs: 0.25rem; /* 4px */
   --space-xs: 0.5rem; /* 8px */
   --space-sm: 0.75rem; /* 12px */
@@ -22,6 +23,7 @@
   --touch-comfortable: 48px; /* WCAG AA comfortable size */
 
   /* ===== ICON SIZES ===== */
+  /* NOTE: --icon-xs/lg/xl not yet adopted. Use --icon-sm (20px) and --icon-md (24px). */
   --icon-xs: 16px;
   --icon-sm: 20px;
   --icon-md: 24px;
@@ -29,6 +31,7 @@
   --icon-xl: 48px;
 
   /* ===== FONT SIZES ===== */
+  /* NOTE: --font-2xs/md/lg/xl not yet adopted. Use --font-xs and --font-sm for compact UI. */
   --font-2xs: 0.625rem; /* 10px */
   --font-xs: 0.65rem; /* 10.4px - compact UI */
   --font-sm: 0.7rem; /* 11.2px - compact labels */
@@ -57,7 +60,7 @@
   --shell-padding-compact: 85px; /* 969-1280px */
   --shell-padding-comfortable: 78px; /* >1280px */
 
-  /* Navigation item sizing */
+  /* Navigation item sizing — NOTE: not yet adopted in navigation.css (uses inline values) */
   --nav-gap-compact: 0.25rem; /* Small viewports */
   --nav-gap-comfortable: 0.5rem; /* Large viewports */
   --nav-padding-compact: 0.5rem; /* Small viewports */
@@ -73,12 +76,16 @@
   /* --breakpoint-wide: 1440px; */
 
   /* ===== LAYOUT ===== */
+  /* NOTE: Not yet adopted — navigation uses inline values instead.
+   * Use these tokens when refactoring layout dimensions. */
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 64px;
   --appbar-height: 64px;
   --mobile-bottom-bar-height: 60px;
 
   /* ===== BORDERS & RADIUS ===== */
+  /* NOTE: Not yet adopted — codebase currently uses inline border-radius values.
+   * Use these tokens for all new component work. */
   --radius-sm: 0.25rem; /* 4px */
   --radius-md: 0.5rem; /* 8px */
   --radius-lg: 0.75rem; /* 12px */

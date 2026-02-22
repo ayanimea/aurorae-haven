@@ -163,3 +163,9 @@
   /* Note: Top-edge highlight is provided by .fc-event::before only.
    * No ::before rule defined here to avoid duplicate luminous layers. */
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .solid-event-card {
+    transition: none;
+  }
+}

@@ -105,3 +105,9 @@
     bottom: 12px;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .fab {
+    transition: none;
+  }
+}

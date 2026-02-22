@@ -89,6 +89,12 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .error-notification {
+    animation: none;
+  }
+}
+
 .eisenhower-matrix {
   display: grid;
   /* Fixed 2x2 grid layout */

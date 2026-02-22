@@ -31,6 +31,21 @@
   --bg-secondary: rgba(16, 20, 44, 0.32);
   --bg-hover: rgba(140, 150, 210, 0.12);
   --glass-md: rgba(18, 22, 52, 0.58); /* Mid-opacity glass surface (between glass-lo and glass-hi) */
+
+  /* ===== STATUS COLOURS ===== */
+  /* Dark-UI appropriate status palette — replaces Bootstrap light-mode fallbacks in settings.css */
+  --success: #4ade80;            /* Vibrant green readable on dark backgrounds */
+  --success-bg: rgba(74, 222, 128, 0.12);
+  --success-border: rgba(74, 222, 128, 0.3);
+  --success-text: #bbf7d0;       /* Muted green text */
+  --info: #60a5fa;               /* Soft blue */
+  --warning: #fbbf24;            /* Amber */
+  --warn-bg: rgba(251, 191, 36, 0.12);
+  --warn-border: rgba(251, 191, 36, 0.3);
+  --error-bg: rgba(255, 107, 107, 0.12);
+  --error-border: rgba(255, 107, 107, 0.3);
+  --error-text: #fca5a5;         /* Muted red text */
+  --shadow-color: #000000;       /* Base shadow colour for color-mix() patterns */
 }
 
 * {
