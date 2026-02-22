@@ -383,7 +383,7 @@
   display: block;
   margin-top: 4px;
   font-size: 12px;
-  color: #ff6464;
+  color: var(--error);
 }
 
 .tag-input-container,

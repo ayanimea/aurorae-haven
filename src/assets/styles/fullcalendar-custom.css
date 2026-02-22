@@ -382,7 +382,9 @@
   margin: 0;
 }
 
-.error-message {
+/* Floating error toast — renamed from .error-message to avoid cascade conflict
+ * with library.css's inline .error-message (form validation messages). */
+.fc-error-toast {
   position: fixed;
   top: 80px;
   right: 20px;

@@ -211,7 +211,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#eef0ff',
+            color: 'var(--ink)',
             fontSize: '1.5rem',
             cursor: 'pointer',
             padding: '0.25rem'

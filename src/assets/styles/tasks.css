@@ -135,7 +135,7 @@
   gap: 8px;
 }
 
-.empty-state {
+.task-list .empty-state {
   text-align: center;
   color: var(--dim);
   font-size: 14px;

@@ -166,7 +166,7 @@ Ask for clarification or preserve the existing structure.
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(134, 245, 224, 0.3),
+    color-mix(in srgb, var(--mint) 30%, transparent),
     transparent
   );
   z-index: 1;
@@ -184,10 +184,10 @@ Ask for clarification or preserve the existing structure.
   left: 0;
   right: 0;
   height: 2px;
-  background: #86f5e0;
+  background: var(--mint);
   z-index: 10;
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(134, 245, 224, 0.6);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--mint) 60%, transparent);
 }
 
 .current-time-indicator::before {
@@ -198,8 +198,8 @@ Ask for clarification or preserve the existing structure.
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #86f5e0;
-  box-shadow: 0 0 6px rgba(134, 245, 224, 0.8);
+  background: var(--mint);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--mint) 80%, transparent);
 }
 
 .current-time-label {
@@ -208,11 +208,11 @@ Ask for clarification or preserve the existing structure.
   top: -20px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #86f5e0;
+  color: var(--mint);
   background: rgba(16, 20, 44, 0.9);
   padding: 2px 8px;
   border-radius: 6px;
-  border: 1px solid rgba(134, 245, 224, 0.4);
+  border: 1px solid color-mix(in srgb, var(--mint) 40%, transparent);
 }
 
 .next-badge {
@@ -221,17 +221,17 @@ Ask for clarification or preserve the existing structure.
   top: 12px;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #86f5e0;
-  background: rgba(134, 245, 224, 0.2);
+  color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 20%, transparent);
   padding: 3px 8px;
   border-radius: 6px;
-  border: 1px solid rgba(134, 245, 224, 0.4);
+  border: 1px solid color-mix(in srgb, var(--mint) 40%, transparent);
   z-index: 5;
 }
 
 .block.next-up {
-  border: 2px solid rgba(134, 245, 224, 0.6);
-  box-shadow: 0 0 12px rgba(134, 245, 224, 0.3);
+  border: 2px solid color-mix(in srgb, var(--mint) 60%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--mint) 30%, transparent);
 }
 .block {
   position: absolute;
@@ -239,7 +239,7 @@ Ask for clarification or preserve the existing structure.
   padding: 8px 12px;
   background: rgba(142, 200, 255, 0.14);
   border: 1px solid rgba(150, 200, 255, 0.24);
-  border-left: 3px solid #86f5e0;
+  border-left: 3px solid var(--mint);
   z-index: 2;
   overflow: hidden;
   min-height: 40px;
@@ -364,9 +364,9 @@ Ask for clarification or preserve the existing structure.
 }
 
 .block-preparation.travel {
-  background: rgba(134, 245, 224, 0.15);
-  border-color: rgba(134, 245, 224, 0.4);
-  border-left: 3px dashed rgba(134, 245, 224, 0.7);
+  background: color-mix(in srgb, var(--mint) 15%, transparent);
+  border-color: color-mix(in srgb, var(--mint) 40%, transparent);
+  border-left: 3px dashed color-mix(in srgb, var(--mint) 70%, transparent);
   color: var(--text-primary);
 }
 
@@ -397,9 +397,9 @@ Ask for clarification or preserve the existing structure.
   }
 
   .block-preparation.travel {
-    background: rgba(134, 245, 224, 0.25);
-    border-color: rgba(134, 245, 224, 0.8);
-    border-left: 3px dashed rgba(134, 245, 224, 1);
+    background: color-mix(in srgb, var(--mint) 25%, transparent);
+    border-color: color-mix(in srgb, var(--mint) 80%, transparent);
+    border-left: 3px dashed var(--mint);
   }
 
   .block-preparation.preparation {
@@ -1852,7 +1852,7 @@ Ask for clarification or preserve the existing structure.
   text-overflow: ellipsis;
   /* Match day/week view block styling: 1px border on all sides, 3px left border for color coding */
   border: 1px solid rgba(150, 200, 255, 0.24);
-  border-left: 3px solid #86f5e0;
+  border-left: 3px solid var(--mint);
   transition: all 0.2s ease;
 }
 
@@ -1871,7 +1871,7 @@ Ask for clarification or preserve the existing structure.
 .month-event.routine {
   background: rgba(142, 200, 255, 0.14);
   border-color: rgba(150, 200, 255, 0.24);
-  border-left: 3px solid #86f5e0;
+  border-left: 3px solid var(--mint);
   color: var(--ink);
 }
 

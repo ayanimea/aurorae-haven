@@ -700,7 +700,7 @@ function Schedule() {
           )}
 
           {error && (
-            <div className='error-message' role='alert'>
+            <div className='fc-error-toast' role='alert'>
               {error}
               <button
                 type='button'
