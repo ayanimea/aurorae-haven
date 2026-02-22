@@ -61,7 +61,7 @@
 
 /* Top-edge luminous highlight — glass catching ambient light */
 .solid-event-card::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   border-radius: var(--event-radius);
@@ -95,7 +95,7 @@
   letter-spacing: 0.02em;
   margin-bottom: 0.25rem;
   color: var(--event-text);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 255, 255, 0.10);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   flex-shrink: 0; /* Prevent flex container from collapsing */
   min-height: 1.4em; /* Ensure minimum visible height */
   overflow: visible; /* Don't collapse with overflow */
@@ -167,8 +167,7 @@
 @media (max-width: 768px) {
   .solid-event-card {
     border-color: rgba(255, 255, 255, 0.06);
-    box-shadow:
-      0 6px 18px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   }
 
   .solid-event-card::before {

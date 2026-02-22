@@ -103,6 +103,9 @@ import '../components/ErrorBoundary.css'
 // See commit 511b225 for the migration from custom logger to console methods.
 
 function Schedule() {
+  // Time-of-day classification boundaries (hour of day, matches TimeBands.jsx and schedule-ui-spec.md)
+  const TIME_ZONE_HOURS = { MORNING: 7, AFTERNOON: 12, EVENING: 18, NIGHT: 23 }
+
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
 
@@ -145,8 +148,7 @@ function Schedule() {
         if (typeof updatedValue === 'boolean') {
           setUse24HourFormat(updatedValue)
         }
-      } catch (_err) {
-      }
+      } catch (_err) {}
     }
 
     // Handle same-tab updates via custom 'settingsUpdated' event
@@ -157,8 +159,7 @@ function Schedule() {
         if (typeof updatedValue === 'boolean') {
           setUse24HourFormat(updatedValue)
         }
-      } catch (_err) {
-      }
+      } catch (_err) {}
     }
 
     window.addEventListener('storage', handleStorage)
@@ -249,8 +250,7 @@ function Schedule() {
         setShowActionModal(true)
       } else {
       }
-    } catch (_err) {
-    }
+    } catch (_err) {}
   }, [])
 
   const handleSaveEvent = async (eventData) => {
@@ -328,8 +328,7 @@ function Schedule() {
       setSelectedEventType(null)
       // Clear any errors when closing modal
       setError('')
-    } catch (_err) {
-    }
+    } catch (_err) {}
   }
 
   const handleScheduleEvent = (eventType) => {
@@ -581,8 +580,7 @@ function Schedule() {
   // Cleanup all context menu handlers on component unmount
   // Prevents memory leaks if component unmounts before eventWillUnmount fires
   useEffect(() => {
-    return () => {
-    }
+    return () => {}
   }, [])
 
   return (
@@ -670,11 +668,14 @@ function Schedule() {
                   eventDidMount={(info) => {
                     if (!info.event.start) return
                     const hour = info.event.start.getHours()
-                    if (hour < 7 || hour >= 23) {
+                    if (
+                      hour < TIME_ZONE_HOURS.MORNING ||
+                      hour >= TIME_ZONE_HOURS.NIGHT
+                    ) {
                       info.el.dataset.timezone = 'night'
-                    } else if (hour < 12) {
+                    } else if (hour < TIME_ZONE_HOURS.AFTERNOON) {
                       info.el.dataset.timezone = 'morning'
-                    } else if (hour < 18) {
+                    } else if (hour < TIME_ZONE_HOURS.EVENING) {
                       info.el.dataset.timezone = 'afternoon'
                     } else {
                       info.el.dataset.timezone = 'evening'
@@ -710,7 +711,8 @@ function Schedule() {
           {error && (
             <div className='error-message' role='alert'>
               {error}
-              <button type="button"
+              <button
+                type='button'
                 onClick={() => setError('')}
                 className='error-dismiss'
                 aria-label='Dismiss error'
@@ -723,7 +725,8 @@ function Schedule() {
           {successMessage && (
             <div className='success-message' role='status'>
               {successMessage}
-              <button type="button"
+              <button
+                type='button'
                 onClick={() => setSuccessMessage('')}
                 className='success-dismiss'
                 aria-label='Dismiss message'

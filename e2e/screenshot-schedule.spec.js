@@ -14,7 +14,9 @@ test('desktop', async ({ page }, testInfo) => {
 })
 
 test('mobile', async ({ browser }, testInfo) => {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } })
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 }
+  })
   const page = await ctx.newPage()
   await page.goto('/aurorae-haven/')
   await page.waitForLoadState('networkidle')
