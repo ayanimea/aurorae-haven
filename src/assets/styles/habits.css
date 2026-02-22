@@ -267,3 +267,9 @@
     width: 100%;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .habit-card {
+    transition: none;
+  }
+}

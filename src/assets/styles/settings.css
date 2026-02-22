@@ -201,3 +201,9 @@
   color: var(--dim, #666);
   font-size: 0.9rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-button {
+    transition: none;
+  }
+}

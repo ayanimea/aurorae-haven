@@ -636,3 +636,11 @@ textarea:focus {
   -webkit-line-clamp: unset;
   overflow: visible;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .brain-dump-container,
+  .note-list-sidebar,
+  .note-item {
+    transition: none;
+  }
+}

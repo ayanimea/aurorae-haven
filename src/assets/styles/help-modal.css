@@ -231,3 +231,9 @@
     font-size: 0.9rem;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-help {
+    transition: none;
+  }
+}

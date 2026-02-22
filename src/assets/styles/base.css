@@ -31,6 +31,8 @@
   --bg-secondary: rgba(16, 20, 44, 0.32);
   --bg-hover: rgba(140, 150, 210, 0.12);
   --glass-md: rgba(18, 22, 52, 0.58); /* Mid-opacity glass surface (between glass-lo and glass-hi) */
+  --glass-bg: rgba(16, 20, 44, 0.28);  /* Glass panel background — used for inline-styled surfaces */
+  --glass-border: rgba(200, 210, 255, 0.2); /* Glass panel border — equals --line */
 
   /* ===== STATUS COLOURS ===== */
   /* Dark-UI appropriate status palette — replaces Bootstrap light-mode fallbacks in settings.css */

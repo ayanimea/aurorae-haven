@@ -384,3 +384,11 @@
     display: none;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .routine-progress-bar,
+  .panel,
+  .btn-menu {
+    transition: none;
+  }
+}
