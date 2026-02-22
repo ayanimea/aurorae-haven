@@ -1,90 +1,58 @@
 /**
  * TimeBands Styling - Canonical Visual Specification
  * Soft gradients that provide temporal context without visual dominance
- * 
+ *
  * Rules:
  * - Bands provide context, not emphasis
- * - z-index: 1 (below grid and events)
+ * - z-index: 0 — same level as ::before nebula; DOM order ensures bands paint on top
+ *   of the pseudo-element. .fc grid (z-index: 1) explicitly renders above both.
  * - pointer-events: none (don't interfere with interactions)
- * - Full-width horizontal bands
- * - Soft gradients (no sharp edges)
+ * - Full-width horizontal bands, absolutely positioned within .schedule-calendar-container
+ * - Soft gradients (no sharp edges); adjacent bands fade at boundaries
  * - No borders
- * - Low opacity (≤10%)
+ *
+ * Percentages represent proportions of the visible range 07:00–24:00 (17 hours):
+ *   Morning   07:00–12:00  5h / 17h ≈ 29.41%  → top: 0%,      height: 29.41%
+ *   Afternoon 12:00–18:00  6h / 17h ≈ 35.29%  → top: 29.41%,  height: 35.29%
+ *   Evening   18:00–23:00  5h / 17h ≈ 29.41%  → top: 64.70%,  height: 29.41%
+ *   Night     23:00–24:00  1h / 17h ≈  5.89%  → top: 94.11%,  height:  5.89%
+ *
+ * Opacity rationale: bands render against the nebula glow layer (::before on container)
+ * and the dark isolation surface beneath it. Values interact with the radial glows so
+ * hue/luminance shifts at 12:00 and 18:00 remain perceptible in grayscale.
  */
 
 :root {
-  /**
-   * IMPORTANT: Toolbar Height Contract - Dynamic Value
-   * 
-   * This CSS variable is set at runtime by JavaScript in Schedule.jsx
-   * via a useRef + useEffect that measures the rendered toolbar height.
-   * 
-   * Characteristics of the current measurement strategy:
-   * - Reduces manual sync: Minimizes maintenance when toolbar design changes
-   * - Responsive to layout changes: Re-measured on mount, view changes, and window resize
-   * - Safer alignment: Helps keep time-of-day bands aligned with the time grid toolbar
-   * - Uses a CSS fallback so bands remain usable if JS measurement is unavailable
-   * 
-   * Implementation (Schedule.jsx):
-   *   const toolbarRef = useRef(null)
-   *   useEffect(() => {
-   *     function updateToolbarHeight() {
-   *       if (toolbarRef.current) {
-   *         document.documentElement.style.setProperty(
-   *           '--toolbar-height',
-   *           `${toolbarRef.current.offsetHeight}px`
-   *         )
-   *       }
-   *     }
-   * 
-   *     updateToolbarHeight()            // on mount and when `view` changes
-   *     window.addEventListener('resize', updateToolbarHeight)
-   *     return () => window.removeEventListener('resize', updateToolbarHeight)
-   *   }, [view])
-   * 
-   * Note: Structural toolbar changes that do not involve a view change or resize
-   * may require a re-render to update this measurement.
-   * 
-   * Fallback value: 150px (for SSR or first paint before measurement)
-   */
-  --toolbar-height: 150px;
+  /* Time-of-day atmospheres - More luminous top stops for glass-over-nebula feel */
+  /* Morning: warm golden — gentle activation */
+  --morning-top: rgba(255, 220, 160, 0.17);
+  --morning-mid: rgba(245, 192, 111, 0.07);
+  --morning-bottom: rgba(245, 192, 111, 0.01);
 
-  /* Time-of-day atmospheres - Canonical values from specification */
-  /* Perceptible but subtle gradients for temporal orientation */
-  /* Morning: warm orange/amber tones for gentle activation */
-  --morning-top: rgba(245, 192, 111, 0.14);
-  --morning-mid: rgba(245, 192, 111, 0.06);
-  --morning-bottom: rgba(245, 192, 111, 0.02);
+  /* Afternoon: sky blue — focused daylight, distinct hue shift at 12:00 */
+  --afternoon-top: rgba(170, 215, 255, 0.16);
+  --afternoon-mid: rgba(147, 197, 253, 0.06);
+  --afternoon-bottom: rgba(147, 197, 253, 0.01);
 
-  /* Afternoon: cool blue tones for focused daylight */
-  --afternoon-top: rgba(147, 197, 253, 0.12);
-  --afternoon-mid: rgba(147, 197, 253, 0.05);
-  --afternoon-bottom: rgba(147, 197, 253, 0.02);
-
-  /* Evening: purple/violet tones for calm wind-down */
-  --evening-top: rgba(167, 139, 250, 0.14);
-  --evening-mid: rgba(167, 139, 250, 0.06);
+  /* Evening: violet — calm wind-down, distinct hue shift at 18:00 */
+  --evening-top: rgba(200, 150, 255, 0.19);
+  --evening-mid: rgba(167, 139, 250, 0.08);
   --evening-bottom: rgba(167, 139, 250, 0.02);
 
-  /* Night: deep navy for low stimulation rest */
-  --night-top: rgba(15, 23, 42, 0.55);
-  --night-bottom: rgba(15, 23, 42, 0.35);
+  /* Night: deep navy — low stimulation rest, clearly darker zone */
+  --night-top: rgba(15, 23, 42, 0.72);
+  --night-bottom: rgba(15, 23, 42, 0.52);
 }
 
-.schedule-bands-container {
+/* z-index: 0 — above the ::before nebula glow layer (DOM order ensures bands paint
+ * after the pseudo-element within the same z-index level) and below the .fc grid
+ * which carries z-index: 1, keeping the required band → grid → event stacking order. */
+.schedule-bands {
   position: absolute;
-  /* Position relative to .fc (FullCalendar container) which is inside .schedule-wrapper */
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  /* Ensure bands don't interfere with toolbar - they should only overlay the time grid */
-  /* Use CSS custom property for consistent toolbar height with safe fallback */
-  /* Fallback ensures bands are never positioned incorrectly if JS measurement fails */
-  padding-top: var(--toolbar-height, 150px);
 }
 
 .schedule-band {
@@ -94,8 +62,10 @@
   pointer-events: none;
 }
 
-/* Morning: 07:00–12:00 - Warm, gentle activation */
+/* Morning: 07:00–12:00 — 5h / 17h ≈ 29.41% */
 .schedule-band.morning {
+  top: 0%;
+  height: 29.41%;
   background: linear-gradient(
     to bottom,
     var(--morning-top),
@@ -104,8 +74,10 @@
   );
 }
 
-/* Afternoon: 12:00–18:00 - Neutral, focused daylight */
+/* Afternoon: 12:00–18:00 — 6h / 17h ≈ 35.29% */
 .schedule-band.afternoon {
+  top: 29.41%;
+  height: 35.29%;
   background: linear-gradient(
     to bottom,
     var(--afternoon-top),
@@ -114,8 +86,10 @@
   );
 }
 
-/* Evening: 18:00–23:00 - Calm wind-down */
+/* Evening: 18:00–23:00 — 5h / 17h ≈ 29.41% */
 .schedule-band.evening {
+  top: 64.70%;
+  height: 29.41%;
   background: linear-gradient(
     to bottom,
     var(--evening-top),
@@ -124,7 +98,9 @@
   );
 }
 
-/* Night: 23:00–24:00 - Low stimulation rest */
+/* Night: 23:00–24:00 — 1h / 17h ≈ 5.89% */
 .schedule-band.night {
+  top: 94.11%;
+  height: 5.89%;
   background: linear-gradient(to bottom, var(--night-top), var(--night-bottom));
 }

@@ -38,12 +38,17 @@
 /* ===== FullCalendar Base Overrides ===== */
 
 .fc {
-  background: rgba(16, 20, 44, 0.25);
-  backdrop-filter: blur(12px) saturate(120%);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
-  border: 1px solid var(--fc-border-color);
-  border-radius: 12px;
-  padding: 16px;
+  /* Transparent, borderless — the container is the only visible surface.
+   * Removing border + padding eliminates the nested-panel visual artefact.
+   * position: relative + z-index: 1 puts the grid explicitly above the
+   * time-of-day bands (.schedule-bands at z-index: 0) so grid lines reliably
+   * render in front of band colours. */
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  position: relative;
+  z-index: 1;
   color: var(--text);
 }
 
@@ -57,33 +62,68 @@
 
 /* ===== Time Grid View ===== */
 
-.fc-timegrid {
+/* Ensure grid containers are fully transparent — starfield and band layer must show through */
+.fc-scrollgrid,
+.fc-view-harness,
+.fc-timegrid,
+.fc-timegrid-slots,
+.fc-timegrid-cols,
+.fc-col-header,
+.fc-scrollgrid-section-header,
+.fc-scrollgrid-section-header > td,
+.fc-scrollgrid-section-header > th,
+.fc-scrollgrid-section,
+.fc-scrollgrid-section > td,
+.fc-scrollgrid-section > th,
+.fc-scroller-harness,
+.fc-scroller-harness-liquid {
+  background: transparent !important;
   border-color: var(--fc-border-color);
 }
 
 .fc-timegrid-axis {
   background: rgba(16, 20, 44, 0.35);
   border-color: var(--fc-border-color);
+  color: rgba(255, 255, 255, 0.45);
 }
 
-/* Time slot sizing
- * Derived from --minute-unit for dynamic scaling based on slotDuration.
+/* Timegrid body — fully transparent; atmospheric feel comes from .schedule-calendar-container
+ * ::before nebula glows and TimeBands layer, not from nested grid overlays. */
+.fc-timegrid-body {
+  background: transparent !important;
+}
+
+/* Time slot sizing and major hour line styling
+ * height derived from --minute-unit for dynamic scaling based on slotDuration.
  * For 15-min slots, this gives calc(var(--minute-unit) * 15) per slot.
- * This ensures proportional scaling across viewports per schedule.css (lines 60-71).
+ * border-top set to soft structural-only value (must not overpower bands).
  */
 .fc-timegrid-slot {
   height: calc(var(--minute-unit, 1.2px) * 15);
   border-color: var(--fc-border-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.055) !important;
+  background: none !important;
 }
 
-/* Hour lines - more prominent */
+/* Minor slot lines (quarter/half-hour) — almost invisible */
+.fc-timegrid-slot-minor {
+  border-top: 1px solid rgba(255, 255, 255, 0.025) !important;
+  background: none !important;
+}
+
+/* Hour lines - more prominent (data-time selector for specificity on :00:00) */
 .fc-timegrid-slot-lane[data-time$=':00:00'] {
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
 }
 
 /* Half-hour and quarter-hour lines - subtle */
 .fc-timegrid-slot-lane {
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(255, 255, 255, 0.025);
+}
+
+/* Slight global softening so bands breathe through the grid */
+.fc-timegrid-slots {
+  opacity: 0.88;
 }
 
 .fc-timegrid-slot-label {
@@ -97,13 +137,24 @@
   background: transparent;
 }
 
-/* Day header */
+/* Day header — transparent, text floats in space */
 .fc-col-header-cell {
-  background: rgba(16, 20, 44, 0.35);
-  border-color: var(--fc-border-color);
-  padding: 8px;
-  font-weight: 600;
-  color: var(--accent);
+  background: transparent !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.fc-col-header-cell-cushion {
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.55),
+    0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 /* ===== Day Grid View (Month) ===== */
@@ -124,11 +175,17 @@
 
 /* ===== Events ===== */
 
-/* Ensure event cards respect documented z-index hierarchy and sit above time bands */
-.fc-event,
+/* Ensure .fc-event-main sits in the same stacking context as its parent card */
 .fc-event-main {
   position: relative;
   z-index: 2;
+  padding: 0;
+  background: none;
+  color: inherit;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* FullCalendar's positioned event container - must fill the time slot */
@@ -138,24 +195,96 @@
   padding: 2px; /* Small padding for visual separation */
 }
 
-/* Inner wrappers - let SolidEventCard handle all styling */
+/* Event card wrapper — glass panel aesthetic.
+ * Background/border/::before apply here as a fallback layer; the primary
+ * visual glass surface is rendered by .solid-event-card inside. */
 .fc-event {
-  border: none;
-  background: none;
   padding: 0;
   margin: 0;
   height: 100%;
   width: 100%;
+  position: relative;
+  z-index: 3;
+  border-radius: 0.875rem; /* 14px — matches --event-radius in SolidEventCard.css */
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  overflow: hidden;
+
+  /* No base background — colour comes from [data-timezone] rules */
+  background: none !important;
+
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 40px rgba(255, 255, 255, 0.05);
+
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
 }
 
-.fc-event-main {
-  padding: 0;
-  background: none;
-  color: inherit;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
+/* ── Time-of-day coloured gradients ── */
+
+.fc-event[data-timezone='morning'] {
+  background: radial-gradient(
+    circle at 25% 20%,
+    rgba(255, 200, 120, 0.95),
+    rgba(255, 165, 85, 0.85) 50%,
+    rgba(60, 30, 90, 0.98) 100%
+  ) !important;
+}
+
+.fc-event[data-timezone='afternoon'] {
+  background: radial-gradient(
+    circle at 30% 25%,
+    rgba(110, 190, 255, 0.95),
+    rgba(80, 150, 255, 0.85) 55%,
+    rgba(30, 40, 90, 0.99) 100%
+  ) !important;
+}
+
+/* brightness(0.92) baked into RGB values to avoid filter applying to card text */
+.fc-event[data-timezone='evening'] {
+  background: radial-gradient(
+    circle at 30% 20%,
+    rgba(184, 110, 235, 0.98),
+    rgba(156, 87, 235, 0.88) 55%,
+    rgba(32, 18, 74, 1) 100%
+  ) !important;
+}
+
+/* brightness(0.93) baked into RGB values to avoid filter applying to card text */
+.fc-event[data-timezone='night'] {
+  background: radial-gradient(
+    circle at 35% 15%,
+    rgba(121, 177, 237, 0.65),
+    rgba(56, 102, 205, 0.8) 45%,
+    rgba(9, 14, 42, 1) 100%
+  ) !important;
+}
+
+/* Subtle luminous top-edge highlight */
+.fc-event::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.875rem; /* same as .fc-event */
+  pointer-events: none;
+  z-index: 0;
+
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05),
+    transparent 55%
+  );
+}
+
+.fc-event:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    0 0 40px rgba(255, 255, 255, 0.06);
 }
 
 /* Hide default FC event title/time since SolidEventCard renders them */
@@ -187,12 +316,16 @@
 /* ===== Current Time Indicator ===== */
 
 .fc-timegrid-now-indicator-line {
-  border-color: var(--accent);
+  border-color: rgba(255, 80, 80, 0.65) !important;
   border-width: 2px;
+  box-shadow: 0 0 8px rgba(255, 80, 80, 0.4);
+  position: relative;
+  z-index: 2;
 }
 
 .fc-timegrid-now-indicator-arrow {
-  border-top-color: var(--accent);
+  border-top-color: rgba(255, 80, 80, 0.65) !important;
+  z-index: 2;
 }
 
 /* ===== Selection & Interaction ===== */
@@ -309,22 +442,105 @@
 
 /* ===== TimeBands Integration ===== */
 
-/* Base .schedule-bands-container styling and time-band visuals
+/* Base .schedule-bands styling and time-band visuals
  * live in TimeBands.css. This file focuses on integrating those
  * bands with FullCalendar (e.g. layering, alignment, and any
  * calendar-specific responsive tweaks).
  */
 
-/* Z-index hierarchy (from top to bottom):
+/* Z-index hierarchy within .schedule-calendar-container stacking context (from top to bottom):
  * 1000: Modals and overlays
- * 10: Toolbar
+ * 10: Toolbar (sibling, above container)
  * 3: Event cards (on hover)
  * 2: Event cards (normal)
  * 2: Current-time indicator
- * 2: Grid lines
- * 1: Time-of-day bands
- * 0: Decorative background
+ * 1: .fc transparent grid (position: relative; z-index: 1 — above time-of-day bands)
+ * 0: Time-of-day bands (.schedule-bands — same z-index as ::before; DOM order wins)
+ * 0: Nebula glow layer (::before pseudo-element — painted before child elements)
+ * -: .schedule-calendar-container dark isolation surface
+ * -: Global cosmic background (blocked by isolation surface)
  */
+
+/* .schedule-calendar-container is the glass viewport over the cosmic background.
+ *   background: low-opacity dark so global stars bleed through (glass feel)
+ *   backdrop-filter: blurs the global background *behind* the container — gives glass depth
+ *     NOTE: this is safe because the bands live INSIDE the container,
+ *     not behind it, so they are not blurred.
+ *   box-shadow: inset glows add internal depth without a separate element
+ *   isolation: isolate + overflow: clip confine the z-index stack and clip to border-radius
+ *
+ * Stacking order inside (z-index, bottom → top):
+ *   0: ::before nebula radial glows (painted before child elements at same z-index)
+ *   0: .schedule-bands (semantic time-of-day zones; DOM order above ::before)
+ *   1: .fc transparent grid (explicit z-index: 1, above bands)
+ *   3: .fc-event cards
+ */
+.schedule-calendar-container {
+  position: relative;
+  isolation: isolate;
+  background: rgba(8, 14, 32, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 12px;
+  overflow: clip;
+  box-shadow:
+    inset 0 0 120px rgba(40, 80, 180, 0.15),
+    inset 0 0 200px rgba(120, 60, 255, 0.1);
+}
+
+/* Nebula glow layer — stronger radial gradients at higher opacity to restore
+ * the cosmic vibrancy seen in the approved mockup.
+ * Sits below time-of-day bands (same z-index: 0; DOM order determines stacking). */
+.schedule-calendar-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 25% 20%,
+      rgba(80, 140, 255, 0.35),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 75% 70%,
+      rgba(170, 120, 255, 0.35),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 50% 85%,
+      rgba(60, 180, 255, 0.25),
+      transparent 65%
+    );
+  opacity: 0.9;
+  animation: nebulaBreath 24s ease-in-out infinite alternate;
+}
+
+@keyframes nebulaBreath {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 0.98;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schedule-calendar-container::before {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
+/* Remove any background coloring from time grid rows and slots.
+ * Time-of-day context is provided exclusively by the TimeBands layer,
+ * not by row-level backgrounds. */
+.fc-timegrid-slots td,
+.fc-timegrid-slots tr,
+.fc-timegrid-slot {
+  background: none !important;
+}
 
 /* ===== Toolbar Styling ===== */
 
@@ -418,6 +634,43 @@
   .fc-timegrid-slot {
     /* Maintain minute-based scaling on mobile (slightly reduced from default) */
     height: calc(var(--minute-unit, 1.2px) * 12.5);
+    /* Slightly reduce grid visibility on small screens */
+    border-top: 1px solid rgba(255, 255, 255, 0.045) !important;
+  }
+
+  /* ── Mobile aesthetic refinement ── */
+
+  /* Reduce internal nebula glow intensity */
+  .schedule-calendar-container::before {
+    opacity: 0.7;
+  }
+
+  /* Slightly soften semantic band strength across all time-of-day bands */
+  .schedule-band.morning,
+  .schedule-band.afternoon,
+  .schedule-band.evening,
+  .schedule-band.night {
+    opacity: 0.9;
+  }
+
+  /* Softer event card shadow on small screens — colour identity preserved */
+  .fc-event {
+    box-shadow:
+      0 8px 28px rgba(0, 0, 0, 0.45),
+      0 0 24px rgba(255, 255, 255, 0.03);
+  }
+
+  /* Softer luminous top edge */
+  .fc-event::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.04),
+      transparent 45%
+    );
+  }
+
+  .fc-timegrid-slot-minor {
+    border-top: 1px solid rgba(255, 255, 255, 0.02) !important;
   }
 }
 

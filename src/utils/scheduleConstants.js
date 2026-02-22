@@ -19,6 +19,11 @@ export const VALID_EVENT_TYPES = Object.values(EVENT_TYPES)
 
 // Schedule time range constants (in hours, 24-hour format)
 export const SCHEDULE_START_HOUR = 7
+
+// Time-of-day hour boundaries — single source of truth for eventDidMount classification
+// and TimeBands visual zones. Matches schedule-ui-spec.md §time-bands.
+// Morning 07:00–12:00, Afternoon 12:00–18:00, Evening 18:00–23:00, Night 23:00–07:00.
+export const TIME_ZONE_HOURS = { MORNING: 7, AFTERNOON: 12, EVENING: 18, NIGHT: 23 }
 export const SCHEDULE_END_HOUR = 24 // Exclusive end marker: 24:00 represents midnight/end of day. This is an internal
 // representation for range calculations (e.g., hour < SCHEDULE_END_HOUR). Events at midnight (00:00) are
 // stored/displayed as 0, but this constant helps boundary checks treat them as "end of previous day".

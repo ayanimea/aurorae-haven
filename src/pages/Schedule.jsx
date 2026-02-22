@@ -84,7 +84,7 @@ import {
   toFullCalendarEvents,
   createEventFromSlot
 } from '../utils/eventAdapter'
-import { EVENT_TYPES } from '../utils/scheduleConstants'
+import { EVENT_TYPES, TIME_ZONE_HOURS } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
 import '../assets/styles/fullcalendar-custom.css'
@@ -105,9 +105,6 @@ import '../components/ErrorBoundary.css'
 function Schedule() {
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
-
-  // Toolbar ref for dynamic height measurement (aligns time-of-day bands)
-  const toolbarRef = useRef(null)
 
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
@@ -148,8 +145,7 @@ function Schedule() {
         if (typeof updatedValue === 'boolean') {
           setUse24HourFormat(updatedValue)
         }
-      } catch (_err) {
-      }
+      } catch (_err) {}
     }
 
     // Handle same-tab updates via custom 'settingsUpdated' event
@@ -160,8 +156,7 @@ function Schedule() {
         if (typeof updatedValue === 'boolean') {
           setUse24HourFormat(updatedValue)
         }
-      } catch (_err) {
-      }
+      } catch (_err) {}
     }
 
     window.addEventListener('storage', handleStorage)
@@ -228,31 +223,6 @@ function Schedule() {
     loadEvents()
   }, [loadEvents])
 
-  // Dynamically measure and sync toolbar height with TimeBands CSS variable
-  // This ensures time-of-day bands align with the time grid after layout changes
-  // Currently measures on mount, view changes, and window resize
-  // TODO: Consider ResizeObserver for more robust detection of toolbar height changes
-  // (e.g., when date label length changes, isLoading state changes, or fonts load)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: view is intentionally included to re-measure toolbar when calendar view changes (day/week/month toolbars differ in height)
-  useEffect(() => {
-    const updateToolbarHeight = () => {
-      if (toolbarRef.current) {
-        const height = toolbarRef.current.offsetHeight
-        document.documentElement.style.setProperty(
-          '--toolbar-height',
-          `${height}px`
-        )
-      }
-    }
-
-    // Measure on mount and view changes (toolbar may resize)
-    updateToolbarHeight()
-
-    // Re-measure on window resize (responsive toolbar height)
-    window.addEventListener('resize', updateToolbarHeight)
-    return () => window.removeEventListener('resize', updateToolbarHeight)
-  }, [view]) // Re-run when view changes as toolbar buttons may affect height
-
   // Cleanup success message timeout on unmount to prevent setState on unmounted component
   useEffect(() => {
     return () => {
@@ -277,8 +247,7 @@ function Schedule() {
         setShowActionModal(true)
       } else {
       }
-    } catch (_err) {
-    }
+    } catch (_err) {}
   }, [])
 
   const handleSaveEvent = async (eventData) => {
@@ -356,8 +325,7 @@ function Schedule() {
       setSelectedEventType(null)
       // Clear any errors when closing modal
       setError('')
-    } catch (_err) {
-    }
+    } catch (_err) {}
   }
 
   const handleScheduleEvent = (eventType) => {
@@ -606,23 +574,13 @@ function Schedule() {
     [handleEventContextMenu]
   )
 
-  // Cleanup all context menu handlers on component unmount
-  // Prevents memory leaks if component unmounts before eventWillUnmount fires
-  useEffect(() => {
-    return () => {
-    }
-  }, [])
-
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
         <div className='schedule-container'>
           <div className='schedule-wrapper'>
-            {/* Only render time-of-day bands for time grid views (not month view) */}
-            {(view === 'day' || view === 'week') && <TimeBands />}
-
-            {/* Custom Toolbar - Wrapped for dynamic height measurement */}
-            <div ref={toolbarRef}>
+            {/* Custom Toolbar */}
+            <div>
               <CustomToolbar
                 date={date}
                 view={getFullCalendarView(view)}
@@ -655,58 +613,83 @@ function Schedule() {
               />
             </div>
 
-            {/* FullCalendar - Wrapped for aria-label support */}
-            <div role='region' aria-label='Event calendar'>
-              <FullCalendar
-                ref={calendarRef}
-                plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-                initialView={getFullCalendarView(view)}
-                initialDate={date}
-                events={fullCalendarEvents}
-                slotMinTime={slotMinTime}
-                slotMaxTime={slotMaxTime}
-                slotDuration='00:15:00'
-                slotLabelInterval='01:00:00'
-                allDaySlot={false}
-                headerToolbar={false}
-                height='auto'
-                expandRows={true}
-                slotLabelFormat={{
-                  hour: use24HourFormat ? '2-digit' : 'numeric',
-                  minute: '2-digit',
-                  hour12: !use24HourFormat,
-                  meridiem: use24HourFormat ? false : 'short'
-                }}
-                eventTimeFormat={{
-                  hour: use24HourFormat ? '2-digit' : 'numeric',
-                  minute: '2-digit',
-                  hour12: !use24HourFormat
-                }}
-                firstDay={1}
-                selectable={true}
-                selectMirror={true}
-                editable={false}
-                eventClick={handleEventClick}
-                select={handleDateSelect}
-                eventMouseEnter={handleEventMouseEnter}
-                eventWillUnmount={handleEventWillUnmount}
-                eventContent={(eventInfo) => (
-                  <SolidEventCard
-                    event={{
-                      ...eventInfo.event,
-                      title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
-                      resource: {
-                        type: eventInfo.event.extendedProps?.type,
-                        originalEvent:
-                          eventInfo.event.extendedProps?.originalEvent,
-                        preparationTime:
-                          eventInfo.event.extendedProps?.preparationTime,
-                        travelTime: eventInfo.event.extendedProps?.travelTime
-                      }
-                    }}
-                  />
-                )}
-              />
+            {/* Calendar area: TimeBands + FullCalendar wrapped in a positioned container
+                 so bands (z-index: 0, position: absolute) sit behind .fc which renders
+                 on top via DOM order within the same stack level. */}
+            <div className='schedule-calendar-container'>
+              {/* Only render time-of-day bands for time grid views (not month view) */}
+              {(view === 'day' || view === 'week') && <TimeBands />}
+
+              {/* FullCalendar - Wrapped for aria-label support */}
+              <div role='region' aria-label='Event calendar'>
+                <FullCalendar
+                  ref={calendarRef}
+                  plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+                  initialView={getFullCalendarView(view)}
+                  initialDate={date}
+                  events={fullCalendarEvents}
+                  nowIndicator={true}
+                  slotMinTime={slotMinTime}
+                  slotMaxTime={slotMaxTime}
+                  slotDuration='00:15:00'
+                  slotLabelInterval='01:00:00'
+                  allDaySlot={false}
+                  headerToolbar={false}
+                  height='auto'
+                  expandRows={true}
+                  slotLabelFormat={{
+                    hour: use24HourFormat ? '2-digit' : 'numeric',
+                    minute: '2-digit',
+                    hour12: !use24HourFormat,
+                    meridiem: use24HourFormat ? false : 'short'
+                  }}
+                  eventTimeFormat={{
+                    hour: use24HourFormat ? '2-digit' : 'numeric',
+                    minute: '2-digit',
+                    hour12: !use24HourFormat
+                  }}
+                  firstDay={1}
+                  selectable={true}
+                  selectMirror={true}
+                  editable={false}
+                  eventClick={handleEventClick}
+                  select={handleDateSelect}
+                  eventMouseEnter={handleEventMouseEnter}
+                  eventWillUnmount={handleEventWillUnmount}
+                  eventDidMount={(info) => {
+                    if (!info.event.start) return
+                    const hour = info.event.start.getHours()
+                    if (
+                      hour < TIME_ZONE_HOURS.MORNING ||
+                      hour >= TIME_ZONE_HOURS.NIGHT
+                    ) {
+                      info.el.dataset.timezone = 'night'
+                    } else if (hour < TIME_ZONE_HOURS.AFTERNOON) {
+                      info.el.dataset.timezone = 'morning'
+                    } else if (hour < TIME_ZONE_HOURS.EVENING) {
+                      info.el.dataset.timezone = 'afternoon'
+                    } else {
+                      info.el.dataset.timezone = 'evening'
+                    }
+                  }}
+                  eventContent={(eventInfo) => (
+                    <SolidEventCard
+                      event={{
+                        ...eventInfo.event,
+                        title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
+                        resource: {
+                          type: eventInfo.event.extendedProps?.type,
+                          originalEvent:
+                            eventInfo.event.extendedProps?.originalEvent,
+                          preparationTime:
+                            eventInfo.event.extendedProps?.preparationTime,
+                          travelTime: eventInfo.event.extendedProps?.travelTime
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </div>
             </div>
           </div>
 
@@ -719,7 +702,8 @@ function Schedule() {
           {error && (
             <div className='error-message' role='alert'>
               {error}
-              <button type="button"
+              <button
+                type='button'
                 onClick={() => setError('')}
                 className='error-dismiss'
                 aria-label='Dismiss error'
@@ -732,7 +716,8 @@ function Schedule() {
           {successMessage && (
             <div className='success-message' role='status'>
               {successMessage}
-              <button type="button"
+              <button
+                type='button'
                 onClick={() => setSuccessMessage('')}
                 className='success-dismiss'
                 aria-label='Dismiss message'

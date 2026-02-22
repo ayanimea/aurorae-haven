@@ -6,10 +6,10 @@
  */
 
 :root {
-  /* Event card colors - EXACT canonical values */
-  --event-bg: #161b22;
-  --event-border: #2a3240;
-  --event-text: #e6edf3;
+  /* Event card colors */
+  --event-bg: rgba(18, 28, 50, 0.85);
+  --event-border: rgba(255, 255, 255, 0.08);
+  --event-text: rgba(255, 255, 255, 0.92);
   --event-text-dim: rgba(230, 237, 243, 0.7);
 
   /* Event card measurements */
@@ -25,13 +25,12 @@
   /* Fill parent container */
   height: 100%;
   width: 100%;
-  /* Minimum height derived from minute-based scaling (15 minutes = 15 * --minute-unit) */
-  /* This ensures 15-minute events remain proportional across viewports */
   min-height: calc(var(--minute-unit, 1.2px) * 15);
 
-  /* Solid background - no glass effect */
-  background: var(--event-bg);
-  border: 1px solid var(--event-border);
+  /* Transparent so .fc-event[data-timezone] gradient shows through */
+  /* Border handled by parent .fc-event to avoid double-border */
+  background: transparent;
+  border: none;
   border-radius: var(--event-radius);
 
   padding: var(--event-padding-v) var(--event-padding-h);
@@ -41,10 +40,10 @@
   flex-direction: column;
   justify-content: flex-start;
 
-  /* Dual-layer shadow for soft elevation */
+  /* Diffused depth shadow — not rectangular, no heavy elevation */
   box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    0 4px 18px rgba(0, 0, 0, 0.28),
+    0 1px 4px rgba(0, 0, 0, 0.18);
 
   /* Typography */
   color: var(--event-text);
@@ -56,17 +55,21 @@
 
   /* Smooth transitions */
   transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
+    transform 0.2s ease,
+    box-shadow 0.25s ease,
     border-color 0.15s ease;
 }
+
+/* Note: top-edge luminous highlight is provided by the parent .fc-event::before
+ * in fullcalendar-custom.css to avoid duplicate luminous layers over the
+ * chromatic gradient. A second ::before here would stack and over-brighten
+ * the card's top edge. */
 
 .solid-event-card:hover {
   transform: translateY(-1px);
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  border-color: rgba(134, 245, 224, 0.3); /* Subtle accent on hover */
+    0 6px 24px rgba(0, 0, 0, 0.35),
+    0 0 10px rgba(140, 180, 255, 0.08);
 }
 
 .solid-event-card:active {
@@ -76,11 +79,13 @@
 /* Event title - prominent */
 .event-title {
   display: block;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
   line-height: 1.4; /* Explicit line-height to ensure height > 0 */
+  letter-spacing: 0.02em;
   margin-bottom: 0.25rem;
   color: var(--event-text);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   flex-shrink: 0; /* Prevent flex container from collapsing */
   min-height: 1.4em; /* Ensure minimum visible height */
   overflow: visible; /* Don't collapse with overflow */
@@ -146,4 +151,15 @@
   .event-pre-activities {
     font-size: 0.75rem;
   }
+}
+
+/* Softer event card on narrow screens — keep transparent, just reduce shadow */
+/* Note: border is handled by the parent .fc-event wrapper; no border-color set here */
+@media (max-width: 768px) {
+  .solid-event-card {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Note: Top-edge highlight is provided by .fc-event::before only.
+   * No ::before rule defined here to avoid duplicate luminous layers. */
 }
