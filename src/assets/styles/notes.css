@@ -587,7 +587,7 @@ textarea:focus {
   border-radius: 12px;
   border: 1px solid var(--line);
   display: none;
-  z-index: 60;
+  z-index: var(--z-toast);
 }
 
 /* === SJ secure v12.3 additions (non-breaking) === */

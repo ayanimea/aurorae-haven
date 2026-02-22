@@ -46,9 +46,10 @@
   --z-content: 50;
   --z-sidebar: 100;   /* Overlay sidebars (e.g. brain-dump note list) */
   --z-editor: 101;    /* Inline editor surfaces above sidebars */
-  --z-dropdown: 102;  /* Context menus and dropdowns */
-  --z-modal: 200;     /* Modal overlays and backdrops */
-  --z-toast: 300;     /* Toasts and transient notifications */
+  --z-dropdown: 102;      /* Context menus and dropdowns */
+  --z-notification: 150;  /* In-page error/status banners (below modals, above dropdowns) */
+  --z-modal: 200;         /* Modal overlays and backdrops */
+  --z-toast: 300;         /* Toasts and transient notifications */
 
   /* ===== NAVIGATION DIMENSIONS ===== */
   /* Shell padding values for different viewport sizes */

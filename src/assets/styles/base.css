@@ -17,11 +17,15 @@
   --text: var(--ink);
   --text-primary: var(--ink);
   --text-secondary: var(--dim);
+  --text-bright: rgba(255, 255, 255, 0.98);
   --border: var(--line);
   --danger: var(--error);
   --alert: var(--error);
+  --accent: var(--mint);
+  --bg: rgba(16, 20, 44, 0.95);
   --bg-primary: rgba(10, 14, 38, 0.95);
   --dark: rgba(10, 14, 38, 0.95);
+  --base: var(--line);
   --bg-secondary: rgba(16, 20, 44, 0.32);
   --bg-hover: rgba(140, 150, 210, 0.12);
 }
