@@ -22,12 +22,15 @@
   --danger: var(--error);
   --alert: var(--error);
   --accent: var(--mint);
+  --accent-hover: color-mix(in srgb, var(--mint) 85%, white); /* Lighter tint for hover states */
+  --paper: #060a1b;      /* Darkest surface colour — readable on --mint background */
   --bg: rgba(16, 20, 44, 0.95);
   --bg-primary: rgba(10, 14, 38, 0.95);
   --dark: rgba(10, 14, 38, 0.95);
   --base: var(--line);
   --bg-secondary: rgba(16, 20, 44, 0.32);
   --bg-hover: rgba(140, 150, 210, 0.12);
+  --glass-md: rgba(18, 22, 52, 0.58); /* Mid-opacity glass surface (between glass-lo and glass-hi) */
 }
 
 * {

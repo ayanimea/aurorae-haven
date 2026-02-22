@@ -85,6 +85,11 @@
   --radius-xl: 1rem; /* 16px */
 
   /* ===== TRANSITIONS ===== */
+  /* NOTE: These composite tokens are defined for future use but are not yet
+   * adopted. The canonical transition pattern in this codebase is:
+   *   transition: <property> var(--dur) var(--ease);
+   * where --dur = 240ms and --ease = cubic-bezier(0.25, 0.1, 0.25, 1).
+   * Use these shorthand tokens for new work when a single-value transition suffices. */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;

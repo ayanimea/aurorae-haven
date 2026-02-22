@@ -36,7 +36,9 @@
   }
 }
 
-.context-menu-item {
+/* Scoped inside .item-action-context-menu to avoid conflicting with the global
+ * .context-menu-item rule in modal.css (which styles the Notes ContextMenu). */
+.item-action-context-menu .context-menu-item {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -47,19 +49,19 @@
   color: var(--text);
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background var(--dur) var(--ease);
   text-align: left;
 }
 
-.context-menu-item:hover {
+.item-action-context-menu .context-menu-item:hover {
   background: var(--bg-hover);
 }
 
-.context-menu-item-danger {
+.item-action-context-menu .context-menu-item-danger {
   color: var(--danger);
 }
 
-.context-menu-item-danger:hover {
+.item-action-context-menu .context-menu-item-danger:hover {
   background: rgba(255, 59, 48, 0.1);
 }
 
