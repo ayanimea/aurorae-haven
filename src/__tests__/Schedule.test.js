@@ -5,10 +5,14 @@ import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 import EventService from '../services/EventService'
 
+// Hoisted so the mock factory below can reference it before module init
+const capturedHandlers = vi.hoisted(() => ({ eventDidMount: null }))
+
 // Mock FullCalendar to avoid ESM parsing issues
 vi.mock('@fullcalendar/react', () => {
   return {
     default: function FullCalendar(props) {
+      capturedHandlers.eventDidMount = props.eventDidMount
       return (
         <div className='fc' data-testid='fullcalendar'>
           <div className='fc-view'>{props.initialView}</div>
@@ -220,25 +224,30 @@ describe('Schedule Component with FullCalendar', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Unit tests for the eventDidMount hour→timezone boundary logic.
-// These mirror the TIME_ZONE_HOURS constant and the if-chain in Schedule.jsx
-// exactly (MORNING 7, AFTERNOON 12, EVENING 18, NIGHT 23) so that any
-// divergence between the constant and the CSS gradient selectors is caught
-// immediately.
+// Integration tests for the eventDidMount hour→timezone boundary logic.
+// We capture the real eventDidMount prop from the FullCalendar mock and call
+// it with a fake info object, asserting the resulting dataset.timezone value.
+// This guarantees divergence between the TIME_ZONE_HOURS constant and the CSS
+// gradient selectors is caught immediately — a local classify() helper would
+// not detect mismatches in the production component.
 // ---------------------------------------------------------------------------
 describe('eventDidMount hour→timezone classification', () => {
-  // Duplicate of TIME_ZONE_HOURS from Schedule.jsx — kept in sync intentionally
-  const TIME_ZONE_HOURS = { MORNING: 7, AFTERNOON: 12, EVENING: 18, NIGHT: 23 }
+  beforeEach(async () => {
+    capturedHandlers.eventDidMount = null
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue([])
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+    EventService.getEventsForDays.mockResolvedValue([])
+    render(<Schedule />)
+    await waitFor(() => expect(capturedHandlers.eventDidMount).not.toBeNull())
+  })
 
-  function classify(hour) {
-    if (
-      hour < TIME_ZONE_HOURS.MORNING ||
-      hour >= TIME_ZONE_HOURS.NIGHT
-    ) return 'night'
-    if (hour < TIME_ZONE_HOURS.AFTERNOON) return 'morning'
-    if (hour < TIME_ZONE_HOURS.EVENING) return 'afternoon'
-    return 'evening'
-  }
+  afterEach(() => {
+    jest.useRealTimers()
+  })
 
   const cases = [
     // night band (00:00–06:59)
@@ -262,6 +271,14 @@ describe('eventDidMount hour→timezone classification', () => {
   ]
 
   test.each(cases)('hour %i → %s', (hour, expected) => {
-    expect(classify(hour)).toBe(expected)
+    const el = document.createElement('div')
+    capturedHandlers.eventDidMount({ event: { start: new Date(2025, 0, 1, hour) }, el })
+    expect(el.dataset.timezone).toBe(expected)
+  })
+
+  test('skips events with no start time (no data-timezone set)', () => {
+    const el = document.createElement('div')
+    capturedHandlers.eventDidMount({ event: { start: null }, el })
+    expect(el.dataset.timezone).toBeUndefined()
   })
 })

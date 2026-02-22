@@ -577,12 +577,6 @@ function Schedule() {
     [handleEventContextMenu]
   )
 
-  // Cleanup all context menu handlers on component unmount
-  // Prevents memory leaks if component unmounts before eventWillUnmount fires
-  useEffect(() => {
-    return () => {}
-  }, [])
-
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
