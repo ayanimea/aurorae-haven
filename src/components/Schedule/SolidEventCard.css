@@ -28,8 +28,9 @@
   min-height: calc(var(--minute-unit, 1.2px) * 15);
 
   /* Transparent so .fc-event[data-timezone] gradient shows through */
+  /* Border handled by parent .fc-event to avoid double-border */
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: var(--event-radius);
 
   padding: var(--event-padding-v) var(--event-padding-h);
@@ -59,21 +60,10 @@
     border-color 0.15s ease;
 }
 
-/* Top-edge luminous highlight — glass catching ambient light */
-.solid-event-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--event-radius);
-  pointer-events: none;
-  z-index: 0;
-
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.05),
-    transparent 40%
-  );
-}
+/* Note: top-edge luminous highlight is provided by the parent .fc-event::before
+ * in fullcalendar-custom.css to avoid duplicate luminous layers over the
+ * chromatic gradient. A second ::before here would stack and over-brighten
+ * the card's top edge. */
 
 .solid-event-card:hover {
   transform: translateY(-1px);
