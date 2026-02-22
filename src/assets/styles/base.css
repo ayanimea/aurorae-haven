@@ -11,6 +11,19 @@
   --blur: saturate(135%) blur(10px);
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --dur: 240ms;
+
+  /* ===== SEMANTIC ALIASES ===== */
+  /* Single source of truth — map generic names to palette tokens */
+  --text: var(--ink);
+  --text-primary: var(--ink);
+  --text-secondary: var(--dim);
+  --border: var(--line);
+  --danger: var(--error);
+  --alert: var(--error);
+  --bg-primary: rgba(10, 14, 38, 0.95);
+  --dark: rgba(10, 14, 38, 0.95);
+  --bg-secondary: rgba(16, 20, 44, 0.32);
+  --bg-hover: rgba(140, 150, 210, 0.12);
 }
 
 * {

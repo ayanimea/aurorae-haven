@@ -125,7 +125,7 @@
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 4px;
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -183,7 +183,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: var(--z-modal);
   padding: 20px;
 }
 

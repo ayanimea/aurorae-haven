@@ -357,7 +357,7 @@
   cursor: col-resize;
   transition: background var(--dur) var(--ease);
   position: relative;
-  z-index: 1;
+  z-index: var(--z-base);
 }
 
 .resize-handle:hover,

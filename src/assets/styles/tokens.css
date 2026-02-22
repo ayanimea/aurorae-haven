@@ -38,14 +38,17 @@
 
   /* ===== Z-INDEX LAYERS ===== */
   /* Stacking order for overlays and modals */
-  --z-base: 1;
-  --z-mobile-menu: 40;
+  --z-base: 1;        /* Local stacking contexts (resize handles, cards) */
+  --z-appbar: 20;     /* Fixed top/bottom app bar */
+  --z-mobile-menu: 40; /* Sliding navigation drawer */
+  /* NOTE: --z-content (50) is intentionally above --z-mobile-menu (40) */
+  /* and is reserved for future content-layer use; do not assign to page content */
   --z-content: 50;
-  --z-sidebar: 100;
-  --z-editor: 101;
-  --z-dropdown: 102;
-  --z-modal: 200;
-  --z-toast: 300;
+  --z-sidebar: 100;   /* Overlay sidebars (e.g. brain-dump note list) */
+  --z-editor: 101;    /* Inline editor surfaces above sidebars */
+  --z-dropdown: 102;  /* Context menus and dropdowns */
+  --z-modal: 200;     /* Modal overlays and backdrops */
+  --z-toast: 300;     /* Toasts and transient notifications */
 
   /* ===== NAVIGATION DIMENSIONS ===== */
   /* Shell padding values for different viewport sizes */

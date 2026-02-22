@@ -5,7 +5,7 @@
  * - Touch targets: var(--touch-min), var(--touch-comfortable)
  * - Icon sizes: var(--icon-sm), var(--icon-md)
  * - Font sizes: var(--font-xs), var(--font-sm)
- * - Z-index: var(--z-mobile-menu), var(--z-content), var(--z-editor)
+ * - Z-index: var(--z-appbar), var(--z-mobile-menu), var(--z-editor)
  * - Shell padding: var(--shell-padding-narrow), var(--shell-padding-compact), var(--shell-padding-comfortable)
  */
 
@@ -31,7 +31,7 @@ body.density-cozy {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 20;
+  z-index: var(--z-appbar);
   background: rgba(16, 20, 44, 0.3);
   backdrop-filter: var(--blur);
   border-bottom: 1px solid var(--line);
@@ -335,7 +335,7 @@ body.density-cozy {
   backdrop-filter: var(--blur);
   border-top: 1px solid var(--line);
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 19;
+  z-index: calc(var(--z-appbar) - 1);
   animation: slideUp 0.2s ease;
 }
 
