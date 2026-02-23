@@ -286,6 +286,9 @@ async function seedIndexedDB(page, routines, events) {
           try {
             tx = db.transaction(['routines', 'schedule'], 'readwrite')
           } catch (err) {
+            // Close the connection on the error path to avoid leaking it
+            // across test retries.
+            db.close()
             reject(err)
             return
           }

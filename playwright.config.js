@@ -78,7 +78,10 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: 'npm run preview',
+    // Build first so the preview server always has a fresh dist/ to serve.
+    // This ensures a clean checkout can run `npm run test:e2e` without a
+    // separate manual build step.
+    command: 'npm run build && npm run preview',
     url: BASE_URL,
     reuseExistingServer: true,
     timeout: 120000
