@@ -4,8 +4,11 @@ import { loadEnv } from 'vite'
 
 // Load env the same way Vite does so that .env / .env.production are respected
 // even when running Playwright directly (Node processes don't auto-load .env files).
-// Priority: process.env override > .env.* files > default '/'
-const viteEnv = loadEnv(process.env.NODE_ENV || 'test', process.cwd(), '')
+// Use 'production' mode in CI (matches how `vite preview` serves the built output)
+// and 'development' locally. An explicit VITE_BASE_URL env var always takes precedence.
+const mode =
+  process.env.NODE_ENV || (process.env.CI ? 'production' : 'development')
+const viteEnv = loadEnv(mode, process.cwd(), '')
 const rawBasePath =
   process.env.VITE_BASE_URL ?? viteEnv.VITE_BASE_URL ?? '/'
 

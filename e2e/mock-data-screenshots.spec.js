@@ -30,6 +30,7 @@ const screenshotDir = path.resolve('playwright-screenshots')
 
 function buildMockTasks() {
   const now = new Date().toISOString()
+  const nowMs = Date.now()
   return {
     urgent_important: [
       {
@@ -64,7 +65,8 @@ function buildMockTasks() {
         completed: true,
         createdAt: now,
         dueDate: null,
-        completedAt: now
+        // completedAt is stored as a numeric timestamp (Date.now()) in production
+        completedAt: nowMs
       }
     ],
     urgent_not_important: [
@@ -298,8 +300,14 @@ async function seedIndexedDB(page, routines, events) {
             db.close()
             resolve()
           }
-          tx.onerror = () => reject(tx.error)
-          tx.onabort = () => reject(new Error('Transaction aborted'))
+          tx.onerror = () => {
+            db.close()
+            reject(tx.error)
+          }
+          tx.onabort = () => {
+            db.close()
+            reject(new Error('Transaction aborted'))
+          }
         }
       })
     },
@@ -356,7 +364,14 @@ test.describe('Mock-data screenshots: Tasks, Routines, Schedule', () => {
 
     // Step 2: Seed IndexedDB with mock routines (and schedule events at the
     // same time, since both stores exist now).
-    const todayStr = new Date().toISOString().slice(0, 10)
+    // Use the local date (not UTC) so seeded events match the date the
+    // Schedule UI displays (which also uses local date strings).
+    const today = new Date()
+    const todayStr = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0')
+    ].join('-')
     await seedIndexedDB(page, buildMockRoutines(), buildMockEvents(todayStr))
 
     // Step 3: Reload the page so the Routines component re-fetches from IndexedDB
@@ -387,7 +402,13 @@ test.describe('Mock-data screenshots: Tasks, Routines, Schedule', () => {
     })
 
     // Step 2: Seed both stores
-    const todayStr = new Date().toISOString().slice(0, 10)
+    // Use local date to match the Schedule UI's date display (local, not UTC)
+    const today = new Date()
+    const todayStr = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0')
+    ].join('-')
     await seedIndexedDB(page, buildMockRoutines(), buildMockEvents(todayStr))
 
     // Step 3: Navigate to the Schedule tab
@@ -397,8 +418,9 @@ test.describe('Mock-data screenshots: Tasks, Routines, Schedule', () => {
     // Wait for FullCalendar to render its time-grid
     await page.waitForSelector('.fc-timegrid-slot', { timeout: 10000 })
 
-    // Give event cards time to appear after the calendar mounts
-    await page.waitForTimeout(1000)
+    // Wait for at least one event card to appear before screenshotting,
+    // avoiding a fixed timeout that can be flaky on slower machines
+    await page.waitForSelector('.fc-timegrid-event', { timeout: 10000 })
 
     await page.screenshot({
       path: path.join(screenshotDir, 'mock-03-schedule.png'),
