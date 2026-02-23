@@ -95,7 +95,7 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 
 .btn-icon:hover {
@@ -163,7 +163,10 @@
   padding: 16px;
   backdrop-filter: var(--blur);
   box-shadow: var(--shadow);
-  transition: all var(--dur) var(--ease);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
 }
 
 .template-card:hover {

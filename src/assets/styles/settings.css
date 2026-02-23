@@ -78,7 +78,7 @@
 .settings-hint {
   display: block;
   margin-top: 0.25rem;
-  color: var(--dim, #666);
+  color: var(--dim);
   font-size: 0.9rem;
 }
 
@@ -101,7 +101,7 @@
   display: block;
   margin-top: 0.25rem;
   margin-left: 1.5rem;
-  color: var(--dim, #666);
+  color: var(--dim);
   font-size: 0.9rem;
 }
 
@@ -123,7 +123,7 @@
 }
 
 .settings-button:focus {
-  outline: 2px solid var(--ink, #000);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -158,7 +158,7 @@
 
 .settings-button-warning {
   background-color: var(--warning, #ffc107);
-  color: var(--ink, #333);
+  color: var(--ink);
 }
 
 .settings-button-warning:hover:not(:disabled) {
@@ -198,7 +198,7 @@
 }
 
 .settings-placeholder-text {
-  color: var(--dim, #666);
+  color: var(--dim);
   font-size: 0.9rem;
 }
 

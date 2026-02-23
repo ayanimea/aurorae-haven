@@ -260,7 +260,9 @@ Ask for clarification or preserve the existing structure.
   cursor: pointer;
   opacity: 0.9;
   transform: translateY(-1px);
-  transition: all 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1657,7 +1659,6 @@ Ask for clarification or preserve the existing structure.
     /* Don't override max-height, let .calendar handle it with its media query */
     overflow-x: auto;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   }
 
   .week-grid {
@@ -1853,7 +1854,9 @@ Ask for clarification or preserve the existing structure.
   /* Match day/week view block styling: 1px border on all sides, 3px left border for color coding */
   border: 1px solid rgba(150, 200, 255, 0.24);
   border-left: 3px solid var(--mint);
-  transition: all 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .month-event:hover {

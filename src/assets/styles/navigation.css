@@ -151,9 +151,13 @@ body.density-cozy {
   border: 1px solid transparent;
   text-decoration: none;
   font-size: 0.9rem;
-  transition: all var(--dur) var(--ease);
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    text-decoration-color var(--dur) var(--ease);
 }
 
 /* TAB-NAV-07 & TAB-NAV-17: Active state with accent background */
@@ -210,7 +214,9 @@ body.density-cozy {
   border-radius: 8px;
   color: var(--ink);
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
 }
 
 .icon-button:hover {
@@ -245,7 +251,9 @@ body.density-cozy {
   border-radius: 8px;
   color: var(--ink);
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
   text-decoration: none;
 }
 
@@ -271,7 +279,7 @@ body.density-cozy {
   border-radius: 8px;
   color: var(--ink);
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 
 .hamburger-button:hover {
@@ -377,7 +385,10 @@ body.density-cozy {
   border: 1px solid transparent;
   text-decoration: none;
   font-size: var(--font-sm);
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
   gap: 4px;
 }
 
@@ -426,7 +437,10 @@ body.density-cozy {
   border-radius: 10px;
   color: var(--dim);
   text-decoration: none;
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-left-color var(--dur) var(--ease);
   border-left: 3px solid transparent;
   position: relative;
 }
