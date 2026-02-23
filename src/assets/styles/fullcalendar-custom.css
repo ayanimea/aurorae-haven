@@ -370,11 +370,11 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(16, 20, 44, 0.95);
+  background: var(--bg);
   padding: 2rem;
   border-radius: 12px;
   border: 1px solid var(--line);
-  z-index: 1000;
+  z-index: var(--z-modal);
 }
 
 .loading-overlay p {

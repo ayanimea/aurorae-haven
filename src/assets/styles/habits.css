@@ -57,7 +57,7 @@
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(16, 20, 44, 0.32);
+  background: var(--bg-secondary);
   color: var(--ink);
   font-size: 14px;
   min-height: 48px;
@@ -161,7 +161,7 @@
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(16, 20, 44, 0.32);
+  background: var(--bg-secondary);
   color: var(--ink);
   font-size: 14px;
 }

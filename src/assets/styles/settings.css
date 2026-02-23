@@ -14,14 +14,14 @@
 .settings-warning {
   padding: 1rem;
   margin-bottom: 1rem;
-  background-color: var(--warn-bg, #fff3cd);
-  border: 1px solid var(--warn-border, #ffc107);
+  background-color: var(--warn-bg);
+  border: 1px solid var(--warn-border);
   border-radius: 4px;
 }
 
 .settings-warning-directory-lost {
-  background-color: #fff3cd;
-  border-color: #ffc107;
+  background-color: var(--warn-bg);
+  border-color: var(--warn-border);
 }
 
 .settings-warning-title {
@@ -59,7 +59,7 @@
 }
 
 .settings-input:focus {
-  outline: 2px solid var(--mint, #007bff);
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
 
@@ -71,7 +71,7 @@
 }
 
 .settings-input-number:focus {
-  outline: 2px solid var(--mint, #007bff);
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .settings-checkbox:focus {
-  outline: 2px solid var(--mint, #007bff);
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
 
@@ -133,7 +133,7 @@
 }
 
 .settings-button-primary {
-  background-color: var(--mint, #007bff);
+  background-color: var(--mint);
 }
 
 .settings-button-primary:hover:not(:disabled) {
@@ -149,7 +149,7 @@
 }
 
 .settings-button-info {
-  background-color: var(--info, #007bff);
+  background-color: var(--info);
 }
 
 .settings-button-info:hover:not(:disabled) {
@@ -157,7 +157,7 @@
 }
 
 .settings-button-warning {
-  background-color: var(--warning, #ffc107);
+  background-color: var(--warning);
   color: var(--ink);
 }
 

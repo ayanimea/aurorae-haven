@@ -161,10 +161,10 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
         bottom: 0,
         width: '500px',
         maxWidth: '90vw',
-        backgroundColor: '#1a1d2e',
-        borderLeft: '1px solid #3d4263',
+        backgroundColor: 'var(--surface)',
+        borderLeft: '1px solid var(--surface-raised)',
         boxShadow: '-2px 0 10px rgba(0, 0, 0, 0.3)',
-        zIndex: 1000,
+        zIndex: 200, /* --z-modal */
         overflowY: 'auto',
         padding: '1.5rem'
       }}
@@ -201,7 +201,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
             <h2 style={{ margin: 0 }}>{habit.name}</h2>
           </div>
           {habit.paused && (
-            <span className='small' style={{ color: '#f2c94c' }}>
+            <span className='small' style={{ color: 'var(--streak)' }}>
               ⏸️ Paused
             </span>
           )}
@@ -290,13 +290,13 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                     height: '12px',
                     borderRadius: '2px',
                     backgroundColor: day.isVacation
-                      ? '#3d4263'
+                      ? 'var(--surface-raised)'
                       : day.isCompleted
                         ? 'var(--mint)'
-                        : '#1a1d2e',
+                        : 'var(--surface)',
                     border: day.isToday
                       ? '2px solid var(--mint)'
-                      : '1px solid #2a2e47',
+                      : '1px solid var(--surface-border)',
                     backgroundImage: day.isVacation
                       ? 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)'
                       : 'none'
@@ -332,8 +332,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                 width: '12px',
                 height: '12px',
                 borderRadius: '2px',
-                backgroundColor: '#1a1d2e',
-                border: '1px solid #2a2e47'
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--surface-border)'
               }}
             />
             <span className='small'>Not done</span>
@@ -344,7 +344,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                 width: '12px',
                 height: '12px',
                 borderRadius: '2px',
-                backgroundColor: '#3d4263',
+                backgroundColor: 'var(--surface-raised)',
                 backgroundImage:
                   'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)'
               }}
@@ -369,7 +369,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
             onClick={() => setShowVacationMode(!showVacationMode)}
             style={{
               padding: '0.5rem 1rem',
-              background: showVacationMode ? '#2a2e47' : 'var(--mint)',
+              background: showVacationMode ? 'var(--surface-border)' : 'var(--mint)',
               color: showVacationMode ? 'var(--dim)' : '#0e1117',
               border: 'none',
               borderRadius: '8px',
@@ -415,9 +415,9 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    background: '#1a1d2e',
-                    color: '#e6e9f2',
-                    border: '1px solid #2a2e47',
+                    background: 'var(--surface)',
+                    color: 'var(--ink)',
+                    border: '1px solid var(--surface-border)',
                     borderRadius: '8px',
                     fontSize: '0.875rem'
                   }}
@@ -444,9 +444,9 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    background: '#1a1d2e',
-                    color: '#e6e9f2',
-                    border: '1px solid #2a2e47',
+                    background: 'var(--surface)',
+                    color: 'var(--ink)',
+                    border: '1px solid var(--surface-border)',
                     borderRadius: '8px',
                     fontSize: '0.875rem'
                   }}
@@ -458,7 +458,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                 style={{
                   padding: '0.5rem 1rem',
                   background:
-                    !vacationStart || !vacationEnd ? '#2a2e47' : 'var(--mint)',
+                    !vacationStart || !vacationEnd ? 'var(--surface-border)' : 'var(--mint)',
                   color: !vacationStart || !vacationEnd ? 'var(--dim)' : '#0e1117',
                   border: 'none',
                   borderRadius: '8px',
@@ -516,8 +516,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           style={{
             width: '100%',
             padding: '0.75rem',
-            background: '#4a7dff',
-            color: '#e6e9f2',
+            background: 'var(--accent-blue)',
+            color: 'var(--ink)',
             border: 'none',
             borderRadius: '8px',
             cursor: 'pointer',
@@ -557,9 +557,9 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
               onChange={(e) => setHistoryFilter(e.target.value)}
               style={{
                 padding: '0.375rem 0.75rem',
-                background: '#1a1d2e',
-                color: '#e6e9f2',
-                border: '1px solid #2a2e47',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
+                border: '1px solid var(--surface-border)',
                 borderRadius: '8px',
                 fontSize: '0.75rem',
                 cursor: 'pointer'
@@ -575,8 +575,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
               disabled={completions.length === 0}
               style={{
                 padding: '0.375rem 0.75rem',
-                background: completions.length === 0 ? '#2a2e47' : '#4a7dff',
-                color: completions.length === 0 ? 'var(--dim)' : '#e6e9f2',
+                background: completions.length === 0 ? 'var(--surface-border)' : 'var(--accent-blue)',
+                color: completions.length === 0 ? 'var(--dim)' : 'var(--ink)',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: completions.length === 0 ? 'not-allowed' : 'pointer',
@@ -592,8 +592,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
               disabled={completions.length === 0}
               style={{
                 padding: '0.375rem 0.75rem',
-                background: completions.length === 0 ? '#2a2e47' : '#4a7dff',
-                color: completions.length === 0 ? 'var(--dim)' : '#e6e9f2',
+                background: completions.length === 0 ? 'var(--surface-border)' : 'var(--accent-blue)',
+                color: completions.length === 0 ? 'var(--dim)' : 'var(--ink)',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: completions.length === 0 ? 'not-allowed' : 'pointer',
@@ -620,7 +620,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   padding: '0.5rem',
                   borderBottom:
                     idx < getFilteredCompletions().length - 1
-                      ? '1px solid #2a2e47'
+                      ? '1px solid var(--surface-border)'
                       : 'none',
                   display: 'flex',
                   justifyContent: 'space-between',

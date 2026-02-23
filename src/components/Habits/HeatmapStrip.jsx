@@ -32,11 +32,11 @@ function HeatmapStrip({ completions, vacationDates, daysToShow = 28 }) {
     const vacation = isVacation(date)
 
     if (vacation) {
-      return '#3d4263' // Vacation - neutral color with pattern
+      return 'var(--surface-raised)' // Vacation - neutral color with pattern
     } else if (completion) {
       return 'var(--mint)' // Completed - mint color
     } else {
-      return '#1a1d2e' // Not completed - background color
+      return 'var(--surface)' // Not completed - background color
     }
   }
 
@@ -62,7 +62,7 @@ function HeatmapStrip({ completions, vacationDates, daysToShow = 28 }) {
               height: '8px',
               borderRadius: '2px',
               backgroundColor: getCellColor(date),
-              border: isToday ? '1px solid var(--mint)' : '1px solid #2a2e47',
+              border: isToday ? '1px solid var(--mint)' : '1px solid var(--surface-border)',
               position: 'relative',
               backgroundImage: vacation
                 ? 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)'

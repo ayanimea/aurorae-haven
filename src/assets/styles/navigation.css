@@ -170,7 +170,7 @@ body.density-cozy {
 
 /* TAB-NAV-07: Hover state with underline and semi-transparent background */
 .nav-tab:hover:not(.active) {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--ink);
   text-decoration: underline;
   text-decoration-color: var(--mint);
@@ -220,7 +220,7 @@ body.density-cozy {
 }
 
 .icon-button:hover {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--mint);
 }
 
@@ -258,7 +258,7 @@ body.density-cozy {
 }
 
 .mobile-settings-button:hover {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--mint);
 }
 
@@ -283,7 +283,7 @@ body.density-cozy {
 }
 
 .hamburger-button:hover {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
 }
 
 .hamburger-button:focus {
@@ -313,7 +313,7 @@ body.density-cozy {
   left: -56px;
   bottom: 0;
   width: 56px;
-  background: rgba(16, 20, 44, 0.98);
+  background: var(--bg-solid);
   backdrop-filter: var(--blur);
   border-right: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -339,7 +339,7 @@ body.density-cozy {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(16, 20, 44, 0.95);
+  background: var(--bg);
   backdrop-filter: var(--blur);
   border-top: 1px solid var(--line);
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
@@ -399,7 +399,7 @@ body.density-cozy {
 }
 
 .more-menu-item:hover:not(.active) {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--ink);
 }
 
@@ -453,7 +453,7 @@ body.density-cozy {
 }
 
 .mobile-menu-item:hover:not(.active) {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--ink);
 }
 

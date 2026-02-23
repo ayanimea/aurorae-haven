@@ -121,7 +121,7 @@
 /* Context Menu */
 .context-menu {
   position: fixed;
-  background: rgba(16, 20, 44, 0.95);
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 4px;
@@ -152,7 +152,7 @@
 }
 
 .context-menu-item:hover {
-  background: rgba(99, 102, 241, 0.15);
+  background: var(--editor-tint);
 }
 
 .context-menu-item:disabled {
@@ -356,7 +356,7 @@
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: rgba(10, 14, 38, 0.5);
+  background: var(--overlay);
   color: var(--ink);
   font-size: 14px;
   transition: border-color var(--dur) var(--ease);

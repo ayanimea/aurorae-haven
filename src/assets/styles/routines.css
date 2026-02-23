@@ -44,7 +44,7 @@
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px;
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -83,7 +83,7 @@
   gap: 14px;
 }
 .routine-card {
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 14px;
@@ -151,7 +151,7 @@
   height: 36px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   cursor: pointer;
   transition:
     transform 0.2s ease,

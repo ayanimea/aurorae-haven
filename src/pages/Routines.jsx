@@ -774,7 +774,7 @@ function Routines() {
                       key={i}
                       style={{
                         padding: '4px 8px',
-                        background: 'rgba(16, 20, 44, 0.28)',
+                        background: 'var(--glass-bg)',
                         borderRadius: '8px',
                         fontSize: '0.9rem'
                       }}

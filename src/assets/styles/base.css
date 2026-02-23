@@ -34,6 +34,17 @@
   --glass-bg: rgba(16, 20, 44, 0.28);  /* Glass panel background — used for inline-styled surfaces */
   --glass-border: rgba(200, 210, 255, 0.2); /* Glass panel border — equals --line */
 
+  /* ===== SOLID SURFACE PALETTE ===== */
+  /* Opaque surfaces for drawers, cards, and disabled states that cannot use glass/alpha */
+  --surface: #1a1d2e;            /* Solid dark surface — drawers, card backgrounds */
+  --surface-border: #2a2e47;     /* Subtle border / disabled-state background on solid surfaces */
+  --surface-raised: #3d4263;     /* Slightly raised surface — category chips, vacation markers */
+  --bg-solid: rgba(16, 20, 44, 0.98); /* Near-opaque panel for sidebars and sticky headers */
+  --overlay: rgba(10, 14, 38, 0.5);   /* Semi-transparent scrim for modals and drawers */
+  --editor-tint: rgba(99, 102, 241, 0.15); /* Indigo tint for editor/brain-dump surfaces */
+  --accent-blue: #4a7dff;        /* Indigo/blue accent — action buttons, milestone badges */
+  --streak: #f2c94c;             /* Gold/amber — streak indicators and paused-habit badges */
+
   /* ===== STATUS COLOURS ===== */
   /* Dark-UI appropriate status palette — replaces Bootstrap light-mode fallbacks in settings.css */
   --success: #4ade80;            /* Vibrant green readable on dark backgrounds */

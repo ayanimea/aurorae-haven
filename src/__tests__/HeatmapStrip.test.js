@@ -44,7 +44,7 @@ describe('HeatmapStrip Component', () => {
     const cells = container.querySelectorAll('[aria-label]')
     const incompleteCell = cells[0]
 
-    expect(incompleteCell).toHaveStyle({ backgroundColor: '#1a1d2e' })
+    expect(incompleteCell).toHaveStyle({ backgroundColor: 'var(--surface)' })
   })
 
   test('shows vacation days with diagonal pattern', () => {
@@ -143,6 +143,6 @@ describe('HeatmapStrip Component', () => {
     const cells = container.querySelectorAll('[aria-label]')
     const vacationCell = cells[cells.length - 2]
 
-    expect(vacationCell).toHaveStyle({ backgroundColor: '#3d4263' })
+    expect(vacationCell).toHaveStyle({ backgroundColor: 'var(--surface-raised)' })
   })
 })
