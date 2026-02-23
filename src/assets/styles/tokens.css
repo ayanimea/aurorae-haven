@@ -53,6 +53,7 @@
   --z-notification: 150;  /* In-page error/status banners (below modals, above dropdowns) */
   --z-modal: 200;         /* Modal overlays and backdrops */
   --z-toast: 300;         /* Toasts and transient notifications */
+  --z-celebration: 9000;  /* One-shot celebration overlays (above everything) */
 
   /* ===== NAVIGATION DIMENSIONS ===== */
   /* Shell padding values for different viewport sizes */

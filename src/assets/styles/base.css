@@ -44,6 +44,17 @@
   --editor-tint: rgba(99, 102, 241, 0.15); /* Indigo tint for editor/brain-dump surfaces */
   --accent-blue: #4a7dff;        /* Indigo/blue accent — action buttons, milestone badges */
   --streak: #f2c94c;             /* Gold/amber — streak indicators and paused-habit badges */
+  --gold: #ffd700;               /* Pure gold — pinned-item accents */
+  --sky: #8ec8ff;                /* Sky blue — icon accents and progress gradients */
+
+  /* ===== BLOCK PRIORITY COLOURS ===== */
+  /* Eisenhower Matrix quadrant colours + calendar block type accents */
+  --prio-do: #ef4444;            /* Urgent & Important (Do First) — red */
+  --prio-schedule: #f59e0b;      /* Not Urgent & Important (Schedule) — amber */
+  --prio-delegate: #3b82f6;      /* Urgent & Not Important (Delegate) — blue */
+  --prio-eliminate: #10b981;     /* Not Urgent & Not Important (Eliminate) — green */
+  --prio-meeting: #94a3b8;       /* Meeting blocks — slate grey */
+  --prio-habit: #14b8a6;         /* Habit blocks — teal */
 
   /* ===== STATUS COLOURS ===== */
   /* Dark-UI appropriate status palette — replaces Bootstrap light-mode fallbacks in settings.css */

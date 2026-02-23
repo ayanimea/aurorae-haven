@@ -168,7 +168,7 @@
 
 .help-btn-primary {
   background: linear-gradient(135deg, var(--mint), #5ac7ff);
-  color: #0a0f24;
+  color: var(--paper);
 }
 
 .help-btn-primary:hover {

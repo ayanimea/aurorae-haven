@@ -71,7 +71,7 @@ function FilterModal({ isOpen, currentFilters, onApply, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
+        zIndex: 200 /* --z-modal */
       }}
       role='presentation'
     >

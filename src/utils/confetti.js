@@ -18,6 +18,7 @@ export function triggerConfetti({ reducedMotion = false } = {}) {
     const style = getComputedStyle(document.documentElement)
     const mint = style.getPropertyValue('--mint').trim() || '#86f5e0'
     const paper = style.getPropertyValue('--paper').trim() || '#0e1117'
+    const zCelebration = style.getPropertyValue('--z-celebration').trim() || '9000'
 
     const celebrationDiv = document.createElement('div')
     celebrationDiv.style.cssText = `
@@ -32,7 +33,7 @@ export function triggerConfetti({ reducedMotion = false } = {}) {
       color: ${paper};
       font-size: 2rem;
       font-weight: bold;
-      z-index: 10000;
+      z-index: ${zCelebration};
       pointer-events: none;
     `
     celebrationDiv.textContent = '🎉 Milestone!'
