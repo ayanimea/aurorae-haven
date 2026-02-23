@@ -294,7 +294,10 @@ async function seedIndexedDB(page, routines, events) {
           rList.forEach((r) => routineStore.put(r))
           eList.forEach((e) => scheduleStore.put(e))
 
-          tx.oncomplete = () => resolve()
+          tx.oncomplete = () => {
+            db.close()
+            resolve()
+          }
           tx.onerror = () => reject(tx.error)
           tx.onabort = () => reject(new Error('Transaction aborted'))
         }

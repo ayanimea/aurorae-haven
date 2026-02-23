@@ -41,10 +41,10 @@ function normalizeBasePath(base) {
 // - CI / GitHub Pages: VITE_BASE_URL=/aurorae-haven/ (see .env.production)
 const APP_BASE_PATH = normalizeBasePath(rawBasePath)
 
-// Keep baseURL as the origin so that page.goto('/') always resolves to the
-// server root, matching Playwright's standard behaviour.  Tests that need to
-// navigate into the app base path use relative paths (e.g. 'tasks') which
-// Playwright resolves against baseURL + APP_BASE_PATH via the webServer URL.
+// Define the local preview server origin and the full app URL. BASE_URL
+// combines ORIGIN + APP_BASE_PATH so that page.goto('/') and other
+// root-relative paths resolve to the app root (including any VITE_BASE_URL)
+// rather than the bare server origin.
 const ORIGIN = 'http://localhost:4173'
 const BASE_URL = `${ORIGIN}${APP_BASE_PATH}`
 
