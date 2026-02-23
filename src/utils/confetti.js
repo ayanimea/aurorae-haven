@@ -21,13 +21,14 @@ export function triggerConfetti({ reducedMotion = false } = {}) {
     const zCelebration = style.getPropertyValue('--z-celebration').trim() || '9000'
 
     const celebrationDiv = document.createElement('div')
+    const accentBlue = style.getPropertyValue('--accent-blue').trim() || '#4a7dff'
     celebrationDiv.style.cssText = `
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       padding: 2rem 3rem;
-      background: linear-gradient(135deg, ${mint} 0%, #4a7dff 100%);
+      background: linear-gradient(135deg, ${mint} 0%, ${accentBlue} 100%);
       border-radius: 16px;
       box-shadow: 0 0 0 4px var(--mint), 0 0 40px color-mix(in srgb, var(--mint) 50%, transparent);
       color: ${paper};
@@ -50,7 +51,10 @@ export function triggerConfetti({ reducedMotion = false } = {}) {
   const style = getComputedStyle(document.documentElement)
   const mint = style.getPropertyValue('--mint').trim() || '#86f5e0'
   const error = style.getPropertyValue('--error').trim() || '#ff6b6b'
-  const colors = [mint, '#4a7dff', error, '#ffd93d', '#a78bfa']
+  const accentBlue = style.getPropertyValue('--accent-blue').trim() || '#4a7dff'
+  const gold = style.getPropertyValue('--gold').trim() || '#ffd700'
+  const lavender = style.getPropertyValue('--lavender').trim() || '#a78bfa'
+  const colors = [mint, accentBlue, error, gold, lavender]
 
   confetti({
     particleCount: 50,

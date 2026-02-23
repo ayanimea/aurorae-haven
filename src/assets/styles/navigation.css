@@ -926,7 +926,7 @@ body.mobile-menu-open .shell {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: #fff;
+  color: var(--text-bright);
   padding: 9px 12px;
   min-height: var(--touch-comfortable);
   border-radius: 12px;

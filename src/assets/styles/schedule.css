@@ -1888,17 +1888,17 @@ Ask for clarification or preserve the existing structure.
 
 /* Meeting events - match .block.meeting styling */
 .month-event.meeting {
-  background: rgba(148, 163, 184, 0.14);
-  border-color: rgba(148, 163, 184, 0.24);
-  border-left: 3px solid #94a3b8;
+  background: color-mix(in srgb, var(--prio-meeting) 14%, transparent);
+  border-color: color-mix(in srgb, var(--prio-meeting) 24%, transparent);
+  border-left: 3px solid var(--prio-meeting);
   color: var(--ink);
 }
 
 /* Habit events - match .block.habit styling */
 .month-event.habit {
-  background: rgba(20, 184, 166, 0.14);
-  border-color: rgba(20, 184, 166, 0.24);
-  border-left: 3px solid #14b8a6;
+  background: color-mix(in srgb, var(--prio-habit) 14%, transparent);
+  border-color: color-mix(in srgb, var(--prio-habit) 24%, transparent);
+  border-left: 3px solid var(--prio-habit);
   color: var(--ink);
 }
 

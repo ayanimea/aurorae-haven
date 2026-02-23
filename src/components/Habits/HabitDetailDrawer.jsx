@@ -370,7 +370,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
             style={{
               padding: '0.5rem 1rem',
               background: showVacationMode ? 'var(--surface-border)' : 'var(--mint)',
-              color: showVacationMode ? 'var(--dim)' : '#0e1117',
+              color: showVacationMode ? 'var(--dim)' : 'var(--paper)',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
@@ -459,7 +459,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   padding: '0.5rem 1rem',
                   background:
                     !vacationStart || !vacationEnd ? 'var(--surface-border)' : 'var(--mint)',
-                  color: !vacationStart || !vacationEnd ? 'var(--dim)' : '#0e1117',
+                  color: !vacationStart || !vacationEnd ? 'var(--dim)' : 'var(--paper)',
                   border: 'none',
                   borderRadius: '8px',
                   cursor:

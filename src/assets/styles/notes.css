@@ -582,7 +582,7 @@ textarea:focus {
   left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 24, 60, 0.9);
-  color: #fff;
+  color: var(--text-bright);
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--line);
