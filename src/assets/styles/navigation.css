@@ -5,7 +5,7 @@
  * - Touch targets: var(--touch-min), var(--touch-comfortable)
  * - Icon sizes: var(--icon-sm), var(--icon-md)
  * - Font sizes: var(--font-xs), var(--font-sm)
- * - Z-index: var(--z-mobile-menu), var(--z-content), var(--z-editor)
+ * - Z-index: var(--z-appbar), var(--z-mobile-menu), var(--z-editor)
  * - Shell padding: var(--shell-padding-narrow), var(--shell-padding-compact), var(--shell-padding-comfortable)
  */
 
@@ -31,7 +31,7 @@ body.density-cozy {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 20;
+  z-index: var(--z-appbar);
   background: rgba(16, 20, 44, 0.3);
   backdrop-filter: var(--blur);
   border-bottom: 1px solid var(--line);
@@ -151,9 +151,13 @@ body.density-cozy {
   border: 1px solid transparent;
   text-decoration: none;
   font-size: 0.9rem;
-  transition: all var(--dur) var(--ease);
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    text-decoration-color var(--dur) var(--ease);
 }
 
 /* TAB-NAV-07 & TAB-NAV-17: Active state with accent background */
@@ -166,7 +170,7 @@ body.density-cozy {
 
 /* TAB-NAV-07: Hover state with underline and semi-transparent background */
 .nav-tab:hover:not(.active) {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--ink);
   text-decoration: underline;
   text-decoration-color: var(--mint);
@@ -210,11 +214,13 @@ body.density-cozy {
   border-radius: 8px;
   color: var(--ink);
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
 }
 
 .icon-button:hover {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--mint);
 }
 
@@ -245,12 +251,14 @@ body.density-cozy {
   border-radius: 8px;
   color: var(--ink);
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
   text-decoration: none;
 }
 
 .mobile-settings-button:hover {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--mint);
 }
 
@@ -271,11 +279,11 @@ body.density-cozy {
   border-radius: 8px;
   color: var(--ink);
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 
 .hamburger-button:hover {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
 }
 
 .hamburger-button:focus {
@@ -305,7 +313,7 @@ body.density-cozy {
   left: -56px;
   bottom: 0;
   width: 56px;
-  background: rgba(16, 20, 44, 0.98);
+  background: var(--bg-solid);
   backdrop-filter: var(--blur);
   border-right: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -331,11 +339,11 @@ body.density-cozy {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(16, 20, 44, 0.95);
+  background: var(--bg);
   backdrop-filter: var(--blur);
   border-top: 1px solid var(--line);
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 19;
+  z-index: calc(var(--z-appbar) - 1);
   animation: slideUp 0.2s ease;
 }
 
@@ -377,7 +385,10 @@ body.density-cozy {
   border: 1px solid transparent;
   text-decoration: none;
   font-size: var(--font-sm);
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
   gap: 4px;
 }
 
@@ -388,7 +399,7 @@ body.density-cozy {
 }
 
 .more-menu-item:hover:not(.active) {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--ink);
 }
 
@@ -426,7 +437,10 @@ body.density-cozy {
   border-radius: 10px;
   color: var(--dim);
   text-decoration: none;
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-left-color var(--dur) var(--ease);
   border-left: 3px solid transparent;
   position: relative;
 }
@@ -439,7 +453,7 @@ body.density-cozy {
 }
 
 .mobile-menu-item:hover:not(.active) {
-  background: rgba(140, 150, 210, 0.12);
+  background: var(--bg-hover);
   color: var(--ink);
 }
 
@@ -912,7 +926,7 @@ body.mobile-menu-open .shell {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: #fff;
+  color: var(--text-bright);
   padding: 9px 12px;
   min-height: var(--touch-comfortable);
   border-radius: 12px;

@@ -370,11 +370,11 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(16, 20, 44, 0.95);
+  background: var(--bg);
   padding: 2rem;
   border-radius: 12px;
   border: 1px solid var(--line);
-  z-index: 1000;
+  z-index: var(--z-modal);
 }
 
 .loading-overlay p {
@@ -382,7 +382,9 @@
   margin: 0;
 }
 
-.error-message {
+/* Floating error toast — renamed from .error-message to avoid cascade conflict
+ * with library.css's inline .error-message (form validation messages). */
+.fc-error-toast {
   position: fixed;
   top: 80px;
   right: 20px;
@@ -391,7 +393,7 @@
   padding: 1rem 1.5rem;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  z-index: var(--z-toast);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -417,7 +419,7 @@
   padding: 1rem 1.5rem;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  z-index: var(--z-toast);
   display: flex;
   align-items: center;
   gap: 1rem;

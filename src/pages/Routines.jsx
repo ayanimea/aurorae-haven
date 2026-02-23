@@ -774,7 +774,7 @@ function Routines() {
                       key={i}
                       style={{
                         padding: '4px 8px',
-                        background: 'rgba(16, 20, 44, 0.28)',
+                        background: 'var(--glass-bg)',
                         borderRadius: '8px',
                         fontSize: '0.9rem'
                       }}
@@ -846,7 +846,7 @@ function Routines() {
             borderRadius: '12px',
             padding: '12px 16px',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-            zIndex: 1000
+            zIndex: 300 /* --z-toast */
           }}
         >
           {toastMessage}

@@ -20,7 +20,7 @@
   left: 0;
   top: 0;
   height: 100%;
-  background: linear-gradient(90deg, #8ec8ff, #86f5e0);
+  background: linear-gradient(90deg, var(--sky), var(--mint));
   transition: width 0.3s ease;
 }
 
@@ -44,7 +44,7 @@
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px;
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -83,7 +83,7 @@
   gap: 14px;
 }
 .routine-card {
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 14px;
@@ -151,7 +151,7 @@
   height: 36px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -188,19 +188,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-.details-list {
-  display: grid;
-  gap: 8px;
-}
-.detail-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-}
-
 /* ===== Mobile/Tablet Responsiveness ===== */
 
 /* TAB-RTN-38: Sticky bottom control bar for mobile */
@@ -214,7 +201,7 @@
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--line);
     padding: 12px;
-    z-index: 100;
+    z-index: var(--z-sidebar);
     display: flex;
     gap: 8px;
     justify-content: space-around;
@@ -382,5 +369,13 @@
 
   .panel.dim .step-meta {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routine-progress-bar,
+  .panel,
+  .btn-menu {
+    transition: none;
   }
 }

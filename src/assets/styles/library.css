@@ -95,7 +95,7 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 
 .btn-icon:hover {
@@ -104,7 +104,7 @@
 
 .btn-icon.active {
   background: var(--mint);
-  color: #060a1b;
+  color: var(--paper);
 }
 
 .btn-icon .icon {
@@ -163,7 +163,10 @@
   padding: 16px;
   backdrop-filter: var(--blur);
   box-shadow: var(--shadow);
-  transition: all var(--dur) var(--ease);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
 }
 
 .template-card:hover {
@@ -173,8 +176,8 @@
 }
 
 .template-card.pinned {
-  border-color: #ffd700;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+  border-color: var(--gold);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--gold) 20%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -211,7 +214,7 @@
 .template-icon .icon-routine {
   width: 24px;
   height: 24px;
-  color: #86c8f5;
+  color: var(--sky);
 }
 
 .template-title-area {
@@ -383,7 +386,7 @@
   display: block;
   margin-top: 4px;
   font-size: 12px;
-  color: #ff6464;
+  color: var(--error);
 }
 
 .tag-input-container,
@@ -466,7 +469,7 @@
   margin: 4px 4px 4px 0;
   padding: 4px 10px;
   background: var(--mint);
-  color: #060a1b;
+  color: var(--paper);
   border-radius: 12px;
   font-size: 12px;
 }

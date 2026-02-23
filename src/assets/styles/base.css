@@ -11,7 +11,86 @@
   --blur: saturate(135%) blur(10px);
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --dur: 240ms;
+
+  /* ===== SEMANTIC ALIASES ===== */
+  /* Single source of truth — map generic names to palette tokens */
+  --text: var(--ink);
+  --text-primary: var(--ink);
+  --text-secondary: var(--dim);
+  --text-bright: rgba(255, 255, 255, 0.98);
+  --border: var(--line);
+  --danger: var(--error);
+  --alert: var(--error);
+  --accent: var(--mint);
+  --accent-hover: color-mix(in srgb, var(--mint) 85%, white); /* Lighter tint for hover states */
+  --paper: #060a1b;      /* Darkest surface colour — readable on --mint background */
+  --bg: rgba(16, 20, 44, 0.95);
+  --bg-primary: rgba(10, 14, 38, 0.95);
+  --dark: rgba(10, 14, 38, 0.95);
+  --base: var(--line);
+  --bg-secondary: rgba(16, 20, 44, 0.32);
+  --bg-hover: rgba(140, 150, 210, 0.12);
+  --glass-md: rgba(18, 22, 52, 0.58); /* Mid-opacity glass surface (between glass-lo and glass-hi) */
+  --glass-bg: rgba(16, 20, 44, 0.28);  /* Glass panel background — used for inline-styled surfaces */
+  --glass-border: rgba(200, 210, 255, 0.2); /* Glass panel border — equals --line */
+
+  /* ===== SOLID SURFACE PALETTE ===== */
+  /* Opaque surfaces for drawers, cards, and disabled states that cannot use glass/alpha */
+  --surface: #1a1d2e;            /* Solid dark surface — drawers, card backgrounds */
+  --surface-border: #2a2e47;     /* Subtle border / disabled-state background on solid surfaces */
+  --surface-raised: #3d4263;     /* Slightly raised surface — category chips, vacation markers */
+  --bg-solid: rgba(16, 20, 44, 0.98); /* Near-opaque panel for sidebars and sticky headers */
+  --overlay: rgba(10, 14, 38, 0.5);   /* Semi-transparent scrim for modals and drawers */
+  --editor-tint: rgba(99, 102, 241, 0.15); /* Indigo tint for editor/brain-dump surfaces */
+  --accent-blue: #4a7dff;        /* Indigo/blue accent — action buttons, milestone badges */
+  --streak: #f2c94c;             /* Gold/amber — streak indicators and paused-habit badges */
+  --gold: #ffd700;               /* Pure gold — pinned-item accents */
+  --sky: #8ec8ff;                /* Sky blue — icon accents and progress gradients */
+  --lavender: #a78bfa;           /* Soft lavender — celebration accents */
+
+  /* ===== BLOCK PRIORITY COLOURS ===== */
+  /* Eisenhower Matrix quadrant colours + calendar block type accents */
+  --prio-do: #ef4444;            /* Urgent & Important (Do First) — red */
+  --prio-schedule: #f59e0b;      /* Not Urgent & Important (Schedule) — amber */
+  --prio-delegate: #3b82f6;      /* Urgent & Not Important (Delegate) — blue */
+  --prio-eliminate: #10b981;     /* Not Urgent & Not Important (Eliminate) — green */
+  --prio-meeting: #94a3b8;       /* Meeting blocks — slate grey */
+  --prio-habit: #14b8a6;         /* Habit blocks — teal */
+
+  /* ===== STATUS COLOURS ===== */
+  /* Dark-UI appropriate status palette — replaces Bootstrap light-mode fallbacks in settings.css */
+  --success: #4ade80;            /* Vibrant green readable on dark backgrounds */
+  --success-bg: rgba(74, 222, 128, 0.12);
+  --success-border: rgba(74, 222, 128, 0.3);
+  --success-text: #bbf7d0;       /* Muted green text */
+  --info: #60a5fa;               /* Soft blue */
+  --warning: #fbbf24;            /* Amber */
+  --warn-bg: rgba(251, 191, 36, 0.12);
+  --warn-border: rgba(251, 191, 36, 0.3);
+  --error-bg: rgba(255, 107, 107, 0.12);
+  --error-border: rgba(255, 107, 107, 0.3);
+  --error-text: #fca5a5;         /* Muted red text */
+  --shadow-color: #000000;       /* Base shadow colour for color-mix() patterns */
 }
+
+/* ===== LIGHT THEME (Coming soon) =====
+ * To add a light theme, define overrides inside [data-theme="light"] below.
+ * The JS in settingsManager.js sets data-theme="light" on <html> when the user
+ * selects the light option in Settings.
+ *
+ * Minimum tokens to override:
+ *   --ink, --dim, --mint, --error, --line,
+ *   --glass-hi, --glass-lo, --glass-md, --glass-bg, --glass-border,
+ *   --shadow, --paper, --bg, --bg-primary, --bg-secondary, --bg-hover,
+ *   --surface, --surface-border, --surface-raised, --bg-solid,
+ *   --overlay, --editor-tint, --text-bright,
+ *   all --prio-* colours (may stay the same),
+ *   all --success/--warn/--error-* colours (may stay the same)
+ *
+ * Also override body { background: ... } inside [data-theme="light"] body { }
+ * since the starfield gradient is hard-coded as a value, not a token.
+ */
+/* [data-theme="light"] { } */
 
 * {
   box-sizing: border-box;

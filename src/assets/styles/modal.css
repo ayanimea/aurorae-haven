@@ -121,11 +121,11 @@
 /* Context Menu */
 .context-menu {
   position: fixed;
-  background: rgba(16, 20, 44, 0.95);
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 4px;
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -152,7 +152,7 @@
 }
 
 .context-menu-item:hover {
-  background: rgba(99, 102, 241, 0.15);
+  background: var(--editor-tint);
 }
 
 .context-menu-item:disabled {
@@ -165,7 +165,7 @@
 }
 
 .context-menu-item-danger {
-  color: #ff6b6b;
+  color: var(--error);
 }
 
 .context-menu-item-danger:hover {
@@ -183,7 +183,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: var(--z-modal);
   padding: 20px;
 }
 
@@ -305,18 +305,18 @@
 
 /* Destructive action button styling per TAB-SEC-25 */
 .btn-destructive {
-  background: var(--alert, #ff5555);
+  background: var(--alert);
   color: white;
-  border: 1px solid var(--alert, #ff5555);
+  border: 1px solid var(--alert);
 }
 
 .btn-destructive:hover {
-  background: #ff3333;
-  border-color: #ff3333;
+  background: color-mix(in srgb, var(--alert) 80%, black);
+  border-color: color-mix(in srgb, var(--alert) 80%, black);
 }
 
 .btn-destructive:focus {
-  outline: 3px solid var(--alert, #ff5555);
+  outline: 3px solid var(--alert);
   outline-offset: 2px;
 }
 
@@ -356,7 +356,7 @@
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: rgba(10, 14, 38, 0.5);
+  background: var(--overlay);
   color: var(--ink);
   font-size: 14px;
   transition: border-color var(--dur) var(--ease);

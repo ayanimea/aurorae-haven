@@ -65,7 +65,7 @@
     z-index: var(
       --z-editor
     ); /* Sidebar above main content so buttons remain clickable */
-    background: rgba(16, 20, 44, 0.98);
+    background: var(--bg-solid);
     backdrop-filter: var(--blur);
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
     /* Note: Sidebar visibility controlled by React (mount/unmount), not CSS transform */
@@ -147,7 +147,7 @@
   padding: 8px 32px 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgba(10, 14, 38, 0.5);
+  background: var(--overlay);
   color: var(--ink);
   font-size: 14px;
   transition: border-color var(--dur) var(--ease);
@@ -184,7 +184,7 @@
   padding: 12px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgba(16, 20, 44, 0.32);
+  background: var(--bg-secondary);
   cursor: pointer;
   transition:
     background var(--dur) var(--ease),
@@ -198,7 +198,7 @@
 }
 
 .note-item.active {
-  background: rgba(99, 102, 241, 0.15);
+  background: var(--editor-tint);
   border-color: rgba(99, 102, 241, 0.35);
 }
 
@@ -239,7 +239,7 @@
 .note-item-category {
   font-size: 11px;
   color: var(--mint);
-  background: rgba(99, 102, 241, 0.15);
+  background: var(--editor-tint);
   padding: 2px 6px;
   border-radius: 4px;
   width: fit-content;
@@ -290,7 +290,7 @@
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgba(10, 14, 38, 0.5);
+  background: var(--overlay);
   color: var(--ink);
   font-size: 16px;
   font-weight: 600;
@@ -315,7 +315,7 @@
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgba(10, 14, 38, 0.5);
+  background: var(--overlay);
   color: var(--ink);
   font-size: 14px;
   transition: border-color var(--dur) var(--ease);
@@ -357,7 +357,7 @@
   cursor: col-resize;
   transition: background var(--dur) var(--ease);
   position: relative;
-  z-index: 1;
+  z-index: var(--z-base);
 }
 
 .resize-handle:hover,
@@ -460,7 +460,7 @@ textarea {
   padding: 12px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: rgba(10, 14, 38, 0.5);
+  background: var(--overlay);
   color: var(--ink);
 }
 
@@ -552,7 +552,7 @@ button:disabled {
   padding: 10px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: rgba(16, 20, 44, 0.32);
+  background: var(--bg-secondary);
 }
 
 a:focus,
@@ -582,12 +582,12 @@ textarea:focus {
   left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 24, 60, 0.9);
-  color: #fff;
+  color: var(--text-bright);
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--line);
   display: none;
-  z-index: 60;
+  z-index: var(--z-toast);
 }
 
 /* === SJ secure v12.3 additions (non-breaking) === */
@@ -598,7 +598,7 @@ textarea:focus {
   padding: 4px 8px;
   border-radius: 9999px;
   margin-bottom: 6px;
-  background: rgba(99, 102, 241, 0.15);
+  background: var(--editor-tint);
   border: 1px solid rgba(99, 102, 241, 0.35);
 }
 .fc-event-title {
@@ -635,4 +635,12 @@ textarea:focus {
   display: block;
   -webkit-line-clamp: unset;
   overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brain-dump-container,
+  .note-list-sidebar,
+  .note-item {
+    transition: none;
+  }
 }

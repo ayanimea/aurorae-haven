@@ -7,7 +7,8 @@
 
 :root {
   /* ===== SPACING SCALE ===== */
-  /* Used for margins, padding, gaps */
+  /* NOTE: Not yet adopted — codebase currently uses inline px/rem values.
+   * Use these tokens for all new spacing work to move toward a consistent scale. */
   --space-2xs: 0.25rem; /* 4px */
   --space-xs: 0.5rem; /* 8px */
   --space-sm: 0.75rem; /* 12px */
@@ -22,6 +23,7 @@
   --touch-comfortable: 48px; /* WCAG AA comfortable size */
 
   /* ===== ICON SIZES ===== */
+  /* NOTE: --icon-xs/lg/xl not yet adopted. Use --icon-sm (20px) and --icon-md (24px). */
   --icon-xs: 16px;
   --icon-sm: 20px;
   --icon-md: 24px;
@@ -29,6 +31,7 @@
   --icon-xl: 48px;
 
   /* ===== FONT SIZES ===== */
+  /* NOTE: --font-2xs/md/lg/xl not yet adopted. Use --font-xs and --font-sm for compact UI. */
   --font-2xs: 0.625rem; /* 10px */
   --font-xs: 0.65rem; /* 10.4px - compact UI */
   --font-sm: 0.7rem; /* 11.2px - compact labels */
@@ -38,14 +41,19 @@
 
   /* ===== Z-INDEX LAYERS ===== */
   /* Stacking order for overlays and modals */
-  --z-base: 1;
-  --z-mobile-menu: 40;
+  --z-base: 1;        /* Local stacking contexts (resize handles, cards) */
+  --z-appbar: 20;     /* Fixed top/bottom app bar */
+  --z-mobile-menu: 40; /* Sliding navigation drawer */
+  /* NOTE: --z-content (50) is intentionally above --z-mobile-menu (40) */
+  /* and is reserved for future content-layer use; do not assign to page content */
   --z-content: 50;
-  --z-sidebar: 100;
-  --z-editor: 101;
-  --z-dropdown: 102;
-  --z-modal: 200;
-  --z-toast: 300;
+  --z-sidebar: 100;   /* Overlay sidebars (e.g. brain-dump note list) */
+  --z-editor: 101;    /* Inline editor surfaces above sidebars */
+  --z-dropdown: 102;      /* Context menus and dropdowns */
+  --z-notification: 150;  /* In-page error/status banners (below modals, above dropdowns) */
+  --z-modal: 200;         /* Modal overlays and backdrops */
+  --z-toast: 300;         /* Toasts and transient notifications */
+  --z-celebration: 9000;  /* One-shot celebration overlays (above everything) */
 
   /* ===== NAVIGATION DIMENSIONS ===== */
   /* Shell padding values for different viewport sizes */
@@ -53,7 +61,7 @@
   --shell-padding-compact: 85px; /* 969-1280px */
   --shell-padding-comfortable: 78px; /* >1280px */
 
-  /* Navigation item sizing */
+  /* Navigation item sizing — NOTE: not yet adopted in navigation.css (uses inline values) */
   --nav-gap-compact: 0.25rem; /* Small viewports */
   --nav-gap-comfortable: 0.5rem; /* Large viewports */
   --nav-padding-compact: 0.5rem; /* Small viewports */
@@ -69,18 +77,27 @@
   /* --breakpoint-wide: 1440px; */
 
   /* ===== LAYOUT ===== */
+  /* NOTE: Not yet adopted — navigation uses inline values instead.
+   * Use these tokens when refactoring layout dimensions. */
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 64px;
   --appbar-height: 64px;
   --mobile-bottom-bar-height: 60px;
 
   /* ===== BORDERS & RADIUS ===== */
+  /* NOTE: Not yet adopted — codebase currently uses inline border-radius values.
+   * Use these tokens for all new component work. */
   --radius-sm: 0.25rem; /* 4px */
   --radius-md: 0.5rem; /* 8px */
   --radius-lg: 0.75rem; /* 12px */
   --radius-xl: 1rem; /* 16px */
 
   /* ===== TRANSITIONS ===== */
+  /* NOTE: These composite tokens are defined for future use but are not yet
+   * adopted. The canonical transition pattern in this codebase is:
+   *   transition: <property> var(--dur) var(--ease);
+   * where --dur = 240ms and --ease = cubic-bezier(0.25, 0.1, 0.25, 1).
+   * Use these shorthand tokens for new work when a single-value transition suffices. */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;

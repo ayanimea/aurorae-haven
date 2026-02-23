@@ -325,26 +325,18 @@ export function applySettings(settings) {
 
 /**
  * Apply theme setting
- * @param {string} theme - Theme name
+ * Sets data-theme attribute on <html> so CSS [data-theme="..."] overrides can respond.
+ * @param {string} theme - 'dark' | 'light' | 'auto'
  */
 function applyTheme(theme) {
-  // TODO: Implement theme switching
   const root = document.documentElement
 
-  if (theme === 'dark') {
-    root.classList.add('dark-theme')
-  } else if (theme === 'light') {
-    root.classList.remove('dark-theme')
+  if (theme === 'dark' || theme === 'light') {
+    root.dataset.theme = theme
   } else {
-    // Auto - use system preference
-    const prefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches
-    if (prefersDark) {
-      root.classList.add('dark-theme')
-    } else {
-      root.classList.remove('dark-theme')
-    }
+    // Auto — resolve system preference and set explicitly so CSS sees a defined attribute
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    root.dataset.theme = prefersDark ? 'dark' : 'light'
   }
 }
 
