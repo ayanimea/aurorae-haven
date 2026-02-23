@@ -666,10 +666,17 @@ function Schedule() {
                       info.el.dataset.timezone = 'night'
                     } else if (hour < TIME_ZONE_HOURS.AFTERNOON) {
                       info.el.dataset.timezone = 'morning'
+                      // Intra-morning hue shift: early (7–8) → mid (9–10) → late (11)
+                      info.el.dataset.hour =
+                        hour < 9 ? 'early' : hour < 11 ? 'mid' : 'late'
                     } else if (hour < TIME_ZONE_HOURS.EVENING) {
                       info.el.dataset.timezone = 'afternoon'
+                      // Intra-afternoon: early (12–14) → late (15–17)
+                      info.el.dataset.hour = hour < 15 ? 'early' : 'late'
                     } else {
                       info.el.dataset.timezone = 'evening'
+                      // Intra-evening: early (18–20) → late (21–22)
+                      info.el.dataset.hour = hour < 21 ? 'early' : 'late'
                     }
                   }}
                   eventContent={(eventInfo) => (

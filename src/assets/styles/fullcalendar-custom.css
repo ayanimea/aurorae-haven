@@ -206,7 +206,7 @@
   position: relative;
   z-index: 3;
   border-radius: 0.875rem; /* 14px — matches --event-radius in SolidEventCard.css */
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   overflow: hidden;
@@ -215,8 +215,8 @@
   background: none !important;
 
   box-shadow:
-    0 8px 60px rgba(0, 0, 0, 0.38),
-    0 0 60px rgba(255, 255, 255, 0.03);
+    0 6px 80px rgba(0, 0, 0, 0.3),
+    0 0 80px rgba(255, 255, 255, 0.02);
 
   transition:
     box-shadow 0.25s ease,
@@ -225,6 +225,7 @@
 
 /* ── Time-of-day coloured gradients ── */
 
+/* Base per-period gradients (fallback when no data-hour is present) */
 .fc-event[data-timezone='morning'] {
   background: radial-gradient(
     circle at 25% 20%,
@@ -260,6 +261,82 @@
     rgba(121, 177, 237, 0.65),
     rgba(56, 102, 205, 0.8) 45%,
     rgba(9, 14, 42, 1) 100%
+  ) !important;
+}
+
+/* ── Intra-period hue variation (data-hour set by eventDidMount) ──
+ * Two-attribute selectors win specificity over single-attribute base rules above.
+ * Shifts are intentionally subtle — just enough to break "same-color corridor"
+ * effect in long event blocks without introducing jarring color jumps.
+ */
+
+/* Morning early 07–08: richest gold-amber */
+.fc-event[data-timezone='morning'][data-hour='early'] {
+  background: radial-gradient(
+    circle at 25% 20%,
+    rgba(255, 205, 125, 0.95),
+    rgba(255, 168, 88, 0.85) 50%,
+    rgba(60, 28, 88, 0.98) 100%
+  ) !important;
+}
+
+/* Morning mid 09–10: tangerine shift, slightly warmer */
+.fc-event[data-timezone='morning'][data-hour='mid'] {
+  background: radial-gradient(
+    circle at 28% 22%,
+    rgba(248, 178, 96, 0.95),
+    rgba(235, 140, 72, 0.85) 50%,
+    rgba(62, 26, 82, 0.98) 100%
+  ) !important;
+}
+
+/* Morning late 11: cooling toward noon */
+.fc-event[data-timezone='morning'][data-hour='late'] {
+  background: radial-gradient(
+    circle at 30% 25%,
+    rgba(238, 158, 82, 0.93),
+    rgba(215, 118, 60, 0.82) 50%,
+    rgba(55, 22, 76, 0.97) 100%
+  ) !important;
+}
+
+/* Afternoon early 12–14: bright azure (base) */
+.fc-event[data-timezone='afternoon'][data-hour='early'] {
+  background: radial-gradient(
+    circle at 30% 25%,
+    rgba(110, 190, 255, 0.95),
+    rgba(80, 150, 255, 0.85) 55%,
+    rgba(30, 40, 90, 0.99) 100%
+  ) !important;
+}
+
+/* Afternoon late 15–17: deeper steel-blue with periwinkle hint */
+.fc-event[data-timezone='afternoon'][data-hour='late'] {
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(88, 158, 245, 0.95),
+    rgba(62, 118, 228, 0.85) 55%,
+    rgba(26, 35, 95, 0.99) 100%
+  ) !important;
+}
+
+/* Evening early 18–20: violet (base) */
+.fc-event[data-timezone='evening'][data-hour='early'] {
+  background: radial-gradient(
+    circle at 30% 20%,
+    rgba(184, 110, 235, 0.98),
+    rgba(156, 87, 235, 0.88) 55%,
+    rgba(32, 18, 74, 1) 100%
+  ) !important;
+}
+
+/* Evening late 21–22: deeper indigo */
+.fc-event[data-timezone='evening'][data-hour='late'] {
+  background: radial-gradient(
+    circle at 32% 22%,
+    rgba(152, 82, 215, 0.98),
+    rgba(118, 58, 205, 0.88) 55%,
+    rgba(22, 10, 65, 1) 100%
   ) !important;
 }
 
@@ -316,15 +393,15 @@
 /* ===== Current Time Indicator ===== */
 
 .fc-timegrid-now-indicator-line {
-  border-color: rgba(180, 55, 55, 0.4) !important;
+  border-color: rgba(140, 55, 55, 0.25) !important;
   border-width: 1px;
-  box-shadow: 0 0 14px rgba(160, 50, 50, 0.2);
+  box-shadow: 0 0 18px rgba(120, 40, 40, 0.12);
   position: relative;
   z-index: 2;
 }
 
 .fc-timegrid-now-indicator-arrow {
-  border-top-color: rgba(180, 55, 55, 0.4) !important;
+  border-top-color: rgba(140, 55, 55, 0.25) !important;
   z-index: 2;
 }
 

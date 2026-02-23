@@ -25,23 +25,23 @@
 :root {
   /* Time-of-day atmospheres - More luminous top stops for glass-over-nebula feel */
   /* Morning: warm golden — gentle activation */
-  --morning-top: rgba(255, 220, 160, 0.11);
-  --morning-mid: rgba(245, 192, 111, 0.04);
-  --morning-bottom: rgba(245, 192, 111, 0.01);
+  --morning-top: rgba(255, 220, 160, 0.07);
+  --morning-mid: rgba(245, 192, 111, 0.02);
+  --morning-bottom: rgba(245, 192, 111, 0.005);
 
   /* Afternoon: sky blue — focused daylight, distinct hue shift at 12:00 */
-  --afternoon-top: rgba(170, 215, 255, 0.1);
-  --afternoon-mid: rgba(147, 197, 253, 0.04);
-  --afternoon-bottom: rgba(147, 197, 253, 0.01);
+  --afternoon-top: rgba(170, 215, 255, 0.06);
+  --afternoon-mid: rgba(147, 197, 253, 0.02);
+  --afternoon-bottom: rgba(147, 197, 253, 0.005);
 
   /* Evening: violet — calm wind-down, distinct hue shift at 18:00 */
-  --evening-top: rgba(200, 150, 255, 0.13);
-  --evening-mid: rgba(167, 139, 250, 0.05);
-  --evening-bottom: rgba(167, 139, 250, 0.01);
+  --evening-top: rgba(200, 150, 255, 0.08);
+  --evening-mid: rgba(167, 139, 250, 0.03);
+  --evening-bottom: rgba(167, 139, 250, 0.005);
 
   /* Night: deep navy — low stimulation rest, clearly darker zone */
-  --night-top: rgba(15, 23, 42, 0.55);
-  --night-bottom: rgba(15, 23, 42, 0.38);
+  --night-top: rgba(15, 23, 42, 0.42);
+  --night-bottom: rgba(15, 23, 42, 0.28);
 }
 
 /* z-index: 0 — above the ::before nebula glow layer (DOM order ensures bands paint
