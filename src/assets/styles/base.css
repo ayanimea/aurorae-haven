@@ -72,6 +72,25 @@
   --shadow-color: #000000;       /* Base shadow colour for color-mix() patterns */
 }
 
+/* ===== LIGHT THEME (Coming soon) =====
+ * To add a light theme, define overrides inside [data-theme="light"] below.
+ * The JS in settingsManager.js sets data-theme="light" on <html> when the user
+ * selects the light option in Settings.
+ *
+ * Minimum tokens to override:
+ *   --ink, --dim, --mint, --error, --line,
+ *   --glass-hi, --glass-lo, --glass-md, --glass-bg, --glass-border,
+ *   --shadow, --paper, --bg, --bg-primary, --bg-secondary, --bg-hover,
+ *   --surface, --surface-border, --surface-raised, --bg-solid,
+ *   --overlay, --editor-tint, --text-bright,
+ *   all --prio-* colours (may stay the same),
+ *   all --success/--warn/--error-* colours (may stay the same)
+ *
+ * Also override body { background: ... } inside [data-theme="light"] body { }
+ * since the starfield gradient is hard-coded as a value, not a token.
+ */
+/* [data-theme="light"] { } */
+
 * {
   box-sizing: border-box;
 }

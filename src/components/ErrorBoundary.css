@@ -8,8 +8,8 @@
   justify-content: center;
   min-height: 100vh;
   padding: 2rem;
-  background: var(--bg-primary, #0d1117);
-  color: var(--text-primary, #c9d1d9);
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .error-boundary-content {
@@ -20,7 +20,7 @@
 .error-boundary-content h2 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  color: var(--error, #f85149);
+  color: var(--error);
 }
 
 .error-boundary-content p {
@@ -55,7 +55,7 @@
   white-space: pre-wrap;
   word-wrap: break-word;
   margin: 0.5rem 0;
-  color: var(--text-secondary, #8b949e);
+  color: var(--text-secondary);
 }
 
 .error-actions {
@@ -76,17 +76,18 @@
 }
 
 .error-actions .btn-primary {
-  background: var(--accent, #238636);
-  color: white;
+  background: var(--accent-blue);
+  color: var(--text-bright);
 }
 
 .error-actions .btn-primary:hover {
-  background: var(--accent-hover, #2ea043);
+  /* NOTE: When implementing [data-theme="light"], verify this hover has sufficient contrast */
+  background: color-mix(in srgb, var(--accent-blue) 85%, white);
 }
 
 .error-actions .btn-secondary {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary, #c9d1d9);
+  color: var(--text-primary);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
