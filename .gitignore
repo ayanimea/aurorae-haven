@@ -39,6 +39,8 @@ coverage/
 audit-report.txt
 test-results/
 playwright-report/
+# Generated screenshots (directory is tracked via .gitkeep; images are local-only)
+playwright-screenshots/*.png
 
 # Jupyter Notebook
 .ipynb_checkpoints/
