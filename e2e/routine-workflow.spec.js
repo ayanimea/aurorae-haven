@@ -8,9 +8,7 @@ test.describe('Routine Workflow', () => {
     // eslint-disable-next-line no-console
     console.log('Step 1: Selecting a routine from Library...')
     await page.goto('.')
-
-    // Wait for app to load
-    await page.waitForTimeout(2000)
+    await page.waitForLoadState('networkidle')
 
     // Navigate to Library tab
     await page.click('text=Library')

@@ -45,9 +45,11 @@ function normalizeBasePath(base) {
 const APP_BASE_PATH = normalizeBasePath(rawBasePath)
 
 // Define the local preview server origin and the full app URL. BASE_URL
-// combines ORIGIN + APP_BASE_PATH so that page.goto('/') and other
-// root-relative paths resolve to the app root (including any VITE_BASE_URL)
-// rather than the bare server origin.
+// combines ORIGIN + APP_BASE_PATH and is used as Playwright's baseURL.
+// NOTE: In Playwright, only relative paths without a leading slash
+// (e.g. '.', 'tasks') are resolved under APP_BASE_PATH. Root-relative
+// paths like '/' or '/foo' are resolved from the bare ORIGIN and ignore
+// the base path component of baseURL.
 const ORIGIN = 'http://localhost:4173'
 const BASE_URL = `${ORIGIN}${APP_BASE_PATH}`
 
