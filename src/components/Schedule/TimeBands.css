@@ -14,7 +14,7 @@
  * Percentages represent proportions of the visible range 07:00–24:00 (17 hours):
  *   Morning   07:00–12:00  5h / 17h ≈ 29.41%  → top: 0%,      height: 29.41%
  *   Afternoon 12:00–18:00  6h / 17h ≈ 35.29%  → top: 29.41%,  height: 35.29%
- *   Evening   18:00–23:00  5h / 17h ≈ 29.41%  → top: 64.70%,  height: 29.41%
+ *   Evening   18:00–23:00  5h / 17h ≈ 29.41%  → top: 64.7%,   height: 29.41%
  *   Night     23:00–24:00  1h / 17h ≈  5.89%  → top: 94.11%,  height:  5.89%
  *
  * Opacity rationale: bands render against the nebula glow layer (::before on container)

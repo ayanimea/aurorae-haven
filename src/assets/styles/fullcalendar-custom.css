@@ -483,7 +483,6 @@
   background: rgba(8, 14, 32, 0.22);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   overflow: clip;
   box-shadow:
