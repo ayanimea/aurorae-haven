@@ -316,15 +316,15 @@
 /* ===== Current Time Indicator ===== */
 
 .fc-timegrid-now-indicator-line {
-  border-color: rgba(255, 80, 80, 0.65) !important;
+  border-color: var(--now-line) !important;
   border-width: 2px;
-  box-shadow: 0 0 8px rgba(255, 80, 80, 0.4);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--now-line) 40%, transparent);
   position: relative;
   z-index: 2;
 }
 
 .fc-timegrid-now-indicator-arrow {
-  border-top-color: rgba(255, 80, 80, 0.65) !important;
+  border-top-color: var(--now-line) !important;
   z-index: 2;
 }
 
@@ -492,7 +492,8 @@
 
 /* Nebula glow layer — stronger radial gradients at higher opacity to restore
  * the cosmic vibrancy seen in the approved mockup.
- * Sits below time-of-day bands (same z-index: 0; DOM order determines stacking). */
+ * Sits below time-of-day bands (same z-index: 0; DOM order determines stacking).
+ * Static — no animation per performance and spec constraints. */
 .schedule-calendar-container::before {
   content: '';
   position: absolute;
@@ -516,23 +517,6 @@
       transparent 65%
     );
   opacity: 0.9;
-  animation: nebulaBreath 24s ease-in-out infinite alternate;
-}
-
-@keyframes nebulaBreath {
-  from {
-    opacity: 0.8;
-  }
-  to {
-    opacity: 0.98;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .schedule-calendar-container::before {
-    animation: none;
-    opacity: 0.9;
-  }
 }
 
 /* Remove any background coloring from time grid rows and slots.

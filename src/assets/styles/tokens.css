@@ -41,19 +41,19 @@
 
   /* ===== Z-INDEX LAYERS ===== */
   /* Stacking order for overlays and modals */
-  --z-base: 1;        /* Local stacking contexts (resize handles, cards) */
-  --z-appbar: 20;     /* Fixed top/bottom app bar */
+  --z-base: 1; /* Local stacking contexts (resize handles, cards) */
+  --z-appbar: 20; /* Fixed top/bottom app bar */
   --z-mobile-menu: 40; /* Sliding navigation drawer */
   /* NOTE: --z-content (50) is intentionally above --z-mobile-menu (40) */
   /* and is reserved for future content-layer use; do not assign to page content */
   --z-content: 50;
-  --z-sidebar: 100;   /* Overlay sidebars (e.g. brain-dump note list) */
-  --z-editor: 101;    /* Inline editor surfaces above sidebars */
-  --z-dropdown: 102;      /* Context menus and dropdowns */
-  --z-notification: 150;  /* In-page error/status banners (below modals, above dropdowns) */
-  --z-modal: 200;         /* Modal overlays and backdrops */
-  --z-toast: 300;         /* Toasts and transient notifications */
-  --z-celebration: 9000;  /* One-shot celebration overlays (above everything) */
+  --z-sidebar: 100; /* Overlay sidebars (e.g. brain-dump note list) */
+  --z-editor: 101; /* Inline editor surfaces above sidebars */
+  --z-dropdown: 102; /* Context menus and dropdowns */
+  --z-notification: 150; /* In-page error/status banners (below modals, above dropdowns) */
+  --z-modal: 200; /* Modal overlays and backdrops */
+  --z-toast: 300; /* Toasts and transient notifications */
+  --z-celebration: 9000; /* One-shot celebration overlays (above everything) */
 
   /* ===== NAVIGATION DIMENSIONS ===== */
   /* Shell padding values for different viewport sizes */
@@ -91,6 +91,35 @@
   --radius-md: 0.5rem; /* 8px */
   --radius-lg: 0.75rem; /* 12px */
   --radius-xl: 1rem; /* 16px */
+
+  /* ===== SCHEDULE — ATMOSPHERIC TOKENS ===== */
+  /* Sky gradient stops for the fixed background layer */
+  --bg-sky-top: #0f172a;
+  --bg-sky-mid: #16213e;
+  --bg-sky-bottom: #1a1f3c;
+
+  /* Time-of-day zone overlays (barely perceptible tints) */
+  --zone-morning: rgba(255, 200, 120, 0.05);
+  --zone-afternoon: rgba(100, 160, 255, 0.04);
+  --zone-evening: rgba(120, 100, 200, 0.05);
+
+  /* Star field — opacity kept ≤ 0.4 per spec */
+  --star-color: rgba(255, 255, 255, 0.3);
+
+  /* Planet glow layers — combined effective opacity ≤ 0.08 */
+  --planet-core: rgba(180, 200, 255, 0.08);
+  --planet-mid: rgba(150, 180, 255, 0.05);
+  --planet-edge: rgba(120, 150, 255, 0.03);
+
+  /* Event glass surface */
+  --event-glass-top: rgba(255, 255, 255, 0.06);
+  --event-glass-bottom: rgba(255, 255, 255, 0.03);
+
+  /* Category accent */
+  --category-blue: rgba(100, 160, 255, 0.22);
+
+  /* Current-time indicator — mint (distinct from --mint for explicit token name) */
+  --now-line: #a3ffd6;
 
   /* ===== TRANSITIONS ===== */
   /* NOTE: These composite tokens are defined for future use but are not yet

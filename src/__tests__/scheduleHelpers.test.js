@@ -3,7 +3,9 @@ import {
   getAllTasks,
   searchRoutinesAndTasks,
   getAllRoutinesAndTasks,
-  instantiateRoutineFromTemplate
+  instantiateRoutineFromTemplate,
+  clusterEvents,
+  assignColumns
 } from '../utils/scheduleHelpers'
 import { getRoutines, createRoutine } from '../utils/routinesManager'
 import { getAllTemplates } from '../utils/templatesManager'
@@ -384,6 +386,128 @@ describe('scheduleHelpers', () => {
       await expect(instantiateRoutineFromTemplate(template)).rejects.toThrow(
         'Database error'
       )
+    })
+  })
+
+  describe('clusterEvents', () => {
+    it('returns empty array for no events', () => {
+      expect(clusterEvents([])).toEqual([])
+    })
+
+    it('puts a single event in its own cluster', () => {
+      const events = [{ start: 60, end: 120 }]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(1)
+      expect(clusters[0]).toHaveLength(1)
+    })
+
+    it('groups overlapping events into one cluster', () => {
+      const events = [
+        { start: 60, end: 120 },
+        { start: 90, end: 150 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(1)
+      expect(clusters[0]).toHaveLength(2)
+    })
+
+    it('creates separate clusters for non-overlapping events', () => {
+      const events = [
+        { start: 60, end: 120 },
+        { start: 180, end: 240 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(2)
+    })
+
+    it('does not treat touching boundaries as overlap', () => {
+      const events = [
+        { start: 60, end: 120 },
+        { start: 120, end: 180 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(2)
+    })
+
+    it('sorts events by start time before clustering', () => {
+      const events = [
+        { start: 180, end: 240 },
+        { start: 60, end: 120 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(2)
+      expect(clusters[0][0].start).toBe(60)
+    })
+
+    it('does not mutate the original array', () => {
+      const events = [
+        { start: 90, end: 150 },
+        { start: 60, end: 120 }
+      ]
+      const original = [...events]
+      clusterEvents(events)
+      expect(events[0].start).toBe(original[0].start)
+    })
+
+    it('handles transitive overlap spanning more than two events', () => {
+      // A overlaps B, B overlaps C → all in one cluster even if A and C don't directly overlap
+      const events = [
+        { start: 0, end: 60 },
+        { start: 30, end: 90 },
+        { start: 70, end: 120 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(1)
+      expect(clusters[0]).toHaveLength(3)
+    })
+  })
+
+  describe('assignColumns', () => {
+    it('assigns column 0 and totalColumns 1 to a single event', () => {
+      const cluster = [{ start: 60, end: 120 }]
+      assignColumns(cluster)
+      expect(cluster[0].column).toBe(0)
+      expect(cluster[0].totalColumns).toBe(1)
+    })
+
+    it('places two overlapping events in separate columns', () => {
+      const cluster = [
+        { start: 60, end: 120 },
+        { start: 90, end: 150 }
+      ]
+      assignColumns(cluster)
+      expect(cluster[0].column).toBe(0)
+      expect(cluster[1].column).toBe(1)
+      expect(cluster[0].totalColumns).toBe(2)
+      expect(cluster[1].totalColumns).toBe(2)
+    })
+
+    it('reuses a column when the previous occupant has ended', () => {
+      // event0 ends at 120; event1 starts at 90 (overlap); event2 starts at 120 (touching, no overlap)
+      const cluster = [
+        { start: 0, end: 60 },
+        { start: 30, end: 90 },
+        { start: 60, end: 120 }
+      ]
+      assignColumns(cluster)
+      // event2 starts at 60 which equals event0.end (60) → can reuse column 0
+      expect(cluster[2].column).toBe(0)
+      expect(cluster[0].totalColumns).toBe(2)
+    })
+
+    it('assigns totalColumns consistently to all events in cluster', () => {
+      const cluster = [
+        { start: 0, end: 120 },
+        { start: 30, end: 90 },
+        { start: 60, end: 150 }
+      ]
+      assignColumns(cluster)
+      const totals = cluster.map((e) => e.totalColumns)
+      expect(new Set(totals).size).toBe(1)
+    })
+
+    it('handles an empty cluster without error', () => {
+      expect(() => assignColumns([])).not.toThrow()
     })
   })
 })

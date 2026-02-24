@@ -58,17 +58,13 @@ Ask for clarification or preserve the existing structure.
 
 /* ===== Schedule ===== */
 :root {
-  /* Minute-based scaling unit per schedule-ui-spec.md §4 */
-  /* All vertical sizing derives from this proportional unit */
-  /* Fallback for browsers that don't support svh (pre-2022) */
-  --minute-unit: 1.2px;
-  /* Using svh (small viewport height) for stable sizing on mobile when keyboard/browser UI appears */
-  /* This prevents layout shifts when mobile keyboard opens or address bar hides/shows */
-  --minute-unit: clamp(1px, 0.15svh, 1.6px);
+  /* Responsive hour height — clamp ensures usable range across all viewports */
+  /* 48px min (compact), 8vh preferred, 96px max (large displays) */
+  --hour-height: clamp(48px, 8vh, 96px);
 
-  /* Hour height calculated dynamically from minute unit (60 minutes per hour) */
-  /* This ensures proportional, non-hardcoded time scaling per spec §6 */
-  --hour-height: calc(var(--minute-unit) * 60);
+  /* Minute-based scaling unit derived from hour height (60 min per hour) */
+  /* All vertical sizing uses this unit — do NOT hardcode pixel heights */
+  --minute-unit: calc(var(--hour-height) / 60);
 }
 
 .layout-schedule {
