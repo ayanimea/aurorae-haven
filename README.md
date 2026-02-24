@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1225 KB compressed
+- ✅ Total size: 1227 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-24 10:12:32 UTC
-**Source Branch**: refine-schedule-visuals
-**Source Commit**: a7b2256
+**Last Updated**: 2026-02-24 18:55:11 UTC
+**Source Branch**: feature-ui
+**Source Commit**: eaad975
 
 ---
 
