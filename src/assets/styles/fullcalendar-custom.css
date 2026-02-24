@@ -5,7 +5,7 @@
  */
 
 :root {
-  --fc-border-color: rgba(255, 255, 255, 0.08);
+  --fc-border-color: rgba(255, 255, 255, 0.05);
   --fc-today-bg-color: rgba(147, 197, 253, 0.05);
   --fc-event-bg-color: transparent;
   --fc-event-border-color: transparent;
@@ -82,9 +82,9 @@
 }
 
 .fc-timegrid-axis {
-  background: rgba(16, 20, 44, 0.35);
+  background: rgba(16, 20, 44, 0.18);
   border-color: var(--fc-border-color);
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* Timegrid body — fully transparent; atmospheric feel comes from .schedule-calendar-container
@@ -143,7 +143,6 @@
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .fc-col-header-cell-cushion {
@@ -206,7 +205,7 @@
   position: relative;
   z-index: 3;
   border-radius: 0.875rem; /* 14px — matches --event-radius in SolidEventCard.css */
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border: none !important;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   overflow: hidden;
@@ -270,33 +269,33 @@
  * effect in long event blocks without introducing jarring color jumps.
  */
 
-/* Morning early 07–08: richest gold-amber */
+/* Morning early 07–08: distinctly golden-yellow, warm sunrise quality */
 .fc-event[data-timezone='morning'][data-hour='early'] {
   background: radial-gradient(
     circle at 25% 20%,
-    rgba(255, 205, 125, 0.95),
-    rgba(255, 168, 88, 0.85) 50%,
-    rgba(60, 28, 88, 0.98) 100%
+    rgba(255, 228, 95, 0.95),
+    rgba(255, 200, 70, 0.88) 50%,
+    rgba(58, 25, 82, 0.98) 100%
   ) !important;
 }
 
-/* Morning mid 09–10: tangerine shift, slightly warmer */
+/* Morning mid 09–10: clear amber-orange, hue distinctly warmer/deeper than early */
 .fc-event[data-timezone='morning'][data-hour='mid'] {
   background: radial-gradient(
     circle at 28% 22%,
-    rgba(248, 178, 96, 0.95),
-    rgba(235, 140, 72, 0.85) 50%,
-    rgba(62, 26, 82, 0.98) 100%
+    rgba(255, 172, 72, 0.95),
+    rgba(240, 132, 48, 0.85) 50%,
+    rgba(60, 18, 78, 0.98) 100%
   ) !important;
 }
 
-/* Morning late 11: cooling toward noon */
+/* Morning late 11: deep bronze-amber, cooling toward noon */
 .fc-event[data-timezone='morning'][data-hour='late'] {
   background: radial-gradient(
     circle at 30% 25%,
-    rgba(238, 158, 82, 0.93),
-    rgba(215, 118, 60, 0.82) 50%,
-    rgba(55, 22, 76, 0.97) 100%
+    rgba(232, 140, 58, 0.93),
+    rgba(205, 98, 38, 0.82) 50%,
+    rgba(54, 15, 70, 0.97) 100%
   ) !important;
 }
 
@@ -393,15 +392,15 @@
 /* ===== Current Time Indicator ===== */
 
 .fc-timegrid-now-indicator-line {
-  border-color: rgba(150, 60, 60, 0.38) !important;
+  border-color: rgba(130, 52, 52, 0.28) !important;
   border-width: 1px;
-  box-shadow: 0 0 18px rgba(120, 45, 45, 0.18);
+  box-shadow: 0 0 20px rgba(110, 38, 38, 0.12);
   position: relative;
   z-index: 2;
 }
 
 .fc-timegrid-now-indicator-arrow {
-  border-top-color: rgba(150, 60, 60, 0.38) !important;
+  border-top-color: rgba(130, 52, 52, 0.28) !important;
   z-index: 2;
 }
 

@@ -78,10 +78,13 @@
 .schedule-band.afternoon {
   top: 29.41%;
   height: 35.29%;
+  /* Fade from transparent so the 12:00 boundary has no visible step.
+   * Tint builds up over the first ~12% of the band then fades to nothing. */
   background: linear-gradient(
     to bottom,
-    var(--afternoon-top),
-    var(--afternoon-mid),
+    transparent,
+    var(--afternoon-top) 12%,
+    var(--afternoon-mid) 55%,
     var(--afternoon-bottom)
   );
 }
@@ -90,10 +93,13 @@
 .schedule-band.evening {
   top: 64.7%;
   height: 29.41%;
+  /* Fade from transparent so the 18:00 boundary has no visible step.
+   * Violet tint builds up over the first ~12% of the band then fades. */
   background: linear-gradient(
     to bottom,
-    var(--evening-top),
-    var(--evening-mid),
+    transparent,
+    var(--evening-top) 12%,
+    var(--evening-mid) 55%,
     var(--evening-bottom)
   );
 }
