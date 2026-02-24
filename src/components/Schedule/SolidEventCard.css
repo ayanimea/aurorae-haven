@@ -85,7 +85,9 @@
   letter-spacing: 0.02em;
   margin-bottom: 0.25rem;
   color: var(--event-text);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  text-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.75),
+    0 0 8px rgba(0, 0, 0, 0.4);
   flex-shrink: 0; /* Prevent flex container from collapsing */
   min-height: 1.4em; /* Ensure minimum visible height */
   overflow: visible; /* Don't collapse with overflow */
