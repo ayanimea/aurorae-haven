@@ -393,15 +393,15 @@
 /* ===== Current Time Indicator ===== */
 
 .fc-timegrid-now-indicator-line {
-  border-color: rgba(140, 55, 55, 0.25) !important;
+  border-color: rgba(150, 60, 60, 0.38) !important;
   border-width: 1px;
-  box-shadow: 0 0 18px rgba(120, 40, 40, 0.12);
+  box-shadow: 0 0 18px rgba(120, 45, 45, 0.18);
   position: relative;
   z-index: 2;
 }
 
 .fc-timegrid-now-indicator-arrow {
-  border-top-color: rgba(140, 55, 55, 0.25) !important;
+  border-top-color: rgba(150, 60, 60, 0.38) !important;
   z-index: 2;
 }
 
