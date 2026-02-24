@@ -391,17 +391,26 @@
 
 /* ===== Current Time Indicator ===== */
 
+/* ===== Current Time Indicator ===== */
+
+/* Full-width bar — replaces the small arrow with a spanning horizontal band */
 .fc-timegrid-now-indicator-line {
-  border-color: rgba(130, 52, 52, 0.28) !important;
-  border-width: 1px;
-  box-shadow: 0 0 20px rgba(110, 38, 38, 0.12);
+  border-color: rgba(180, 70, 70, 0.45) !important;
+  border-width: 2px;
+  box-shadow:
+    0 0 16px rgba(160, 55, 55, 0.22),
+    0 0 48px rgba(140, 40, 40, 0.08);
   position: relative;
-  z-index: 2;
+  z-index: 4;
+  /* Extend leftward to cover the time-axis column so the bar spans full row */
+  left: -100vw;
+  right: 0;
+  width: calc(100% + 100vw);
 }
 
+/* Hide the small arrow — the full bar communicates position sufficiently */
 .fc-timegrid-now-indicator-arrow {
-  border-top-color: rgba(130, 52, 52, 0.28) !important;
-  z-index: 2;
+  display: none !important;
 }
 
 /* ===== Selection & Interaction ===== */
