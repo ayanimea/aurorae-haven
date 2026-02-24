@@ -228,36 +228,36 @@
 .fc-event[data-timezone='morning'] {
   background: linear-gradient(
     90deg,
-    rgba(255, 215, 90, 0.95) 0%,
-    rgba(230, 140, 60, 0.95) 55%,
-    rgba(80, 40, 110, 0.78) 100%
+    rgba(255, 215, 90, 0.72) 0%,
+    rgba(230, 140, 60, 0.72) 55%,
+    rgba(80, 40, 110, 0.42) 100%
   ) !important;
 }
 
 .fc-event[data-timezone='afternoon'] {
   background: linear-gradient(
     90deg,
-    rgba(110, 180, 255, 0.95) 0%,
-    rgba(80, 140, 230, 0.95) 50%,
-    rgba(40, 60, 130, 0.78) 100%
+    rgba(110, 180, 255, 0.72) 0%,
+    rgba(80, 140, 230, 0.72) 50%,
+    rgba(40, 60, 130, 0.42) 100%
   ) !important;
 }
 
 .fc-event[data-timezone='evening'] {
   background: linear-gradient(
     90deg,
-    rgba(170, 100, 255, 0.95) 0%,
-    rgba(140, 80, 220, 0.92) 50%,
-    rgba(50, 20, 100, 0.78) 100%
+    rgba(170, 100, 255, 0.72) 0%,
+    rgba(140, 80, 220, 0.68) 50%,
+    rgba(50, 20, 100, 0.42) 100%
   ) !important;
 }
 
 .fc-event[data-timezone='night'] {
   background: linear-gradient(
     90deg,
-    rgba(120, 177, 237, 0.65) 0%,
-    rgba(60, 100, 200, 0.8) 45%,
-    rgba(12, 18, 52, 0.78) 100%
+    rgba(120, 177, 237, 0.48) 0%,
+    rgba(60, 100, 200, 0.55) 45%,
+    rgba(12, 18, 52, 0.42) 100%
   ) !important;
 }
 
@@ -270,9 +270,9 @@
 .fc-event[data-timezone='morning'][data-hour='early'] {
   background: linear-gradient(
     90deg,
-    rgba(255, 225, 80, 0.95) 0%,
-    rgba(235, 165, 60, 0.95) 55%,
-    rgba(75, 35, 105, 0.78) 100%
+    rgba(255, 225, 80, 0.72) 0%,
+    rgba(235, 165, 60, 0.72) 55%,
+    rgba(75, 35, 105, 0.42) 100%
   ) !important;
 }
 
@@ -280,9 +280,9 @@
 .fc-event[data-timezone='morning'][data-hour='mid'] {
   background: linear-gradient(
     90deg,
-    rgba(255, 178, 60, 0.95) 0%,
-    rgba(222, 118, 38, 0.95) 55%,
-    rgba(70, 22, 95, 0.78) 100%
+    rgba(255, 178, 60, 0.72) 0%,
+    rgba(222, 118, 38, 0.72) 55%,
+    rgba(70, 22, 95, 0.42) 100%
   ) !important;
 }
 
@@ -290,9 +290,9 @@
 .fc-event[data-timezone='morning'][data-hour='late'] {
   background: linear-gradient(
     90deg,
-    rgba(238, 148, 48, 0.93) 0%,
-    rgba(198, 92, 30, 0.92) 55%,
-    rgba(65, 16, 85, 0.78) 100%
+    rgba(238, 148, 48, 0.7) 0%,
+    rgba(198, 92, 30, 0.68) 55%,
+    rgba(65, 16, 85, 0.42) 100%
   ) !important;
 }
 
@@ -300,9 +300,9 @@
 .fc-event[data-timezone='afternoon'][data-hour='early'] {
   background: linear-gradient(
     90deg,
-    rgba(110, 180, 255, 0.95) 0%,
-    rgba(80, 140, 230, 0.95) 50%,
-    rgba(40, 60, 130, 0.78) 100%
+    rgba(110, 180, 255, 0.72) 0%,
+    rgba(80, 140, 230, 0.72) 50%,
+    rgba(40, 60, 130, 0.42) 100%
   ) !important;
 }
 
@@ -310,9 +310,9 @@
 .fc-event[data-timezone='afternoon'][data-hour='late'] {
   background: linear-gradient(
     90deg,
-    rgba(88, 158, 245, 0.95) 0%,
-    rgba(62, 118, 210, 0.92) 50%,
-    rgba(30, 45, 110, 0.78) 100%
+    rgba(88, 158, 245, 0.72) 0%,
+    rgba(62, 118, 210, 0.68) 50%,
+    rgba(30, 45, 110, 0.42) 100%
   ) !important;
 }
 
@@ -320,9 +320,9 @@
 .fc-event[data-timezone='evening'][data-hour='early'] {
   background: linear-gradient(
     90deg,
-    rgba(170, 100, 255, 0.95) 0%,
-    rgba(140, 80, 220, 0.92) 50%,
-    rgba(50, 20, 100, 0.78) 100%
+    rgba(170, 100, 255, 0.72) 0%,
+    rgba(140, 80, 220, 0.68) 50%,
+    rgba(50, 20, 100, 0.42) 100%
   ) !important;
 }
 
@@ -330,9 +330,9 @@
 .fc-event[data-timezone='evening'][data-hour='late'] {
   background: linear-gradient(
     90deg,
-    rgba(148, 78, 230, 0.95) 0%,
-    rgba(112, 52, 200, 0.92) 50%,
-    rgba(35, 12, 85, 0.78) 100%
+    rgba(148, 78, 230, 0.72) 0%,
+    rgba(112, 52, 200, 0.68) 50%,
+    rgba(35, 12, 85, 0.42) 100%
   ) !important;
 }
 
@@ -564,7 +564,7 @@
 .schedule-calendar-container {
   position: relative;
   isolation: isolate;
-  background: rgba(8, 14, 32, 0.1);
+  background: rgba(8, 14, 32, 0.05);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   border-radius: 12px;
