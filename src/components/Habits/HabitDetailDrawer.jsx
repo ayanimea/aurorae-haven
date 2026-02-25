@@ -164,7 +164,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
         backgroundColor: 'var(--surface)',
         borderLeft: '1px solid var(--surface-raised)',
         boxShadow: '-2px 0 10px rgba(0, 0, 0, 0.3)',
-        zIndex: 200, /* --z-modal */
+        zIndex: 200 /* --z-modal */,
         overflowY: 'auto',
         padding: '1.5rem'
       }}
@@ -206,7 +206,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
             </span>
           )}
         </div>
-        <button type="button"
+        <button
+          type='button'
           onClick={onClose}
           style={{
             background: 'transparent',
@@ -365,11 +366,14 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           }}
         >
           <strong>Vacation Mode</strong>
-          <button type="button"
+          <button
+            type='button'
             onClick={() => setShowVacationMode(!showVacationMode)}
             style={{
               padding: '0.5rem 1rem',
-              background: showVacationMode ? 'var(--surface-border)' : 'var(--mint)',
+              background: showVacationMode
+                ? 'var(--surface-border)'
+                : 'var(--mint)',
               color: showVacationMode ? 'var(--dim)' : 'var(--paper)',
               border: 'none',
               borderRadius: '8px',
@@ -452,14 +456,20 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   }}
                 />
               </div>
-              <button type="button"
+              <button
+                type='button'
                 onClick={handleSetVacation}
                 disabled={!vacationStart || !vacationEnd}
                 style={{
                   padding: '0.5rem 1rem',
                   background:
-                    !vacationStart || !vacationEnd ? 'var(--surface-border)' : 'var(--mint)',
-                  color: !vacationStart || !vacationEnd ? 'var(--dim)' : 'var(--paper)',
+                    !vacationStart || !vacationEnd
+                      ? 'var(--surface-border)'
+                      : 'var(--mint)',
+                  color:
+                    !vacationStart || !vacationEnd
+                      ? 'var(--dim)'
+                      : 'var(--paper)',
                   border: 'none',
                   borderRadius: '8px',
                   cursor:
@@ -482,7 +492,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
                   {vacationDates.length} vacation{' '}
                   {vacationDates.length === 1 ? 'day' : 'days'} set
                 </p>
-                <button type="button"
+                <button
+                  type='button'
                   onClick={handleClearVacation}
                   style={{
                     padding: '0.375rem 0.75rem',
@@ -505,7 +516,8 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
 
       {/* Brain Dump Link - TAB-HAB-29 */}
       <div className='card-b' style={{ marginBottom: '1.5rem' }}>
-        <button type="button"
+        <button
+          type='button'
           onClick={() => {
             // Create a Brain Dump note with habit context
             const habitInfo = `# ${habit.name}\n\n**Current Streak:** ${habit.streak || 0} days 🔥\n**Best Streak:** ${habit.longestStreak || 0} days ⭐\n**Total XP:** ${habit.xp || 0} ✨\n\n---\n\n*Write your thoughts about this habit here...*\n`
@@ -534,7 +546,11 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
         </button>
         <p
           className='small'
-          style={{ color: 'var(--dim)', marginTop: '0.5rem', textAlign: 'center' }}
+          style={{
+            color: 'var(--dim)',
+            marginTop: '0.5rem',
+            textAlign: 'center'
+          }}
         >
           Create a note about this habit with your current stats
         </p>
@@ -570,12 +586,16 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
               <option value='30'>Last 30 days</option>
               <option value='90'>Last 90 days</option>
             </select>
-            <button type="button"
+            <button
+              type='button'
               onClick={() => handleExport('csv')}
               disabled={completions.length === 0}
               style={{
                 padding: '0.375rem 0.75rem',
-                background: completions.length === 0 ? 'var(--surface-border)' : 'var(--accent-blue)',
+                background:
+                  completions.length === 0
+                    ? 'var(--surface-border)'
+                    : 'var(--accent-blue)',
                 color: completions.length === 0 ? 'var(--dim)' : 'var(--ink)',
                 border: 'none',
                 borderRadius: '8px',
@@ -587,12 +607,16 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
             >
               CSV
             </button>
-            <button type="button"
+            <button
+              type='button'
               onClick={() => handleExport('markdown')}
               disabled={completions.length === 0}
               style={{
                 padding: '0.375rem 0.75rem',
-                background: completions.length === 0 ? 'var(--surface-border)' : 'var(--accent-blue)',
+                background:
+                  completions.length === 0
+                    ? 'var(--surface-border)'
+                    : 'var(--accent-blue)',
                 color: completions.length === 0 ? 'var(--dim)' : 'var(--ink)',
                 border: 'none',
                 borderRadius: '8px',
@@ -638,12 +662,6 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
       </div>
     </div>
   )
-}
-
-HabitDetailDrawer.propTypes = {
-  habit: PropTypes.object,
-  onClose: PropTypes.func.isRequired,
-  onUpdateHabit: PropTypes.func.isRequired
 }
 
 HabitDetailDrawer.propTypes = {

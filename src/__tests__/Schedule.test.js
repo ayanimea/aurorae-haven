@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 import EventService from '../services/EventService'
@@ -11,14 +11,14 @@ const capturedHandlers = vi.hoisted(() => ({ eventDidMount: null }))
 // Mock FullCalendar to avoid ESM parsing issues
 vi.mock('@fullcalendar/react', () => {
   return {
-    default: function FullCalendar(props) {
+    default: React.forwardRef(function FullCalendar(props, _ref) {
       capturedHandlers.eventDidMount = props.eventDidMount
       return (
         <div className='fc' data-testid='fullcalendar'>
           <div className='fc-view'>{props.initialView}</div>
         </div>
       )
-    }
+    })
   }
 })
 
@@ -194,11 +194,14 @@ describe('Schedule Component with FullCalendar', () => {
     })
   })
 
-  test('shows loading state initially', () => {
+  test('shows loading state initially', async () => {
     render(<Schedule />)
 
-    // Loading overlay should be visible initially
+    // Loading overlay should be visible initially (before async effects resolve)
     expect(screen.getByText('Loading events...')).toBeInTheDocument()
+
+    // Flush pending async effects so they don't leak into the next test
+    await act(async () => {})
   })
 
   test('renders without errors when events are loaded', async () => {
@@ -272,7 +275,10 @@ describe('eventDidMount hour→timezone classification', () => {
 
   test.each(cases)('hour %i → %s', (hour, expected) => {
     const el = document.createElement('div')
-    capturedHandlers.eventDidMount({ event: { start: new Date(2025, 0, 1, hour) }, el })
+    capturedHandlers.eventDidMount({
+      event: { start: new Date(2025, 0, 1, hour) },
+      el
+    })
     expect(el.dataset.timezone).toBe(expected)
   })
 

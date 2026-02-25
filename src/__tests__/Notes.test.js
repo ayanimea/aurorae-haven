@@ -614,8 +614,10 @@ describe('Notes Component', () => {
 
       fireEvent.change(importInput, { target: { files: [file] } })
 
-      // Simulate file read completion
-      mockFileReader.onload({ target: { result: fileContent } })
+      // Simulate file read completion inside act() so React state updates are captured
+      await act(async () => {
+        mockFileReader.onload({ target: { result: fileContent } })
+      })
 
       await waitFor(() => {
         const entries = JSON.parse(
@@ -648,7 +650,11 @@ describe('Notes Component', () => {
       }
 
       fireEvent.change(importInput, { target: { files: [file] } })
-      mockFileReader.onload({ target: { result: fileContent } })
+
+      // Simulate file read completion inside act() so React state updates are captured
+      await act(async () => {
+        mockFileReader.onload({ target: { result: fileContent } })
+      })
 
       await waitFor(() => {
         const entries = JSON.parse(

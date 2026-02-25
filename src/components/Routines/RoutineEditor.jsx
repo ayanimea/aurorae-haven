@@ -7,7 +7,7 @@ import { useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
-function RoutineEditor({ routine, onSave, onCancel, isSaving }) {
+function RoutineEditor({ routine = null, onSave, onCancel, isSaving = false }) {
   const [name, setName] = useState(routine?.name || routine?.title || '')
   const [tags, setTags] = useState(routine?.tags?.join(', ') || '')
   const [steps, setSteps] = useState(
@@ -290,11 +290,6 @@ RoutineEditor.propTypes = {
   onSave: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   isSaving: PropTypes.bool
-}
-
-RoutineEditor.defaultProps = {
-  routine: null,
-  isSaving: false
 }
 
 export default RoutineEditor

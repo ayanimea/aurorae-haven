@@ -1,4 +1,3 @@
-
 import PropTypes from 'prop-types'
 import dayjs from 'dayjs'
 
@@ -8,7 +7,11 @@ import dayjs from 'dayjs'
  * TAB-HAB-13: Left to right, oldest to newest, today outlined
  * TAB-HAB-14: Completion intensity varies by streak
  */
-function HeatmapStrip({ completions, vacationDates, daysToShow = 28 }) {
+function HeatmapStrip({
+  completions = [],
+  vacationDates = [],
+  daysToShow = 28
+}) {
   const today = dayjs()
   const dates = []
 
@@ -62,7 +65,9 @@ function HeatmapStrip({ completions, vacationDates, daysToShow = 28 }) {
               height: '8px',
               borderRadius: '2px',
               backgroundColor: getCellColor(date),
-              border: isToday ? '1px solid var(--mint)' : '1px solid var(--surface-border)',
+              border: isToday
+                ? '1px solid var(--mint)'
+                : '1px solid var(--surface-border)',
               position: 'relative',
               backgroundImage: vacation
                 ? 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)'
@@ -87,12 +92,6 @@ HeatmapStrip.propTypes = {
   ),
   vacationDates: PropTypes.arrayOf(PropTypes.string),
   daysToShow: PropTypes.number
-}
-
-HeatmapStrip.defaultProps = {
-  completions: [],
-  vacationDates: [],
-  daysToShow: 28
 }
 
 export default HeatmapStrip
