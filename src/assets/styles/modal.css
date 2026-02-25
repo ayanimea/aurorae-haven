@@ -303,6 +303,28 @@
   margin: 0;
 }
 
+/* EventModal — larger initial size and user-resizable on desktop */
+.event-modal {
+  /* Override the base max-width so users can resize beyond the default cap */
+  width: clamp(680px, 80vw, 1100px);
+  max-width: unset;
+  max-height: unset;
+  min-width: 500px;
+  min-height: 600px;
+  /* overflow: hidden is already set by .modal-content; resize works with overflow != visible */
+  resize: both;
+}
+
+/* Disable resize on mobile/touch — not suitable for small viewports */
+@media (max-width: 768px) {
+  .event-modal {
+    width: 100%;
+    min-width: unset;
+    min-height: unset;
+    resize: none;
+  }
+}
+
 /* Destructive action button styling per TAB-SEC-25 */
 .btn-destructive {
   background: var(--alert);

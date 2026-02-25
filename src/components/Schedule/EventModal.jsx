@@ -364,6 +364,7 @@ function EventModal({
         onClose={onClose}
         title={getModalTitle()}
         closeOnOverlayClick={false}
+        className='event-modal'
       >
         {/* Show search selector for routines/tasks when not in manual form mode */}
         {!showManualForm &&
