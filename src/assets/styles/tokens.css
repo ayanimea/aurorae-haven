@@ -114,9 +114,13 @@
   /* Event glass surface */
   --event-glass-top: rgba(255, 255, 255, 0.06);
   --event-glass-bottom: rgba(255, 255, 255, 0.03);
+  --event-border: rgba(255, 255, 255, 0.12);
 
   /* Category accent */
   --category-blue: rgba(100, 160, 255, 0.22);
+
+  /* Preparation / travel block accent */
+  --color-preparation: rgba(251, 191, 36, 1);
 
   /* Current-time indicator — mint (distinct from --mint for explicit token name) */
   --now-line: #a3ffd6;

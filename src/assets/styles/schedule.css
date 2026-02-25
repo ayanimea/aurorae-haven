@@ -128,31 +128,6 @@ Ask for clarification or preserve the existing structure.
   border-left: 1px solid var(--line);
 }
 
-/* Time of day color coding */
-.time-period-morning {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 223, 186, 0.05) 0%,
-    rgba(255, 223, 186, 0.02) 100%
-  );
-}
-
-.time-period-afternoon {
-  background: linear-gradient(
-    180deg,
-    rgba(135, 206, 250, 0.05) 0%,
-    rgba(135, 206, 250, 0.02) 100%
-  );
-}
-
-.time-period-evening {
-  background: linear-gradient(
-    180deg,
-    rgba(186, 141, 255, 0.05) 0%,
-    rgba(186, 141, 255, 0.02) 100%
-  );
-}
-
 /* Time-blind accessibility features */
 .time-period-separator {
   position: absolute;
@@ -171,7 +146,7 @@ Ask for clarification or preserve the existing structure.
 
 .time-period-label {
   font-weight: 600;
-  color: var(--accent) !important;
+  color: var(--accent);
   font-size: 0.85rem;
 }
 
@@ -180,10 +155,10 @@ Ask for clarification or preserve the existing structure.
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--mint);
-  z-index: 10;
+  background: linear-gradient(90deg, transparent, var(--now-line), transparent);
+  z-index: 3;
   pointer-events: none;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--mint) 60%, transparent);
+  box-shadow: 0 0 6px var(--now-line);
 }
 
 .current-time-indicator::before {
@@ -194,8 +169,8 @@ Ask for clarification or preserve the existing structure.
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--mint);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--mint) 80%, transparent);
+  background: var(--now-line);
+  box-shadow: 0 0 4px var(--now-line);
 }
 
 .current-time-label {
@@ -233,9 +208,10 @@ Ask for clarification or preserve the existing structure.
   position: absolute;
   border-radius: 10px;
   padding: 8px 12px;
-  background: rgba(142, 200, 255, 0.14);
-  border: 1px solid rgba(150, 200, 255, 0.24);
+  background: linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom));
+  border: 1px solid var(--event-border);
   border-left: 3px solid var(--mint);
+  backdrop-filter: blur(8px);
   z-index: 2;
   overflow: hidden;
   min-height: 40px;
@@ -281,50 +257,38 @@ Ask for clarification or preserve the existing structure.
 /* Routine blocks use default styling from .block */
 
 /* Task blocks - Eisenhower Matrix colors */
+/* Inherit glass gradient and event-border from .block; only override border-left accent */
 .block.task {
-  background: rgba(200, 180, 255, 0.14);
-  border-color: rgba(200, 180, 255, 0.24);
+  border-left: 3px solid color-mix(in srgb, var(--prio-schedule) 80%, transparent);
 }
 
 /* Urgent & Important (Do First) - Red */
 .block.task.urgent-important {
-  background: color-mix(in srgb, var(--prio-do) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-do) 24%, transparent);
   border-left: 3px solid var(--prio-do);
 }
 
 /* Not Urgent & Important (Schedule) - Yellow/Amber */
 .block.task.not-urgent-important {
-  background: color-mix(in srgb, var(--prio-schedule) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-schedule) 24%, transparent);
   border-left: 3px solid var(--prio-schedule);
 }
 
 /* Urgent & Not Important (Delegate) - Blue */
 .block.task.urgent-not-important {
-  background: color-mix(in srgb, var(--prio-delegate) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-delegate) 24%, transparent);
   border-left: 3px solid var(--prio-delegate);
 }
 
 /* Not Urgent & Not Important (Eliminate) - Green */
 .block.task.not-urgent-not-important {
-  background: color-mix(in srgb, var(--prio-eliminate) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-eliminate) 24%, transparent);
   border-left: 3px solid var(--prio-eliminate);
 }
 
 /* Meeting blocks - grey accent */
 .block.meeting {
-  background: color-mix(in srgb, var(--prio-meeting) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-meeting) 24%, transparent);
   border-left: 3px solid var(--prio-meeting);
 }
 
 /* Habit blocks - teal accent */
 .block.habit {
-  background: color-mix(in srgb, var(--prio-habit) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-habit) 24%, transparent);
   border-left: 3px solid var(--prio-habit);
 }
 
@@ -369,9 +333,9 @@ Ask for clarification or preserve the existing structure.
 }
 
 .block-preparation.preparation {
-  background: rgba(251, 191, 36, 0.15);
-  border-color: rgba(251, 191, 36, 0.4);
-  border-left: 3px dashed rgba(251, 191, 36, 0.7);
+  background: color-mix(in srgb, var(--color-preparation) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-preparation) 40%, transparent);
+  border-left: 3px dashed color-mix(in srgb, var(--color-preparation) 70%, transparent);
   color: var(--text-primary);
 }
 
@@ -401,9 +365,9 @@ Ask for clarification or preserve the existing structure.
   }
 
   .block-preparation.preparation {
-    background: rgba(251, 191, 36, 0.25);
-    border-color: rgba(251, 191, 36, 0.8);
-    border-left: 3px dashed rgba(251, 191, 36, 1);
+    background: color-mix(in srgb, var(--color-preparation) 25%, transparent);
+    border-color: color-mix(in srgb, var(--color-preparation) 80%, transparent);
+    border-left: 3px dashed var(--color-preparation);
   }
 }
 
@@ -1545,12 +1509,12 @@ Ask for clarification or preserve the existing structure.
 
 /* Desktop: Proportional hour height reduction for better overview */
 @media (min-width: 1024px) {
-  /* Reduce minute unit for more compact desktop view */
+  /* Reduce hour height for more compact desktop view; --minute-unit derives automatically */
   :root {
     /* Fallback for browsers that don't support dvh */
-    --minute-unit: 1px;
+    --hour-height: 60px;
     /* Using dvh (dynamic viewport height) for responsive sizing with browser chrome changes */
-    --minute-unit: clamp(0.8px, 0.12dvh, 1.4px);
+    --hour-height: clamp(48px, 7.2dvh, 84px);
   }
 
   .week-hour {
@@ -1847,8 +1811,8 @@ Ask for clarification or preserve the existing structure.
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Match day/week view block styling: 1px border on all sides, 3px left border for color coding */
-  border: 1px solid rgba(150, 200, 255, 0.24);
+  background: linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom));
+  border: 1px solid var(--event-border);
   border-left: 3px solid var(--mint);
   transition:
     opacity 0.2s ease,
@@ -1868,32 +1832,24 @@ Ask for clarification or preserve the existing structure.
 
 /* Routine events - default mint color (same as .block default) */
 .month-event.routine {
-  background: rgba(142, 200, 255, 0.14);
-  border-color: rgba(150, 200, 255, 0.24);
   border-left: 3px solid var(--mint);
   color: var(--ink);
 }
 
 /* Task events - match .block.task styling */
 .month-event.task {
-  background: rgba(200, 180, 255, 0.14);
-  border-color: rgba(200, 180, 255, 0.24);
-  border-left: 3px solid rgba(200, 180, 255, 0.5);
+  border-left: 3px solid color-mix(in srgb, var(--prio-schedule) 80%, transparent);
   color: var(--ink);
 }
 
 /* Meeting events - match .block.meeting styling */
 .month-event.meeting {
-  background: color-mix(in srgb, var(--prio-meeting) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-meeting) 24%, transparent);
   border-left: 3px solid var(--prio-meeting);
   color: var(--ink);
 }
 
 /* Habit events - match .block.habit styling */
 .month-event.habit {
-  background: color-mix(in srgb, var(--prio-habit) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-habit) 24%, transparent);
   border-left: 3px solid var(--prio-habit);
   color: var(--ink);
 }
@@ -2084,11 +2040,11 @@ Ask for clarification or preserve the existing structure.
     gap: 4px !important;
   }
 
-  /* Compact mobile view: reduce minute unit for smaller hour heights */
+  /* Compact mobile view: reduce hour height; --minute-unit derives automatically */
   :root {
     /* Fallback for browsers that don't support svh */
-    --minute-unit: 1.05px;
+    --hour-height: 63px;
     /* Using svh (small viewport height) for consistent sizing when address bar hides/shows */
-    --minute-unit: clamp(0.9px, 0.13svh, 1.2px);
+    --hour-height: clamp(54px, 7.8svh, 72px);
   }
 }
