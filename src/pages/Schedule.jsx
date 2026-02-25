@@ -285,7 +285,7 @@ function Schedule() {
               timeToMinutes(cleanEventData.endTime) -
               timeToMinutes(cleanEventData.startTime)
             await createRoutine({
-              title: cleanEventData.title,
+              name: cleanEventData.title,
               estimatedDuration: Math.max(0, durationMinutes) * 60
             })
           }
