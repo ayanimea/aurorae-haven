@@ -16,6 +16,7 @@ The timegrid must not introduce opaque containers.
 Time-of-day modulation is achieved through ultra-subtle vertical tinting.
 
 Rules:
+
 - Opacity must remain below 0.20.
 - Transitions must be smooth.
 - Horizontal bands must not be visually identifiable.
@@ -29,6 +30,7 @@ Atmosphere is perceptual, not graphic.
 Event cards are luminous objects floating above space.
 
 They must:
+
 - Use gradient interior.
 - Use translucent backgrounds.
 - Avoid solid borders.
