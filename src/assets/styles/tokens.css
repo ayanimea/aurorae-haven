@@ -99,12 +99,12 @@
   --bg-sky-bottom: #1a1f3c;
 
   /* Time-of-day zone overlays (barely perceptible tints) */
-  --zone-morning: rgba(255, 200, 120, 0.05);
-  --zone-afternoon: rgba(100, 160, 255, 0.04);
-  --zone-evening: rgba(120, 100, 200, 0.05);
+  --zone-morning: rgba(255, 200, 120, 0.033);
+  --zone-afternoon: rgba(100, 160, 255, 0.028);
+  --zone-evening: rgba(120, 100, 200, 0.033);
 
   /* Star field — opacity kept ≤ 0.4 per spec */
-  --star-color: rgba(255, 255, 255, 0.3);
+  --star-color: rgba(255, 255, 255, 0.25);
 
   /* Planet glow layers — combined effective opacity ≤ 0.08 */
   --planet-core: rgba(180, 200, 255, 0.08);
@@ -112,9 +112,9 @@
   --planet-edge: rgba(120, 150, 255, 0.03);
 
   /* Event glass surface */
-  --event-glass-top: rgba(255, 255, 255, 0.06);
-  --event-glass-bottom: rgba(255, 255, 255, 0.03);
-  --event-border: rgba(255, 255, 255, 0.12);
+  --event-glass-top: rgba(255, 255, 255, 0.05);
+  --event-glass-bottom: rgba(255, 255, 255, 0.025);
+  --event-border: rgba(255, 255, 255, 0.10);
 
   /* Category accent */
   --category-blue: rgba(100, 160, 255, 0.22);

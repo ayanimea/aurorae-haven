@@ -117,7 +117,7 @@ Ask for clarification or preserve the existing structure.
     --hour-height
   ); /* Match grid row height for proper event alignment */
   box-sizing: border-box; /* Include border in height calculation */
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px dashed color-mix(in srgb, var(--line) 45%, transparent);
   padding: 6px 8px;
   color: var(--dim);
   display: flex;
@@ -158,7 +158,7 @@ Ask for clarification or preserve the existing structure.
   background: linear-gradient(90deg, transparent, var(--now-line), transparent);
   z-index: 3;
   pointer-events: none;
-  box-shadow: 0 0 6px var(--now-line);
+  box-shadow: 0 0 4px var(--now-line);
 }
 
 .current-time-indicator::before {
@@ -1499,9 +1499,8 @@ Ask for clarification or preserve the existing structure.
   padding: 6px 8px;
   color: var(--dim);
   font-size: 0.85rem;
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px dashed color-mix(in srgb, var(--line) 45%, transparent);
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   position: relative;
   z-index: 0; /* Below headers (z-index: 100) - ensure hours don't show through */
