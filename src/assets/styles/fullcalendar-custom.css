@@ -603,14 +603,34 @@
 /* ===== Responsive Design ===== */
 
 @media (max-width: 768px) {
+  /* Toolbar: title row + single controls row */
   .calendar-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
   }
 
   .toolbar-right {
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
     justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* Prevent the global `.task-input-form .btn-primary { width: 100% }` bleed */
+  .calendar-toolbar .btn-primary {
+    width: auto;
+    flex-shrink: 0;
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+  }
+
+  /* Keep nav cluster and view selector from expanding */
+  .nav-buttons,
+  .view-selector {
+    flex-shrink: 0;
   }
 
   .schedule-container {
