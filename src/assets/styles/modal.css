@@ -315,13 +315,23 @@
   resize: both;
 }
 
-/* Disable resize on mobile/touch — not suitable for small viewports */
+/* Full-screen on mobile — covers the entire viewport like Google Calendar */
 @media (max-width: 768px) {
   .event-modal {
     width: 100%;
+    /* Fill the full viewport height (dvh accounts for mobile address bar) */
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
     min-width: unset;
     min-height: unset;
     resize: none;
+  }
+
+  /* Strip overlay padding so the full-screen modal reaches every edge */
+  .modal-overlay:has(.event-modal) {
+    padding: 0;
+    align-items: flex-start;
   }
 }
 
