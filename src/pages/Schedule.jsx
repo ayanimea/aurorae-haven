@@ -87,6 +87,9 @@ import {
 import { EVENT_TYPES, TIME_ZONE_HOURS } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
+import { addTaskToStorage } from '../utils/scheduleHelpers'
+import { createRoutine } from '../utils/routinesManager'
+import { timeToMinutes } from '../utils/timeUtils'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -257,16 +260,36 @@ function Schedule() {
         throw new Error('No event data provided')
       }
 
+      // Strip the internal flag before persisting to avoid polluting IndexedDB
+      const { _isNewCreation, ...cleanEventData } = eventData
+
       // Check if this is an update or create
       // For updates, we need both an ID and it must be a string/number
       const isUpdate =
-        eventData.id &&
-        (typeof eventData.id === 'string' || typeof eventData.id === 'number')
+        cleanEventData.id &&
+        (typeof cleanEventData.id === 'string' ||
+          typeof cleanEventData.id === 'number')
 
       if (isUpdate) {
-        await EventService.updateEvent(eventData)
+        await EventService.updateEvent(cleanEventData)
       } else {
-        await EventService.createEvent(eventData)
+        await EventService.createEvent(cleanEventData)
+
+        // When user created a brand-new task/routine from the schedule, also
+        // persist it in its native store so it appears in the respective tab.
+        if (_isNewCreation) {
+          if (cleanEventData.type === EVENT_TYPES.TASK) {
+            addTaskToStorage(cleanEventData.title)
+          } else if (cleanEventData.type === EVENT_TYPES.ROUTINE) {
+            const durationMinutes =
+              timeToMinutes(cleanEventData.endTime) -
+              timeToMinutes(cleanEventData.startTime)
+            await createRoutine({
+              title: cleanEventData.title,
+              estimatedDuration: Math.max(0, durationMinutes) * 60
+            })
+          }
+        }
       }
 
       await loadEvents()

@@ -5,7 +5,8 @@ import {
   getAllRoutinesAndTasks,
   instantiateRoutineFromTemplate,
   clusterEvents,
-  assignColumns
+  assignColumns,
+  addTaskToStorage
 } from '../utils/scheduleHelpers'
 import { getRoutines, createRoutine } from '../utils/routinesManager'
 import { getAllTemplates } from '../utils/templatesManager'
@@ -508,6 +509,51 @@ describe('scheduleHelpers', () => {
 
     it('handles an empty cluster without error', () => {
       expect(() => assignColumns([])).not.toThrow()
+    })
+  })
+
+  describe('addTaskToStorage', () => {
+    it('adds a task to not_urgent_not_important quadrant in localStorage', () => {
+      const task = addTaskToStorage('Write unit tests')
+      expect(task.text).toBe('Write unit tests')
+      expect(task.completed).toBe(false)
+      expect(task.id).toBeTruthy()
+
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important[0].text).toBe('Write unit tests')
+    })
+
+    it('trims whitespace from the title', () => {
+      addTaskToStorage('  Trimmed Task  ')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.not_urgent_not_important[0].text).toBe('Trimmed Task')
+    })
+
+    it('preserves existing tasks when adding a new one', () => {
+      localStorage.setItem(
+        'aurorae_tasks',
+        JSON.stringify({
+          urgent_important: [{ id: 'existing', text: 'Existing', completed: false }],
+          not_urgent_important: [],
+          urgent_not_important: [],
+          not_urgent_not_important: []
+        })
+      )
+      addTaskToStorage('New Task')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.urgent_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important[0].text).toBe('New Task')
+    })
+
+    it('initialises empty storage structure when localStorage is empty', () => {
+      addTaskToStorage('First Task')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.urgent_important).toEqual([])
+      expect(saved.not_urgent_important).toEqual([])
+      expect(saved.urgent_not_important).toEqual([])
+      expect(saved.not_urgent_not_important).toHaveLength(1)
     })
   })
 })

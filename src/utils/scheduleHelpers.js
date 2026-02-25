@@ -9,12 +9,53 @@
  *
  * @module scheduleHelpers
  */
+import { v4 as generateSecureUUID } from 'uuid'
 import { getRoutines, createRoutine } from './routinesManager'
 import { getAllTemplates } from './templatesManager'
 import { getPredefinedTemplates } from './predefinedTemplates'
 import { createLogger } from './logger'
 
 const logger = createLogger('ScheduleHelpers')
+
+/**
+ * Add a new task directly to localStorage storage (not_urgent_not_important quadrant).
+ * Used when a user creates a brand-new task from the Schedule view so it also
+ * appears in the Tasks tab without requiring a separate entry.
+ *
+ * @param {string} title - Task title/text
+ * @returns {Object} The created task object
+ * @throws {Error} If localStorage write fails
+ */
+export function addTaskToStorage(title) {
+  const task = {
+    id: generateSecureUUID(),
+    text: title.trim(),
+    completed: false,
+    createdAt: new Date().toISOString(),
+    dueDate: null,
+    completedAt: null
+  }
+  try {
+    const savedStr = localStorage.getItem('aurorae_tasks')
+    const tasks = savedStr
+      ? JSON.parse(savedStr)
+      : {
+          urgent_important: [],
+          not_urgent_important: [],
+          urgent_not_important: [],
+          not_urgent_not_important: []
+        }
+    if (!tasks.not_urgent_not_important) {
+      tasks.not_urgent_not_important = []
+    }
+    tasks.not_urgent_not_important.push(task)
+    localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
+    return task
+  } catch (e) {
+    logger.error('Failed to add task to storage:', e)
+    throw e
+  }
+}
 
 /**
  * Sort items by importance, priority, type, and title
