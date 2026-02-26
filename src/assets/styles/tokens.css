@@ -103,9 +103,6 @@
   --zone-afternoon: rgba(100, 160, 255, 0.028);
   --zone-evening: rgba(120, 100, 200, 0.033);
 
-  /* Star field — opacity kept ≤ 0.4 per spec */
-  --star-color: rgba(255, 255, 255, 0.25);
-
   /* Planet glow layers — combined effective opacity ≤ 0.08 */
   --planet-core: rgba(180, 200, 255, 0.08);
   --planet-mid: rgba(150, 180, 255, 0.05);

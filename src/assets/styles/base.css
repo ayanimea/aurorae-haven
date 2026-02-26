@@ -157,24 +157,24 @@ body {
 /* ===== Fixed Atmospheric Background ===== */
 /* Three-size star field (small ≈1px, medium ≈1.5px, large ≈2px) overlaid on a
  * deep sky gradient. Rendered on a fixed element so it never scrolls with content.
- * Stars use hex opacity notation (%23 = '#'); CSS custom properties are not
- * usable inside SVG data URIs, so values are kept as literals matching
- * --star-color (rgba(255,255,255,0.3)), with small stars slightly lower opacity
- * for perceptual size variation. */
+ * CSS custom properties cannot be used inside SVG data URIs, so star opacity is
+ * hardcoded as hex literals: small ≈ 0.16 (29 hex), medium ≈ 0.25 (40 hex),
+ * large ≈ 0.37 (5e hex). Tile size is 320×320 to reduce repetition on wide
+ * monitors while keeping the same 14/5/1 star distribution (70/25/5 %). */
 .app-background {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
   background:
-    /* Small stars (~1px) — 14 of 20 = 70%, opacity ≈ 0.19 */
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="none"/><g fill="%23FFFFFF30"><circle cx="12" cy="18" r="0.5"/><circle cx="64" cy="36" r="0.5"/><circle cx="100" cy="8" r="0.5"/><circle cx="150" cy="60" r="0.5"/><circle cx="200" cy="22" r="0.5"/><circle cx="180" cy="100" r="0.5"/><circle cx="40" cy="120" r="0.5"/><circle cx="22" cy="180" r="0.5"/><circle cx="90" cy="160" r="0.5"/><circle cx="210" cy="150" r="0.5"/><circle cx="140" cy="200" r="0.5"/><circle cx="55" cy="75" r="0.5"/><circle cx="170" cy="55" r="0.5"/><circle cx="120" cy="130" r="0.5"/></g></svg>')
+    /* Small stars (~1px) — 14 of 20 = 70%, opacity ≈ 0.16 */
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><rect width="320" height="320" fill="none"/><g fill="%23FFFFFF29"><circle cx="16" cy="24" r="0.5"/><circle cx="85" cy="48" r="0.5"/><circle cx="133" cy="11" r="0.5"/><circle cx="200" cy="80" r="0.5"/><circle cx="267" cy="29" r="0.5"/><circle cx="240" cy="133" r="0.5"/><circle cx="53" cy="160" r="0.5"/><circle cx="29" cy="240" r="0.5"/><circle cx="120" cy="213" r="0.5"/><circle cx="280" cy="200" r="0.5"/><circle cx="187" cy="267" r="0.5"/><circle cx="73" cy="100" r="0.5"/><circle cx="227" cy="73" r="0.5"/><circle cx="160" cy="173" r="0.5"/></g></svg>')
       repeat,
-    /* Medium stars (~1.5px) — 5 of 20 = 25%, opacity ≈ 0.30 */
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="none"/><g fill="%23FFFFFF4D"><circle cx="50" cy="50" r="0.75"/><circle cx="130" cy="90" r="0.75"/><circle cx="195" cy="170" r="0.75"/><circle cx="75" cy="210" r="0.75"/><circle cx="220" cy="30" r="0.75"/></g></svg>')
+    /* Medium stars (~1.5px) — 5 of 20 = 25%, opacity ≈ 0.25 */
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><rect width="320" height="320" fill="none"/><g fill="%23FFFFFF40"><circle cx="67" cy="67" r="0.75"/><circle cx="173" cy="120" r="0.75"/><circle cx="260" cy="227" r="0.75"/><circle cx="100" cy="280" r="0.75"/><circle cx="293" cy="40" r="0.75"/></g></svg>')
       repeat,
-    /* Large stars (~2px) — 1 of 20 = 5%, opacity ≈ 0.40 */
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="none"/><g fill="%23FFFFFF66"><circle cx="190" cy="86" r="1"/></g></svg>')
+    /* Large stars (~2px) — 1 of 20 = 5%, opacity ≈ 0.37 */
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><rect width="320" height="320" fill="none"/><g fill="%23FFFFFF5E"><circle cx="253" cy="115" r="1"/></g></svg>')
       repeat,
     /* Deep sky vertical gradient using atmospheric tokens */
     linear-gradient(
@@ -183,14 +183,15 @@ body {
         var(--bg-sky-mid, #16213e) 50%,
         var(--bg-sky-bottom, #1a1f3c) 100%
       ),
+    /* Depth nebula layers — rgba so they respect the calm-mode opacity budget */
     radial-gradient(
       1000px 720px at 76% 28%,
-      #0f1a4e 0%,
+      rgba(15, 26, 78, 0.35) 0%,
       rgba(15, 26, 78, 0) 60%
     ),
     radial-gradient(
       820px 520px at 16% 86%,
-      #0a1340 0%,
+      rgba(10, 19, 64, 0.35) 0%,
       rgba(10, 19, 64, 0) 60%
     );
 }
