@@ -84,7 +84,7 @@ import {
   toFullCalendarEvents,
   createEventFromSlot
 } from '../utils/eventAdapter'
-import { EVENT_TYPES, TIME_ZONE_HOURS } from '../utils/scheduleConstants'
+import { EVENT_TYPES, TIME_ZONE_HOURS, DEFAULT_EVENT_DURATION_MINUTES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
 import { addTaskToStorage } from '../utils/scheduleHelpers'
@@ -607,11 +607,13 @@ function Schedule() {
       }
       try {
         const newStart = dropInfo.event.start
-        const newEnd = dropInfo.event.end ?? new Date(newStart.getTime() + 30 * 60 * 1000)
+        const defaultEndMs = newStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60 * 1000
+        const newEnd = dropInfo.event.end ?? new Date(defaultEndMs)
         const updated = {
           ...originalEvent,
           day: format(newStart, 'yyyy-MM-dd'),
           startTime: format(newStart, 'HH:mm'),
+          // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
           endTime: format(newEnd, 'HH:mm')
         }
         await EventService.updateEvent(updated)
@@ -634,11 +636,13 @@ function Schedule() {
       }
       try {
         const newStart = resizeInfo.event.start
-        const newEnd = resizeInfo.event.end ?? new Date(newStart.getTime() + 30 * 60 * 1000)
+        const defaultEndMs = newStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60 * 1000
+        const newEnd = resizeInfo.event.end ?? new Date(defaultEndMs)
         const updated = {
           ...originalEvent,
           day: format(newStart, 'yyyy-MM-dd'),
           startTime: format(newStart, 'HH:mm'),
+          // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
           endTime: format(newEnd, 'HH:mm')
         }
         await EventService.updateEvent(updated)
