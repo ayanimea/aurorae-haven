@@ -113,6 +113,36 @@
   --event-glass-bottom: rgba(255, 255, 255, 0.025);
   --event-border: rgba(255, 255, 255, 0.10);
 
+  /* Event time-of-day accent tints — applied as top layer over the glass base.
+   * Max opacity: 0.20. Must not overpower glass surface or text readability. */
+  --event-morning-accent: rgba(255, 200, 120, 0.18);
+  --event-afternoon-accent: rgba(100, 160, 255, 0.14);
+  --event-evening-accent: rgba(170, 100, 255, 0.18);
+  --event-night-accent: rgba(60, 80, 200, 0.14);
+
+  /* Event card text colours */
+  --event-text: rgba(255, 255, 255, 0.92);
+  --event-text-dim: rgba(230, 237, 243, 0.7);
+  --event-text-secondary: rgba(255, 255, 255, 0.60);
+
+  /* Event card measurements */
+  --event-radius: 0.875rem;
+  --event-padding-v: 0.75rem;
+  --event-padding-h: 1rem;
+
+  /* Event top-edge luminous highlight (::before layer) — same as glass-top */
+  --event-highlight-top: rgba(255, 255, 255, 0.05);
+
+  /* Event type left-border accent colours */
+  --color-routine: rgba(134, 245, 224, 0.5);
+  --color-task: rgba(96, 165, 250, 0.5);
+  --color-meeting: rgba(249, 115, 22, 0.5);
+  --color-habit: rgba(167, 139, 250, 0.5);
+  --color-break: rgba(34, 197, 94, 0.5);
+
+  /* Focus ring — matches --color-routine teal */
+  --event-focus-ring: rgba(134, 245, 224, 0.6);
+
   /* Category accent */
   --category-blue: rgba(100, 160, 255, 0.22);
 

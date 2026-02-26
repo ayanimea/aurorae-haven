@@ -35,7 +35,6 @@
     "@fullcalendar/interaction": "^6.1.20",
     "@fullcalendar/react": "^6.1.20",
     "@fullcalendar/timegrid": "^6.1.20",
-    "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",

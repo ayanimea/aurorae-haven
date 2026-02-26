@@ -3,21 +3,14 @@
  * 
  * Events are the primary visual anchor - they must be the most dominant elements
  * No glass-morphism, no semi-transparency - solid, clear, readable cards
+ *
+ * All colour and sizing tokens for this component live in tokens.css:
+ *   --event-glass-top / --event-glass-bottom  glass surface gradient
+ *   --event-border                             card border opacity
+ *   --event-text / --event-text-dim            primary / secondary text
+ *   --event-text-secondary                     metadata (time) text
+ *   --event-radius / --event-padding-v/h       geometry tokens
  */
-
-:root {
-  /* Event card colors */
-  --event-bg: rgba(18, 28, 50, 0.85);
-  --event-border: rgba(255, 255, 255, 0.08);
-  --event-text: rgba(255, 255, 255, 0.92);
-  --event-text-dim: rgba(230, 237, 243, 0.7);
-  --event-text-secondary: rgba(255, 255, 255, 0.60);
-
-  /* Event card measurements */
-  --event-radius: 0.875rem; /* 14px */
-  --event-padding-v: 0.75rem; /* 12px */
-  --event-padding-h: 1rem; /* 16px */
-}
 
 .solid-event-card {
   position: relative;
@@ -122,28 +115,28 @@
 
 /* Type-specific left border accent (subtle) */
 .event-type-routine {
-  border-left: 3px solid rgba(134, 245, 224, 0.5); /* Accent teal */
+  border-left: 3px solid var(--color-routine);
 }
 
 .event-type-task {
-  border-left: 3px solid rgba(96, 165, 250, 0.5); /* Blue */
+  border-left: 3px solid var(--color-task);
 }
 
 .event-type-meeting {
-  border-left: 3px solid rgba(249, 115, 22, 0.5); /* Orange */
+  border-left: 3px solid var(--color-meeting);
 }
 
 .event-type-habit {
-  border-left: 3px solid rgba(167, 139, 250, 0.5); /* Purple */
+  border-left: 3px solid var(--color-habit);
 }
 
 .event-type-break {
-  border-left: 3px solid rgba(34, 197, 94, 0.5); /* Green */
+  border-left: 3px solid var(--color-break);
 }
 
 /* Focus state for accessibility */
 .solid-event-card:focus-visible {
-  outline: 2px solid rgba(134, 245, 224, 0.6);
+  outline: 2px solid var(--event-focus-ring);
   outline-offset: 2px;
 }
 
