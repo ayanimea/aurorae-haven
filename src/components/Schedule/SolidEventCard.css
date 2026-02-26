@@ -11,6 +11,7 @@
   --event-border: rgba(255, 255, 255, 0.08);
   --event-text: rgba(255, 255, 255, 0.92);
   --event-text-dim: rgba(230, 237, 243, 0.7);
+  --event-text-secondary: rgba(255, 255, 255, 0.60);
 
   /* Event card measurements */
   --event-radius: 0.875rem; /* 14px */
@@ -79,7 +80,7 @@
 /* Event title - prominent */
 .event-title {
   display: block;
-  font-weight: 700;
+  font-weight: 500;
   font-size: 0.95rem;
   line-height: 1.4; /* Explicit line-height to ensure height > 0 */
   letter-spacing: 0.02em;
@@ -89,6 +90,16 @@
   flex-shrink: 0; /* Prevent flex container from collapsing */
   min-height: 1.4em; /* Ensure minimum visible height */
   overflow: visible; /* Don't collapse with overflow */
+}
+
+/* Event start time - secondary metadata */
+.event-time {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--event-text-secondary);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  flex-shrink: 0;
 }
 
 /* Pre-activities (prep/travel) - subtle context */
@@ -146,6 +157,10 @@
   .event-title {
     font-size: 0.9rem;
     min-height: 1.3em; /* Slightly smaller for mobile */
+  }
+
+  .event-time {
+    font-size: 0.72rem;
   }
 
   .event-pre-activities {

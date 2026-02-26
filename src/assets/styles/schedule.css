@@ -145,9 +145,11 @@ Ask for clarification or preserve the existing structure.
 }
 
 .time-period-label {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--accent);
   font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  opacity: 0.5;
 }
 
 .current-time-indicator {

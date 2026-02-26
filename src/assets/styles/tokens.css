@@ -122,6 +122,11 @@
   /* Current-time indicator — mint (distinct from --mint for explicit token name) */
   --now-line: #a3ffd6;
 
+  /* Hour / timegrid label — neutral white at readable opacity (SVG-safe inline value
+   * required in fullcalendar-custom.css since CSS vars cannot be used in SVG data URIs,
+   * but this token is used for the rendered text labels) */
+  --time-label: rgba(255, 255, 255, 0.55);
+
   /* ===== TRANSITIONS ===== */
   /* NOTE: These composite tokens are defined for future use but are not yet
    * adopted. The canonical transition pattern in this codebase is:

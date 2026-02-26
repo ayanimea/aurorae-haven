@@ -127,7 +127,7 @@
 }
 
 .fc-timegrid-slot-label {
-  color: var(--dim);
+  color: var(--time-label);
   font-size: 0.7rem;
   padding: 4px;
   border-color: var(--fc-border-color);
@@ -317,8 +317,8 @@
 
 .fc-timegrid-now-indicator-line {
   border-color: var(--now-line) !important;
-  border-width: 2px;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--now-line) 40%, transparent);
+  border-width: 1.5px;
+  box-shadow: none;
   position: relative;
   z-index: 2;
 }
