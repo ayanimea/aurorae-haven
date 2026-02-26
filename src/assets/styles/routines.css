@@ -128,20 +128,14 @@
   margin-top: 4px;
 }
 .btn-primary {
-  background: linear-gradient(
-    135deg,
-    rgba(142, 200, 255, 0.25),
-    rgba(134, 245, 224, 0.2)
-  );
-  border: 1px solid rgba(142, 200, 255, 0.35);
+  background: var(--nav-active-bg);
+  border: 1px solid var(--nav-active-border);
+  color: var(--mint);
 }
 .btn-primary:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(142, 200, 255, 0.3),
-    rgba(134, 245, 224, 0.25)
-  );
-  transform: translateY(-1px);
+  filter: brightness(1.12);
+  box-shadow: var(--nav-active-glow);
+  transform: translateY(-0.5px);
 }
 .btn-menu {
   display: inline-flex;

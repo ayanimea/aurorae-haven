@@ -173,6 +173,14 @@
   --nav-group-bg: rgba(16, 20, 44, 0.35);
   --nav-group-border: rgba(255, 255, 255, 0.06);
 
+  /* ===== MODAL & INPUT GLASS SURFACE ===== */
+  /* Hierarchy: Modal > Event Cards > Bands > Background.
+   * Uses blur+shadow elevation rather than opacity for depth distinction. */
+  --modal-overlay-bg: rgba(10, 14, 38, 0.55);  /* Softer than black — preserves cosmic continuity */
+  --modal-surface-base: rgba(16, 20, 44, 0.38); /* Lighter than --dark for true glass float */
+  --modal-border: rgba(255, 255, 255, 0.08);    /* Softer than event-border (0.10) — hierarchy preserved */
+  --input-glass-bg: rgba(16, 20, 44, 0.30);     /* Input background — lighter than modal surface */
+
   /* ===== TRANSITIONS ===== */
   /* NOTE: These composite tokens are defined for future use but are not yet
    * adopted. The canonical transition pattern in this codebase is:

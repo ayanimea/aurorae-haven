@@ -623,9 +623,9 @@ Ask for clarification or preserve the existing structure.
 .event-form input[type='number'] {
   width: 100%;
   padding: 10px 12px;
-  background: var(--glass-lo);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: var(--input-glass-bg);
+  border: 1px solid var(--modal-border);
+  border-radius: 12px;
   color: var(--ink);
   font-size: 14px;
   transition: border-color var(--dur) var(--ease);
