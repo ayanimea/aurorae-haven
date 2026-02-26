@@ -72,9 +72,9 @@
   );
 }
 
-/* Night: 23:00–24:00 — 1h / 17h ≈ 5.89% — darkening overlay (distinct semantic purpose) */
+/* Night: 23:00–24:00 — 1h / 17h ≈ 5.89% */
 .schedule-band.night {
   top: 94.11%;
   height: 5.89%;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.45), rgba(15, 23, 42, 0.3));
+  background: linear-gradient(180deg, var(--zone-night), transparent);
 }

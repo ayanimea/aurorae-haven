@@ -195,9 +195,10 @@
   padding: 2px; /* Small padding for visual separation */
 }
 
-/* Event card wrapper — glass panel.
+/* Event card wrapper — neutral glass panel.
  * Base: vertical glass gradient + blur.
- * [data-timezone] rules stack a subtle tint on top without obscuring the glass. */
+ * Colour coding is provided exclusively by a 4px left-edge accent strip (::after),
+ * keeping the event body neutral and ensuring text readability is never compromised. */
 .fc-event {
   padding: 0;
   margin: 0;
@@ -211,48 +212,53 @@
   -webkit-backdrop-filter: blur(8px);
   overflow: hidden;
 
-  /* Glass surface — same as .block architectural intent */
-  background: linear-gradient(
-    180deg,
-    var(--event-glass-top),
-    var(--event-glass-bottom)
-  ) !important;
+  /* Neutral glass body — no colour fill; semantic colour comes from left-edge strip */
+  background:
+    linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom)),
+    var(--event-body-overlay) !important;
 
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.45),
-    0 0 40px var(--event-glass-top);
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 0 20px var(--event-glass-top);
 
   transition:
-    box-shadow 0.25s ease,
-    transform 0.2s ease;
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
 }
 
-/* ── Time-of-day accent tints — stacked over the glass base.
- * Opacity ≤ 0.20 so the glass surface always remains the dominant layer.
- * Stacked gradients: tint fades to transparent, revealing glass below. ── */
+/* ── Left-edge accent strip — 4px coloured bar at the start of each event.
+ * Alpha 0.58–0.62 for perceptible but non-dominant semantic colour coding.
+ * Uses ::after to render above the glass body without altering background. ── */
 
-.fc-event[data-timezone='morning'] {
-  background:
-    linear-gradient(180deg, var(--event-morning-accent), transparent 65%),
-    linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom)) !important;
+.fc-event[data-timezone='morning']::after,
+.fc-event[data-timezone='afternoon']::after,
+.fc-event[data-timezone='evening']::after,
+.fc-event[data-timezone='night']::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: var(--event-radius) 0 0 var(--event-radius);
+  pointer-events: none;
+  z-index: 1;
 }
 
-.fc-event[data-timezone='afternoon'] {
-  background:
-    linear-gradient(180deg, var(--event-afternoon-accent), transparent 65%),
-    linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom)) !important;
+.fc-event[data-timezone='morning']::after {
+  background: var(--event-morning-accent);
 }
 
-.fc-event[data-timezone='evening'] {
-  background:
-    linear-gradient(180deg, var(--event-evening-accent), transparent 65%),
-    linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom)) !important;
+.fc-event[data-timezone='afternoon']::after {
+  background: var(--event-afternoon-accent);
 }
 
-.fc-event[data-timezone='night'] {
-  background:
-    linear-gradient(180deg, var(--event-night-accent), transparent 65%),
-    linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom)) !important;
+.fc-event[data-timezone='evening']::after {
+  background: var(--event-evening-accent);
+}
+
+.fc-event[data-timezone='night']::after {
+  background: var(--event-night-accent);
 }
 
 /* Subtle luminous top-edge highlight */
@@ -271,12 +277,13 @@
   );
 }
 
+/* Hover — toned down to ~50% of the previous animation */
 .fc-event:hover {
-  transform: translateY(-1px);
+  transform: translateY(-0.5px);
 
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.55),
-    0 0 40px var(--event-glass-top);
+    0 10px 28px rgba(0, 0, 0, 0.42),
+    0 0 20px var(--event-glass-top);
 }
 
 /* Hide default FC event title/time since SolidEventCard renders them */

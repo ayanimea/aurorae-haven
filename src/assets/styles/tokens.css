@@ -98,10 +98,11 @@
   --bg-sky-mid: #16213e;
   --bg-sky-bottom: #1a1f3c;
 
-  /* Time-of-day zone overlays (barely perceptible tints) */
-  --zone-morning: rgba(255, 200, 120, 0.033);
-  --zone-afternoon: rgba(100, 160, 255, 0.028);
-  --zone-evening: rgba(120, 100, 200, 0.033);
+  /* Time-of-day zone overlays — semantic orientation bands (alpha 0.05–0.065) */
+  --zone-morning: rgba(255, 200, 120, 0.06);
+  --zone-afternoon: rgba(100, 160, 255, 0.05);
+  --zone-evening: rgba(120, 100, 200, 0.055);
+  --zone-night: rgba(80, 120, 200, 0.045);
 
   /* Planet glow layers — combined effective opacity ≤ 0.08 */
   --planet-core: rgba(180, 200, 255, 0.08);
@@ -114,11 +115,15 @@
   --event-border: rgba(255, 255, 255, 0.10);
 
   /* Event time-of-day accent tints — applied as top layer over the glass base.
-   * Max opacity: 0.20. Must not overpower glass surface or text readability. */
-  --event-morning-accent: rgba(255, 200, 120, 0.18);
-  --event-afternoon-accent: rgba(100, 160, 255, 0.14);
-  --event-evening-accent: rgba(170, 100, 255, 0.18);
-  --event-night-accent: rgba(60, 80, 200, 0.14);
+   * Body uses neutral glass (no colour fill). Left-edge strip uses saturated accent
+   * (alpha 0.58–0.62) for semantic scan speed. Must not overpower text. */
+  --event-morning-accent: rgba(255, 200, 120, 0.60);
+  --event-afternoon-accent: rgba(100, 160, 255, 0.58);
+  --event-evening-accent: rgba(170, 100, 255, 0.60);
+  --event-night-accent: rgba(60, 80, 200, 0.58);
+
+  /* Neutral event body overlay — stacked above glass, provides dark depth without colour */
+  --event-body-overlay: rgba(16, 20, 44, 0.42);
 
   /* Event card text colours */
   --event-text: rgba(255, 255, 255, 0.92);

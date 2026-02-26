@@ -597,6 +597,60 @@ function Schedule() {
     [handleEventContextMenu]
   )
 
+  // Handle event drag-and-drop (FullCalendar)
+  const handleEventDrop = useCallback(
+    async (dropInfo) => {
+      const originalEvent = dropInfo.event.extendedProps?.originalEvent
+      if (!originalEvent) {
+        dropInfo.revert()
+        return
+      }
+      try {
+        const newStart = dropInfo.event.start
+        const newEnd = dropInfo.event.end ?? new Date(newStart.getTime() + 30 * 60 * 1000)
+        const updated = {
+          ...originalEvent,
+          day: format(newStart, 'yyyy-MM-dd'),
+          startTime: format(newStart, 'HH:mm'),
+          endTime: format(newEnd, 'HH:mm')
+        }
+        await EventService.updateEvent(updated)
+        await loadEvents()
+      } catch (_err) {
+        dropInfo.revert()
+        setError('Failed to move event. Please try again.')
+      }
+    },
+    [loadEvents]
+  )
+
+  // Handle event resize (FullCalendar)
+  const handleEventResize = useCallback(
+    async (resizeInfo) => {
+      const originalEvent = resizeInfo.event.extendedProps?.originalEvent
+      if (!originalEvent) {
+        resizeInfo.revert()
+        return
+      }
+      try {
+        const newStart = resizeInfo.event.start
+        const newEnd = resizeInfo.event.end ?? new Date(newStart.getTime() + 30 * 60 * 1000)
+        const updated = {
+          ...originalEvent,
+          day: format(newStart, 'yyyy-MM-dd'),
+          startTime: format(newStart, 'HH:mm'),
+          endTime: format(newEnd, 'HH:mm')
+        }
+        await EventService.updateEvent(updated)
+        await loadEvents()
+      } catch (_err) {
+        resizeInfo.revert()
+        setError('Failed to resize event. Please try again.')
+      }
+    },
+    [loadEvents]
+  )
+
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
@@ -674,8 +728,11 @@ function Schedule() {
                   firstDay={1}
                   selectable={true}
                   selectMirror={true}
-                  editable={false}
+                  editable={true}
+                  eventOverlap={true}
                   eventClick={handleEventClick}
+                  eventDrop={handleEventDrop}
+                  eventResize={handleEventResize}
                   select={handleDateSelect}
                   eventMouseEnter={handleEventMouseEnter}
                   eventWillUnmount={handleEventWillUnmount}
