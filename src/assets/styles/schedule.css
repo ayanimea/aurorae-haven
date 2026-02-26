@@ -1979,9 +1979,11 @@ Ask for clarification or preserve the existing structure.
   /* Navigation group on the left */
   .nav-group {
     order: 1;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--nav-group-bg);
+    border: 1px solid var(--nav-group-border);
+    backdrop-filter: blur(6px);
     padding: 4px;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 
   /* Action group in center-left */
@@ -1995,9 +1997,11 @@ Ask for clarification or preserve the existing structure.
   .settings-group {
     order: 3;
     margin-left: auto; /* Push to right */
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--nav-group-bg);
+    border: 1px solid var(--nav-group-border);
+    backdrop-filter: blur(6px);
     padding: 4px;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 
   /* Show settings dropdown on desktop */

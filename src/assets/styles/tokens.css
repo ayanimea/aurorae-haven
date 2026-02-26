@@ -157,6 +157,17 @@
    * but this token is used for the rendered text labels) */
   --time-label: rgba(255, 255, 255, 0.55);
 
+  /* ===== NAVIGATION & BUTTON GLASS SURFACE ===== */
+  /* Shared glass surface for nav tabs, toolbar buttons, and button groups.
+   * Hierarchy: Events > Navigation > Background */
+  --nav-glass-base: rgba(16, 20, 44, 0.28);
+  --nav-glass-border: rgba(255, 255, 255, 0.07);
+  --nav-active-bg: rgba(134, 245, 224, 0.12);
+  --nav-active-border: rgba(134, 245, 224, 0.30);
+  --nav-active-glow: 0 0 10px rgba(134, 245, 224, 0.12);
+  --nav-group-bg: rgba(16, 20, 44, 0.35);
+  --nav-group-border: rgba(255, 255, 255, 0.06);
+
   /* ===== TRANSITIONS ===== */
   /* NOTE: These composite tokens are defined for future use but are not yet
    * adopted. The canonical transition pattern in this codebase is:
