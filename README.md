@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1224 KB compressed
+- ✅ Total size: 1222 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-02-26 08:27:55 UTC
+**Last Updated**: 2026-02-26 09:54:58 UTC
 **Source Branch**: refactor-schedule-view-layout
-**Source Commit**: e7a0aaa
+**Source Commit**: 3ce5aa4
 
 ---
 
