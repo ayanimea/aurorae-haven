@@ -176,10 +176,15 @@
   /* ===== MODAL & INPUT GLASS SURFACE ===== */
   /* Hierarchy: Modal > Event Cards > Bands > Background.
    * Uses blur+shadow elevation rather than opacity for depth distinction. */
-  --modal-overlay-bg: rgba(10, 14, 38, 0.55);  /* Softer than black — preserves cosmic continuity */
-  --modal-surface-base: rgba(16, 20, 44, 0.38); /* Lighter than --dark for true glass float */
-  --modal-border: rgba(255, 255, 255, 0.08);    /* Softer than event-border (0.10) — hierarchy preserved */
-  --input-glass-bg: rgba(16, 20, 44, 0.30);     /* Input background — lighter than modal surface */
+  --modal-overlay-bg: rgba(10, 14, 38, 0.55);       /* Softer than black — preserves cosmic continuity */
+  --modal-surface-base: rgba(16, 20, 44, 0.34);      /* Lighter than --dark for true glass float */
+  --modal-border: rgba(255, 255, 255, 0.06);          /* Softer than event-border — hierarchy preserved */
+  --modal-glass-top: rgba(255, 255, 255, 0.06);       /* Directional light — top highlight */
+  --modal-glass-mid: rgba(255, 255, 255, 0.02);       /* Directional light — upper-mid fade */
+  --modal-glass-dim: rgba(255, 255, 255, 0.01);       /* Directional light — lower-mid dim */
+  --modal-glass-shade: rgba(0, 0, 0, 0.05);           /* Directional light — base density */
+  --modal-edge-shimmer: rgba(255, 255, 255, 0.04);    /* ::before edge hairline — removes flatness */
+  --input-glass-bg: rgba(16, 20, 44, 0.26);           /* Input background — below modal surface */
 
   /* ===== TRANSITIONS ===== */
   /* NOTE: These composite tokens are defined for future use but are not yet

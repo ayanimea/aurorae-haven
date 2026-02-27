@@ -198,11 +198,14 @@
 
 /* Modal Content */
 .modal-content {
+  position: relative;
   background:
     linear-gradient(
       180deg,
-      var(--event-glass-top),
-      var(--event-glass-bottom)
+      var(--modal-glass-top)   0%,
+      var(--modal-glass-mid)   25%,
+      var(--modal-glass-dim)   60%,
+      var(--modal-glass-shade) 100%
     ),
     var(--modal-surface-base);
   border: 1px solid var(--modal-border);
@@ -213,10 +216,22 @@
   width: 100%;
   max-height: 90vh;
   overflow: hidden;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.28),
+    0 40px 120px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
+}
+
+/* Edge hairline shimmer — removes flatness without making the modal look outlined */
+.modal-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid var(--modal-edge-shimmer);
 }
 
 /* Mobile - full width and slide up animation */
