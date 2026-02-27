@@ -179,7 +179,7 @@ export const toFullCalendarEvents = (events) => {
       end: Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
     }))
     const clusters = clusterEvents(eventSlots)
-    clusters.forEach((cluster) => assignColumns(cluster))
+    for (const cluster of clusters) assignColumns(cluster)
     const columnMap = Object.fromEntries(
       eventSlots.map((s) => [s.id, { column: s.column ?? 0, totalColumns: s.totalColumns ?? 1 }])
     )
