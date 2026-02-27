@@ -90,6 +90,8 @@ import { isDevelopment } from '../utils/environment'
 import { addTaskToStorage } from '../utils/scheduleHelpers'
 import { createRoutine } from '../utils/routinesManager'
 import { timeToMinutes } from '../utils/timeUtils'
+import { getMemoizedDayLoad } from '../schedule/loadComputation'
+import { SCHEDULING_CONFIG } from '../schedule/config'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -152,13 +154,20 @@ function Schedule() {
     () => getSettings().schedule?.use24HourFormat ?? true
   )
 
+  const [schedulingGuidanceLevel, setSchedulingGuidanceLevel] = useState(
+    () => getSettings().schedule?.schedulingGuidanceLevel ?? 'full'
+  )
+
   useEffect(() => {
     // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
     const handleStorage = (event) => {
       try {
-        const updatedValue = getSettings().schedule?.use24HourFormat
-        if (typeof updatedValue === 'boolean') {
-          setUse24HourFormat(updatedValue)
+        const scheduleSettings = getSettings().schedule
+        if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
+          setUse24HourFormat(scheduleSettings.use24HourFormat)
+        }
+        if (scheduleSettings?.schedulingGuidanceLevel) {
+          setSchedulingGuidanceLevel(scheduleSettings.schedulingGuidanceLevel)
         }
       } catch (_err) {}
 
@@ -175,9 +184,12 @@ function Schedule() {
     // Settings page should dispatch: window.dispatchEvent(new CustomEvent('settingsUpdated'))
     const handleSettingsUpdated = () => {
       try {
-        const updatedValue = getSettings().schedule?.use24HourFormat
-        if (typeof updatedValue === 'boolean') {
-          setUse24HourFormat(updatedValue)
+        const scheduleSettings = getSettings().schedule
+        if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
+          setUse24HourFormat(scheduleSettings.use24HourFormat)
+        }
+        if (scheduleSettings?.schedulingGuidanceLevel) {
+          setSchedulingGuidanceLevel(scheduleSettings.schedulingGuidanceLevel)
         }
       } catch (_err) {}
     }
@@ -209,6 +221,24 @@ function Schedule() {
     () => toFullCalendarEvents(events),
     [events]
   )
+
+  // Per-day load map for week-view header indicators (only computed in week view)
+  // Not computed during scroll/hover — only recomputed when events or view changes.
+  const dayLoadMap = useMemo(() => {
+    if (view !== 'week' || schedulingGuidanceLevel === 'off') return {}
+    const map = {}
+    for (const event of events) {
+      const day = event.day
+      if (!day) continue
+      if (!map[day]) map[day] = []
+      map[day].push(event)
+    }
+    const result = {}
+    for (const [day, dayEvents] of Object.entries(map)) {
+      result[day] = getMemoizedDayLoad(dayEvents, day)
+    }
+    return result
+  }, [events, view, schedulingGuidanceLevel])
 
   // Load events based on current view and date
   const loadEvents = useCallback(async () => {
@@ -729,6 +759,36 @@ function Schedule() {
     [loadEvents]
   )
 
+  // Week-view day header content with load indicators.
+  // Only rendered in week view when guidance is not "off".
+  const dayHeaderContent = useCallback(
+    (arg) => {
+      if (view !== 'week' || schedulingGuidanceLevel === 'off') return undefined
+
+      const dateStr = format(arg.date, 'yyyy-MM-dd')
+      const load = dayLoadMap[dateStr] ?? 0
+
+      let loadClass = ''
+      if (load >= SCHEDULING_CONFIG.loadThresholdOver) {
+        loadClass = 'day-header-load--over'
+      } else if (load >= SCHEDULING_CONFIG.loadThresholdHigh) {
+        loadClass = 'day-header-load--high'
+      }
+
+      const isOver = load >= SCHEDULING_CONFIG.loadThresholdOver
+      const label = isOver
+        ? `${arg.text} — over capacity`
+        : load >= SCHEDULING_CONFIG.loadThresholdHigh
+          ? `${arg.text} — high load`
+          : arg.text
+
+      return {
+        html: `<span class="day-header-load ${loadClass}" aria-label="${label}"><span class="day-header-load__label">${arg.text}</span><span class="day-header-load__indicator" aria-hidden="true"></span>${isOver ? '<span class="day-header-load__icon" aria-hidden="true">⚠</span>' : ''}</span>`
+      }
+    },
+    [view, schedulingGuidanceLevel, dayLoadMap]
+  )
+
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
@@ -814,6 +874,7 @@ function Schedule() {
                   select={handleDateSelect}
                   eventMouseEnter={handleEventMouseEnter}
                   eventWillUnmount={handleEventWillUnmount}
+                  dayHeaderContent={dayHeaderContent}
                   eventDidMount={(info) => {
                     // Use mainStart (actual event time) for timezone band classification,
                     // not event.start which equals renderStart (includes buffer offset).

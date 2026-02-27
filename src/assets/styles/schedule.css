@@ -2078,3 +2078,59 @@ Ask for clarification or preserve the existing structure.
     --hour-height: clamp(54px, 7.8svh, 72px);
   }
 }
+
+/* ===== Week-View Load Indicators (Week View Only) =====
+ * Applied to day column headers in timeGridWeek to indicate scheduling density.
+ * Uses design tokens only — no hardcoded colours, shadows, or rgba values.
+ * Indicators are static and accessible (aria-label on each element).
+ *
+ * Threshold tokens are defined in tokens.css :root via --color-warning / --color-danger.
+ * Fallback values are kept here for contexts where those tokens are not available.
+ */
+
+/* Wrapper rendered inside FullCalendar's dayHeaderContent */
+.day-header-load {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs, 0.25rem);
+}
+
+/* Indicator row — only visible when a load class is present on the wrapper */
+.day-header-load__indicator {
+  display: none;
+  height: 2px;
+  width: 100%;
+  border-radius: 1px;
+  /* animation is intentionally disabled per spec (static only) */
+  animation: none !important;
+  transition: none !important;
+}
+
+/* High load state (≥ loadThresholdHigh) — subtle underline only */
+.day-header-load--high .day-header-load__indicator {
+  display: block;
+  background-color: var(--color-warning, #f5a623);
+}
+
+/* Over-capacity state (≥ loadThresholdOver) — underline + icon */
+.day-header-load--over .day-header-load__indicator {
+  display: block;
+  background-color: var(--color-danger, #e05252);
+}
+
+/* Icon rendered alongside the underline for over-capacity */
+.day-header-load__icon {
+  display: none;
+  width: var(--icon-xs, 16px);
+  height: var(--icon-xs, 16px);
+  font-size: var(--icon-xs, 16px);
+  line-height: 1;
+  /* Static — no animation */
+  animation: none !important;
+  transition: none !important;
+}
+
+.day-header-load--over .day-header-load__icon {
+  display: inline-block;
+}
