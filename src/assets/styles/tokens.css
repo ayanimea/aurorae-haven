@@ -92,6 +92,21 @@
   --radius-lg: 0.75rem; /* 12px */
   --radius-xl: 1rem; /* 16px */
 
+  /* Border widths */
+  --border-thin: 1px;   /* Default structural borders */
+  --border-accent: 3px; /* Left-edge type accent stripe */
+  --border-focus: 2px;  /* Focus outline width */
+  --focus-outline-offset: 2px;
+
+  /* ===== TYPOGRAPHY ===== */
+  --font-weight-medium: 500;
+  --line-height-base: 1.4;
+  --letter-spacing-wide: 0.02em;
+
+  /* Event card title — slightly larger than --font-md (0.875rem) for visual prominence */
+  --font-event-title: 0.95rem;
+  --font-event-title-sm: 0.9rem; /* Mobile / compact context */
+
   /* ===== SCHEDULE — ATMOSPHERIC TOKENS ===== */
   /* Sky gradient stops for the fixed background layer */
   --bg-sky-top: #0f172a;
@@ -129,8 +144,8 @@
   --event-prep-opacity: 0.85;
   --event-divider: rgba(255, 255, 255, 0.08);
 
-  /* Column gap for side-by-side overlap layout (unitless px value, consumed via getComputedStyle) */
-  --event-column-gap: 3;
+  /* Column gap for side-by-side overlap layout (px unit; parseFloat-safe for JS consumption) */
+  --event-column-gap: 3px;
 
   /* Event time-of-day accent tints — applied as top layer over the glass base.
    * Body uses neutral glass (no colour fill). Left-edge strip uses saturated accent

@@ -117,6 +117,10 @@ function Schedule() {
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
 
+  // Cached column gap in pixels — read once from the CSS custom property rather than
+  // calling getComputedStyle on every eventDidMount call (which fires per event).
+  const columnGapPxRef = useRef(null)
+
   // Success message timeout ref for cleanup on unmount
   const successMessageTimeoutRef = useRef(null)
   // Ref that always points to the latest loadEvents callback so storage event
@@ -688,13 +692,10 @@ function Schedule() {
         let mainEnd =
           resizeInfo.event.extendedProps?.mainEnd ?? resizeInfo.event.end
 
-        // Detect which handle was dragged — non-zero on the changed side
-        const resizeDeltaMs = (delta) =>
-          delta?.milliseconds ??
-          (delta?.years || delta?.months || delta?.days ? 1 : 0)
-
-        const startDeltaMs = resizeDeltaMs(resizeInfo.startDelta)
-        const endDeltaMs = resizeDeltaMs(resizeInfo.endDelta)
+        // Detect which handle was dragged using Duration#valueOf() which returns
+        // the total milliseconds of the delta (handles years/months/days correctly).
+        const startDeltaMs = resizeInfo.startDelta?.valueOf() ?? 0
+        const endDeltaMs = resizeInfo.endDelta?.valueOf() ?? 0
         const resizedFromTop = startDeltaMs !== 0 && endDeltaMs === 0
         const resizedFromBottom = endDeltaMs !== 0 && startDeltaMs === 0
 
@@ -835,17 +836,26 @@ function Schedule() {
 
                     // Side-by-side overlap layout using precomputed column metadata.
                     // Override FullCalendar's positioning with equal-width columns
-                    // separated by --event-column-gap (unitless px value).
+                    // separated by --event-column-gap.
+                    // The gap value is read once and cached in columnGapPxRef to avoid
+                    // calling getComputedStyle on every event mount (constant per theme).
                     const column = info.event.extendedProps?.column ?? 0
                     const totalColumns = info.event.extendedProps?.totalColumns ?? 1
                     if (totalColumns > 1) {
-                      const gap = parseFloat(
-                        getComputedStyle(document.documentElement).getPropertyValue(
-                          '--event-column-gap'
-                        )
-                      ) || EVENT_COLUMN_GAP_FALLBACK_PX
+                      if (columnGapPxRef.current === null) {
+                        columnGapPxRef.current =
+                          parseFloat(
+                            getComputedStyle(document.documentElement).getPropertyValue(
+                              '--event-column-gap'
+                            )
+                          ) || EVENT_COLUMN_GAP_FALLBACK_PX
+                      }
+                      const gap = columnGapPxRef.current
                       const width = `calc((100% - ${(totalColumns - 1) * gap}px) / ${totalColumns})`
                       info.el.style.width = width
+                      // Column is 0-indexed: column 0 → left=0, column 1 → left=width+gap, etc.
+                      // Produces nested calc() (e.g. calc(1 * (calc(...) + 3px))) which is
+                      // valid CSS and ensures alignment matches the width expression exactly.
                       info.el.style.left = `calc(${column} * (${width} + ${gap}px))`
                     }
                   }}

@@ -45,10 +45,12 @@ function SolidEventCard({ event, onContextMenu }) {
   const mainStart = resource?.mainStart ?? null
   const mainEnd = resource?.mainEnd ?? null
 
-  // Strict proportional ratios — no minimum height, no clamping, no artificial padding
+  // Strict proportional ratios — no minimum height, no clamping, no artificial padding.
+  // If canonical mainStart/mainEnd are missing, assume a 60-minute main segment so that
+  // proportions remain reasonable regardless of buffer values.
   const mainDuration = mainStart && mainEnd
     ? Math.max(1, (mainEnd.getTime() - mainStart.getTime()) / MILLISECONDS_PER_MINUTE)
-    : Math.max(1, DEFAULT_MAIN_DURATION_MINUTES - prepDuration - travelDuration)
+    : DEFAULT_MAIN_DURATION_MINUTES
 
   const totalDuration = travelDuration + prepDuration + mainDuration
   const travelRatio = (travelDuration / totalDuration) * 100

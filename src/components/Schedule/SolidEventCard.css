@@ -27,15 +27,15 @@
   background:
     var(--event-glass-gradient),
     var(--event-base-surface);
-  border: 1px solid var(--event-border);
+  border: var(--border-thin) solid var(--event-border);
   box-shadow: var(--event-shadow);
   color: var(--event-text);
 }
 
 /* Focus state for accessibility */
 .fc-event-wrapper:focus-visible {
-  outline: 2px solid var(--event-focus-ring);
-  outline-offset: 2px;
+  outline: var(--border-focus) solid var(--event-focus-ring);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* ===== Segments ===== */
@@ -48,13 +48,13 @@
 .event-travel {
   background: var(--event-travel-surface);
   opacity: var(--event-travel-opacity);
-  border-bottom: 1px solid var(--event-divider);
+  border-bottom: var(--border-thin) solid var(--event-divider);
 }
 
 .event-prep {
   background: var(--event-prep-surface);
   opacity: var(--event-prep-opacity);
-  border-bottom: 1px solid var(--event-divider);
+  border-bottom: var(--border-thin) solid var(--event-divider);
 }
 
 .event-main {
@@ -71,10 +71,10 @@
 
 .event-title {
   display: block;
-  font-weight: 500;
-  font-size: 0.95rem;
-  line-height: 1.4;
-  letter-spacing: 0.02em;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-event-title);
+  line-height: var(--line-height-base);
+  letter-spacing: var(--letter-spacing-wide);
   color: var(--event-text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -84,34 +84,34 @@
 /* ===== Type-specific left border accent (on wrapper) ===== */
 
 .event-type-routine {
-  border-left: 3px solid var(--color-routine);
+  border-left: var(--border-accent) solid var(--color-routine);
 }
 
 .event-type-task {
-  border-left: 3px solid var(--color-task);
+  border-left: var(--border-accent) solid var(--color-task);
 }
 
 .event-type-meeting {
-  border-left: 3px solid var(--color-meeting);
+  border-left: var(--border-accent) solid var(--color-meeting);
 }
 
 .event-type-habit {
-  border-left: 3px solid var(--color-habit);
+  border-left: var(--border-accent) solid var(--color-habit);
 }
 
 .event-type-break {
-  border-left: 3px solid var(--color-break);
+  border-left: var(--border-accent) solid var(--color-break);
 }
 
 /* ===== Mobile adjustments ===== */
 
 @media (max-width: 640px) {
   .event-main {
-    padding: var(--space-xs) var(--space-sm);
+    padding: var(--space-xs, 0.5rem) var(--space-sm, 0.75rem);
   }
 
   .event-title {
-    font-size: 0.9rem;
+    font-size: var(--font-event-title-sm);
   }
 }
 

@@ -119,14 +119,19 @@ export const toFullCalendarEvent = (event) => {
     // Canonical data model — mainStart/mainEnd are source of truth.
     // renderStart expands backwards to accommodate prep + travel buffers so
     // the FC event's visual span covers the full block.
+    // Guard: if the buffer would push renderStart into the previous calendar day,
+    // clamp to dayDate (midnight) so that day-based clustering stays correct.
     const mainStart = startTime
     const mainEnd = endTime
     const prepDuration = event.preparationTime || 0
     const travelDuration = event.travelTime || 0
     const totalBuffer = prepDuration + travelDuration
-    const renderStart = totalBuffer > 0
-      ? new Date(mainStart.getTime() - totalBuffer * MILLISECONDS_PER_MINUTE)
-      : mainStart
+
+    let renderStart = mainStart
+    if (totalBuffer > 0) {
+      const bufferedStart = new Date(mainStart.getTime() - totalBuffer * MILLISECONDS_PER_MINUTE)
+      renderStart = bufferedStart < dayDate ? dayDate : bufferedStart
+    }
 
     // FullCalendar event format
     return {
@@ -137,6 +142,10 @@ export const toFullCalendarEvent = (event) => {
       classNames: [`event-${eventType}`],
       extendedProps: {
         type: eventType,
+        // Legacy fields — kept for backward compatibility with consumers that
+        // still read travelTime / preparationTime. Canonical names are
+        // travelDuration / prepDuration below. Remove legacy fields once all
+        // consumers have migrated to the canonical names.
         travelTime: travelDuration,
         preparationTime: prepDuration,
         mainStart,
