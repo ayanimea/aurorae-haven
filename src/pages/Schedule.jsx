@@ -759,9 +759,27 @@ function Schedule() {
     [loadEvents]
   )
 
-  // Week-view day header content with load indicators.
-  // Only rendered in week view when guidance is not "off".
-  // Returns a React element (safe, no innerHTML) when in week view.
+  // Week-view day header class names for load indicators.
+  // Only applied in week view when guidance is not "off".
+  // Uses dayHeaderClassNames (safer than dayHeaderContent) to add CSS classes
+  // without replacing FullCalendar's default header DOM or its click handlers.
+  const dayHeaderClassNames = useCallback(
+    (arg) => {
+      if (view !== 'week' || schedulingGuidanceLevel === 'off') return []
+
+      const dateStr = format(arg.date, 'yyyy-MM-dd')
+      const load = dayLoadMap[dateStr] ?? 0
+
+      if (load >= SCHEDULING_CONFIG.loadThresholdOver) return ['day-header--over']
+      if (load >= SCHEDULING_CONFIG.loadThresholdHigh) return ['day-header--high']
+      return []
+    },
+    [view, schedulingGuidanceLevel, dayLoadMap]
+  )
+
+  // Week-view accessible load label — only injects a .sr-only span for days
+  // that are high-load or over-capacity.  Normal days return undefined so
+  // FullCalendar's default rendering is preserved entirely for those cells.
   const dayHeaderContent = useCallback(
     (arg) => {
       if (view !== 'week' || schedulingGuidanceLevel === 'off') return undefined
@@ -769,33 +787,17 @@ function Schedule() {
       const dateStr = format(arg.date, 'yyyy-MM-dd')
       const load = dayLoadMap[dateStr] ?? 0
 
-      let loadClass = ''
-      if (load >= SCHEDULING_CONFIG.loadThresholdOver) {
-        loadClass = 'day-header-load--over'
-      } else if (load >= SCHEDULING_CONFIG.loadThresholdHigh) {
-        loadClass = 'day-header-load--high'
-      }
-
       const isOver = load >= SCHEDULING_CONFIG.loadThresholdOver
-      const accessibleSuffix = isOver
-        ? ' — over capacity'
-        : load >= SCHEDULING_CONFIG.loadThresholdHigh
-          ? ' — high load'
-          : ''
+      const isHigh = load >= SCHEDULING_CONFIG.loadThresholdHigh
 
+      if (!isOver && !isHigh) return undefined
+
+      const srLabel = isOver ? ' — over capacity' : ' — high load'
       return (
-        <span className={`day-header-load ${loadClass}`}>
-          <span className='day-header-load__label'>{arg.text}</span>
-          {accessibleSuffix && (
-            <span className='sr-only'>{accessibleSuffix}</span>
-          )}
-          <span className='day-header-load__indicator' aria-hidden='true' />
-          {isOver && (
-            <span className='day-header-load__icon' aria-hidden='true'>
-              ⚠
-            </span>
-          )}
-        </span>
+        <>
+          {arg.text}
+          <span className='sr-only'>{srLabel}</span>
+        </>
       )
     },
     [view, schedulingGuidanceLevel, dayLoadMap]
@@ -886,6 +888,7 @@ function Schedule() {
                   select={handleDateSelect}
                   eventMouseEnter={handleEventMouseEnter}
                   eventWillUnmount={handleEventWillUnmount}
+                  dayHeaderClassNames={dayHeaderClassNames}
                   dayHeaderContent={dayHeaderContent}
                   eventDidMount={(info) => {
                     // Use mainStart (actual event time) for timezone band classification,

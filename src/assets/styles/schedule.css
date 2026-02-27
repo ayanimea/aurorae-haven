@@ -2080,57 +2080,48 @@ Ask for clarification or preserve the existing structure.
 }
 
 /* ===== Week-View Load Indicators (Week View Only) =====
- * Applied to day column headers in timeGridWeek to indicate scheduling density.
- * Uses design tokens only — no hardcoded colours, shadows, or rgba values.
- * Indicators are static and accessible (aria-label on each element).
+ * Uses dayHeaderClassNames to add .day-header--high / .day-header--over to the
+ * FullCalendar .fc-col-header-cell element.  CSS pseudo-elements on the cushion
+ * (the inner text element) then create the visual indicator without touching
+ * FullCalendar's default DOM or its click handlers.
  *
- * Threshold tokens are defined in tokens.css :root via --color-warning / --color-danger.
- * Fallback values are kept here for contexts where those tokens are not available.
+ * Uses design tokens only — no hardcoded colours or rgba.
+ * Indicators are static (animation: none, transition: none).
  */
 
-/* Wrapper rendered inside FullCalendar's dayHeaderContent */
-.day-header-load {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2xs, 0.25rem);
+/* Allow ::after pseudo-element to be positioned below the day label */
+.fc-col-header-cell.day-header--high .fc-col-header-cell-cushion,
+.fc-col-header-cell.day-header--over .fc-col-header-cell-cushion {
+  position: relative;
 }
 
-/* Indicator row — only visible when a load class is present on the wrapper */
-.day-header-load__indicator {
-  display: none;
+/* High load (≥ loadThresholdHigh) — subtle amber underline */
+.fc-col-header-cell.day-header--high .fc-col-header-cell-cushion::after,
+.fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::after {
+  content: '';
+  display: block;
   height: 2px;
-  width: 100%;
-  border-radius: 1px;
-  /* animation is intentionally disabled per spec (static only) */
-  animation: none !important;
-  transition: none !important;
-}
-
-/* High load state (≥ loadThresholdHigh) — subtle underline only */
-.day-header-load--high .day-header-load__indicator {
-  display: block;
   background-color: var(--color-warning, #f5a623);
-}
-
-/* Over-capacity state (≥ loadThresholdOver) — underline + icon */
-.day-header-load--over .day-header-load__indicator {
-  display: block;
-  background-color: var(--color-danger, #e05252);
-}
-
-/* Icon rendered alongside the underline for over-capacity */
-.day-header-load__icon {
-  display: none;
-  width: var(--icon-xs, 16px);
-  height: var(--icon-xs, 16px);
-  font-size: var(--icon-xs, 16px);
-  line-height: 1;
+  border-radius: 1px;
   /* Static — no animation */
   animation: none !important;
   transition: none !important;
 }
 
-.day-header-load--over .day-header-load__icon {
-  display: inline-block;
+/* Over-capacity (≥ loadThresholdOver) — red underline */
+.fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::after {
+  background-color: var(--color-danger, #e05252);
+}
+
+/* Over-capacity warning icon — rendered before the day text as supplementary visual cue.
+ * The ⚠ character is read by modern screen readers as "warning sign".
+ * A visually-hidden sr-only label is injected via dayHeaderContent for all AT. */
+.fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::before {
+  content: '⚠\00a0';
+  font-size: 0.75em;
+  color: var(--color-danger, #e05252);
+  vertical-align: super;
+  /* Static — no animation */
+  animation: none !important;
+  transition: none !important;
 }
