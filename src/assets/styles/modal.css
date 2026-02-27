@@ -316,7 +316,8 @@
   /* Override the base max-width to allow a wider default modal on large screens */
   width: clamp(680px, 80vw, 1100px);
   max-width: unset;
-  max-height: unset;
+  /* Cap height so the modal never overflows short laptop viewports */
+  max-height: calc(100dvh - 40px);
   min-width: 500px;
   min-height: 600px;
   /* Native CSS resize handles cannot be operated via keyboard in most browsers,

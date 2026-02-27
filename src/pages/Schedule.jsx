@@ -153,9 +153,11 @@ function Schedule() {
         }
       } catch (_err) {}
 
-      // Reload schedule events when tasks or routines are modified in another
-      // tab so the Schedule view stays in sync without requiring a page refresh.
-      if (event?.key === 'aurorae_tasks' || event?.key === 'aurorae_routines') {
+      // Reload schedule events when tasks are modified in another tab so the
+      // Schedule view stays in sync without requiring a page refresh.
+      // Routines are stored in IndexedDB (not localStorage), so no 'aurorae_routines'
+      // key will ever fire here — cross-tab routine sync would require BroadcastChannel.
+      if (event?.key === 'aurorae_tasks') {
         loadEventsRef.current?.()
       }
     }
@@ -289,19 +291,28 @@ function Schedule() {
 
         // When user created a brand-new task/routine from the schedule, also
         // persist it in its native store so it appears in the respective tab.
+        // This is best-effort: failure here does NOT block the schedule event
+        // save or the modal close — it only logs a non-blocking warning.
         if (_isNewCreation) {
-          if (cleanEventData.type === EVENT_TYPES.TASK) {
-            addTaskToStorage(cleanEventData.title)
-          } else if (cleanEventData.type === EVENT_TYPES.ROUTINE) {
-            const durationMinutes =
-              timeToMinutes(cleanEventData.endTime) -
-              timeToMinutes(cleanEventData.startTime)
-            // `steps` defaults to [] in routinesManager.createRoutine when not provided.
-            // Only name and estimatedDuration are required for a minimal routine entry.
-            await createRoutine({
-              name: cleanEventData.title,
-              estimatedDuration: Math.max(0, durationMinutes) * 60
-            })
+          try {
+            if (cleanEventData.type === EVENT_TYPES.TASK) {
+              addTaskToStorage(cleanEventData.title)
+            } else if (cleanEventData.type === EVENT_TYPES.ROUTINE) {
+              const durationMinutes =
+                timeToMinutes(cleanEventData.endTime) -
+                timeToMinutes(cleanEventData.startTime)
+              // `steps` defaults to [] in routinesManager.createRoutine when not provided.
+              // Only name and estimatedDuration are required for a minimal routine entry.
+              await createRoutine({
+                name: cleanEventData.title,
+                estimatedDuration: Math.max(0, durationMinutes) * 60
+              })
+            }
+          } catch (mirrorErr) {
+            // Mirror failure is non-fatal: the schedule event was already saved.
+            // Log a warning so developers are aware but don't surface this to the user.
+            // biome-ignore lint/suspicious/noConsole: non-fatal mirror failure, intentional warning
+            console.warn('Secondary store mirror failed (non-blocking):', mirrorErr)
           }
         }
       }

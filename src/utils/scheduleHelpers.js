@@ -35,26 +35,36 @@ export function addTaskToStorage(title) {
     dueDate: null,
     completedAt: null
   }
+  const defaultStructure = () => ({
+    urgent_important: [],
+    not_urgent_important: [],
+    urgent_not_important: [],
+    not_urgent_not_important: []
+  })
+
+  let tasks
   try {
     const savedStr = localStorage.getItem('aurorae_tasks')
-    const tasks = savedStr
-      ? JSON.parse(savedStr)
-      : {
-          urgent_important: [],
-          not_urgent_important: [],
-          urgent_not_important: [],
-          not_urgent_not_important: []
-        }
-    if (!tasks.not_urgent_not_important) {
-      tasks.not_urgent_not_important = []
-    }
-    tasks.not_urgent_not_important.push(task)
+    tasks = savedStr ? JSON.parse(savedStr) : defaultStructure()
+  } catch (_parseErr) {
+    // Corrupted or invalid JSON — start fresh rather than failing the whole save.
+    logger.warn('aurorae_tasks contained invalid JSON; resetting to empty structure.')
+    tasks = defaultStructure()
+  }
+
+  if (!tasks.not_urgent_not_important) {
+    tasks.not_urgent_not_important = []
+  }
+  tasks.not_urgent_not_important.push(task)
+
+  try {
     localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
-    return task
   } catch (e) {
-    logger.error('Failed to add task to storage:', e)
+    logger.error('Failed to write aurorae_tasks to localStorage:', e)
     throw e
   }
+
+  return task
 }
 
 /**
