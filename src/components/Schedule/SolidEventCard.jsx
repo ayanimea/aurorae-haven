@@ -57,6 +57,10 @@ function SolidEventCard({ event, onContextMenu }) {
   const prepRatio = (prepDuration / totalDuration) * 100
   const mainRatio = (mainDuration / totalDuration) * 100
 
+  // Sanitize title: coerce null/undefined to empty string so aria-label and
+  // display never expose literal "null" or "undefined" to users or screen readers.
+  const safeTitle = title != null ? String(title) : ''
+
   const handleContextMenu = (e) => {
     e.preventDefault()
     if (onContextMenu) {
@@ -68,7 +72,7 @@ function SolidEventCard({ event, onContextMenu }) {
     <div
       className={`fc-event-wrapper event-type-${eventType}`}
       role='article'
-      aria-label={`${eventType}: ${title}`}
+      aria-label={`${eventType}: ${safeTitle}`}
       onContextMenu={handleContextMenu}
     >
       {travelDuration > 0 && (
@@ -85,17 +89,12 @@ function SolidEventCard({ event, onContextMenu }) {
           aria-hidden='true'
         />
       )}
-      {/* Security note: event.title may contain user-provided text. React's JSX automatically
-          escapes text content to prevent XSS attacks when rendering as {expression} text nodes.
-          We intentionally render it as plain text and do NOT use dangerouslySetInnerHTML.
-          Type validation: title is coerced to string, empty string for null/undefined
-          to avoid displaying "null"/"undefined" text. */}
       <div
         className='event-segment event-main'
         style={{ height: `${mainRatio}%` }}
       >
         <strong className='event-title'>
-          {title != null ? String(title) : ''}
+          {safeTitle}
         </strong>
       </div>
     </div>

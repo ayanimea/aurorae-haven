@@ -434,6 +434,35 @@ describe('SolidEventCard Component', () => {
       const wrapper = container.querySelector('.fc-event-wrapper')
       expect(wrapper).toHaveAttribute('aria-label', 'task: Default Event')
     })
+
+    it('should not expose literal "null" or "undefined" in aria-label when title is empty string', () => {
+      const event = {
+        title: '',
+        resource: { type: 'task' }
+      }
+
+      const { container } = render(<SolidEventCard event={event} />)
+      const wrapper = container.querySelector('.fc-event-wrapper')
+      expect(wrapper).toHaveAttribute('aria-label', 'task: ')
+      expect(wrapper.getAttribute('aria-label')).not.toContain('null')
+      expect(wrapper.getAttribute('aria-label')).not.toContain('undefined')
+    })
+
+    it('should coerce null title to empty string in aria-label', () => {
+      // Suppress PropTypes isRequired warning for this null-title edge-case test
+      const origError = console.error
+      console.error = vi.fn()
+      try {
+        const event = { title: null, resource: { type: 'task' } }
+        const { container } = render(<SolidEventCard event={event} />)
+        const wrapper = container.querySelector('.fc-event-wrapper')
+        expect(wrapper).toHaveAttribute('aria-label', 'task: ')
+        expect(wrapper.getAttribute('aria-label')).not.toContain('null')
+        expect(wrapper.getAttribute('aria-label')).not.toContain('undefined')
+      } finally {
+        console.error = origError
+      }
+    })
   })
 
   describe('Component Structure', () => {

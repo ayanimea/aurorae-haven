@@ -64,7 +64,8 @@
   flex-direction: column;
   justify-content: flex-start;
   overflow: hidden;
-  flex: 1 1 auto;
+  /* Height is governed by the inline percentage style — no flex grow/shrink */
+  flex: 0 0 auto;
 }
 
 /* ===== Title ===== */

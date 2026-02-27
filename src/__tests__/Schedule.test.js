@@ -427,4 +427,126 @@ describe('handleEventDrop and handleEventResize', () => {
     expect(resizeInfo.revert).toHaveBeenCalled()
     expect(EventService.updateEvent).not.toHaveBeenCalled()
   })
+
+  // ---------------------------------------------------------------------------
+  // Buffer-aware drop: event.start is renderStart; mainStart must be recovered
+  // ---------------------------------------------------------------------------
+  test('handleEventDrop recovers mainStart from renderStart + buffers', async () => {
+    // prep=15min + travel=30min → totalBuffer=45min
+    const original = makeOriginalEvent()
+    const mainStart = new Date('2025-09-17T10:00:00')
+    const mainEnd = new Date('2025-09-17T11:00:00')
+    const renderStart = new Date(mainStart.getTime() - 45 * 60000) // 09:15
+
+    const dropInfo = {
+      event: {
+        start: renderStart,
+        end: mainEnd,
+        extendedProps: {
+          originalEvent: original,
+          prepDuration: 15,
+          travelDuration: 30,
+          mainStart,
+          mainEnd
+        }
+      },
+      revert: vi.fn()
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventDrop(dropInfo)
+    })
+
+    // startTime must reflect mainStart (10:00), not renderStart (09:15)
+    expect(EventService.updateEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        day: '2025-09-17',
+        startTime: '10:00',
+        endTime: '11:00'
+      })
+    )
+    expect(dropInfo.revert).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // Buffer-aware resize — bottom handle: only mainEnd changes
+  // ---------------------------------------------------------------------------
+  test('handleEventResize bottom-handle updates endTime only, buffers unchanged', async () => {
+    const original = makeOriginalEvent()
+    const mainStart = new Date('2025-09-16T09:00:00')
+    const mainEnd = new Date('2025-09-16T10:00:00')
+    const newMainEnd = new Date('2025-09-16T10:30:00')
+    const renderStart = new Date(mainStart.getTime() - 45 * 60000) // 08:15
+
+    const resizeInfo = {
+      event: {
+        start: renderStart,
+        end: newMainEnd,
+        extendedProps: {
+          originalEvent: original,
+          prepDuration: 15,
+          travelDuration: 30,
+          mainStart,
+          mainEnd
+        }
+      },
+      // Bottom handle: endDelta non-zero, startDelta zero
+      startDelta: { valueOf: () => 0 },
+      endDelta: { valueOf: () => 30 * 60000 },
+      revert: vi.fn()
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventResize(resizeInfo)
+    })
+
+    expect(EventService.updateEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startTime: '09:00', // mainStart unchanged
+        endTime: '10:30'   // new mainEnd from event.end
+      })
+    )
+    expect(resizeInfo.revert).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // Buffer-aware resize — top handle: only mainStart changes, buffers preserved
+  // ---------------------------------------------------------------------------
+  test('handleEventResize top-handle updates startTime only, buffers preserved', async () => {
+    const original = makeOriginalEvent()
+    // After top resize: new renderStart = 07:45, so new mainStart = 07:45 + 45min = 08:30
+    const newRenderStart = new Date('2025-09-16T07:45:00')
+    const mainEnd = new Date('2025-09-16T10:00:00')
+
+    const resizeInfo = {
+      event: {
+        start: newRenderStart,
+        end: mainEnd,
+        extendedProps: {
+          originalEvent: original,
+          prepDuration: 15,
+          travelDuration: 30,
+          mainStart: new Date('2025-09-16T09:00:00'), // canonical before resize
+          mainEnd
+        }
+      },
+      // Top handle: startDelta non-zero, endDelta zero
+      startDelta: { valueOf: () => -15 * 60000 },
+      endDelta: { valueOf: () => 0 },
+      revert: vi.fn()
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventResize(resizeInfo)
+    })
+
+    // mainStart = newRenderStart + (prep + travel) = 07:45 + 45min = 08:30
+    expect(EventService.updateEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startTime: '08:30', // new mainStart recovered from renderStart + buffers
+        endTime: '10:00'    // mainEnd unchanged
+      })
+    )
+    expect(resizeInfo.revert).not.toHaveBeenCalled()
+  })
 })
