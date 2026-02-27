@@ -675,8 +675,6 @@ function Habits() {
           habit={selectedHabit}
           onClose={() => setSelectedHabit(null)}
           onUpdateHabit={handleUpdateHabit}
-          onPause={handlePauseHabit}
-          onDelete={handleDeleteHabit}
         />
       )}
 

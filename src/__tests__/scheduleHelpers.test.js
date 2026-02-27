@@ -30,7 +30,8 @@ vi.mock('../utils/logger', () => ({
   createLogger: () => ({
     error: vi.fn(),
     log: vi.fn(),
-    info: vi.fn()
+    info: vi.fn(),
+    warn: vi.fn()
   })
 }))
 
@@ -554,6 +555,16 @@ describe('scheduleHelpers', () => {
       expect(saved.not_urgent_important).toEqual([])
       expect(saved.urgent_not_important).toEqual([])
       expect(saved.not_urgent_not_important).toHaveLength(1)
+    })
+
+    it('recovers from corrupted JSON without throwing and persists the new task', () => {
+      localStorage.setItem('aurorae_tasks', 'this is not valid json {{{')
+      expect(() => addTaskToStorage('Recovery Task')).not.toThrow()
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important[0].text).toBe('Recovery Task')
+      // Other quadrants should be empty (fresh structure)
+      expect(saved.urgent_important).toEqual([])
     })
   })
 })
