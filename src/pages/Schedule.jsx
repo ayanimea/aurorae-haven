@@ -761,6 +761,7 @@ function Schedule() {
 
   // Week-view day header content with load indicators.
   // Only rendered in week view when guidance is not "off".
+  // Returns a React element (safe, no innerHTML) when in week view.
   const dayHeaderContent = useCallback(
     (arg) => {
       if (view !== 'week' || schedulingGuidanceLevel === 'off') return undefined
@@ -776,15 +777,26 @@ function Schedule() {
       }
 
       const isOver = load >= SCHEDULING_CONFIG.loadThresholdOver
-      const label = isOver
-        ? `${arg.text} — over capacity`
+      const accessibleSuffix = isOver
+        ? ' — over capacity'
         : load >= SCHEDULING_CONFIG.loadThresholdHigh
-          ? `${arg.text} — high load`
-          : arg.text
+          ? ' — high load'
+          : ''
 
-      return {
-        html: `<span class="day-header-load ${loadClass}" aria-label="${label}"><span class="day-header-load__label">${arg.text}</span><span class="day-header-load__indicator" aria-hidden="true"></span>${isOver ? '<span class="day-header-load__icon" aria-hidden="true">⚠</span>' : ''}</span>`
-      }
+      return (
+        <span className={`day-header-load ${loadClass}`}>
+          <span className='day-header-load__label'>{arg.text}</span>
+          {accessibleSuffix && (
+            <span className='sr-only'>{accessibleSuffix}</span>
+          )}
+          <span className='day-header-load__indicator' aria-hidden='true' />
+          {isOver && (
+            <span className='day-header-load__icon' aria-hidden='true'>
+              ⚠
+            </span>
+          )}
+        </span>
+      )
     },
     [view, schedulingGuidanceLevel, dayLoadMap]
   )

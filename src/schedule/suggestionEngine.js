@@ -18,6 +18,7 @@ import { SCHEDULING_CONFIG } from './config'
 import { snapUp } from './timeUtils'
 import { computeDayLoad } from './loadComputation'
 import { validateStructural } from './structuralConstraints'
+import { timeToMinutes } from '../utils/timeUtils'
 
 /** Maximum number of suggestions returned (performance guard) */
 const MAX_SUGGESTIONS = 5
@@ -130,8 +131,8 @@ function measureFreeBlock(slotStart, slotEnd, existingEvents, rangeEnd) {
   // Collect occupied windows sorted by start
   const occupied = existingEvents
     .map((e) => {
-      const s = timeToMinutesLocal(e.startTime) - (e.preparationTime ?? 0)
-      const en = timeToMinutesLocal(e.endTime) + (e.travelTime ?? 0)
+      const s = timeToMinutes(e.startTime) - (e.preparationTime ?? 0)
+      const en = timeToMinutes(e.endTime) + (e.travelTime ?? 0)
       return { start: s, end: en }
     })
     .sort((a, b) => a.start - b.start)
@@ -153,15 +154,4 @@ function measureFreeBlock(slotStart, slotEnd, existingEvents, rangeEnd) {
   }
 
   return Math.max(0, blockEnd - blockStart)
-}
-
-/**
- * Simple local helper — avoids importing the full timeUtils module.
- * @param {string} hhmm
- * @returns {number}
- */
-function timeToMinutesLocal(hhmm) {
-  if (!hhmm) return 0
-  const [h, m] = hhmm.split(':').map(Number)
-  return (h || 0) * 60 + (m || 0)
 }

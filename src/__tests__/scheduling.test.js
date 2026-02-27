@@ -131,7 +131,7 @@ describe('computeDayLoad', () => {
   })
 
   it('snaps event duration correctly', () => {
-    // 09:07 → 10:53: raw = 106 min, snapped = snapDown(547)=540 start, snapUp(653)=660 end → 120 min
+    // 09:07–10:53 raw = 106 min; snapDown(547)=540 start, snapUp(653)=660 end → 120 min snapped
     const events = [{ startTime: '09:07', endTime: '10:53' }]
     const load = computeDayLoad(events, new Date(2025, 0, 1))
     expect(load).toBeCloseTo(120 / 1440, 5)
@@ -147,8 +147,8 @@ describe('computeDayLoad', () => {
   it('can exceed 1.0 when over capacity', () => {
     // 24 events of 60 min each with 30 min prep = 90 min each = 24 * 90 = 2160 min / 1440 > 1.0
     const events = Array.from({ length: 24 }, (_, i) => ({
-      startTime: `${String(i % 24).padStart(2, '0')}:00`,
-      endTime: `${String((i + 1) % 24 || 24).padStart(2, '0')}:00`,
+      startTime: `${String(i).padStart(2, '0')}:00`,
+      endTime: `${String(i).padStart(2, '0')}:59`,
       preparationTime: 30,
       travelTime: 0
     }))
