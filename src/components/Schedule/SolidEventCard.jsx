@@ -20,7 +20,7 @@ import './SolidEventCard.css'
 
 const logger = createLogger('SolidEventCard')
 
-function SolidEventCard({ event, onContextMenu }) {
+function SolidEventCard({ event, onContextMenu, use24HourFormat = true }) {
   const { title, start, resource } = event
   // Validate event type to prevent injection attacks - provides defense-in-depth
   const rawEventType = resource?.type || 'task'
@@ -49,7 +49,11 @@ function SolidEventCard({ event, onContextMenu }) {
 
   const startLabel =
     start instanceof Date
-      ? start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+      ? start.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: !use24HourFormat
+        })
       : null
 
   return (
@@ -111,7 +115,8 @@ SolidEventCard.propTypes = {
       travelTime: PropTypes.number
     })
   }).isRequired,
-  onContextMenu: PropTypes.func
+  onContextMenu: PropTypes.func,
+  use24HourFormat: PropTypes.bool
 }
 
 export default SolidEventCard

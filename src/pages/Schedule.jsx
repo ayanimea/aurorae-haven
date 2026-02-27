@@ -153,9 +153,9 @@ function Schedule() {
         }
       } catch (_err) {}
 
-      // Reload schedule events when tasks are modified in another tab so the
-      // Schedule view stays in sync without requiring a page refresh.
-      if (event?.key === 'aurorae_tasks') {
+      // Reload schedule events when tasks or routines are modified in another
+      // tab so the Schedule view stays in sync without requiring a page refresh.
+      if (event?.key === 'aurorae_tasks' || event?.key === 'aurorae_routines') {
         loadEventsRef.current?.()
       }
     }
@@ -774,6 +774,7 @@ function Schedule() {
                   }}
                   eventContent={(eventInfo) => (
                     <SolidEventCard
+                      use24HourFormat={use24HourFormat}
                       event={{
                         ...eventInfo.event,
                         title: eventInfo.event.title, // Explicitly pass title from FullCalendar event

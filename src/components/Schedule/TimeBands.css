@@ -17,7 +17,7 @@
  *   Evening   18:00–23:00  5h / 17h ≈ 29.41%  → top: 64.70%,  height: 29.41%
  *   Night     23:00–24:00  1h / 17h ≈  5.89%  → top: 94.11%,  height:  5.89%
  *
- * Band colors use canonical zone tokens from tokens.css (max opacity 0.04).
+ * Band colors use canonical zone tokens from tokens.css (alpha range 0.045–0.06).
  * Night band uses a darkening overlay (separate semantic purpose).
  */
 
