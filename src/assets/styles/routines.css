@@ -128,14 +128,18 @@
   margin-top: 4px;
 }
 .btn-primary {
-  background: var(--nav-active-bg);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-accent-top) 0%,
+      var(--glass-accent-bg) 100%
+    );
   border: 1px solid var(--nav-active-border);
   color: var(--mint);
 }
 .btn-primary:hover {
-  filter: brightness(1.12);
-  box-shadow: var(--nav-active-glow);
   transform: translateY(-0.5px);
+  box-shadow: var(--nav-active-glow);
 }
 .btn-menu {
   display: inline-flex;
@@ -149,11 +153,11 @@
   cursor: pointer;
   transition:
     transform 0.2s ease,
-    filter 0.2s ease;
+    box-shadow 0.2s ease;
 }
 .btn-menu:hover {
-  filter: brightness(1.1);
   transform: translateY(-1px);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 /* Empty state for routine library */

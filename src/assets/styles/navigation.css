@@ -147,8 +147,16 @@ body.density-cozy {
   min-width: var(--touch-comfortable);
   border-radius: 20px;
   color: var(--dim);
-  background: var(--nav-glass-base);
-  border: 1px solid var(--nav-glass-border);
+  font-weight: 500;
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-base-bg);
+  border: 1px solid var(--glass-border-soft);
   text-decoration: none;
   font-size: 0.9rem;
   cursor: pointer;
@@ -160,11 +168,16 @@ body.density-cozy {
     box-shadow var(--dur) var(--ease);
 }
 
-/* TAB-NAV-07 & TAB-NAV-17: Active state with luminous glass aura */
+/* TAB-NAV-07 & TAB-NAV-17: Active state with luminous accent glass gradient */
 .nav-tab.active {
-  background: var(--nav-active-bg);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-accent-top) 0%,
+      var(--glass-accent-bg) 100%
+    );
   color: var(--mint);
-  font-weight: 700;
+  font-weight: 600;
   border-color: var(--nav-active-border);
   box-shadow: var(--nav-active-glow);
 }
@@ -172,7 +185,7 @@ body.density-cozy {
 /* TAB-NAV-07: Hover state with glass lift */
 .nav-tab:hover:not(.active) {
   background: var(--bg-hover);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--glass-border-hover);
   color: var(--ink);
 }
 
@@ -338,10 +351,17 @@ body.density-cozy {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--bg);
-  backdrop-filter: var(--blur);
-  border-top: 1px solid var(--line);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-elevated-bg);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--glass-border-soft);
+  box-shadow: var(--glass-shadow-elevated);
   z-index: calc(var(--z-appbar) - 1);
   animation: slideUp 0.2s ease;
 }
@@ -392,9 +412,14 @@ body.density-cozy {
 }
 
 .more-menu-item.active {
-  background: var(--nav-active-bg);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-accent-top) 0%,
+      var(--glass-accent-bg) 100%
+    );
   color: var(--mint);
-  font-weight: 700;
+  font-weight: 600;
   border-color: var(--nav-active-border);
   box-shadow: var(--nav-active-glow);
 }
@@ -673,7 +698,12 @@ body.density-cozy {
   }
 
   .more-button.active {
-    background: var(--nav-active-bg);
+    background:
+      linear-gradient(
+        180deg,
+        var(--glass-accent-top) 0%,
+        var(--glass-accent-bg) 100%
+      );
     border-color: var(--nav-active-border);
     color: var(--mint);
   }
@@ -929,21 +959,27 @@ body.mobile-menu-open .shell {
   gap: 8px;
   cursor: pointer;
   color: var(--text-bright);
+  font-weight: 500;
   padding: 9px 12px;
   min-height: var(--touch-comfortable);
   border-radius: 12px;
-  border: 1px solid var(--nav-glass-border);
-  background: var(--nav-glass-base);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20);
+  border: 1px solid var(--glass-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-base-bg);
+  box-shadow: var(--glass-shadow-base);
   transition:
     transform var(--dur) var(--ease),
-    filter var(--dur) var(--ease),
     box-shadow var(--dur) var(--ease);
 }
 .btn:hover {
-  filter: brightness(1.06);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 /* Icons */

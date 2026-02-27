@@ -162,14 +162,35 @@
    * but this token is used for the rendered text labels) */
   --time-label: rgba(255, 255, 255, 0.55);
 
+  /* ===== UNIFIED GLASS SURFACE SYSTEM — "Full Luxury, Restrained" ===== */
+  /* Light source: from top. Micro elevation defines depth, not opacity jumps.
+   * Hierarchy: Background < Bands < Events < Button < Nav Tab < Modal < Dropdown */
+
+  /* Canonical surface tokens */
+  --glass-base-bg: rgba(16, 20, 44, 0.28);          /* Base: inactive buttons, nav tabs */
+  --glass-elevated-bg: rgba(12, 16, 38, 0.62);       /* Elevated: dropdowns (deeper than modal) */
+  --glass-accent-top: rgba(134, 245, 224, 0.16);     /* Accent gradient — top highlight */
+  --glass-accent-bg: rgba(134, 245, 224, 0.09);      /* Accent gradient — base (bottom) */
+  --glass-border-soft: rgba(255, 255, 255, 0.07);    /* Shared soft border — all glass surfaces */
+  --glass-border-hover: rgba(255, 255, 255, 0.13);   /* Border lift on hover — inputs, nav tabs */
+  --glass-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.22);  /* Base button shadow */
+  --glass-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.28); /* Hover lift shadow — 1px translateY */
+  --glass-shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.46), 0 4px 12px rgba(0, 0, 0, 0.32); /* Dropdown — deepest */
+
+  /* Directional light gradient stops — light from top */
+  --glass-light-top: rgba(255, 255, 255, 0.08);      /* Top highlight */
+  --glass-light-mid: rgba(255, 255, 255, 0.03);      /* Upper-mid fade */
+  --glass-light-shade: rgba(0, 0, 0, 0.06);          /* Bottom density */
+
   /* ===== NAVIGATION & BUTTON GLASS SURFACE ===== */
   /* Shared glass surface for nav tabs, toolbar buttons, and button groups.
-   * Hierarchy: Events > Navigation > Background */
-  --nav-glass-base: rgba(16, 20, 44, 0.28);
-  --nav-glass-border: rgba(255, 255, 255, 0.07);
+   * Hierarchy: Events > Navigation > Background
+   * These alias the canonical glass tokens above for backward compatibility. */
+  --nav-glass-base: var(--glass-base-bg);
+  --nav-glass-border: var(--glass-border-soft);
   --nav-active-bg: rgba(134, 245, 224, 0.12);
-  --nav-active-border: rgba(134, 245, 224, 0.30);
-  --nav-active-glow: 0 0 10px rgba(134, 245, 224, 0.12);
+  --nav-active-border: rgba(134, 245, 224, 0.22);   /* Reduced from 0.30 — luxury is desaturated */
+  --nav-active-glow: 0 0 40px rgba(134, 245, 224, 0.06); /* Diffused light, not glow (≤0.08) */
   --nav-group-bg: rgba(16, 20, 44, 0.35);
   --nav-group-border: rgba(255, 255, 255, 0.06);
 
@@ -184,6 +205,7 @@
   --modal-glass-dim: rgba(255, 255, 255, 0.01);       /* Directional light — lower-mid dim */
   --modal-glass-shade: rgba(0, 0, 0, 0.05);           /* Directional light — base density */
   --modal-edge-shimmer: rgba(255, 255, 255, 0.04);    /* ::before edge hairline — removes flatness */
+  --modal-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), 0 40px 120px rgba(0, 0, 0, 0.25); /* Atmospheric lift */
   --input-glass-bg: rgba(16, 20, 44, 0.26);           /* Input background — below modal surface */
 
   /* ===== TRANSITIONS ===== */
