@@ -161,9 +161,14 @@ export const toFullCalendarEvents = (events) => {
 
   const fcEvents = events.map(toFullCalendarEvent).filter(Boolean)
 
-  // Compute overlap columns using the deterministic engine so that
-  // clusterEvents / assignColumns are used in the production rendering path.
-  // Column metadata is stored in extendedProps and available to SolidEventCard.
+  // Compute overlap columns using the deterministic engine.
+  // Column metadata (column, totalColumns) is stored in extendedProps as prep work
+  // for future side-by-side overlap rendering. To wire it into the UI:
+  //   1. Schedule.jsx eventContent: forward extendedProps.column / .totalColumns into the
+  //      `resource` object passed to SolidEventCard.
+  //   2. SolidEventCard: accept column / totalColumns props and apply CSS `left` / `width`
+  //      (e.g. left = (column/totalColumns)*100+'%', width = (1/totalColumns)*100+'%').
+  // Until that rendering path is implemented, the values are precomputed but unused by CSS.
   // Multi-day/midnight-spanning events are excluded from clustering — FullCalendar
   // handles their layout separately and minute offsets would be incorrect for them.
   try {
