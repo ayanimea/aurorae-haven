@@ -114,6 +114,24 @@
   --event-glass-bottom: rgba(255, 255, 255, 0.025);
   --event-border: rgba(255, 255, 255, 0.10);
 
+  /* Event wrapper tokens — used by fc-event-wrapper */
+  --event-glass-gradient: linear-gradient(180deg, var(--event-glass-top) 0%, var(--event-glass-bottom) 100%);
+  --event-base-surface: rgba(16, 20, 44, 0.55);
+  --event-blur: blur(8px);
+  --shadow-elevation-md: 0 4px 18px rgba(0, 0, 0, 0.28), 0 1px 4px rgba(0, 0, 0, 0.18);
+  --shadow-glow-soft: 0 0 12px rgba(134, 245, 224, 0.06);
+  --event-shadow: var(--shadow-elevation-md), var(--shadow-glow-soft);
+
+  /* Buffer segment tokens */
+  --event-travel-surface: rgba(96, 165, 250, 0.18);
+  --event-travel-opacity: 0.85;
+  --event-prep-surface: rgba(251, 191, 36, 0.18);
+  --event-prep-opacity: 0.85;
+  --event-divider: rgba(255, 255, 255, 0.08);
+
+  /* Column gap for side-by-side overlap layout (unitless px value, consumed via getComputedStyle) */
+  --event-column-gap: 3;
+
   /* Event time-of-day accent tints — applied as top layer over the glass base.
    * Body uses neutral glass (no colour fill). Left-edge strip uses saturated accent
    * (alpha 0.58–0.62) for semantic scan speed. Must not overpower text. */

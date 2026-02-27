@@ -114,17 +114,33 @@ export const toFullCalendarEvent = (event) => {
       ? event.type
       : 'task'
 
+    // Canonical data model — mainStart/mainEnd are source of truth.
+    // renderStart expands backwards to accommodate prep + travel buffers so
+    // the FC event's visual span covers the full block.
+    const mainStart = startTime
+    const mainEnd = endTime
+    const prepDuration = event.preparationTime || 0
+    const travelDuration = event.travelTime || 0
+    const totalBuffer = prepDuration + travelDuration
+    const renderStart = totalBuffer > 0
+      ? new Date(mainStart.getTime() - totalBuffer * 60000)
+      : mainStart
+
     // FullCalendar event format
     return {
       id: event.id,
       title: event.title,
-      start: startTime,
-      end: endTime,
+      start: renderStart,
+      end: mainEnd,
       classNames: [`event-${eventType}`],
       extendedProps: {
         type: eventType,
-        travelTime: event.travelTime || 0,
-        preparationTime: event.preparationTime || 0,
+        travelTime: travelDuration,
+        preparationTime: prepDuration,
+        mainStart,
+        mainEnd,
+        prepDuration,
+        travelDuration,
         originalEvent: event
       }
     }
