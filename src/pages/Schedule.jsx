@@ -114,6 +114,9 @@ function Schedule() {
 
   // Success message timeout ref for cleanup on unmount
   const successMessageTimeoutRef = useRef(null)
+  // Ref that always points to the latest loadEvents callback so storage event
+  // handlers (defined before loadEvents) can call it without stale closures.
+  const loadEventsRef = useRef(null)
 
   // State management
   const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
@@ -142,13 +145,19 @@ function Schedule() {
 
   useEffect(() => {
     // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
-    const handleStorage = () => {
+    const handleStorage = (event) => {
       try {
         const updatedValue = getSettings().schedule?.use24HourFormat
         if (typeof updatedValue === 'boolean') {
           setUse24HourFormat(updatedValue)
         }
       } catch (_err) {}
+
+      // Reload schedule events when tasks are modified in another tab so the
+      // Schedule view stays in sync without requiring a page refresh.
+      if (event?.key === 'aurorae_tasks') {
+        loadEventsRef.current?.()
+      }
     }
 
     // Handle same-tab updates via custom 'settingsUpdated' event
@@ -221,6 +230,9 @@ function Schedule() {
     }
   }, [view, date])
 
+  // Keep the ref in sync so storage event handlers always call the latest version
+  loadEventsRef.current = loadEvents
+
   // Load events when view or date changes
   useEffect(() => {
     loadEvents()
@@ -284,6 +296,8 @@ function Schedule() {
             const durationMinutes =
               timeToMinutes(cleanEventData.endTime) -
               timeToMinutes(cleanEventData.startTime)
+            // `steps` defaults to [] in routinesManager.createRoutine when not provided.
+            // Only name and estimatedDuration are required for a minimal routine entry.
             await createRoutine({
               name: cleanEventData.title,
               estimatedDuration: Math.max(0, durationMinutes) * 60
@@ -597,7 +611,9 @@ function Schedule() {
     [handleEventContextMenu]
   )
 
-  // Handle event drag-and-drop (FullCalendar)
+  // Handle event drag-and-drop (FullCalendar).
+  // Note: drag-and-drop is mouse-driven. Keyboard users can edit event times
+  // via the EventModal (click → open → edit start/end time fields).
   const handleEventDrop = useCallback(
     async (dropInfo) => {
       const originalEvent = dropInfo.event.extendedProps?.originalEvent

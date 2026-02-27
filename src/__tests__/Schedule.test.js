@@ -6,13 +6,19 @@ import Schedule from '../pages/Schedule'
 import EventService from '../services/EventService'
 
 // Hoisted so the mock factory below can reference it before module init
-const capturedHandlers = vi.hoisted(() => ({ eventDidMount: null }))
+const capturedHandlers = vi.hoisted(() => ({
+  eventDidMount: null,
+  eventDrop: null,
+  eventResize: null
+}))
 
 // Mock FullCalendar to avoid ESM parsing issues
 vi.mock('@fullcalendar/react', () => {
   return {
     default: React.forwardRef(function FullCalendar(props, _ref) {
       capturedHandlers.eventDidMount = props.eventDidMount
+      capturedHandlers.eventDrop = props.eventDrop
+      capturedHandlers.eventResize = props.eventResize
       return (
         <div className='fc' data-testid='fullcalendar'>
           <div className='fc-view'>{props.initialView}</div>
@@ -286,5 +292,139 @@ describe('eventDidMount hour→timezone classification', () => {
     const el = document.createElement('div')
     capturedHandlers.eventDidMount({ event: { start: null }, el })
     expect(el.dataset.timezone).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests for handleEventDrop and handleEventResize (drag-and-drop / resize)
+// ---------------------------------------------------------------------------
+describe('handleEventDrop and handleEventResize', () => {
+  beforeEach(async () => {
+    capturedHandlers.eventDrop = null
+    capturedHandlers.eventResize = null
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue([])
+    EventService.updateEvent = vi.fn().mockResolvedValue(undefined)
+    render(<Schedule />)
+    await waitFor(() => expect(capturedHandlers.eventDrop).not.toBeNull())
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  const makeOriginalEvent = () => ({
+    id: 'evt-1',
+    title: 'Team Standup',
+    day: '2025-09-16',
+    startTime: '09:00',
+    endTime: '09:30',
+    type: 'task'
+  })
+
+  const makeDropInfo = (originalEvent, startDate, endDate) => ({
+    event: {
+      start: startDate,
+      end: endDate,
+      extendedProps: { originalEvent }
+    },
+    revert: vi.fn()
+  })
+
+  test('handleEventDrop updates event via EventService with new day/startTime/endTime', async () => {
+    const original = makeOriginalEvent()
+    const newStart = new Date('2025-09-17T10:00:00')
+    const newEnd = new Date('2025-09-17T10:30:00')
+    const dropInfo = makeDropInfo(original, newStart, newEnd)
+
+    await act(async () => {
+      await capturedHandlers.eventDrop(dropInfo)
+    })
+
+    expect(EventService.updateEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'evt-1',
+        day: '2025-09-17',
+        startTime: '10:00',
+        endTime: '10:30'
+      })
+    )
+    expect(dropInfo.revert).not.toHaveBeenCalled()
+  })
+
+  test('handleEventDrop calls revert on EventService failure', async () => {
+    EventService.updateEvent.mockRejectedValue(new Error('DB error'))
+    const original = makeOriginalEvent()
+    const newStart = new Date('2025-09-17T10:00:00')
+    const dropInfo = makeDropInfo(original, newStart, null)
+
+    await act(async () => {
+      await capturedHandlers.eventDrop(dropInfo)
+    })
+
+    expect(dropInfo.revert).toHaveBeenCalled()
+  })
+
+  test('handleEventDrop calls revert when no originalEvent is present', async () => {
+    const dropInfo = {
+      event: { start: new Date(), end: new Date(), extendedProps: {} },
+      revert: vi.fn()
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventDrop(dropInfo)
+    })
+
+    expect(dropInfo.revert).toHaveBeenCalled()
+    expect(EventService.updateEvent).not.toHaveBeenCalled()
+  })
+
+  test('handleEventResize updates event via EventService with new endTime', async () => {
+    const original = makeOriginalEvent()
+    const newStart = new Date('2025-09-16T09:00:00')
+    const newEnd = new Date('2025-09-16T10:00:00')
+    const resizeInfo = makeDropInfo(original, newStart, newEnd)
+
+    await act(async () => {
+      await capturedHandlers.eventResize(resizeInfo)
+    })
+
+    expect(EventService.updateEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'evt-1',
+        day: '2025-09-16',
+        startTime: '09:00',
+        endTime: '10:00'
+      })
+    )
+    expect(resizeInfo.revert).not.toHaveBeenCalled()
+  })
+
+  test('handleEventResize calls revert on EventService failure', async () => {
+    EventService.updateEvent.mockRejectedValue(new Error('DB error'))
+    const original = makeOriginalEvent()
+    const resizeInfo = makeDropInfo(original, new Date('2025-09-16T09:00:00'), null)
+
+    await act(async () => {
+      await capturedHandlers.eventResize(resizeInfo)
+    })
+
+    expect(resizeInfo.revert).toHaveBeenCalled()
+  })
+
+  test('handleEventResize calls revert when no originalEvent is present', async () => {
+    const resizeInfo = {
+      event: { start: new Date(), end: new Date(), extendedProps: {} },
+      revert: vi.fn()
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventResize(resizeInfo)
+    })
+
+    expect(resizeInfo.revert).toHaveBeenCalled()
+    expect(EventService.updateEvent).not.toHaveBeenCalled()
   })
 })

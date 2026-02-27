@@ -526,20 +526,24 @@ export function clusterEvents(events) {
   const sorted = [...events].sort((a, b) => a.start - b.start)
   const clusters = []
   let cluster = []
+  // Running maximum-end tracks the furthest end time in the current cluster
+  // without recomputing over all cluster members (O(n) instead of O(n²)).
+  let maxEnd = 0
 
   for (const event of sorted) {
     if (cluster.length === 0) {
       cluster.push(event)
+      maxEnd = event.end
       continue
     }
 
-    const maxEnd = Math.max(...cluster.map((e) => e.end))
-
     if (event.start < maxEnd) {
       cluster.push(event)
+      if (event.end > maxEnd) maxEnd = event.end
     } else {
       clusters.push(cluster)
       cluster = [event]
+      maxEnd = event.end
     }
   }
 

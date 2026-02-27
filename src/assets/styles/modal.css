@@ -311,16 +311,17 @@
   margin: 0;
 }
 
-/* EventModal — larger initial size and user-resizable on desktop */
+/* EventModal — larger initial size on desktop */
 .event-modal {
-  /* Override the base max-width so users can resize beyond the default cap */
+  /* Override the base max-width to allow a wider default modal on large screens */
   width: clamp(680px, 80vw, 1100px);
   max-width: unset;
   max-height: unset;
   min-width: 500px;
   min-height: 600px;
-  /* overflow: hidden is already set by .modal-content; resize works with overflow != visible */
-  resize: both;
+  /* Native CSS resize handles cannot be operated via keyboard in most browsers,
+     so resize: both is intentionally omitted to preserve keyboard accessibility.
+     Users can still resize through the EventModal form by editing times directly. */
 }
 
 /* Full-screen on mobile — covers the entire viewport like Google Calendar */
@@ -336,10 +337,13 @@
     resize: none;
   }
 
-  /* Strip overlay padding so the full-screen modal reaches every edge */
-  .modal-overlay:has(.event-modal) {
-    padding: 0;
-    align-items: flex-start;
+  /* Strip overlay padding so the full-screen modal reaches every edge.
+     Guarded by @supports so older browsers without :has() fall back gracefully. */
+  @supports selector(:has(*)) {
+    .modal-overlay:has(.event-modal) {
+      padding: 0;
+      align-items: flex-start;
+    }
   }
 }
 
