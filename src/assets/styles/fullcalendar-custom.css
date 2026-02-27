@@ -581,17 +581,31 @@
 
 .view-dropdown {
   padding: 6px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--glass-border-soft);
   border-radius: 6px;
-  background: rgba(16, 20, 44, 0.25);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-base-bg);
   color: var(--text);
   cursor: pointer;
   font-size: 0.875rem;
 }
 
 .view-dropdown:hover {
-  border-color: var(--accent);
-  background: rgba(16, 20, 44, 0.35);
+  border-color: var(--glass-border-hover);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-elevated-bg);
 }
 
 .view-dropdown:focus {

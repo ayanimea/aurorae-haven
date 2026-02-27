@@ -73,7 +73,7 @@ function CustomToolbar({
           <button
             type='button'
             onClick={handleToday}
-            className='btn-secondary'
+            className='btn btn-secondary'
             aria-label='Go to today'
           >
             Today
@@ -109,7 +109,7 @@ function CustomToolbar({
         {/* Schedule event button */}
         <button
           type='button'
-          className='btn-primary'
+          className='btn btn-primary'
           aria-label='Schedule an event'
           onClick={() => onScheduleEvent(EVENT_TYPES.TASK)}
         >
