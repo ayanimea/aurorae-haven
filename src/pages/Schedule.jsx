@@ -93,6 +93,11 @@ import { timeToMinutes } from '../utils/timeUtils'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
+// Constant for buffer conversions — avoids magic number repetition
+const MILLISECONDS_PER_MINUTE = 60000
+// Default column gap (px) used as fallback when CSS token is unavailable
+const EVENT_COLUMN_GAP_FALLBACK_PX = 3
+
 // Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
 // With Vite, these modules are still included in the production build as separate
 // code-split chunks; the guard only controls whether they are requested at runtime.
@@ -637,13 +642,13 @@ function Schedule() {
         // adding back the buffer so the canonical times are preserved.
         const prepDuration = dropInfo.event.extendedProps?.prepDuration ?? 0
         const travelDuration = dropInfo.event.extendedProps?.travelDuration ?? 0
-        const totalBufferMs = (prepDuration + travelDuration) * 60000
+        const totalBufferMs = (prepDuration + travelDuration) * MILLISECONDS_PER_MINUTE
 
         const renderStart = dropInfo.event.start
         const mainStart = new Date(renderStart.getTime() + totalBufferMs)
         const mainEnd =
           dropInfo.event.end ??
-          new Date(mainStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60000)
+          new Date(mainStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * MILLISECONDS_PER_MINUTE)
 
         const updated = {
           ...originalEvent,
@@ -674,7 +679,7 @@ function Schedule() {
       try {
         const prepDuration = resizeInfo.event.extendedProps?.prepDuration ?? 0
         const travelDuration = resizeInfo.event.extendedProps?.travelDuration ?? 0
-        const totalBufferMs = (prepDuration + travelDuration) * 60000
+        const totalBufferMs = (prepDuration + travelDuration) * MILLISECONDS_PER_MINUTE
 
         // Canonically stored mainStart/mainEnd from the last save
         let mainStart =
@@ -683,22 +688,13 @@ function Schedule() {
         let mainEnd =
           resizeInfo.event.extendedProps?.mainEnd ?? resizeInfo.event.end
 
-        // Detect which handle was dragged
-        const startDeltaMs =
-          resizeInfo.startDelta?.milliseconds ??
-          (resizeInfo.startDelta?.years ||
-          resizeInfo.startDelta?.months ||
-          resizeInfo.startDelta?.days
-            ? 1
-            : 0)
-        const endDeltaMs =
-          resizeInfo.endDelta?.milliseconds ??
-          (resizeInfo.endDelta?.years ||
-          resizeInfo.endDelta?.months ||
-          resizeInfo.endDelta?.days
-            ? 1
-            : 0)
+        // Detect which handle was dragged — non-zero on the changed side
+        const resizeDeltaMs = (delta) =>
+          delta?.milliseconds ??
+          (delta?.years || delta?.months || delta?.days ? 1 : 0)
 
+        const startDeltaMs = resizeDeltaMs(resizeInfo.startDelta)
+        const endDeltaMs = resizeDeltaMs(resizeInfo.endDelta)
         const resizedFromTop = startDeltaMs !== 0 && endDeltaMs === 0
         const resizedFromBottom = endDeltaMs !== 0 && startDeltaMs === 0
 
@@ -712,7 +708,7 @@ function Schedule() {
         }
 
         const defaultEnd = new Date(
-          mainStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60000
+          mainStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * MILLISECONDS_PER_MINUTE
         )
 
         const updated = {
@@ -847,7 +843,7 @@ function Schedule() {
                         getComputedStyle(document.documentElement).getPropertyValue(
                           '--event-column-gap'
                         )
-                      ) || 3
+                      ) || EVENT_COLUMN_GAP_FALLBACK_PX
                       const width = `calc((100% - ${(totalColumns - 1) * gap}px) / ${totalColumns})`
                       info.el.style.width = width
                       info.el.style.left = `calc(${column} * (${width} + ${gap}px))`

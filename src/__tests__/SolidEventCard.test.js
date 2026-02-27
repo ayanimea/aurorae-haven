@@ -269,19 +269,26 @@ describe('SolidEventCard Component', () => {
     it('should compute proportional heights with canonical mainStart/mainEnd', () => {
       const mainStart = new Date('2026-02-03T10:00:00')
       const mainEnd = new Date('2026-02-03T11:00:00') // 60 min main
+      const prepDurationMin = 15
+      const travelDurationMin = 15
+      const mainDurationMin = (mainEnd.getTime() - mainStart.getTime()) / 60000
+      const total = travelDurationMin + prepDurationMin + mainDurationMin
+      const expectedTravelPct = (travelDurationMin / total) * 100
+      const expectedPrepPct = (prepDurationMin / total) * 100
+      const expectedMainPct = (mainDurationMin / total) * 100
+
       const event = {
         title: 'Proportional Event',
         resource: {
           type: 'meeting',
-          prepDuration: 15,
-          travelDuration: 15,
+          prepDuration: prepDurationMin,
+          travelDuration: travelDurationMin,
           mainStart,
           mainEnd
         }
       }
 
       const { container } = render(<SolidEventCard event={event} />)
-      // total = 15 + 15 + 60 = 90; travel = 15/90*100 ≈ 16.67%, prep = 16.67%, main = 66.67%
       const travel = container.querySelector('.event-segment.event-travel')
       const prep = container.querySelector('.event-segment.event-prep')
       const main = container.querySelector('.event-segment.event-main')
@@ -290,9 +297,9 @@ describe('SolidEventCard Component', () => {
       const prepH = parseFloat(prep.style.height)
       const mainH = parseFloat(main.style.height)
 
-      expect(travelH).toBeCloseTo(16.67, 1)
-      expect(prepH).toBeCloseTo(16.67, 1)
-      expect(mainH).toBeCloseTo(66.67, 1)
+      expect(travelH).toBeCloseTo(expectedTravelPct, 1)
+      expect(prepH).toBeCloseTo(expectedPrepPct, 1)
+      expect(mainH).toBeCloseTo(expectedMainPct, 1)
       expect(travelH + prepH + mainH).toBeCloseTo(100, 5)
     })
 

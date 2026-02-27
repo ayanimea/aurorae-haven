@@ -20,6 +20,9 @@ import './SolidEventCard.css'
 
 const logger = createLogger('SolidEventCard')
 
+const MILLISECONDS_PER_MINUTE = 60000
+const DEFAULT_MAIN_DURATION_MINUTES = 60
+
 function SolidEventCard({ event, onContextMenu }) {
   const { title, resource } = event
 
@@ -44,8 +47,8 @@ function SolidEventCard({ event, onContextMenu }) {
 
   // Strict proportional ratios — no minimum height, no clamping, no artificial padding
   const mainDuration = mainStart && mainEnd
-    ? Math.max(1, (mainEnd.getTime() - mainStart.getTime()) / 60000)
-    : Math.max(1, 60 - prepDuration - travelDuration)
+    ? Math.max(1, (mainEnd.getTime() - mainStart.getTime()) / MILLISECONDS_PER_MINUTE)
+    : Math.max(1, DEFAULT_MAIN_DURATION_MINUTES - prepDuration - travelDuration)
 
   const totalDuration = travelDuration + prepDuration + mainDuration
   const travelRatio = (travelDuration / totalDuration) * 100

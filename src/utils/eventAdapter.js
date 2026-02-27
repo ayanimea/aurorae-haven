@@ -18,6 +18,8 @@ import { clusterEvents, assignColumns } from './scheduleHelpers'
 
 const logger = createLogger('EventAdapter')
 
+const MILLISECONDS_PER_MINUTE = 60000
+
 /**
  * Convert our event format to React Big Calendar format
  * @param {Object} event - Event from EventService
@@ -123,7 +125,7 @@ export const toFullCalendarEvent = (event) => {
     const travelDuration = event.travelTime || 0
     const totalBuffer = prepDuration + travelDuration
     const renderStart = totalBuffer > 0
-      ? new Date(mainStart.getTime() - totalBuffer * 60000)
+      ? new Date(mainStart.getTime() - totalBuffer * MILLISECONDS_PER_MINUTE)
       : mainStart
 
     // FullCalendar event format
