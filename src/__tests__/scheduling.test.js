@@ -406,6 +406,73 @@ describe('generateSuggestions', () => {
   })
 })
 
+// ── PR-review regression tests ────────────────────────────────────────────────
+
+describe('midnight-spanning events in computeDayLoad', () => {
+  it('correctly accounts for an event that spans midnight (e.g. 23:00–01:00)', () => {
+    const date = new Date(2025, 5, 15)
+    // 23:00–01:00 = 2h = 120min; without the midnight fix rawEnd (60) < rawStart (1380)
+    // snapEventTime would return end-start = 0, losing the duration
+    const events = [{ startTime: '23:00', endTime: '01:00' }]
+    const load = computeDayLoad(events, date)
+    // 120 min / 1440 min ≈ 0.0833
+    expect(load).toBeCloseTo(120 / 1440, 4)
+  })
+})
+
+describe('getEffectiveWindow — all-day and midnight-spanning', () => {
+  it('returns [0, 1440) for an all-day event (allDay flag)', () => {
+    const w = getEffectiveWindow({ allDay: true })
+    expect(w.start).toBe(0)
+    expect(w.end).toBe(1440)
+    expect(w.isAllDay).toBe(true)
+  })
+
+  it('returns [0, 1440) when startTime and endTime are missing', () => {
+    const w = getEffectiveWindow({})
+    expect(w.start).toBe(0)
+    expect(w.end).toBe(1440)
+    expect(w.isAllDay).toBe(true)
+  })
+
+  it('handles midnight-spanning event (end < start) without prep/travel', () => {
+    const w = getEffectiveWindow({ startTime: '23:00', endTime: '01:00' })
+    // rawStart=1380, rawEnd=60 → normalEnd=60+1440=1500
+    expect(w.start).toBe(1380)
+    expect(w.end).toBe(1500)
+    expect(w.isAllDay).toBe(false)
+  })
+})
+
+describe('validateStructural — sweep-line (disjoint overlaps)', () => {
+  it('does not over-reject disjoint overlapping pairs (sweep-line fix)', () => {
+    // A: 09:00–10:00, B: 10:00–11:00, candidate: 09:30–10:30
+    // Old count: A + B + candidate = 3 → wrongly rejected at limit=2
+    // Sweep-line: A overlaps candidate only in [09:30,10:00], B only in [10:00,10:30].
+    // These sub-intervals are non-overlapping, so peak concurrency = 1 existing + candidate = 2.
+    const existing = [
+      { startTime: '09:00', endTime: '10:00' },
+      { startTime: '10:00', endTime: '11:00' }
+    ]
+    const candidate = { startTime: '09:30', endTime: '10:30' }
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(true)
+    expect(result.simultaneousCount).toBe(2)
+  })
+})
+
+describe('getMemoizedDayLoad — order-independent cache key', () => {
+  it('returns the same load regardless of event order', () => {
+    clearLoadCache()
+    const a = { startTime: '09:00', endTime: '10:00' }
+    const b = { startTime: '14:00', endTime: '15:00' }
+    const dateStr = '2025-06-15'
+    const load1 = getMemoizedDayLoad([a, b], dateStr)
+    const load2 = getMemoizedDayLoad([b, a], dateStr)
+    expect(load1).toBeCloseTo(load2, 10)
+  })
+})
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function minutesToHHMM(minutes) {

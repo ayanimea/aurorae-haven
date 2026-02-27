@@ -112,6 +112,10 @@ const EVENT_COLUMN_GAP_FALLBACK_PX = 3
 // to tree-shaking and ensures reliable error reporting in production environments.
 // See commit 511b225 for the migration from custom logger to console methods.
 
+// Valid values for the schedulingGuidanceLevel setting.
+// Declared at module level to avoid being a dependency of the useEffect hooks.
+const VALID_GUIDANCE_LEVELS = ['full', 'header-only', 'off']
+
 function Schedule() {
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
@@ -154,9 +158,10 @@ function Schedule() {
     () => getSettings().schedule?.use24HourFormat ?? true
   )
 
-  const [schedulingGuidanceLevel, setSchedulingGuidanceLevel] = useState(
-    () => getSettings().schedule?.schedulingGuidanceLevel ?? 'full'
-  )
+  const [schedulingGuidanceLevel, setSchedulingGuidanceLevel] = useState(() => {
+    const stored = getSettings().schedule?.schedulingGuidanceLevel
+    return VALID_GUIDANCE_LEVELS.includes(stored) ? stored : 'full'
+  })
 
   useEffect(() => {
     // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
@@ -166,8 +171,9 @@ function Schedule() {
         if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
           setUse24HourFormat(scheduleSettings.use24HourFormat)
         }
-        if (scheduleSettings?.schedulingGuidanceLevel) {
-          setSchedulingGuidanceLevel(scheduleSettings.schedulingGuidanceLevel)
+        const level = scheduleSettings?.schedulingGuidanceLevel
+        if (VALID_GUIDANCE_LEVELS.includes(level)) {
+          setSchedulingGuidanceLevel(level)
         }
       } catch (_err) {}
 
@@ -188,8 +194,9 @@ function Schedule() {
         if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
           setUse24HourFormat(scheduleSettings.use24HourFormat)
         }
-        if (scheduleSettings?.schedulingGuidanceLevel) {
-          setSchedulingGuidanceLevel(scheduleSettings.schedulingGuidanceLevel)
+        const level = scheduleSettings?.schedulingGuidanceLevel
+        if (VALID_GUIDANCE_LEVELS.includes(level)) {
+          setSchedulingGuidanceLevel(level)
         }
       } catch (_err) {}
     }

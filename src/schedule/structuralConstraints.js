@@ -26,17 +26,34 @@ import { timeToMinutes } from '../utils/timeUtils'
  * Get the effective start and end in minutes for an event, expanding by prep time.
  * Prep time shifts the window earlier; travel time shifts the window later.
  *
+ * Special cases:
+ *  - All-day events (allDay === true or missing start/end) occupy the full day
+ *    [0, 1440) so they always trigger the all-day simultaneous limit but never
+ *    block creation of timed events by themselves.
+ *  - Midnight-spanning events (endTime parses to ≤ startTime) have 1440 added
+ *    to their end so overlap checks work across the day boundary.
+ *
  * @param {ScheduleEvent} event
- * @returns {{ start: number, end: number }}
+ * @returns {{ start: number, end: number, isAllDay: boolean }}
  */
 export function getEffectiveWindow(event) {
-  const start = timeToMinutes(event.startTime)
-  const end = timeToMinutes(event.endTime)
+  // All-day events: treat as occupying [0, 1440) with no buffer
+  if (event.allDay === true || (!event.startTime && !event.endTime)) {
+    return { start: 0, end: 1440, isAllDay: true }
+  }
+
+  const rawStart = timeToMinutes(event.startTime)
+  const rawEnd = timeToMinutes(event.endTime)
   const prep = typeof event.preparationTime === 'number' ? event.preparationTime : 0
   const travel = typeof event.travelTime === 'number' ? event.travelTime : 0
+
+  // Midnight-spanning: end wraps past midnight (e.g. 23:00–01:00)
+  const normalEnd = rawEnd <= rawStart ? rawEnd + 1440 : rawEnd
+
   return {
-    start: start - prep,
-    end: end + travel
+    start: rawStart - prep,
+    end: normalEnd + travel,
+    isAllDay: false
   }
 }
 
@@ -58,6 +75,11 @@ export function eventsOverlap(a, b) {
  * Validate structural constraints for a candidate event against a set of
  * existing events on the same day.
  *
+ * Uses a sweep-line algorithm over (start, end) boundary points to find the
+ * actual maximum number of concurrent events within the candidate's effective
+ * window. This correctly handles disjoint-in-time overlapping sets that a
+ * simple count would over-reject.
+ *
  * Returns an object describing whether the candidate is valid, along with
  * how many simultaneous events would exist at the busiest point.
  *
@@ -69,8 +91,6 @@ export function eventsOverlap(a, b) {
  */
 export function validateStructural(candidate, existingEvents) {
   const overlapping = existingEvents.filter((e) => eventsOverlap(candidate, e))
-  // +1 accounts for the candidate itself
-  const simultaneousCount = overlapping.length + 1
 
   const hasAllDay =
     candidate.allDay === true || overlapping.some((e) => e.allDay === true)
@@ -78,6 +98,44 @@ export function validateStructural(candidate, existingEvents) {
   const limit = hasAllDay
     ? SCHEDULING_CONFIG.maxSimultaneousWithAllDay
     : SCHEDULING_CONFIG.maxSimultaneousEvents
+
+  // Sweep-line: find max concurrency within the candidate's effective window
+  const candidateWindow = getEffectiveWindow(candidate)
+  const boundaries = []
+
+  for (const event of overlapping) {
+    const w = getEffectiveWindow(event)
+    const start = Math.max(w.start, candidateWindow.start)
+    const end = Math.min(w.end, candidateWindow.end)
+
+    // Only count events that actually overlap (not just touch at boundary)
+    if (start < end) {
+      boundaries.push({ time: start, delta: 1 })
+      boundaries.push({ time: end, delta: -1 })
+    }
+  }
+
+  let simultaneousCount
+  if (boundaries.length === 0) {
+    // Only the candidate itself within its window
+    simultaneousCount = 1
+  } else {
+    // Sort: ascending time; at tie, endings (-1) before starts (+1) so that
+    // events touching at boundary are not counted as concurrent
+    boundaries.sort((a, b) =>
+      a.time !== b.time ? a.time - b.time : a.delta - b.delta
+    )
+
+    let current = 0
+    let maxExisting = 0
+    for (const point of boundaries) {
+      current += point.delta
+      if (current > maxExisting) maxExisting = current
+    }
+
+    // +1 for the candidate itself
+    simultaneousCount = maxExisting + 1
+  }
 
   if (simultaneousCount > limit) {
     return {

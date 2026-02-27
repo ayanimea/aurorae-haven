@@ -47,7 +47,11 @@ export function computeDayLoad(events, date) {
 
   for (const event of events) {
     const rawStart = timeToMinutes(event.startTime)
-    const rawEnd = timeToMinutes(event.endTime)
+    let rawEnd = timeToMinutes(event.endTime)
+
+    // Midnight-spanning event: end wraps past midnight (e.g. 23:00–01:00)
+    if (rawEnd <= rawStart) rawEnd += 1440
+
     const { start, end } = snapEventTime(rawStart, rawEnd)
     const mainDuration = Math.max(0, end - start)
     const prep = typeof event.preparationTime === 'number' ? event.preparationTime : 0
@@ -61,21 +65,24 @@ export function computeDayLoad(events, date) {
 /** @type {Map<string, number>} */
 const _loadCache = new Map()
 
+/** Maximum number of entries in the load cache to prevent unbounded memory growth */
+const LOAD_CACHE_MAX_SIZE = 200
+
 /**
  * Build the memoisation key for a set of events on a date string.
+ * Signatures are sorted so that the same set in different orders produces
+ * the same key (preventing unnecessary cache misses during navigation).
  *
  * @param {Array<object>} events
  * @param {string} dateStr - "YYYY-MM-DD"
  * @returns {string}
  */
 function buildCacheKey(events, dateStr) {
-  const evtSig = events
-    .map(
-      (e) =>
-        `${e.startTime}|${e.endTime}|${e.preparationTime ?? 0}|${e.travelTime ?? 0}`
-    )
-    .join(',')
-  return `${dateStr}::${evtSig}`
+  const signatures = events.map(
+    (e) => `${e.id ?? ''}|${e.startTime}|${e.endTime}|${e.preparationTime ?? 0}|${e.travelTime ?? 0}`
+  )
+  signatures.sort()
+  return `${dateStr}::${signatures.join(',')}`
 }
 
 /**
@@ -95,6 +102,11 @@ export function getMemoizedDayLoad(events, dateStr) {
   }
   const date = new Date(`${dateStr}T00:00:00`)
   const load = computeDayLoad(events, date)
+  // Evict oldest entries when the cache reaches its size limit
+  if (_loadCache.size >= LOAD_CACHE_MAX_SIZE) {
+    const firstKey = _loadCache.keys().next().value
+    _loadCache.delete(firstKey)
+  }
   _loadCache.set(key, load)
   return load
 }

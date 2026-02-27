@@ -2085,6 +2085,10 @@ Ask for clarification or preserve the existing structure.
  * (the inner text element) then create the visual indicator without touching
  * FullCalendar's default DOM or its click handlers.
  *
+ * Accessibility: high-load and over-capacity days include a visually-hidden
+ * `.sr-only` text node (injected via dayHeaderContent) alongside the default
+ * day label so screen readers announce the load state.
+ *
  * Uses design tokens only — no hardcoded colours or rgba.
  * Indicators are static (animation: none, transition: none).
  */
