@@ -83,6 +83,7 @@ function EventModal({
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showManualForm, setShowManualForm] = useState(false)
+  const [isNewCreation, setIsNewCreation] = useState(false)
   // Track if this is a drag-to-schedule operation (show both routines and tasks)
   const [isDragToSchedule, setIsDragToSchedule] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -138,6 +139,7 @@ function EventModal({
         )
       }
       setError('')
+      setIsNewCreation(false)
     }
   }, [isOpen, initialData, validatedEventType])
 
@@ -236,7 +238,8 @@ function EventModal({
       const trimmedData = {
         ...formData,
         title: formData.title.trim(),
-        ...(initialData?.id ? { id: initialData.id } : {})
+        ...(initialData?.id ? { id: initialData.id } : {}),
+        ...(isNewCreation ? { _isNewCreation: true } : {})
       }
       await onSave(trimmedData)
       onClose()
@@ -342,6 +345,7 @@ function EventModal({
       }))
     }
     setShowManualForm(true)
+    setIsNewCreation(false)
   }
 
   // Handle creating new routine/task
@@ -355,6 +359,7 @@ function EventModal({
         prev.type === null ? validatedEventType || EVENT_TYPES.TASK : prev.type
     }))
     setShowManualForm(true)
+    setIsNewCreation(true)
   }
 
   return (
@@ -364,6 +369,7 @@ function EventModal({
         onClose={onClose}
         title={getModalTitle()}
         closeOnOverlayClick={false}
+        className='event-modal'
       >
         {/* Show search selector for routines/tasks when not in manual form mode */}
         {!showManualForm &&

@@ -20,13 +20,11 @@
   background: var(--bg-secondary);
   color: var(--ink);
   font-size: 14px;
-  transition:
-    border-color var(--dur) var(--ease),
-    filter var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease);
 }
 
 .quadrant-select:hover {
-  filter: brightness(1.1);
+  border-color: var(--glass-border-hover);
 }
 
 .quadrant-select:focus {
@@ -41,13 +39,11 @@
   background: var(--bg-secondary);
   color: var(--ink);
   font-size: 14px;
-  transition:
-    border-color var(--dur) var(--ease),
-    filter var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease);
 }
 
 .task-input:hover {
-  filter: brightness(1.1);
+  border-color: var(--glass-border-hover);
 }
 
 .task-input:focus {
@@ -161,8 +157,7 @@
 
 .task-item:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  filter: brightness(1.08);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .task-item:active {

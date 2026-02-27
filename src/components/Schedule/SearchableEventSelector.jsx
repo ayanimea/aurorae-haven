@@ -368,10 +368,9 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 }
 
 SearchableEventSelector.propTypes = {
-  // eventType can be null for drag-to-schedule mode, but must be explicitly provided
-  // Using oneOf with null means the prop must be passed (not undefined), but null is valid
-  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null])
-    .isRequired,
+  // eventType can be null for drag-to-schedule mode; must be explicitly provided
+  // but null is a valid value so isRequired is not used here
+  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]),
   onSelect: PropTypes.func.isRequired,
   onCreateNew: PropTypes.func.isRequired
 }

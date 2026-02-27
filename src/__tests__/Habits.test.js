@@ -571,16 +571,25 @@ describe('Habits Component', () => {
       const habitCards = screen
         .getAllByRole('button')
         .filter((el) => el.className === 'habit-card')
-      habitCards[0].focus()
+
+      act(() => {
+        habitCards[0].focus()
+      })
 
       // Wait a bit for focus to settle
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      })
 
       // Press down arrow on window (keyboard navigation listens to window events)
-      fireEvent.keyDown(window, { key: 'ArrowDown' })
+      act(() => {
+        fireEvent.keyDown(window, { key: 'ArrowDown' })
+      })
 
       // Give time for the focus change to happen
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      })
 
       await waitFor(
         () => {
@@ -598,15 +607,24 @@ describe('Habits Component', () => {
       await screen.findByText('Enter Habit')
 
       const habitCard = screen.getByRole('button', { name: /Enter Habit/ })
-      habitCard.focus()
+
+      act(() => {
+        habitCard.focus()
+      })
 
       // Wait for focus to settle
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      })
 
-      fireEvent.keyDown(window, { key: 'Enter' })
+      act(() => {
+        fireEvent.keyDown(window, { key: 'Enter' })
+      })
 
       // Wait for drawer to open
-      await new Promise((resolve) => setTimeout(resolve, 200))
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 200))
+      })
 
       // Check drawer opened by looking for close button
       await waitFor(

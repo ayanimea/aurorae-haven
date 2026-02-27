@@ -9,12 +9,63 @@
  *
  * @module scheduleHelpers
  */
+import { v4 as generateSecureUUID } from 'uuid'
 import { getRoutines, createRoutine } from './routinesManager'
 import { getAllTemplates } from './templatesManager'
 import { getPredefinedTemplates } from './predefinedTemplates'
 import { createLogger } from './logger'
 
 const logger = createLogger('ScheduleHelpers')
+
+/**
+ * Add a new task directly to localStorage storage (not_urgent_not_important quadrant).
+ * Used when a user creates a brand-new task from the Schedule view so it also
+ * appears in the Tasks tab without requiring a separate entry.
+ *
+ * @param {string} title - Task title/text
+ * @returns {Object} The created task object
+ * @throws {Error} If localStorage write fails
+ */
+export function addTaskToStorage(title) {
+  const task = {
+    id: generateSecureUUID(),
+    text: title.trim(),
+    completed: false,
+    createdAt: new Date().toISOString(),
+    dueDate: null,
+    completedAt: null
+  }
+  const defaultStructure = () => ({
+    urgent_important: [],
+    not_urgent_important: [],
+    urgent_not_important: [],
+    not_urgent_not_important: []
+  })
+
+  let tasks
+  try {
+    const savedStr = localStorage.getItem('aurorae_tasks')
+    tasks = savedStr ? JSON.parse(savedStr) : defaultStructure()
+  } catch (_parseErr) {
+    // Corrupted or invalid JSON — start fresh rather than failing the whole save.
+    logger.warn('aurorae_tasks contained invalid JSON; resetting to empty structure.')
+    tasks = defaultStructure()
+  }
+
+  if (!tasks.not_urgent_not_important) {
+    tasks.not_urgent_not_important = []
+  }
+  tasks.not_urgent_not_important.push(task)
+
+  try {
+    localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
+  } catch (e) {
+    logger.error('Failed to write aurorae_tasks to localStorage:', e)
+    throw e
+  }
+
+  return task
+}
 
 /**
  * Sort items by importance, priority, type, and title
@@ -457,4 +508,108 @@ export async function getAllRoutinesAndTasks(eventType = null) {
 
   // Sort using shared sorting function
   return sortItemsByPriority(items)
+}
+
+/**
+ * Cluster overlapping events into groups.
+ *
+ * Two events overlap when A.start < B.end && A.end > B.start.
+ * Touching at boundaries (A.end === B.start) is NOT overlap.
+ * Events are sorted by start time before clustering so that each cluster is a
+ * contiguous group of mutually-intersecting intervals.
+ *
+ * @param {Array<{start: number, end: number}>} events - Events with numeric
+ *   start/end values (e.g. minutes from midnight). The array is not mutated.
+ * @returns {Array<Array<{start: number, end: number}>>} Array of clusters,
+ *   each cluster being an array of events that overlap with at least one other
+ *   event in the same cluster.
+ *
+ * @example
+ * const clusters = clusterEvents([
+ *   { start: 60, end: 120 },   // 01:00–02:00
+ *   { start: 90, end: 150 },   // 01:30–02:30  ← overlaps first
+ *   { start: 180, end: 240 },  // 03:00–04:00  ← separate cluster
+ * ])
+ * // → [[event0, event1], [event2]]
+ */
+export function clusterEvents(events) {
+  const sorted = [...events].sort((a, b) => a.start - b.start)
+  const clusters = []
+  let cluster = []
+  // Running maximum-end tracks the furthest end time in the current cluster
+  // without recomputing over all cluster members (O(n) instead of O(n²)).
+  let maxEnd = 0
+
+  for (const event of sorted) {
+    if (cluster.length === 0) {
+      cluster.push(event)
+      maxEnd = event.end
+      continue
+    }
+
+    if (event.start < maxEnd) {
+      cluster.push(event)
+      if (event.end > maxEnd) maxEnd = event.end
+    } else {
+      clusters.push(cluster)
+      cluster = [event]
+      maxEnd = event.end
+    }
+  }
+
+  if (cluster.length > 0) clusters.push(cluster)
+  return clusters
+}
+
+/**
+ * Assign column indices to events within a cluster for side-by-side rendering.
+ *
+ * Each event receives two new properties (mutated in place):
+ *   - `column`       {number} zero-based column index
+ *   - `totalColumns` {number} total number of columns in this cluster
+ *
+ * The algorithm is greedy and deterministic: events are processed in start-time
+ * order (assumed sorted) and placed in the first column whose last occupant has
+ * ended (last.end <= event.start, so touching boundaries do not conflict).
+ *
+ * @param {Array<{start: number, end: number}>} cluster - A single cluster of
+ *   potentially overlapping events (sorted by start time). Events are mutated
+ *   in place to add `column` and `totalColumns`.
+ * @returns {void}
+ *
+ * @example
+ * const cluster = [
+ *   { start: 60, end: 120 },
+ *   { start: 90, end: 150 },
+ * ]
+ * assignColumns(cluster)
+ * // cluster[0] → { ..., column: 0, totalColumns: 2 }
+ * // cluster[1] → { ..., column: 1, totalColumns: 2 }
+ */
+export function assignColumns(cluster) {
+  const columns = []
+
+  cluster.forEach((event) => {
+    let placed = false
+
+    for (let i = 0; i < columns.length; i++) {
+      const last = columns[i][columns[i].length - 1]
+      if (last.end <= event.start) {
+        columns[i].push(event)
+        event.column = i
+        placed = true
+        break
+      }
+    }
+
+    if (!placed) {
+      columns.push([event])
+      event.column = columns.length - 1
+    }
+  })
+
+  const totalColumns = columns.length
+  cluster.forEach((event) => {
+    event.totalColumns = totalColumns
+  })
 }

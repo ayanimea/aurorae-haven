@@ -20,8 +20,8 @@ import './SolidEventCard.css'
 
 const logger = createLogger('SolidEventCard')
 
-function SolidEventCard({ event, onContextMenu }) {
-  const { title, resource } = event
+function SolidEventCard({ event, onContextMenu, use24HourFormat = true }) {
+  const { title, start, resource } = event
   // Validate event type to prevent injection attacks - provides defense-in-depth
   const rawEventType = resource?.type || 'task'
   const eventType = VALID_EVENT_TYPES.includes(rawEventType)
@@ -47,6 +47,15 @@ function SolidEventCard({ event, onContextMenu }) {
     }
   }
 
+  const startLabel =
+    start instanceof Date
+      ? start.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: !use24HourFormat
+        })
+      : null
+
   return (
     <div
       className={`solid-event-card event-type-${eventType}`}
@@ -71,6 +80,7 @@ function SolidEventCard({ event, onContextMenu }) {
       <strong className='event-title'>
         {title != null ? String(title) : ''}
       </strong>
+      {startLabel && <span className='event-time'>{startLabel}</span>}
       {hasPreActivities && (
         <div className='event-pre-activities'>
           {prepTime > 0 && (
@@ -98,13 +108,15 @@ function SolidEventCard({ event, onContextMenu }) {
 SolidEventCard.propTypes = {
   event: PropTypes.shape({
     title: PropTypes.string.isRequired,
+    start: PropTypes.instanceOf(Date),
     resource: PropTypes.shape({
       type: PropTypes.string,
       preparationTime: PropTypes.number,
       travelTime: PropTypes.number
     })
   }).isRequired,
-  onContextMenu: PropTypes.func
+  onContextMenu: PropTypes.func,
+  use24HourFormat: PropTypes.bool
 }
 
 export default SolidEventCard

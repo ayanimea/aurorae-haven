@@ -41,7 +41,7 @@
     width: 100%;
   }
 
-  .btn-primary {
+  .task-input-form .btn-primary {
     width: 100%;
   }
 
@@ -121,12 +121,20 @@
 /* Context Menu */
 .context-menu {
   position: fixed;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-elevated-bg);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 12px;
   padding: 4px;
   z-index: var(--z-dropdown);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--glass-shadow-elevated);
 }
 
 .context-menu-item {
@@ -179,7 +187,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--modal-overlay-bg);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -197,18 +206,38 @@
 
 /* Modal Content */
 .modal-content {
-  background: var(--dark);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  position: relative;
+  background:
+    linear-gradient(
+      180deg,
+      var(--modal-glass-top)   0%,
+      var(--modal-glass-mid)   25%,
+      var(--modal-glass-dim)   60%,
+      var(--modal-glass-shade) 100%
+    ),
+    var(--modal-surface-base);
+  border: 1px solid var(--modal-border);
+  border-radius: 18px;
   padding: 0;
   /* Responsive: 500px min, 70% viewport, 900px max */
   max-width: clamp(500px, 70vw, 900px);
   width: 100%;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--modal-shadow);
   display: flex;
   flex-direction: column;
+}
+
+/* Edge hairline shimmer — removes flatness without making the modal look outlined */
+.modal-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid var(--modal-edge-shimmer);
 }
 
 /* Mobile - full width and slide up animation */
@@ -244,7 +273,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--modal-border);
 }
 
 .modal-header h2 {
@@ -288,7 +317,7 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 20px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--modal-border);
 }
 
 /* Confirm Modal Specific Styles */
@@ -301,6 +330,43 @@
   font-size: 15px;
   line-height: 1.6;
   margin: 0;
+}
+
+/* EventModal — larger initial size on desktop */
+.event-modal {
+  /* Override the base max-width to allow a wider default modal on large screens */
+  width: clamp(680px, 80vw, 1100px);
+  max-width: unset;
+  /* Cap height so the modal never overflows short laptop viewports */
+  max-height: calc(100dvh - 40px);
+  min-width: 500px;
+  min-height: 600px;
+  /* Native CSS resize handles cannot be operated via keyboard in most browsers,
+     so resize: both is intentionally omitted to preserve keyboard accessibility.
+     Users can still resize through the EventModal form by editing times directly. */
+}
+
+/* Full-screen on mobile — covers the entire viewport like Google Calendar */
+@media (max-width: 768px) {
+  .event-modal {
+    width: 100%;
+    /* Fill the full viewport height (dvh accounts for mobile address bar) */
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    min-width: unset;
+    min-height: unset;
+    resize: none;
+  }
+
+  /* Strip overlay padding so the full-screen modal reaches every edge.
+     Guarded by @supports so older browsers without :has() fall back gracefully. */
+  @supports selector(:has(*)) {
+    .modal-overlay:has(.event-modal) {
+      padding: 0;
+      align-items: flex-start;
+    }
+  }
 }
 
 /* Destructive action button styling per TAB-SEC-25 */
@@ -322,15 +388,15 @@
 
 /* Secondary button for cancel actions */
 .btn-secondary {
-  background: transparent;
+  background: var(--nav-glass-base);
   color: var(--dim);
-  border: 1px solid var(--line);
+  border: 1px solid var(--nav-glass-border);
 }
 
 .btn-secondary:hover {
-  background: rgba(99, 102, 241, 0.1);
+  transform: translateY(-0.5px);
   color: var(--ink);
-  border-color: var(--mint);
+  border-color: var(--glass-border-soft);
 }
 
 .btn-secondary:focus {

@@ -84,9 +84,12 @@ import {
   toFullCalendarEvents,
   createEventFromSlot
 } from '../utils/eventAdapter'
-import { EVENT_TYPES, TIME_ZONE_HOURS } from '../utils/scheduleConstants'
+import { EVENT_TYPES, TIME_ZONE_HOURS, DEFAULT_EVENT_DURATION_MINUTES } from '../utils/scheduleConstants'
 import { getSettings } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
+import { addTaskToStorage } from '../utils/scheduleHelpers'
+import { createRoutine } from '../utils/routinesManager'
+import { timeToMinutes } from '../utils/timeUtils'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -111,6 +114,9 @@ function Schedule() {
 
   // Success message timeout ref for cleanup on unmount
   const successMessageTimeoutRef = useRef(null)
+  // Ref that always points to the latest loadEvents callback so storage event
+  // handlers (defined before loadEvents) can call it without stale closures.
+  const loadEventsRef = useRef(null)
 
   // State management
   const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
@@ -139,13 +145,21 @@ function Schedule() {
 
   useEffect(() => {
     // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
-    const handleStorage = () => {
+    const handleStorage = (event) => {
       try {
         const updatedValue = getSettings().schedule?.use24HourFormat
         if (typeof updatedValue === 'boolean') {
           setUse24HourFormat(updatedValue)
         }
       } catch (_err) {}
+
+      // Reload schedule events when tasks are modified in another tab so the
+      // Schedule view stays in sync without requiring a page refresh.
+      // Routines are stored in IndexedDB (not localStorage), so no 'aurorae_routines'
+      // key will ever fire here — cross-tab routine sync would require BroadcastChannel.
+      if (event?.key === 'aurorae_tasks') {
+        loadEventsRef.current?.()
+      }
     }
 
     // Handle same-tab updates via custom 'settingsUpdated' event
@@ -218,6 +232,9 @@ function Schedule() {
     }
   }, [view, date])
 
+  // Keep the ref in sync so storage event handlers always call the latest version
+  loadEventsRef.current = loadEvents
+
   // Load events when view or date changes
   useEffect(() => {
     loadEvents()
@@ -257,16 +274,47 @@ function Schedule() {
         throw new Error('No event data provided')
       }
 
+      // Strip the internal flag before persisting to avoid polluting IndexedDB
+      const { _isNewCreation, ...cleanEventData } = eventData
+
       // Check if this is an update or create
       // For updates, we need both an ID and it must be a string/number
       const isUpdate =
-        eventData.id &&
-        (typeof eventData.id === 'string' || typeof eventData.id === 'number')
+        cleanEventData.id &&
+        (typeof cleanEventData.id === 'string' ||
+          typeof cleanEventData.id === 'number')
 
       if (isUpdate) {
-        await EventService.updateEvent(eventData)
+        await EventService.updateEvent(cleanEventData)
       } else {
-        await EventService.createEvent(eventData)
+        await EventService.createEvent(cleanEventData)
+
+        // When user created a brand-new task/routine from the schedule, also
+        // persist it in its native store so it appears in the respective tab.
+        // This is best-effort: failure here does NOT block the schedule event
+        // save or the modal close — it only logs a non-blocking warning.
+        if (_isNewCreation) {
+          try {
+            if (cleanEventData.type === EVENT_TYPES.TASK) {
+              addTaskToStorage(cleanEventData.title)
+            } else if (cleanEventData.type === EVENT_TYPES.ROUTINE) {
+              const durationMinutes =
+                timeToMinutes(cleanEventData.endTime) -
+                timeToMinutes(cleanEventData.startTime)
+              // `steps` defaults to [] in routinesManager.createRoutine when not provided.
+              // Only name and estimatedDuration are required for a minimal routine entry.
+              await createRoutine({
+                name: cleanEventData.title,
+                estimatedDuration: Math.max(0, durationMinutes) * 60
+              })
+            }
+          } catch (mirrorErr) {
+            // Mirror failure is non-fatal: the schedule event was already saved.
+            // Log a warning so developers are aware but don't surface this to the user.
+            // biome-ignore lint/suspicious/noConsole: non-fatal mirror failure, intentional warning
+            console.warn('Secondary store mirror failed (non-blocking):', mirrorErr)
+          }
+        }
       }
 
       await loadEvents()
@@ -574,6 +622,66 @@ function Schedule() {
     [handleEventContextMenu]
   )
 
+  // Handle event drag-and-drop (FullCalendar).
+  // Note: drag-and-drop is mouse-driven. Keyboard users can edit event times
+  // via the EventModal (click → open → edit start/end time fields).
+  const handleEventDrop = useCallback(
+    async (dropInfo) => {
+      const originalEvent = dropInfo.event.extendedProps?.originalEvent
+      if (!originalEvent) {
+        dropInfo.revert()
+        return
+      }
+      try {
+        const newStart = dropInfo.event.start
+        const defaultEndMs = newStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60 * 1000
+        const newEnd = dropInfo.event.end ?? new Date(defaultEndMs)
+        const updated = {
+          ...originalEvent,
+          day: format(newStart, 'yyyy-MM-dd'),
+          startTime: format(newStart, 'HH:mm'),
+          // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
+          endTime: format(newEnd, 'HH:mm')
+        }
+        await EventService.updateEvent(updated)
+        await loadEvents()
+      } catch (_err) {
+        dropInfo.revert()
+        setError('Failed to move event. Please try again.')
+      }
+    },
+    [loadEvents]
+  )
+
+  // Handle event resize (FullCalendar)
+  const handleEventResize = useCallback(
+    async (resizeInfo) => {
+      const originalEvent = resizeInfo.event.extendedProps?.originalEvent
+      if (!originalEvent) {
+        resizeInfo.revert()
+        return
+      }
+      try {
+        const newStart = resizeInfo.event.start
+        const defaultEndMs = newStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60 * 1000
+        const newEnd = resizeInfo.event.end ?? new Date(defaultEndMs)
+        const updated = {
+          ...originalEvent,
+          day: format(newStart, 'yyyy-MM-dd'),
+          startTime: format(newStart, 'HH:mm'),
+          // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
+          endTime: format(newEnd, 'HH:mm')
+        }
+        await EventService.updateEvent(updated)
+        await loadEvents()
+      } catch (_err) {
+        resizeInfo.revert()
+        setError('Failed to resize event. Please try again.')
+      }
+    },
+    [loadEvents]
+  )
+
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
@@ -651,8 +759,11 @@ function Schedule() {
                   firstDay={1}
                   selectable={true}
                   selectMirror={true}
-                  editable={false}
+                  editable={true}
+                  eventOverlap={true}
                   eventClick={handleEventClick}
+                  eventDrop={handleEventDrop}
+                  eventResize={handleEventResize}
                   select={handleDateSelect}
                   eventMouseEnter={handleEventMouseEnter}
                   eventWillUnmount={handleEventWillUnmount}
@@ -674,6 +785,7 @@ function Schedule() {
                   }}
                   eventContent={(eventInfo) => (
                     <SolidEventCard
+                      use24HourFormat={use24HourFormat}
                       event={{
                         ...eventInfo.event,
                         title: eventInfo.event.title, // Explicitly pass title from FullCalendar event

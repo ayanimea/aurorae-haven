@@ -14,6 +14,7 @@
 import { parse, format, addDays } from 'date-fns'
 import { createLogger } from './logger'
 import { VALID_EVENT_TYPES } from './scheduleConstants'
+import { clusterEvents, assignColumns } from './scheduleHelpers'
 
 const logger = createLogger('EventAdapter')
 
@@ -158,7 +159,43 @@ export const toFullCalendarEvents = (events) => {
     return []
   }
 
-  return events.map(toFullCalendarEvent).filter(Boolean)
+  const fcEvents = events.map(toFullCalendarEvent).filter(Boolean)
+
+  // Compute overlap columns using the deterministic engine.
+  // Column metadata (column, totalColumns) is stored in extendedProps as prep work
+  // for future side-by-side overlap rendering. To wire it into the UI:
+  //   1. Schedule.jsx eventContent: forward extendedProps.column / .totalColumns into the
+  //      `resource` object passed to SolidEventCard.
+  //   2. SolidEventCard: accept column / totalColumns props and apply CSS `left` / `width`
+  //      (e.g. left = (column/totalColumns)*100+'%', width = (1/totalColumns)*100+'%').
+  // Until that rendering path is implemented, the values are precomputed but unused by CSS.
+  // Multi-day/midnight-spanning events are excluded from clustering — FullCalendar
+  // handles their layout separately and minute offsets would be incorrect for them.
+  try {
+    const MINUTES_PER_DAY = 24 * 60
+    const singleDayEvents = fcEvents.filter((e) => {
+      const startDay = format(e.start, 'yyyy-MM-dd')
+      const endDay = format(e.end, 'yyyy-MM-dd')
+      return startDay === endDay
+    })
+    const eventSlots = singleDayEvents.map((e) => ({
+      id: e.id,
+      start: Math.min(e.start.getHours() * 60 + e.start.getMinutes(), MINUTES_PER_DAY - 1),
+      end: Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
+    }))
+    const clusters = clusterEvents(eventSlots)
+    for (const cluster of clusters) assignColumns(cluster)
+    const columnMap = Object.fromEntries(
+      eventSlots.map((s) => [s.id, { column: s.column ?? 0, totalColumns: s.totalColumns ?? 1 }])
+    )
+    return fcEvents.map((e) => ({
+      ...e,
+      extendedProps: { ...e.extendedProps, ...(columnMap[e.id] ?? {}) }
+    }))
+  } catch (_err) {
+    logger.error('Failed to compute overlap columns:', _err)
+    return fcEvents
+  }
 }
 
 /**

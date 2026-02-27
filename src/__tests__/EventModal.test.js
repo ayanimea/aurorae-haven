@@ -254,7 +254,8 @@ describe('EventModal Component', () => {
         endTime: '10:00',
         type: 'task',
         travelTime: 0,
-        preparationTime: 0
+        preparationTime: 0,
+        _isNewCreation: true
       })
     })
     expect(mockOnClose).toHaveBeenCalled()

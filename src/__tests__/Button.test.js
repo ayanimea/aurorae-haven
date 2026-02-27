@@ -273,11 +273,14 @@ describe('Button Component', () => {
 
   describe('Edge cases', () => {
     test('handles invalid variant gracefully', () => {
+      // Suppress the expected PropTypes warning for the intentionally invalid prop
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       render(
         <Button onClick={mockOnClick} variant='invalid-variant'>
           Button
         </Button>
       )
+      consoleSpy.mockRestore()
 
       // Should fallback to default 'btn' class
       expect(screen.getByRole('button')).toHaveClass('btn')

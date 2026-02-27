@@ -23,6 +23,9 @@
     },
     {
       "pattern": "^https://github\\.com/(ayanimea|aurorae-haven)/aurorae-haven/issues"
+    },
+    {
+      "pattern": "^https://ieeexplore\\.ieee\\.org/"
     }
   ],
   "timeout": "10s",

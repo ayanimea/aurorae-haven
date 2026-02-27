@@ -127,7 +127,7 @@
 }
 
 .fc-timegrid-slot-label {
-  color: var(--dim);
+  color: var(--time-label);
   font-size: 0.7rem;
   padding: 4px;
   border-color: var(--fc-border-color);
@@ -195,9 +195,10 @@
   padding: 2px; /* Small padding for visual separation */
 }
 
-/* Event card wrapper — glass panel aesthetic.
- * Background/border/::before apply here as a fallback layer; the primary
- * visual glass surface is rendered by .solid-event-card inside. */
+/* Event card wrapper — neutral glass panel.
+ * Base: vertical glass gradient + blur.
+ * Colour coding is provided exclusively by a 4px left-edge accent strip (::after),
+ * keeping the event body neutral and ensuring text readability is never compromised. */
 .fc-event {
   padding: 0;
   margin: 0;
@@ -205,62 +206,59 @@
   width: 100%;
   position: relative;
   z-index: 3;
-  border-radius: 0.875rem; /* 14px — matches --event-radius in SolidEventCard.css */
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  border-radius: var(--event-radius);
+  border: 1px solid var(--event-border) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   overflow: hidden;
 
-  /* No base background — colour comes from [data-timezone] rules */
-  background: none !important;
+  /* Neutral glass body — no colour fill; semantic colour comes from left-edge strip */
+  background:
+    linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom)),
+    var(--event-body-overlay) !important;
 
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.45),
-    0 0 40px rgba(255, 255, 255, 0.05);
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 0 20px var(--event-glass-top);
 
   transition:
-    box-shadow 0.25s ease,
-    transform 0.2s ease;
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
 }
 
-/* ── Time-of-day coloured gradients ── */
+/* ── Left-edge accent strip — 4px coloured bar at the start of each event.
+ * Alpha 0.58–0.62 for perceptible but non-dominant semantic colour coding.
+ * Uses ::after to render above the glass body without altering background. ── */
 
-.fc-event[data-timezone='morning'] {
-  background: radial-gradient(
-    circle at 25% 20%,
-    rgba(255, 200, 120, 0.95),
-    rgba(255, 165, 85, 0.85) 50%,
-    rgba(60, 30, 90, 0.98) 100%
-  ) !important;
+.fc-event[data-timezone='morning']::after,
+.fc-event[data-timezone='afternoon']::after,
+.fc-event[data-timezone='evening']::after,
+.fc-event[data-timezone='night']::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: var(--event-radius) 0 0 var(--event-radius);
+  pointer-events: none;
+  z-index: 1;
 }
 
-.fc-event[data-timezone='afternoon'] {
-  background: radial-gradient(
-    circle at 30% 25%,
-    rgba(110, 190, 255, 0.95),
-    rgba(80, 150, 255, 0.85) 55%,
-    rgba(30, 40, 90, 0.99) 100%
-  ) !important;
+.fc-event[data-timezone='morning']::after {
+  background: var(--event-morning-accent);
 }
 
-/* brightness(0.92) baked into RGB values to avoid filter applying to card text */
-.fc-event[data-timezone='evening'] {
-  background: radial-gradient(
-    circle at 30% 20%,
-    rgba(184, 110, 235, 0.98),
-    rgba(156, 87, 235, 0.88) 55%,
-    rgba(32, 18, 74, 1) 100%
-  ) !important;
+.fc-event[data-timezone='afternoon']::after {
+  background: var(--event-afternoon-accent);
 }
 
-/* brightness(0.93) baked into RGB values to avoid filter applying to card text */
-.fc-event[data-timezone='night'] {
-  background: radial-gradient(
-    circle at 35% 15%,
-    rgba(121, 177, 237, 0.65),
-    rgba(56, 102, 205, 0.8) 45%,
-    rgba(9, 14, 42, 1) 100%
-  ) !important;
+.fc-event[data-timezone='evening']::after {
+  background: var(--event-evening-accent);
+}
+
+.fc-event[data-timezone='night']::after {
+  background: var(--event-night-accent);
 }
 
 /* Subtle luminous top-edge highlight */
@@ -268,23 +266,24 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 0.875rem; /* same as .fc-event */
+  border-radius: var(--event-radius);
   pointer-events: none;
   z-index: 0;
 
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.05),
+    var(--event-highlight-top),
     transparent 55%
   );
 }
 
+/* Hover — toned down to ~50% of the previous animation */
 .fc-event:hover {
-  transform: translateY(-1px);
+  transform: translateY(-0.5px);
 
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.55),
-    0 0 40px rgba(255, 255, 255, 0.06);
+    0 10px 28px rgba(0, 0, 0, 0.42),
+    0 0 20px var(--event-glass-top);
 }
 
 /* Hide default FC event title/time since SolidEventCard renders them */
@@ -316,15 +315,15 @@
 /* ===== Current Time Indicator ===== */
 
 .fc-timegrid-now-indicator-line {
-  border-color: rgba(255, 80, 80, 0.65) !important;
-  border-width: 2px;
-  box-shadow: 0 0 8px rgba(255, 80, 80, 0.4);
+  border-color: var(--now-line) !important;
+  border-width: 1.5px;
+  box-shadow: none;
   position: relative;
   z-index: 2;
 }
 
 .fc-timegrid-now-indicator-arrow {
-  border-top-color: rgba(255, 80, 80, 0.65) !important;
+  border-top-color: var(--now-line) !important;
   z-index: 2;
 }
 
@@ -492,7 +491,8 @@
 
 /* Nebula glow layer — stronger radial gradients at higher opacity to restore
  * the cosmic vibrancy seen in the approved mockup.
- * Sits below time-of-day bands (same z-index: 0; DOM order determines stacking). */
+ * Sits below time-of-day bands (same z-index: 0; DOM order determines stacking).
+ * Static — no animation per performance and spec constraints. */
 .schedule-calendar-container::before {
   content: '';
   position: absolute;
@@ -516,23 +516,6 @@
       transparent 65%
     );
   opacity: 0.9;
-  animation: nebulaBreath 24s ease-in-out infinite alternate;
-}
-
-@keyframes nebulaBreath {
-  from {
-    opacity: 0.8;
-  }
-  to {
-    opacity: 0.98;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .schedule-calendar-container::before {
-    animation: none;
-    opacity: 0.9;
-  }
 }
 
 /* Remove any background coloring from time grid rows and slots.
@@ -598,17 +581,31 @@
 
 .view-dropdown {
   padding: 6px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--glass-border-soft);
   border-radius: 6px;
-  background: rgba(16, 20, 44, 0.25);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-base-bg);
   color: var(--text);
   cursor: pointer;
   font-size: 0.875rem;
 }
 
 .view-dropdown:hover {
-  border-color: var(--accent);
-  background: rgba(16, 20, 44, 0.35);
+  border-color: var(--glass-border-hover);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-elevated-bg);
 }
 
 .view-dropdown:focus {
@@ -619,14 +616,34 @@
 /* ===== Responsive Design ===== */
 
 @media (max-width: 768px) {
+  /* Toolbar: title row + single controls row */
   .calendar-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
   }
 
   .toolbar-right {
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
     justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* Prevent the global `.task-input-form .btn-primary { width: 100% }` bleed */
+  .calendar-toolbar .btn-primary {
+    width: auto;
+    flex-shrink: 0;
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+  }
+
+  /* Keep nav cluster and view selector from expanding */
+  .nav-buttons,
+  .view-selector {
+    flex-shrink: 0;
   }
 
   .schedule-container {
@@ -659,14 +676,14 @@
   .fc-event {
     box-shadow:
       0 8px 28px rgba(0, 0, 0, 0.45),
-      0 0 24px rgba(255, 255, 255, 0.03);
+      0 0 24px var(--event-glass-bottom);
   }
 
-  /* Softer luminous top edge */
+  /* Softer luminous top edge on mobile */
   .fc-event::before {
     background: linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.04),
+      var(--event-glass-bottom),
       transparent 45%
     );
   }

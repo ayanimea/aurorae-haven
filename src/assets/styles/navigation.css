@@ -147,8 +147,16 @@ body.density-cozy {
   min-width: var(--touch-comfortable);
   border-radius: 20px;
   color: var(--dim);
-  background: transparent;
-  border: 1px solid transparent;
+  font-weight: 500;
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-base-bg);
+  border: 1px solid var(--glass-border-soft);
   text-decoration: none;
   font-size: 0.9rem;
   cursor: pointer;
@@ -157,24 +165,28 @@ body.density-cozy {
     background var(--dur) var(--ease),
     color var(--dur) var(--ease),
     border-color var(--dur) var(--ease),
-    text-decoration-color var(--dur) var(--ease);
+    box-shadow var(--dur) var(--ease);
 }
 
-/* TAB-NAV-07 & TAB-NAV-17: Active state with accent background */
+/* TAB-NAV-07 & TAB-NAV-17: Active state with luminous accent glass gradient */
 .nav-tab.active {
-  background: var(--mint);
-  color: var(--ink);
-  font-weight: 700;
-  border-color: var(--mint);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-accent-top) 0%,
+      var(--glass-accent-bg) 100%
+    );
+  color: var(--mint);
+  font-weight: 600;
+  border-color: var(--nav-active-border);
+  box-shadow: var(--nav-active-glow);
 }
 
-/* TAB-NAV-07: Hover state with underline and semi-transparent background */
+/* TAB-NAV-07: Hover state with glass lift */
 .nav-tab:hover:not(.active) {
   background: var(--bg-hover);
+  border-color: var(--glass-border-hover);
   color: var(--ink);
-  text-decoration: underline;
-  text-decoration-color: var(--mint);
-  text-underline-offset: 4px;
 }
 
 /* TAB-NAV-18: Focus outline with ≥3px visible outline */
@@ -339,10 +351,17 @@ body.density-cozy {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--bg);
-  backdrop-filter: var(--blur);
-  border-top: 1px solid var(--line);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-elevated-bg);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--glass-border-soft);
+  box-shadow: var(--glass-shadow-elevated);
   z-index: calc(var(--z-appbar) - 1);
   animation: slideUp 0.2s ease;
 }
@@ -393,9 +412,16 @@ body.density-cozy {
 }
 
 .more-menu-item.active {
-  background: var(--mint);
-  color: var(--ink);
-  font-weight: 700;
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-accent-top) 0%,
+      var(--glass-accent-bg) 100%
+    );
+  color: var(--mint);
+  font-weight: 600;
+  border-color: var(--nav-active-border);
+  box-shadow: var(--nav-active-glow);
 }
 
 .more-menu-item:hover:not(.active) {
@@ -672,8 +698,14 @@ body.density-cozy {
   }
 
   .more-button.active {
-    background: var(--mint);
-    color: var(--ink);
+    background:
+      linear-gradient(
+        180deg,
+        var(--glass-accent-top) 0%,
+        var(--glass-accent-bg) 100%
+      );
+    border-color: var(--nav-active-border);
+    color: var(--mint);
   }
 
   .appbar .inner {
@@ -927,19 +959,27 @@ body.mobile-menu-open .shell {
   gap: 8px;
   cursor: pointer;
   color: var(--text-bright);
+  font-weight: 500;
   padding: 9px 12px;
   min-height: var(--touch-comfortable);
   border-radius: 12px;
-  border: 1px solid var(--line);
-  background: rgba(35, 45, 100, 0.28);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--glass-border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-base-bg);
+  box-shadow: var(--glass-shadow-base);
   transition:
     transform var(--dur) var(--ease),
-    filter var(--dur) var(--ease);
+    box-shadow var(--dur) var(--ease);
 }
 .btn:hover {
-  filter: brightness(1.06);
   transform: translateY(-1px);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 /* Icons */

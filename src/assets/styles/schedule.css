@@ -58,17 +58,13 @@ Ask for clarification or preserve the existing structure.
 
 /* ===== Schedule ===== */
 :root {
-  /* Minute-based scaling unit per schedule-ui-spec.md §4 */
-  /* All vertical sizing derives from this proportional unit */
-  /* Fallback for browsers that don't support svh (pre-2022) */
-  --minute-unit: 1.2px;
-  /* Using svh (small viewport height) for stable sizing on mobile when keyboard/browser UI appears */
-  /* This prevents layout shifts when mobile keyboard opens or address bar hides/shows */
-  --minute-unit: clamp(1px, 0.15svh, 1.6px);
+  /* Responsive hour height — clamp ensures usable range across all viewports */
+  /* 48px min (compact), 8vh preferred, 96px max (large displays) */
+  --hour-height: clamp(48px, 8vh, 96px);
 
-  /* Hour height calculated dynamically from minute unit (60 minutes per hour) */
-  /* This ensures proportional, non-hardcoded time scaling per spec §6 */
-  --hour-height: calc(var(--minute-unit) * 60);
+  /* Minute-based scaling unit derived from hour height (60 min per hour) */
+  /* All vertical sizing uses this unit — do NOT hardcode pixel heights */
+  --minute-unit: calc(var(--hour-height) / 60);
 }
 
 .layout-schedule {
@@ -121,7 +117,7 @@ Ask for clarification or preserve the existing structure.
     --hour-height
   ); /* Match grid row height for proper event alignment */
   box-sizing: border-box; /* Include border in height calculation */
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px dashed color-mix(in srgb, var(--line) 45%, transparent);
   padding: 6px 8px;
   color: var(--dim);
   display: flex;
@@ -130,31 +126,6 @@ Ask for clarification or preserve the existing structure.
 .slots {
   position: relative;
   border-left: 1px solid var(--line);
-}
-
-/* Time of day color coding */
-.time-period-morning {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 223, 186, 0.05) 0%,
-    rgba(255, 223, 186, 0.02) 100%
-  );
-}
-
-.time-period-afternoon {
-  background: linear-gradient(
-    180deg,
-    rgba(135, 206, 250, 0.05) 0%,
-    rgba(135, 206, 250, 0.02) 100%
-  );
-}
-
-.time-period-evening {
-  background: linear-gradient(
-    180deg,
-    rgba(186, 141, 255, 0.05) 0%,
-    rgba(186, 141, 255, 0.02) 100%
-  );
 }
 
 /* Time-blind accessibility features */
@@ -174,9 +145,11 @@ Ask for clarification or preserve the existing structure.
 }
 
 .time-period-label {
-  font-weight: 600;
-  color: var(--accent) !important;
+  font-weight: 500;
+  color: var(--accent);
   font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  opacity: 0.5;
 }
 
 .current-time-indicator {
@@ -184,10 +157,10 @@ Ask for clarification or preserve the existing structure.
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--mint);
-  z-index: 10;
+  background: linear-gradient(90deg, transparent, var(--now-line), transparent);
+  z-index: 3;
   pointer-events: none;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--mint) 60%, transparent);
+  box-shadow: 0 0 4px var(--now-line);
 }
 
 .current-time-indicator::before {
@@ -198,8 +171,8 @@ Ask for clarification or preserve the existing structure.
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--mint);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--mint) 80%, transparent);
+  background: var(--now-line);
+  box-shadow: 0 0 4px var(--now-line);
 }
 
 .current-time-label {
@@ -237,9 +210,10 @@ Ask for clarification or preserve the existing structure.
   position: absolute;
   border-radius: 10px;
   padding: 8px 12px;
-  background: rgba(142, 200, 255, 0.14);
-  border: 1px solid rgba(150, 200, 255, 0.24);
+  background: linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom));
+  border: 1px solid var(--event-border);
   border-left: 3px solid var(--mint);
+  backdrop-filter: blur(8px);
   z-index: 2;
   overflow: hidden;
   min-height: 40px;
@@ -285,50 +259,38 @@ Ask for clarification or preserve the existing structure.
 /* Routine blocks use default styling from .block */
 
 /* Task blocks - Eisenhower Matrix colors */
+/* Inherit glass gradient and event-border from .block; only override border-left accent */
 .block.task {
-  background: rgba(200, 180, 255, 0.14);
-  border-color: rgba(200, 180, 255, 0.24);
+  border-left: 3px solid color-mix(in srgb, var(--prio-schedule) 80%, transparent);
 }
 
 /* Urgent & Important (Do First) - Red */
 .block.task.urgent-important {
-  background: color-mix(in srgb, var(--prio-do) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-do) 24%, transparent);
   border-left: 3px solid var(--prio-do);
 }
 
 /* Not Urgent & Important (Schedule) - Yellow/Amber */
 .block.task.not-urgent-important {
-  background: color-mix(in srgb, var(--prio-schedule) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-schedule) 24%, transparent);
   border-left: 3px solid var(--prio-schedule);
 }
 
 /* Urgent & Not Important (Delegate) - Blue */
 .block.task.urgent-not-important {
-  background: color-mix(in srgb, var(--prio-delegate) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-delegate) 24%, transparent);
   border-left: 3px solid var(--prio-delegate);
 }
 
 /* Not Urgent & Not Important (Eliminate) - Green */
 .block.task.not-urgent-not-important {
-  background: color-mix(in srgb, var(--prio-eliminate) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-eliminate) 24%, transparent);
   border-left: 3px solid var(--prio-eliminate);
 }
 
 /* Meeting blocks - grey accent */
 .block.meeting {
-  background: color-mix(in srgb, var(--prio-meeting) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-meeting) 24%, transparent);
   border-left: 3px solid var(--prio-meeting);
 }
 
 /* Habit blocks - teal accent */
 .block.habit {
-  background: color-mix(in srgb, var(--prio-habit) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-habit) 24%, transparent);
   border-left: 3px solid var(--prio-habit);
 }
 
@@ -373,9 +335,9 @@ Ask for clarification or preserve the existing structure.
 }
 
 .block-preparation.preparation {
-  background: rgba(251, 191, 36, 0.15);
-  border-color: rgba(251, 191, 36, 0.4);
-  border-left: 3px dashed rgba(251, 191, 36, 0.7);
+  background: color-mix(in srgb, var(--color-preparation) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-preparation) 40%, transparent);
+  border-left: 3px dashed color-mix(in srgb, var(--color-preparation) 70%, transparent);
   color: var(--text-primary);
 }
 
@@ -405,9 +367,9 @@ Ask for clarification or preserve the existing structure.
   }
 
   .block-preparation.preparation {
-    background: rgba(251, 191, 36, 0.25);
-    border-color: rgba(251, 191, 36, 0.8);
-    border-left: 3px dashed rgba(251, 191, 36, 1);
+    background: color-mix(in srgb, var(--color-preparation) 25%, transparent);
+    border-color: color-mix(in srgb, var(--color-preparation) 80%, transparent);
+    border-left: 3px dashed var(--color-preparation);
   }
 }
 
@@ -661,9 +623,9 @@ Ask for clarification or preserve the existing structure.
 .event-form input[type='number'] {
   width: 100%;
   padding: 10px 12px;
-  background: var(--glass-lo);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: var(--input-glass-bg);
+  border: 1px solid var(--modal-border);
+  border-radius: 12px;
   color: var(--ink);
   font-size: 14px;
   transition: border-color var(--dur) var(--ease);
@@ -791,10 +753,15 @@ Ask for clarification or preserve the existing structure.
   height: 16px;
 }
 
-/* Active button state */
+/* Active button state — uses glass accent tokens (consistent with .btn-primary) */
 .btn-active {
-  background: color-mix(in srgb, var(--mint) 15%, transparent);
-  border-color: color-mix(in srgb, var(--mint) 40%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-accent-top) 0%,
+      var(--glass-accent-bg) 100%
+    );
+  border-color: var(--nav-active-border);
   color: var(--mint);
 }
 
@@ -809,10 +776,18 @@ Ask for clarification or preserve the existing structure.
   top: 100%;
   right: 0;
   margin-top: 4px;
-  background: var(--bg);
-  border: 1px solid var(--base);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--ink) 15%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-elevated-bg);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--glass-shadow-elevated);
   z-index: var(--z-dropdown);
   min-width: 160px;
   overflow: hidden;
@@ -849,6 +824,8 @@ Ask for clarification or preserve the existing structure.
   gap: 8px;
   color: var(--ink);
   font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
   transition: background-color 0.15s ease;
 }
 
@@ -885,10 +862,18 @@ Ask for clarification or preserve the existing structure.
   top: 100%;
   right: 0;
   margin-top: 4px;
-  background: var(--bg);
-  border: 1px solid var(--base);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--ink) 15%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-light-top) 0%,
+      var(--glass-light-mid) 35%,
+      var(--glass-light-shade) 100%
+    ),
+    var(--glass-elevated-bg);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--glass-shadow-elevated);
   z-index: var(--z-dropdown);
   min-width: 120px;
   overflow: hidden;
@@ -922,6 +907,8 @@ Ask for clarification or preserve the existing structure.
   cursor: pointer;
   color: var(--ink);
   font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
   transition: background-color 0.15s ease;
 }
 
@@ -1539,9 +1526,8 @@ Ask for clarification or preserve the existing structure.
   padding: 6px 8px;
   color: var(--dim);
   font-size: 0.85rem;
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px dashed color-mix(in srgb, var(--line) 45%, transparent);
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   position: relative;
   z-index: 0; /* Below headers (z-index: 100) - ensure hours don't show through */
@@ -1549,12 +1535,12 @@ Ask for clarification or preserve the existing structure.
 
 /* Desktop: Proportional hour height reduction for better overview */
 @media (min-width: 1024px) {
-  /* Reduce minute unit for more compact desktop view */
+  /* Reduce hour height for more compact desktop view; --minute-unit derives automatically */
   :root {
     /* Fallback for browsers that don't support dvh */
-    --minute-unit: 1px;
+    --hour-height: 60px;
     /* Using dvh (dynamic viewport height) for responsive sizing with browser chrome changes */
-    --minute-unit: clamp(0.8px, 0.12dvh, 1.4px);
+    --hour-height: clamp(48px, 7.2dvh, 84px);
   }
 
   .week-hour {
@@ -1851,8 +1837,8 @@ Ask for clarification or preserve the existing structure.
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Match day/week view block styling: 1px border on all sides, 3px left border for color coding */
-  border: 1px solid rgba(150, 200, 255, 0.24);
+  background: linear-gradient(180deg, var(--event-glass-top), var(--event-glass-bottom));
+  border: 1px solid var(--event-border);
   border-left: 3px solid var(--mint);
   transition:
     opacity 0.2s ease,
@@ -1872,32 +1858,24 @@ Ask for clarification or preserve the existing structure.
 
 /* Routine events - default mint color (same as .block default) */
 .month-event.routine {
-  background: rgba(142, 200, 255, 0.14);
-  border-color: rgba(150, 200, 255, 0.24);
   border-left: 3px solid var(--mint);
   color: var(--ink);
 }
 
 /* Task events - match .block.task styling */
 .month-event.task {
-  background: rgba(200, 180, 255, 0.14);
-  border-color: rgba(200, 180, 255, 0.24);
-  border-left: 3px solid rgba(200, 180, 255, 0.5);
+  border-left: 3px solid color-mix(in srgb, var(--prio-schedule) 80%, transparent);
   color: var(--ink);
 }
 
 /* Meeting events - match .block.meeting styling */
 .month-event.meeting {
-  background: color-mix(in srgb, var(--prio-meeting) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-meeting) 24%, transparent);
   border-left: 3px solid var(--prio-meeting);
   color: var(--ink);
 }
 
 /* Habit events - match .block.habit styling */
 .month-event.habit {
-  background: color-mix(in srgb, var(--prio-habit) 14%, transparent);
-  border-color: color-mix(in srgb, var(--prio-habit) 24%, transparent);
   border-left: 3px solid var(--prio-habit);
   color: var(--ink);
 }
@@ -2026,9 +2004,11 @@ Ask for clarification or preserve the existing structure.
   /* Navigation group on the left */
   .nav-group {
     order: 1;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--nav-group-bg);
+    border: 1px solid var(--nav-group-border);
+    backdrop-filter: blur(6px);
     padding: 4px;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 
   /* Action group in center-left */
@@ -2042,9 +2022,11 @@ Ask for clarification or preserve the existing structure.
   .settings-group {
     order: 3;
     margin-left: auto; /* Push to right */
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--nav-group-bg);
+    border: 1px solid var(--nav-group-border);
+    backdrop-filter: blur(6px);
     padding: 4px;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 
   /* Show settings dropdown on desktop */
@@ -2088,11 +2070,11 @@ Ask for clarification or preserve the existing structure.
     gap: 4px !important;
   }
 
-  /* Compact mobile view: reduce minute unit for smaller hour heights */
+  /* Compact mobile view: reduce hour height; --minute-unit derives automatically */
   :root {
     /* Fallback for browsers that don't support svh */
-    --minute-unit: 1.05px;
+    --hour-height: 63px;
     /* Using svh (small viewport height) for consistent sizing when address bar hides/shows */
-    --minute-unit: clamp(0.9px, 0.13svh, 1.2px);
+    --hour-height: clamp(54px, 7.8svh, 72px);
   }
 }

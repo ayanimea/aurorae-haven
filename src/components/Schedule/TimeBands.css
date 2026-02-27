@@ -17,32 +17,9 @@
  *   Evening   18:00–23:00  5h / 17h ≈ 29.41%  → top: 64.70%,  height: 29.41%
  *   Night     23:00–24:00  1h / 17h ≈  5.89%  → top: 94.11%,  height:  5.89%
  *
- * Opacity rationale: bands render against the nebula glow layer (::before on container)
- * and the dark isolation surface beneath it. Values interact with the radial glows so
- * hue/luminance shifts at 12:00 and 18:00 remain perceptible in grayscale.
+ * Band colors use canonical zone tokens from tokens.css (alpha range 0.045–0.06).
+ * Night band uses a darkening overlay (separate semantic purpose).
  */
-
-:root {
-  /* Time-of-day atmospheres - More luminous top stops for glass-over-nebula feel */
-  /* Morning: warm golden — gentle activation */
-  --morning-top: rgba(255, 220, 160, 0.17);
-  --morning-mid: rgba(245, 192, 111, 0.07);
-  --morning-bottom: rgba(245, 192, 111, 0.01);
-
-  /* Afternoon: sky blue — focused daylight, distinct hue shift at 12:00 */
-  --afternoon-top: rgba(170, 215, 255, 0.16);
-  --afternoon-mid: rgba(147, 197, 253, 0.06);
-  --afternoon-bottom: rgba(147, 197, 253, 0.01);
-
-  /* Evening: violet — calm wind-down, distinct hue shift at 18:00 */
-  --evening-top: rgba(200, 150, 255, 0.19);
-  --evening-mid: rgba(167, 139, 250, 0.08);
-  --evening-bottom: rgba(167, 139, 250, 0.02);
-
-  /* Night: deep navy — low stimulation rest, clearly darker zone */
-  --night-top: rgba(15, 23, 42, 0.72);
-  --night-bottom: rgba(15, 23, 42, 0.52);
-}
 
 /* z-index: 0 — above the ::before nebula glow layer (DOM order ensures bands paint
  * after the pseudo-element within the same z-index level) and below the .fc grid
@@ -67,10 +44,9 @@
   top: 0%;
   height: 29.41%;
   background: linear-gradient(
-    to bottom,
-    var(--morning-top),
-    var(--morning-mid),
-    var(--morning-bottom)
+    180deg,
+    var(--zone-morning),
+    transparent
   );
 }
 
@@ -79,10 +55,9 @@
   top: 29.41%;
   height: 35.29%;
   background: linear-gradient(
-    to bottom,
-    var(--afternoon-top),
-    var(--afternoon-mid),
-    var(--afternoon-bottom)
+    180deg,
+    var(--zone-afternoon),
+    transparent
   );
 }
 
@@ -91,10 +66,9 @@
   top: 64.70%;
   height: 29.41%;
   background: linear-gradient(
-    to bottom,
-    var(--evening-top),
-    var(--evening-mid),
-    var(--evening-bottom)
+    180deg,
+    var(--zone-evening),
+    transparent
   );
 }
 
@@ -102,5 +76,5 @@
 .schedule-band.night {
   top: 94.11%;
   height: 5.89%;
-  background: linear-gradient(to bottom, var(--night-top), var(--night-bottom));
+  background: linear-gradient(180deg, var(--zone-night), transparent);
 }

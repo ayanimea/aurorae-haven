@@ -41,19 +41,19 @@
 
   /* ===== Z-INDEX LAYERS ===== */
   /* Stacking order for overlays and modals */
-  --z-base: 1;        /* Local stacking contexts (resize handles, cards) */
-  --z-appbar: 20;     /* Fixed top/bottom app bar */
+  --z-base: 1; /* Local stacking contexts (resize handles, cards) */
+  --z-appbar: 20; /* Fixed top/bottom app bar */
   --z-mobile-menu: 40; /* Sliding navigation drawer */
   /* NOTE: --z-content (50) is intentionally above --z-mobile-menu (40) */
   /* and is reserved for future content-layer use; do not assign to page content */
   --z-content: 50;
-  --z-sidebar: 100;   /* Overlay sidebars (e.g. brain-dump note list) */
-  --z-editor: 101;    /* Inline editor surfaces above sidebars */
-  --z-dropdown: 102;      /* Context menus and dropdowns */
-  --z-notification: 150;  /* In-page error/status banners (below modals, above dropdowns) */
-  --z-modal: 200;         /* Modal overlays and backdrops */
-  --z-toast: 300;         /* Toasts and transient notifications */
-  --z-celebration: 9000;  /* One-shot celebration overlays (above everything) */
+  --z-sidebar: 100; /* Overlay sidebars (e.g. brain-dump note list) */
+  --z-editor: 101; /* Inline editor surfaces above sidebars */
+  --z-dropdown: 102; /* Context menus and dropdowns */
+  --z-notification: 150; /* In-page error/status banners (below modals, above dropdowns) */
+  --z-modal: 200; /* Modal overlays and backdrops */
+  --z-toast: 300; /* Toasts and transient notifications */
+  --z-celebration: 9000; /* One-shot celebration overlays (above everything) */
 
   /* ===== NAVIGATION DIMENSIONS ===== */
   /* Shell padding values for different viewport sizes */
@@ -91,6 +91,122 @@
   --radius-md: 0.5rem; /* 8px */
   --radius-lg: 0.75rem; /* 12px */
   --radius-xl: 1rem; /* 16px */
+
+  /* ===== SCHEDULE — ATMOSPHERIC TOKENS ===== */
+  /* Sky gradient stops for the fixed background layer */
+  --bg-sky-top: #0f172a;
+  --bg-sky-mid: #16213e;
+  --bg-sky-bottom: #1a1f3c;
+
+  /* Time-of-day zone overlays — semantic orientation bands (alpha 0.05–0.065) */
+  --zone-morning: rgba(255, 200, 120, 0.06);
+  --zone-afternoon: rgba(100, 160, 255, 0.05);
+  --zone-evening: rgba(120, 100, 200, 0.055);
+  --zone-night: rgba(80, 120, 200, 0.045);
+
+  /* Planet glow layers — combined effective opacity ≤ 0.08 */
+  --planet-core: rgba(180, 200, 255, 0.08);
+  --planet-mid: rgba(150, 180, 255, 0.05);
+  --planet-edge: rgba(120, 150, 255, 0.03);
+
+  /* Event glass surface */
+  --event-glass-top: rgba(255, 255, 255, 0.05);
+  --event-glass-bottom: rgba(255, 255, 255, 0.025);
+  --event-border: rgba(255, 255, 255, 0.10);
+
+  /* Event time-of-day accent tints — applied as top layer over the glass base.
+   * Body uses neutral glass (no colour fill). Left-edge strip uses saturated accent
+   * (alpha 0.58–0.62) for semantic scan speed. Must not overpower text. */
+  --event-morning-accent: rgba(255, 200, 120, 0.60);
+  --event-afternoon-accent: rgba(100, 160, 255, 0.58);
+  --event-evening-accent: rgba(170, 100, 255, 0.60);
+  --event-night-accent: rgba(60, 80, 200, 0.58);
+
+  /* Neutral event body overlay — stacked above glass, provides dark depth without colour */
+  --event-body-overlay: rgba(16, 20, 44, 0.42);
+
+  /* Event card text colours */
+  --event-text: rgba(255, 255, 255, 0.92);
+  --event-text-dim: rgba(230, 237, 243, 0.7);
+  --event-text-secondary: rgba(255, 255, 255, 0.60);
+
+  /* Event card measurements */
+  --event-radius: 0.875rem;
+  --event-padding-v: 0.75rem;
+  --event-padding-h: 1rem;
+
+  /* Event top-edge luminous highlight (::before layer) — same as glass-top */
+  --event-highlight-top: rgba(255, 255, 255, 0.05);
+
+  /* Event type left-border accent colours */
+  --color-routine: rgba(134, 245, 224, 0.5);
+  --color-task: rgba(96, 165, 250, 0.5);
+  --color-meeting: rgba(249, 115, 22, 0.5);
+  --color-habit: rgba(167, 139, 250, 0.5);
+  --color-break: rgba(34, 197, 94, 0.5);
+
+  /* Focus ring — matches --color-routine teal */
+  --event-focus-ring: rgba(134, 245, 224, 0.6);
+
+  /* Category accent */
+  --category-blue: rgba(100, 160, 255, 0.22);
+
+  /* Preparation / travel block accent */
+  --color-preparation: rgba(251, 191, 36, 1);
+
+  /* Current-time indicator — mint (distinct from --mint for explicit token name) */
+  --now-line: #a3ffd6;
+
+  /* Hour / timegrid label — neutral white at readable opacity (SVG-safe inline value
+   * required in fullcalendar-custom.css since CSS vars cannot be used in SVG data URIs,
+   * but this token is used for the rendered text labels) */
+  --time-label: rgba(255, 255, 255, 0.55);
+
+  /* ===== UNIFIED GLASS SURFACE SYSTEM — "Full Luxury, Restrained" ===== */
+  /* Light source: from top. Micro elevation defines depth, not opacity jumps.
+   * Hierarchy: Background < Bands < Events < Button < Nav Tab < Modal < Dropdown */
+
+  /* Canonical surface tokens */
+  --glass-base-bg: rgba(16, 20, 44, 0.28);          /* Base: inactive buttons, nav tabs */
+  --glass-elevated-bg: rgba(12, 16, 38, 0.62);       /* Elevated: dropdowns (deeper than modal) */
+  --glass-accent-top: rgba(134, 245, 224, 0.16);     /* Accent gradient — top highlight */
+  --glass-accent-bg: rgba(134, 245, 224, 0.09);      /* Accent gradient — base (bottom) */
+  --glass-border-soft: rgba(255, 255, 255, 0.07);    /* Shared soft border — all glass surfaces */
+  --glass-border-hover: rgba(255, 255, 255, 0.13);   /* Border lift on hover — inputs, nav tabs */
+  --glass-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.22);  /* Base button shadow */
+  --glass-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.28); /* Hover lift shadow — 1px translateY */
+  --glass-shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.46), 0 4px 12px rgba(0, 0, 0, 0.32); /* Dropdown — deepest */
+
+  /* Directional light gradient stops — light from top */
+  --glass-light-top: rgba(255, 255, 255, 0.08);      /* Top highlight */
+  --glass-light-mid: rgba(255, 255, 255, 0.03);      /* Upper-mid fade */
+  --glass-light-shade: rgba(0, 0, 0, 0.06);          /* Bottom density */
+
+  /* ===== NAVIGATION & BUTTON GLASS SURFACE ===== */
+  /* Shared glass surface for nav tabs, toolbar buttons, and button groups.
+   * Hierarchy: Events > Navigation > Background
+   * These alias the canonical glass tokens above for backward compatibility. */
+  --nav-glass-base: var(--glass-base-bg);
+  --nav-glass-border: var(--glass-border-soft);
+  --nav-active-bg: rgba(134, 245, 224, 0.12);
+  --nav-active-border: rgba(134, 245, 224, 0.22);   /* Reduced from 0.30 — luxury is desaturated */
+  --nav-active-glow: 0 0 40px rgba(134, 245, 224, 0.06); /* Diffused light, not glow (≤0.08) */
+  --nav-group-bg: rgba(16, 20, 44, 0.35);
+  --nav-group-border: rgba(255, 255, 255, 0.06);
+
+  /* ===== MODAL & INPUT GLASS SURFACE ===== */
+  /* Hierarchy: Modal > Event Cards > Bands > Background.
+   * Uses blur+shadow elevation rather than opacity for depth distinction. */
+  --modal-overlay-bg: rgba(10, 14, 38, 0.55);       /* Softer than black — preserves cosmic continuity */
+  --modal-surface-base: rgba(16, 20, 44, 0.34);      /* Lighter than --dark for true glass float */
+  --modal-border: rgba(255, 255, 255, 0.06);          /* Softer than event-border — hierarchy preserved */
+  --modal-glass-top: rgba(255, 255, 255, 0.06);       /* Directional light — top highlight */
+  --modal-glass-mid: rgba(255, 255, 255, 0.02);       /* Directional light — upper-mid fade */
+  --modal-glass-dim: rgba(255, 255, 255, 0.01);       /* Directional light — lower-mid dim */
+  --modal-glass-shade: rgba(0, 0, 0, 0.05);           /* Directional light — base density */
+  --modal-edge-shimmer: rgba(255, 255, 255, 0.04);    /* ::before edge hairline — removes flatness */
+  --modal-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), 0 40px 120px rgba(0, 0, 0, 0.25); /* Atmospheric lift */
+  --input-glass-bg: rgba(16, 20, 44, 0.26);           /* Input background — below modal surface */
 
   /* ===== TRANSITIONS ===== */
   /* NOTE: These composite tokens are defined for future use but are not yet

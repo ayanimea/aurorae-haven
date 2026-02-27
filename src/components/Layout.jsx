@@ -224,6 +224,9 @@ function Layout({ children, onExport, onImport }) {
 
   return (
     <>
+      {/* Fixed atmospheric background — sky gradient + star field. Sits below everything else.
+          The planet (.planet-wrap) renders above this in DOM order at the same z-index. */}
+      <div className='app-background' aria-hidden='true' />
       <div className='planet-wrap'>
         <div className='planet' />
       </div>
@@ -232,7 +235,8 @@ function Layout({ children, onExport, onImport }) {
         <div className='inner'>
           {/* TAB-NAV-04 & TAB-NAV-05: Left Zone - Logo/Title */}
           <div className='navbar-left'>
-            <button type="button"
+            <button
+              type='button'
               className='logo-button'
               onClick={handleLogoClick}
               aria-label='Return to Tasks'
@@ -296,7 +300,8 @@ function Layout({ children, onExport, onImport }) {
                 </Link>
               ))}
               {/* More menu button */}
-              <button type="button"
+              <button
+                type='button'
                 className={`nav-tab more-button ${secondaryTabs.some((tab) => isActive(tab.path)) || moreMenuOpen ? 'active' : ''}`}
                 onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                 aria-haspopup='true'
@@ -333,7 +338,8 @@ function Layout({ children, onExport, onImport }) {
           </Link>
 
           {/* TAB-NAV-13: Mobile hamburger button */}
-          <button type="button"
+          <button
+            type='button'
             ref={hamburgerButtonRef}
             className='hamburger-button'
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -347,7 +353,8 @@ function Layout({ children, onExport, onImport }) {
           {/* TAB-NAV-10: Right Zone - Global Actions */}
           <div className='navbar-right'>
             {/* TAB-NAV-10: Search icon (placeholder for future) */}
-            <button type="button"
+            <button
+              type='button'
               className='icon-button'
               aria-label='Search'
               title='Search (Coming soon)'
@@ -356,7 +363,8 @@ function Layout({ children, onExport, onImport }) {
             </button>
 
             {/* TAB-NAV-10: Theme toggle (placeholder for future) */}
-            <button type="button"
+            <button
+              type='button'
               className='icon-button'
               aria-label='Toggle theme'
               title='Theme (Coming soon)'
@@ -365,7 +373,12 @@ function Layout({ children, onExport, onImport }) {
             </button>
 
             {/* Export/Import buttons */}
-            <button type="button" className='btn' onClick={onExport} aria-label='Export data'>
+            <button
+              type='button'
+              className='btn'
+              onClick={onExport}
+              aria-label='Export data'
+            >
               Export
             </button>
             <FileInputButton
