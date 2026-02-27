@@ -93,6 +93,11 @@ import { timeToMinutes } from '../utils/timeUtils'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
+// Constant for buffer conversions — avoids magic number repetition
+const MILLISECONDS_PER_MINUTE = 60000
+// Default column gap (px) used as fallback when CSS token is unavailable
+const EVENT_COLUMN_GAP_FALLBACK_PX = 3
+
 // Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
 // With Vite, these modules are still included in the production build as separate
 // code-split chunks; the guard only controls whether they are requested at runtime.
@@ -111,6 +116,10 @@ function Schedule() {
 
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
+
+  // Cached column gap in pixels — read once from the CSS custom property rather than
+  // calling getComputedStyle on every eventDidMount call (which fires per event).
+  const columnGapPxRef = useRef(null)
 
   // Success message timeout ref for cleanup on unmount
   const successMessageTimeoutRef = useRef(null)
@@ -633,15 +642,24 @@ function Schedule() {
         return
       }
       try {
-        const newStart = dropInfo.event.start
-        const defaultEndMs = newStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60 * 1000
-        const newEnd = dropInfo.event.end ?? new Date(defaultEndMs)
+        // event.start is renderStart (= mainStart − buffers); recover mainStart by
+        // adding back the buffer so the canonical times are preserved.
+        const prepDuration = dropInfo.event.extendedProps?.prepDuration ?? 0
+        const travelDuration = dropInfo.event.extendedProps?.travelDuration ?? 0
+        const totalBufferMs = (prepDuration + travelDuration) * MILLISECONDS_PER_MINUTE
+
+        const renderStart = dropInfo.event.start
+        const mainStart = new Date(renderStart.getTime() + totalBufferMs)
+        const mainEnd =
+          dropInfo.event.end ??
+          new Date(mainStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * MILLISECONDS_PER_MINUTE)
+
         const updated = {
           ...originalEvent,
-          day: format(newStart, 'yyyy-MM-dd'),
-          startTime: format(newStart, 'HH:mm'),
+          day: format(mainStart, 'yyyy-MM-dd'),
+          startTime: format(mainStart, 'HH:mm'),
           // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
-          endTime: format(newEnd, 'HH:mm')
+          endTime: format(mainEnd, 'HH:mm')
         }
         await EventService.updateEvent(updated)
         await loadEvents()
@@ -653,7 +671,8 @@ function Schedule() {
     [loadEvents]
   )
 
-  // Handle event resize (FullCalendar)
+  // Handle event resize (FullCalendar) — main duration only.
+  // Prep and travel durations never change during resize.
   const handleEventResize = useCallback(
     async (resizeInfo) => {
       const originalEvent = resizeInfo.event.extendedProps?.originalEvent
@@ -662,15 +681,43 @@ function Schedule() {
         return
       }
       try {
-        const newStart = resizeInfo.event.start
-        const defaultEndMs = newStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60 * 1000
-        const newEnd = resizeInfo.event.end ?? new Date(defaultEndMs)
+        const prepDuration = resizeInfo.event.extendedProps?.prepDuration ?? 0
+        const travelDuration = resizeInfo.event.extendedProps?.travelDuration ?? 0
+        const totalBufferMs = (prepDuration + travelDuration) * MILLISECONDS_PER_MINUTE
+
+        // Canonically stored mainStart/mainEnd from the last save
+        let mainStart =
+          resizeInfo.event.extendedProps?.mainStart ??
+          new Date(resizeInfo.event.start.getTime() + totalBufferMs)
+        let mainEnd =
+          resizeInfo.event.extendedProps?.mainEnd ?? resizeInfo.event.end
+
+        // Detect which handle was dragged using Duration#valueOf() which returns
+        // the total milliseconds of the delta (handles years/months/days correctly).
+        const startDeltaMs = resizeInfo.startDelta?.valueOf() ?? 0
+        const endDeltaMs = resizeInfo.endDelta?.valueOf() ?? 0
+        const resizedFromTop = startDeltaMs !== 0 && endDeltaMs === 0
+        const resizedFromBottom = endDeltaMs !== 0 && startDeltaMs === 0
+
+        if (resizedFromTop) {
+          // event.start is the new renderStart; mainStart = renderStart + buffers
+          mainStart = new Date(resizeInfo.event.start.getTime() + totalBufferMs)
+        }
+
+        if (resizedFromBottom) {
+          mainEnd = resizeInfo.event.end
+        }
+
+        const defaultEnd = new Date(
+          mainStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * MILLISECONDS_PER_MINUTE
+        )
+
         const updated = {
           ...originalEvent,
-          day: format(newStart, 'yyyy-MM-dd'),
-          startTime: format(newStart, 'HH:mm'),
+          day: format(mainStart, 'yyyy-MM-dd'),
+          startTime: format(mainStart, 'HH:mm'),
           // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
-          endTime: format(newEnd, 'HH:mm')
+          endTime: format(mainEnd ?? defaultEnd, 'HH:mm')
         }
         await EventService.updateEvent(updated)
         await loadEvents()
@@ -768,8 +815,12 @@ function Schedule() {
                   eventMouseEnter={handleEventMouseEnter}
                   eventWillUnmount={handleEventWillUnmount}
                   eventDidMount={(info) => {
-                    if (!info.event.start) return
-                    const hour = info.event.start.getHours()
+                    // Use mainStart (actual event time) for timezone band classification,
+                    // not event.start which equals renderStart (includes buffer offset).
+                    const mainStart =
+                      info.event.extendedProps?.mainStart ?? info.event.start
+                    if (!mainStart) return
+                    const hour = mainStart.getHours()
                     if (
                       hour < TIME_ZONE_HOURS.MORNING ||
                       hour >= TIME_ZONE_HOURS.NIGHT
@@ -782,10 +833,34 @@ function Schedule() {
                     } else {
                       info.el.dataset.timezone = 'evening'
                     }
+
+                    // Side-by-side overlap layout using precomputed column metadata.
+                    // Override FullCalendar's positioning with equal-width columns
+                    // separated by --event-column-gap.
+                    // The gap value is read once and cached in columnGapPxRef to avoid
+                    // calling getComputedStyle on every event mount (constant per theme).
+                    const column = info.event.extendedProps?.column ?? 0
+                    const totalColumns = info.event.extendedProps?.totalColumns ?? 1
+                    if (totalColumns > 1) {
+                      if (columnGapPxRef.current === null) {
+                        columnGapPxRef.current =
+                          parseFloat(
+                            getComputedStyle(document.documentElement).getPropertyValue(
+                              '--event-column-gap'
+                            )
+                          ) || EVENT_COLUMN_GAP_FALLBACK_PX
+                      }
+                      const gap = columnGapPxRef.current
+                      const width = `calc((100% - ${(totalColumns - 1) * gap}px) / ${totalColumns})`
+                      info.el.style.width = width
+                      // Column is 0-indexed: column 0 → left=0, column 1 → left=width+gap, etc.
+                      // Produces nested calc() (e.g. calc(1 * (calc(...) + 3px))) which is
+                      // valid CSS and ensures alignment matches the width expression exactly.
+                      info.el.style.left = `calc(${column} * (${width} + ${gap}px))`
+                    }
                   }}
                   eventContent={(eventInfo) => (
                     <SolidEventCard
-                      use24HourFormat={use24HourFormat}
                       event={{
                         ...eventInfo.event,
                         title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
@@ -795,7 +870,13 @@ function Schedule() {
                             eventInfo.event.extendedProps?.originalEvent,
                           preparationTime:
                             eventInfo.event.extendedProps?.preparationTime,
-                          travelTime: eventInfo.event.extendedProps?.travelTime
+                          travelTime: eventInfo.event.extendedProps?.travelTime,
+                          prepDuration:
+                            eventInfo.event.extendedProps?.prepDuration,
+                          travelDuration:
+                            eventInfo.event.extendedProps?.travelDuration,
+                          mainStart: eventInfo.event.extendedProps?.mainStart,
+                          mainEnd: eventInfo.event.extendedProps?.mainEnd
                         }
                       }}
                     />

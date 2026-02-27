@@ -441,6 +441,101 @@ describe('eventAdapter', () => {
       expect(fcEvent.classNames).toEqual(['event-task'])
       expect(fcEvent.extendedProps.type).toBe('task')
     })
+
+    it('should store mainStart and mainEnd in extendedProps', () => {
+      const event = {
+        id: 'canonical-1',
+        title: 'Canonical Event',
+        day: '2026-02-03',
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'task',
+        preparationTime: 0,
+        travelTime: 0
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent.extendedProps.mainStart).toEqual(parseISO('2026-02-03T09:00:00'))
+      expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-03T10:00:00'))
+    })
+
+    it('should store prepDuration and travelDuration in extendedProps', () => {
+      const event = {
+        id: 'buffers-1',
+        title: 'Event With Buffers',
+        day: '2026-02-03',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'meeting',
+        preparationTime: 15,
+        travelTime: 20
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent.extendedProps.prepDuration).toBe(15)
+      expect(fcEvent.extendedProps.travelDuration).toBe(20)
+    })
+
+    it('should set start to renderStart (mainStart minus buffers) when buffers > 0', () => {
+      const event = {
+        id: 'render-start-1',
+        title: 'Buffered Meeting',
+        day: '2026-02-03',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'meeting',
+        preparationTime: 15,
+        travelTime: 15
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      // renderStart = mainStart − (15 + 15) min = 09:30
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T09:30:00'))
+      // end is always mainEnd
+      expect(fcEvent.end).toEqual(parseISO('2026-02-03T11:00:00'))
+      // mainStart is preserved in extendedProps
+      expect(fcEvent.extendedProps.mainStart).toEqual(parseISO('2026-02-03T10:00:00'))
+    })
+
+    it('should not adjust start when both buffers are zero', () => {
+      const event = {
+        id: 'no-buffers-1',
+        title: 'No Buffer Event',
+        day: '2026-02-03',
+        startTime: '14:00',
+        endTime: '15:00',
+        type: 'task',
+        preparationTime: 0,
+        travelTime: 0
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      // start should equal mainStart when no buffers
+      expect(fcEvent.start).toEqual(fcEvent.extendedProps.mainStart)
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T14:00:00'))
+    })
+
+    it('should set end to mainEnd regardless of buffers', () => {
+      const event = {
+        id: 'end-canonical-1',
+        title: 'End Canonical',
+        day: '2026-02-03',
+        startTime: '13:00',
+        endTime: '14:30',
+        type: 'routine',
+        preparationTime: 30,
+        travelTime: 0
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent.end).toEqual(parseISO('2026-02-03T14:30:00'))
+      expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-03T14:30:00'))
+    })
   })
 
   describe('toFullCalendarEvents', () => {

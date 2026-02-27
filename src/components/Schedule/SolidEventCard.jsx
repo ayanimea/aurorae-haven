@@ -1,16 +1,16 @@
 /**
  * SolidEventCard Component - Canonical Event Card Implementation
  *
- * Purpose: Primary visual anchor - events are the most dominant elements
- * Visual characteristics:
- * - Solid dark background (#161b22)
- * - Clear borders (#2a3240)
- * - Rounded rectangles (14px radius)
- * - Soft elevation (dual-layer shadows)
- * - Neutral background (no type-specific colors on background)
- * - Clear separation from time bands
+ * Renders a single FullCalendar event as a segmented block:
+ *   travel segment (top) → prep segment → main segment (bottom)
+ * Heights are strictly proportional to durations — no minimums, no padding.
+ * Glow/shadow/border are applied once at the wrapper level only.
  *
- * This is the "hero" of the schedule - everything else is context
+ * Data model (canonical):
+ *   resource.mainStart / resource.mainEnd  — actual event times
+ *   resource.prepDuration / resource.travelDuration — buffer minutes
+ *   event.start = renderStart = mainStart − (prep + travel)
+ *   event.end   = mainEnd
  */
 
 import PropTypes from 'prop-types'
@@ -20,8 +20,12 @@ import './SolidEventCard.css'
 
 const logger = createLogger('SolidEventCard')
 
-function SolidEventCard({ event, onContextMenu, use24HourFormat = true }) {
-  const { title, start, resource } = event
+const MILLISECONDS_PER_MINUTE = 60000
+const DEFAULT_MAIN_DURATION_MINUTES = 60
+
+function SolidEventCard({ event, onContextMenu }) {
+  const { title, resource } = event
+
   // Validate event type to prevent injection attacks - provides defense-in-depth
   const rawEventType = resource?.type || 'task'
   const eventType = VALID_EVENT_TYPES.includes(rawEventType)
@@ -35,10 +39,27 @@ function SolidEventCard({ event, onContextMenu, use24HourFormat = true }) {
     )
   }
 
-  const prepTime = resource?.preparationTime || 0
-  const travelTime = resource?.travelTime || 0
+  // Prefer canonical prepDuration/travelDuration; fall back to legacy fields
+  const prepDuration = resource?.prepDuration ?? resource?.preparationTime ?? 0
+  const travelDuration = resource?.travelDuration ?? resource?.travelTime ?? 0
+  const mainStart = resource?.mainStart ?? null
+  const mainEnd = resource?.mainEnd ?? null
 
-  const hasPreActivities = prepTime > 0 || travelTime > 0
+  // Strict proportional ratios — no minimum height, no clamping, no artificial padding.
+  // If canonical mainStart/mainEnd are missing, assume a 60-minute main segment so that
+  // proportions remain reasonable regardless of buffer values.
+  const mainDuration = mainStart && mainEnd
+    ? Math.max(1, (mainEnd.getTime() - mainStart.getTime()) / MILLISECONDS_PER_MINUTE)
+    : DEFAULT_MAIN_DURATION_MINUTES
+
+  const totalDuration = travelDuration + prepDuration + mainDuration
+  const travelRatio = (travelDuration / totalDuration) * 100
+  const prepRatio = (prepDuration / totalDuration) * 100
+  const mainRatio = (mainDuration / totalDuration) * 100
+
+  // Sanitize title: coerce null/undefined to empty string so aria-label and
+  // display never expose literal "null" or "undefined" to users or screen readers.
+  const safeTitle = title != null ? String(title) : ''
 
   const handleContextMenu = (e) => {
     e.preventDefault()
@@ -47,60 +68,35 @@ function SolidEventCard({ event, onContextMenu, use24HourFormat = true }) {
     }
   }
 
-  const startLabel =
-    start instanceof Date
-      ? start.toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: !use24HourFormat
-        })
-      : null
-
   return (
     <div
-      className={`solid-event-card event-type-${eventType}`}
+      className={`fc-event-wrapper event-type-${eventType}`}
       role='article'
-      aria-label={`${eventType}: ${title}`}
+      aria-label={`${eventType}: ${safeTitle}`}
       onContextMenu={handleContextMenu}
     >
-      {/* Security note: event.title may contain user-provided text. React's JSX automatically
-          escapes text content to prevent XSS attacks when rendering as {expression} text nodes.
-          We intentionally render it as plain text and do NOT use dangerouslySetInnerHTML.
-          
-          Examples of automatic escaping:
-          - "<script>alert('xss')</script>" renders as literal text, not executed
-          - "Title & subtitle" renders as "Title & subtitle" (ampersand escaped to &amp;)
-          - All HTML tags are displayed as text, never interpreted
-          
-          If HTML rendering is needed in the future, the title MUST be sanitized first
-          with DOMPurify or equivalent before using dangerouslySetInnerHTML.
-          
-          Type validation: title is coerced to string, empty string for null/undefined
-          to avoid displaying "null"/"undefined" text. */}
-      <strong className='event-title'>
-        {title != null ? String(title) : ''}
-      </strong>
-      {startLabel && <span className='event-time'>{startLabel}</span>}
-      {hasPreActivities && (
-        <div className='event-pre-activities'>
-          {prepTime > 0 && (
-            <span
-              className='prep-indicator'
-              title={`Preparation: ${prepTime} min`}
-            >
-              🎯 {prepTime}m
-            </span>
-          )}
-          {travelTime > 0 && (
-            <span
-              className='travel-indicator'
-              title={`Travel: ${travelTime} min`}
-            >
-              🚗 {travelTime}m
-            </span>
-          )}
-        </div>
+      {travelDuration > 0 && (
+        <div
+          className='event-segment event-travel'
+          style={{ height: `${travelRatio}%` }}
+          aria-hidden='true'
+        />
       )}
+      {prepDuration > 0 && (
+        <div
+          className='event-segment event-prep'
+          style={{ height: `${prepRatio}%` }}
+          aria-hidden='true'
+        />
+      )}
+      <div
+        className='event-segment event-main'
+        style={{ height: `${mainRatio}%` }}
+      >
+        <strong className='event-title'>
+          {safeTitle}
+        </strong>
+      </div>
     </div>
   )
 }
@@ -108,15 +104,17 @@ function SolidEventCard({ event, onContextMenu, use24HourFormat = true }) {
 SolidEventCard.propTypes = {
   event: PropTypes.shape({
     title: PropTypes.string.isRequired,
-    start: PropTypes.instanceOf(Date),
     resource: PropTypes.shape({
       type: PropTypes.string,
       preparationTime: PropTypes.number,
-      travelTime: PropTypes.number
+      travelTime: PropTypes.number,
+      prepDuration: PropTypes.number,
+      travelDuration: PropTypes.number,
+      mainStart: PropTypes.instanceOf(Date),
+      mainEnd: PropTypes.instanceOf(Date)
     })
   }).isRequired,
-  onContextMenu: PropTypes.func,
-  use24HourFormat: PropTypes.bool
+  onContextMenu: PropTypes.func
 }
 
 export default SolidEventCard
