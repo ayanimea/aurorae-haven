@@ -5,7 +5,7 @@
  * day, honouring all structural constraints and snap alignment.
  *
  * Rules:
- *  - Slots start from `fromMinutes` (default: now), snapped UP to interval.
+ *  - Slots start from current local time (snapped UP to interval) unless `fromMinutes` is provided.
  *  - Slots stay within the visible schedule range [rangeStart, rangeEnd).
  *  - Each candidate slot is checked for simultaneous-event violations.
  *  - Prep + travel time of existing events are included in overlap checks.
@@ -43,9 +43,10 @@ const DEFAULT_RANGE_END = 24 * 60 // 24:00
  *   Events already scheduled for the day.
  * @param {number}   params.durationMinutes   - Required duration for the new event
  * @param {Date}     params.date              - Calendar day (for load computation)
- * @param {number}   [params.fromMinutes]     - Earliest start (default: now, snapped up)
+ * @param {number}   [params.fromMinutes]     - Earliest start (default: current local time, snapped up)
  * @param {number}   [params.rangeStartMinutes] - Visible range start (default 07:00)
  * @param {number}   [params.rangeEndMinutes]   - Visible range end (default 24:00)
+ * @param {number}   [params.nowMinutes]        - Override for "current time" in tests (minutes from midnight)
  * @returns {Suggestion[]} Up to MAX_SUGGESTIONS sorted suggestions
  */
 export function generateSuggestions({
@@ -54,48 +55,51 @@ export function generateSuggestions({
   date,
   fromMinutes,
   rangeStartMinutes = DEFAULT_RANGE_START,
-  rangeEndMinutes = DEFAULT_RANGE_END
+  rangeEndMinutes = DEFAULT_RANGE_END,
+  nowMinutes
 }) {
   const interval = SCHEDULING_CONFIG.snapIntervalMinutes
 
-  // Determine earliest start: snap up from `fromMinutes` or range start
-  const rawFrom =
-    typeof fromMinutes === 'number' ? fromMinutes : rangeStartMinutes
+  // Determine earliest start: snap up from `fromMinutes` (default: current local time)
+  const computedNow = nowMinutes ?? (() => {
+    const now = new Date()
+    return now.getHours() * 60 + now.getMinutes()
+  })()
+  const rawFrom = typeof fromMinutes === 'number' ? fromMinutes : computedNow
   const startFrom = Math.max(rangeStartMinutes, snapUp(rawFrom))
 
   const suggestions = []
 
   // Iterate over every possible snapped start within range
-  for (
-    let start = startFrom;
-    start + durationMinutes <= rangeEndMinutes;
-    start += interval
-  ) {
+  let start = startFrom
+  while (start + durationMinutes <= rangeEndMinutes) {
     // Snap the end time up to the nearest interval boundary
     const rawEnd = start + durationMinutes
     const end = rawEnd === rangeEndMinutes ? rawEnd : snapUp(rawEnd)
 
     // If snapping end pushed it beyond the range, skip this slot
-    if (end > rangeEndMinutes) continue
+    if (end <= rangeEndMinutes) {
+      const candidate = {
+        startTime: minutesToHHMM(start),
+        endTime: minutesToHHMM(end)
+      }
 
-    const candidate = {
-      startTime: minutesToHHMM(start),
-      endTime: minutesToHHMM(end)
+      const { valid } = validateStructural(candidate, existingEvents)
+      if (valid) {
+        // Compute projected load if this slot is added
+        const projectedEvents = [...existingEvents, candidate]
+        const load = computeDayLoad(projectedEvents, date)
+
+        // Measure the free block this slot sits within
+        const freeBlock = measureFreeBlock(start, end, existingEvents, rangeEndMinutes)
+
+        suggestions.push({ startMinutes: start, endMinutes: end, load, freeBlock })
+
+        if (suggestions.length >= MAX_SUGGESTIONS * 10) break // inner scan cap
+      }
     }
 
-    const { valid } = validateStructural(candidate, existingEvents)
-    if (!valid) continue
-
-    // Compute projected load if this slot is added
-    const projectedEvents = [...existingEvents, candidate]
-    const load = computeDayLoad(projectedEvents, date)
-
-    // Measure the free block this slot sits within
-    const freeBlock = measureFreeBlock(start, end, existingEvents, rangeEndMinutes)
-
-    suggestions.push({ startMinutes: start, endMinutes: end, load, freeBlock })
-
-    if (suggestions.length >= MAX_SUGGESTIONS * 10) break // inner scan cap
+    start += interval
   }
 
   // Sort: lowest load → longest free block → earliest start

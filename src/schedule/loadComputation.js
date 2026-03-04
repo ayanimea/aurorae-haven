@@ -66,7 +66,7 @@ export function computeDayLoad(events, date) {
 const _loadCache = new Map()
 
 /** Maximum number of entries in the load cache to prevent unbounded memory growth */
-const LOAD_CACHE_MAX_SIZE = 200
+export const LOAD_CACHE_MAX_SIZE = 200
 
 /**
  * Build the memoisation key for a set of events on a date string.
@@ -87,7 +87,9 @@ function buildCacheKey(events, dateStr) {
 
 /**
  * Memoised variant of `computeDayLoad`.
- * Results are cached by (dateStr + event fingerprint).
+ * Results are cached by (dateStr + event fingerprint) with LRU eviction.
+ * Cache hits refresh key recency; the least-recently-used entry is evicted
+ * when the cache exceeds LOAD_CACHE_MAX_SIZE.
  * Safe to call on initial load and date navigation; must NOT be called
  * during scroll or hover handlers.
  *
@@ -98,11 +100,21 @@ function buildCacheKey(events, dateStr) {
 export function getMemoizedDayLoad(events, dateStr) {
   const key = buildCacheKey(events, dateStr)
   if (_loadCache.has(key)) {
-    return _loadCache.get(key)
+    // Refresh recency for LRU behaviour: move hit entry to the end
+    const cached = _loadCache.get(key)
+    _loadCache.delete(key)
+    _loadCache.set(key, cached)
+    return cached
   }
-  const date = new Date(`${dateStr}T00:00:00`)
+  // Parse dateStr into local components to avoid ISO UTC-shift (DST-safe).
+  // Guards against malformed input by falling back to the ISO constructor.
+  const parts = dateStr.split('-').map(Number)
+  const date =
+    parts.length === 3 && parts.every((n) => !Number.isNaN(n))
+      ? new Date(parts[0], parts[1] - 1, parts[2])
+      : new Date(dateStr)
   const load = computeDayLoad(events, date)
-  // Evict oldest entries when the cache reaches its size limit
+  // Evict least-recently-used entry when the cache reaches its size limit
   if (_loadCache.size >= LOAD_CACHE_MAX_SIZE) {
     const firstKey = _loadCache.keys().next().value
     _loadCache.delete(firstKey)

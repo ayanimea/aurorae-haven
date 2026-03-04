@@ -2105,7 +2105,7 @@ Ask for clarification or preserve the existing structure.
   content: '';
   display: block;
   height: 2px;
-  background-color: var(--color-warning, #f5a623);
+  background-color: var(--warning);
   border-radius: 1px;
   /* Static — no animation */
   animation: none !important;
@@ -2114,7 +2114,7 @@ Ask for clarification or preserve the existing structure.
 
 /* Over-capacity (≥ loadThresholdOver) — red underline */
 .fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::after {
-  background-color: var(--color-danger, #e05252);
+  background-color: var(--danger);
 }
 
 /* Over-capacity warning icon — rendered before the day text as supplementary visual cue.
@@ -2123,7 +2123,7 @@ Ask for clarification or preserve the existing structure.
 .fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::before {
   content: '⚠\00a0';
   font-size: 0.75em;
-  color: var(--color-danger, #e05252);
+  color: var(--danger);
   vertical-align: super;
   /* Static — no animation */
   animation: none !important;

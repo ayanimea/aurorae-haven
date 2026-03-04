@@ -1,3 +1,6 @@
+/** Allowed values for schedulingGuidanceLevel */
+const VALID_GUIDANCE_LEVELS = ['full', 'header-only', 'off']
+
 // Settings Manager - Feature stub for app configuration
 // TODO: Implement full settings management with validation
 import { tryCatch } from './errorHandler'
@@ -63,7 +66,16 @@ export function getSettings() {
       // - Handles nested objects recursively
       // - Replaces arrays (doesn't merge them)
       // - Blocks prototype pollution keys (__proto__, constructor, prototype)
-      return deepMerge(DEFAULT_SETTINGS, parsed)
+      const merged = deepMerge(DEFAULT_SETTINGS, parsed)
+      // Clamp schedule.schedulingGuidanceLevel to allowed enum at read time
+      // so corrupted/old stored values never propagate into the app
+      if (
+        merged.schedule &&
+        !VALID_GUIDANCE_LEVELS.includes(merged.schedule.schedulingGuidanceLevel)
+      ) {
+        merged.schedule.schedulingGuidanceLevel = 'full'
+      }
+      return merged
     },
     'Loading settings from localStorage',
     {
@@ -144,6 +156,14 @@ export function updateSetting(key, value) {
   }
 
   target[lastKey] = value
+
+  // Clamp schedulingGuidanceLevel to allowed enum before persisting
+  if (
+    key === 'schedule.schedulingGuidanceLevel' &&
+    !VALID_GUIDANCE_LEVELS.includes(value)
+  ) {
+    target[lastKey] = 'full'
+  }
 
   return updateSettings(settings)
 }
@@ -303,6 +323,17 @@ export function validateSettings(settings) {
     typeof settings.backupEnabled !== 'boolean'
   ) {
     return false
+  }
+
+  // Validate schedule sub-settings
+  if (settings.schedule) {
+    const { schedulingGuidanceLevel } = settings.schedule
+    if (
+      schedulingGuidanceLevel !== undefined &&
+      !VALID_GUIDANCE_LEVELS.includes(schedulingGuidanceLevel)
+    ) {
+      return false
+    }
   }
 
   return true

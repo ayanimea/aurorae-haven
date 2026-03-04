@@ -14,7 +14,8 @@ import {
   computeDayLoad,
   getDayDurationMinutes,
   getMemoizedDayLoad,
-  clearLoadCache
+  clearLoadCache,
+  LOAD_CACHE_MAX_SIZE
 } from '../schedule/loadComputation'
 import {
   getEffectiveWindow,
@@ -174,6 +175,39 @@ describe('getMemoizedDayLoad', () => {
     const first = getMemoizedDayLoad(events, '2025-06-01')
     const second = getMemoizedDayLoad(events, '2025-06-01')
     expect(first).toBe(second)
+  })
+
+  it('uses local date construction (no UTC offset shift)', () => {
+    // computeDayLoad with a locally-constructed Date must match getMemoizedDayLoad.
+    // If getMemoizedDayLoad used new Date("YYYY-MM-DDT00:00:00") it would be UTC,
+    // which can shift the day in non-UTC timezones producing a DST mismatch.
+    const events = [{ startTime: '08:00', endTime: '09:00' }]
+    const localDate = new Date(2025, 5, 15) // local midnight
+    const directLoad = computeDayLoad(events, localDate)
+    const memoLoad = getMemoizedDayLoad(events, '2025-06-15')
+    expect(memoLoad).toBeCloseTo(directLoad, 10)
+  })
+
+  it('LRU: recently accessed entry survives eviction of cold entries', () => {
+    // 1. Fill cache to LOAD_CACHE_MAX_SIZE with distinct date strings
+    const baseEvent = [{ startTime: '09:00', endTime: '10:00' }]
+    for (let i = 0; i < LOAD_CACHE_MAX_SIZE; i++) {
+      const mm = String((i % 12) + 1).padStart(2, '0')
+      const dd = String((i % 28) + 1).padStart(2, '0')
+      const yyyy = 2020 + Math.floor(i / (12 * 28))
+      getMemoizedDayLoad(baseEvent, `${yyyy}-${mm}-${dd}`)
+    }
+
+    // 2. Re-access the very first key to refresh its recency
+    const hotDateStr = '2020-01-01'
+    const hotVal = getMemoizedDayLoad(baseEvent, hotDateStr)
+
+    // 3. Add one more entry to trigger eviction of the LRU (the second key, '2020-01-02')
+    getMemoizedDayLoad([{ startTime: '10:00', endTime: '11:00' }], '2099-12-31')
+
+    // 4. The hot key should still return the same cached value (no recompute = same ref)
+    const hotValAfter = getMemoizedDayLoad(baseEvent, hotDateStr)
+    expect(hotValAfter).toBe(hotVal)
   })
 })
 
