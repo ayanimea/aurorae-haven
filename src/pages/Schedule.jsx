@@ -85,7 +85,7 @@ import {
   createEventFromSlot
 } from '../utils/eventAdapter'
 import { EVENT_TYPES, TIME_ZONE_HOURS, DEFAULT_EVENT_DURATION_MINUTES } from '../utils/scheduleConstants'
-import { getSettings } from '../utils/settingsManager'
+import { getSettings, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
 import { addTaskToStorage } from '../utils/scheduleHelpers'
 import { createRoutine } from '../utils/routinesManager'
@@ -111,10 +111,6 @@ const EVENT_COLUMN_GAP_FALLBACK_PX = 3
 // resulting in "logger is not defined" runtime errors. Direct console usage is immune
 // to tree-shaking and ensures reliable error reporting in production environments.
 // See commit 511b225 for the migration from custom logger to console methods.
-
-// Valid values for the schedulingGuidanceLevel setting.
-// Declared at module level to avoid being a dependency of the useEffect hooks.
-const VALID_GUIDANCE_LEVELS = ['full', 'header-only', 'off']
 
 function Schedule() {
   // FullCalendar ref for API access

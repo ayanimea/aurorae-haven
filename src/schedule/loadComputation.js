@@ -46,6 +46,9 @@ export function computeDayLoad(events, date) {
   let usedMinutes = 0
 
   for (const event of events) {
+    // Skip all-day events — they have no meaningful time-blocked duration
+    if (event.allDay || !event.startTime || !event.endTime) continue
+
     const rawStart = timeToMinutes(event.startTime)
     let rawEnd = timeToMinutes(event.endTime)
 
@@ -121,6 +124,15 @@ export function getMemoizedDayLoad(events, dateStr) {
   }
   _loadCache.set(key, load)
   return load
+}
+
+/**
+ * Return the current number of entries in the load cache.
+ * Exposed for testing purposes only (e.g. verifying eviction behaviour).
+ * @returns {number}
+ */
+export function getLoadCacheSize() {
+  return _loadCache.size
 }
 
 /**

@@ -15,6 +15,7 @@ import {
   getDayDurationMinutes,
   getMemoizedDayLoad,
   clearLoadCache,
+  getLoadCacheSize,
   LOAD_CACHE_MAX_SIZE
 } from '../schedule/loadComputation'
 import {
@@ -188,26 +189,26 @@ describe('getMemoizedDayLoad', () => {
     expect(memoLoad).toBeCloseTo(directLoad, 10)
   })
 
-  it('LRU: recently accessed entry survives eviction of cold entries', () => {
-    // 1. Fill cache to LOAD_CACHE_MAX_SIZE with distinct date strings
-    const baseEvent = [{ startTime: '09:00', endTime: '10:00' }]
+  it('LRU: cache size stays bounded at MAX_SIZE; evictions occur on every insertion beyond limit', () => {
+    const base = [{ startTime: '09:00', endTime: '10:00' }]
+
+    // Fill cache exactly to LOAD_CACHE_MAX_SIZE using genuinely unique date strings
+    // (increment day-of-year from a fixed base to avoid duplicate mm/dd combos)
     for (let i = 0; i < LOAD_CACHE_MAX_SIZE; i++) {
-      const mm = String((i % 12) + 1).padStart(2, '0')
-      const dd = String((i % 28) + 1).padStart(2, '0')
-      const yyyy = 2020 + Math.floor(i / (12 * 28))
-      getMemoizedDayLoad(baseEvent, `${yyyy}-${mm}-${dd}`)
+      const d = new Date(2000, 0, 1 + i) // 2000-01-01 + i days
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      getMemoizedDayLoad(base, dateStr)
     }
+    expect(getLoadCacheSize()).toBe(LOAD_CACHE_MAX_SIZE)
 
-    // 2. Re-access the very first key to refresh its recency
-    const hotDateStr = '2020-01-01'
-    const hotVal = getMemoizedDayLoad(baseEvent, hotDateStr)
-
-    // 3. Add one more entry to trigger eviction of the LRU (the second key, '2020-01-02')
-    getMemoizedDayLoad([{ startTime: '10:00', endTime: '11:00' }], '2099-12-31')
-
-    // 4. The hot key should still return the same cached value (no recompute = same ref)
-    const hotValAfter = getMemoizedDayLoad(baseEvent, hotDateStr)
-    expect(hotValAfter).toBe(hotVal)
+    // Add 5 more entries — each one must trigger an eviction so size stays bounded
+    for (let i = 1; i <= 5; i++) {
+      getMemoizedDayLoad(
+        [{ startTime: '08:00', endTime: `0${8 + i}:00` }],
+        `2099-12-${String(i).padStart(2, '0')}`
+      )
+      expect(getLoadCacheSize()).toBe(LOAD_CACHE_MAX_SIZE)
+    }
   })
 })
 
@@ -338,6 +339,7 @@ describe('generateSuggestions', () => {
       existingEvents: [],
       durationMinutes: 60,
       date,
+      nowMinutes: 0,
       rangeStartMinutes: 7 * 60,
       rangeEndMinutes: 22 * 60
     })
@@ -351,6 +353,7 @@ describe('generateSuggestions', () => {
       existingEvents: [],
       durationMinutes: 30,
       date,
+      nowMinutes: 0,
       rangeStartMinutes: 7 * 60,
       rangeEndMinutes: 10 * 60
     })
@@ -369,6 +372,7 @@ describe('generateSuggestions', () => {
       existingEvents,
       durationMinutes: 30,
       date,
+      nowMinutes: 0,
       rangeStartMinutes: 8 * 60,
       rangeEndMinutes: 12 * 60
     })
@@ -385,6 +389,7 @@ describe('generateSuggestions', () => {
       existingEvents: [{ startTime: '10:00', endTime: '11:00' }],
       durationMinutes: 45,
       date,
+      nowMinutes: 0,
       rangeStartMinutes: 7 * 60,
       rangeEndMinutes: 20 * 60
     }
@@ -400,6 +405,7 @@ describe('generateSuggestions', () => {
       existingEvents: [],
       durationMinutes: 15,
       date,
+      nowMinutes: 0,
       rangeStartMinutes: 7 * 60,
       rangeEndMinutes: 22 * 60
     })
@@ -413,6 +419,7 @@ describe('generateSuggestions', () => {
       durationMinutes: 60,
       date,
       fromMinutes,
+      nowMinutes: 0,
       rangeStartMinutes: 7 * 60,
       rangeEndMinutes: 22 * 60
     })
@@ -426,6 +433,7 @@ describe('generateSuggestions', () => {
       existingEvents: [],
       durationMinutes: 60,
       date,
+      nowMinutes: 0,
       rangeStartMinutes: 7 * 60,
       rangeEndMinutes: 12 * 60
     })

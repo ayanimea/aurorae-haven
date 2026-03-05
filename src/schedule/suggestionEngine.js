@@ -142,7 +142,12 @@ function minutesToHHMM(minutes) {
  * @returns {number}
  */
 function measureFreeBlock(slotStart, slotEnd, existingEvents, rangeEnd) {
-  const limit = SCHEDULING_CONFIG.maxSimultaneousEvents
+  // Use the higher simultaneous limit when an all-day event is present,
+  // matching the logic in validateStructural
+  const hasAllDayEvent = existingEvents.some((evt) => evt.allDay)
+  const limit = hasAllDayEvent
+    ? SCHEDULING_CONFIG.maxSimultaneousWithAllDay
+    : SCHEDULING_CONFIG.maxSimultaneousEvents
 
   // Build sweep-line boundaries from each event's effective window
   const boundaries = []

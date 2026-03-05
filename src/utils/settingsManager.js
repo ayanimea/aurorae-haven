@@ -1,9 +1,9 @@
-/** Allowed values for schedulingGuidanceLevel */
-const VALID_GUIDANCE_LEVELS = ['full', 'header-only', 'off']
-
 // Settings Manager - Feature stub for app configuration
 // TODO: Implement full settings management with validation
 import { tryCatch } from './errorHandler'
+
+/** Allowed values for schedulingGuidanceLevel */
+export const VALID_GUIDANCE_LEVELS = ['full', 'header-only', 'off']
 
 const SETTINGS_KEY = 'aurorae_settings'
 
