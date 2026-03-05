@@ -92,15 +92,17 @@ export function eventsOverlap(a, b) {
 export function validateStructural(candidate, existingEvents) {
   const overlapping = existingEvents.filter((e) => eventsOverlap(candidate, e))
 
+  // Derive all-day status from getEffectiveWindow so that events with missing
+  // startTime/endTime are recognised as all-day (consistent with getEffectiveWindow).
+  const candidateWindow = getEffectiveWindow(candidate)
   const hasAllDay =
-    candidate.allDay === true || overlapping.some((e) => e.allDay === true)
+    candidateWindow.isAllDay || overlapping.some((e) => getEffectiveWindow(e).isAllDay)
 
   const limit = hasAllDay
     ? SCHEDULING_CONFIG.maxSimultaneousWithAllDay
     : SCHEDULING_CONFIG.maxSimultaneousEvents
 
   // Sweep-line: find max concurrency within the candidate's effective window
-  const candidateWindow = getEffectiveWindow(candidate)
   const boundaries = []
 
   for (const event of overlapping) {

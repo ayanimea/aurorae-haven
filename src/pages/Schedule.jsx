@@ -780,12 +780,12 @@ function Schedule() {
     [view, schedulingGuidanceLevel, dayLoadMap]
   )
 
-  // Week-view accessible load label — only injects a .sr-only span for days
-  // that are high-load or over-capacity.  Normal days return undefined so
-  // FullCalendar's default rendering is preserved entirely for those cells.
-  const dayHeaderContent = useCallback(
+  // Week-view accessible load label — appends a .sr-only span to the cushion
+  // element of high-load or over-capacity header cells without replacing
+  // FullCalendar's default header DOM (preserving all internal click handlers).
+  const dayHeaderDidMount = useCallback(
     (arg) => {
-      if (view !== 'week' || schedulingGuidanceLevel === 'off') return undefined
+      if (view !== 'week' || schedulingGuidanceLevel === 'off') return
 
       const dateStr = format(arg.date, 'yyyy-MM-dd')
       const load = dayLoadMap[dateStr] ?? 0
@@ -793,18 +793,25 @@ function Schedule() {
       const isOver = load >= SCHEDULING_CONFIG.loadThresholdOver
       const isHigh = load >= SCHEDULING_CONFIG.loadThresholdHigh
 
-      if (!isOver && !isHigh) return undefined
+      if (!isOver && !isHigh) return
 
-      const srLabel = isOver ? ' — over capacity' : ' — high load'
-      return (
-        <>
-          {arg.text}
-          <span className='sr-only'>{srLabel}</span>
-        </>
-      )
+      const srOnlyClass = 'sr-only-day-header'
+      // Append to cushion (inner text element) so positioning is relative to it
+      const cushion = arg.el.querySelector('.fc-col-header-cell-cushion') ?? arg.el
+      if (!cushion.querySelector(`.${srOnlyClass}`)) {
+        const srSpan = document.createElement('span')
+        srSpan.className = `sr-only ${srOnlyClass}`
+        srSpan.textContent = isOver ? ' — over capacity' : ' — high load'
+        cushion.appendChild(srSpan)
+      }
     },
     [view, schedulingGuidanceLevel, dayLoadMap]
   )
+
+  const dayHeaderWillUnmount = useCallback((arg) => {
+    const srSpan = arg.el.querySelector('.sr-only-day-header')
+    if (srSpan?.parentNode) srSpan.parentNode.removeChild(srSpan)
+  }, [])
 
   return (
     <ErrorBoundary>
@@ -892,7 +899,8 @@ function Schedule() {
                   eventMouseEnter={handleEventMouseEnter}
                   eventWillUnmount={handleEventWillUnmount}
                   dayHeaderClassNames={dayHeaderClassNames}
-                  dayHeaderContent={dayHeaderContent}
+                  dayHeaderDidMount={dayHeaderDidMount}
+                  dayHeaderWillUnmount={dayHeaderWillUnmount}
                   eventDidMount={(info) => {
                     // Use mainStart (actual event time) for timezone band classification,
                     // not event.start which equals renderStart (includes buffer offset).

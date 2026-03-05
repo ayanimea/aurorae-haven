@@ -327,6 +327,21 @@ describe('validateStructural', () => {
     expect(result.valid).toBe(true)
     expect(result.simultaneousCount).toBe(1)
   })
+
+  it('all-day via missing startTime/endTime triggers the all-day simultaneous limit', () => {
+    // An event with no startTime/endTime is treated as all-day by getEffectiveWindow.
+    // validateStructural must use getEffectiveWindow().isAllDay to detect this,
+    // not just event.allDay === true, so the higher limit applies.
+    const existing = [
+      { /* no startTime, no endTime — all-day via missing times */ },
+      { startTime: '09:00', endTime: '10:00' }
+    ]
+    const candidate = { startTime: '09:30', endTime: '10:30' }
+    // 2 existing + candidate = 3; allowed because one is all-day (by missing times)
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(true)
+    expect(result.simultaneousCount).toBe(3)
+  })
 })
 
 // ── Suggestion Engine ─────────────────────────────────────────────────────────
@@ -444,6 +459,27 @@ describe('generateSuggestions', () => {
       if (prev.load === curr.load && prev.freeBlock === curr.freeBlock) {
         expect(curr.startMinutes).toBeGreaterThanOrEqual(prev.startMinutes)
       }
+    }
+  })
+
+  it('freeBlock is clamped to rangeStart — does not extend before visible range', () => {
+    // With rangeStart=7*60 and no existing events, the free block must be
+    // (rangeEnd - rangeStart), not (rangeEnd - 0).  Previously measureFreeBlock
+    // anchored blockStart to 0, inflating freeBlock by rangeStartMinutes.
+    const rangeStart = 7 * 60
+    const rangeEnd = 10 * 60
+    const suggestions = generateSuggestions({
+      existingEvents: [],
+      durationMinutes: 60,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: rangeStart,
+      rangeEndMinutes: rangeEnd
+    })
+    // Every suggestion's freeBlock must be ≤ (rangeEnd - rangeStart)
+    const maxPossibleBlock = rangeEnd - rangeStart
+    for (const s of suggestions) {
+      expect(s.freeBlock).toBeLessThanOrEqual(maxPossibleBlock)
     }
   })
 })

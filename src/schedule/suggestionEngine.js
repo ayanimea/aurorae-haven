@@ -17,8 +17,7 @@
 import { SCHEDULING_CONFIG } from './config'
 import { snapUp } from './timeUtils'
 import { computeDayLoad } from './loadComputation'
-import { validateStructural } from './structuralConstraints'
-import { timeToMinutes } from '../utils/timeUtils'
+import { validateStructural, getEffectiveWindow } from './structuralConstraints'
 
 /** Maximum number of suggestions returned (performance guard) */
 const MAX_SUGGESTIONS = 5
@@ -91,7 +90,7 @@ export function generateSuggestions({
         const load = computeDayLoad(projectedEvents, date)
 
         // Measure the free block this slot sits within
-        const freeBlock = measureFreeBlock(start, end, existingEvents, rangeEndMinutes)
+        const freeBlock = measureFreeBlock(start, end, existingEvents, rangeStartMinutes, rangeEndMinutes)
 
         suggestions.push({ startMinutes: start, endMinutes: end, load, freeBlock })
 
@@ -135,16 +134,20 @@ function minutesToHHMM(minutes) {
  * i.e. there is room for at least one more event.
  * Prep + travel of existing events are included in their effective windows.
  *
+ * The result is clamped to [rangeStart, rangeEnd] so that only the visible
+ * schedule range is counted, preventing inflated values when rangeStart > 0.
+ *
  * @param {number} slotStart
  * @param {number} slotEnd
  * @param {import('./structuralConstraints').ScheduleEvent[]} existingEvents
+ * @param {number} rangeStart
  * @param {number} rangeEnd
  * @returns {number}
  */
-function measureFreeBlock(slotStart, slotEnd, existingEvents, rangeEnd) {
-  // Use the higher simultaneous limit when an all-day event is present,
-  // matching the logic in validateStructural
-  const hasAllDayEvent = existingEvents.some((evt) => evt.allDay)
+function measureFreeBlock(slotStart, slotEnd, existingEvents, rangeStart, rangeEnd) {
+  // Use getEffectiveWindow so that events with missing startTime/endTime are
+  // treated as all-day (consistent with validateStructural and getEffectiveWindow).
+  const hasAllDayEvent = existingEvents.some((evt) => getEffectiveWindow(evt).isAllDay)
   const limit = hasAllDayEvent
     ? SCHEDULING_CONFIG.maxSimultaneousWithAllDay
     : SCHEDULING_CONFIG.maxSimultaneousEvents
@@ -152,30 +155,23 @@ function measureFreeBlock(slotStart, slotEnd, existingEvents, rangeEnd) {
   // Build sweep-line boundaries from each event's effective window
   const boundaries = []
   for (const evt of existingEvents) {
-    const evtStart = timeToMinutes(evt.startTime)
-    const s = evtStart - (evt.preparationTime ?? 0)
-    const rawEnd = timeToMinutes(evt.endTime)
-    const en = evt.allDay
-      ? 1440
-      : rawEnd <= evtStart
-        ? rawEnd + 1440 + (evt.travelTime ?? 0)
-        : rawEnd + (evt.travelTime ?? 0)
-    boundaries.push({ time: s, delta: 1 })
-    boundaries.push({ time: en, delta: -1 })
+    const w = getEffectiveWindow(evt)
+    boundaries.push({ time: w.start, delta: 1 })
+    boundaries.push({ time: w.end, delta: -1 })
   }
   // Sort: ascending time; endings before starts at the same time
   boundaries.sort((a, b) => (a.time !== b.time ? a.time - b.time : a.delta - b.delta))
 
-  // Collect all relevant time points (including range boundaries)
+  // Collect all relevant time points (clamped to visible range)
   const timePoints = [
-    ...new Set([0, slotStart, slotEnd, rangeEnd, ...boundaries.map((b) => b.time)])
+    ...new Set([rangeStart, slotStart, slotEnd, rangeEnd, ...boundaries.map((b) => b.time)])
   ].sort((a, b) => a - b)
 
   // Sweep to find the capacity-available segment containing slotStart
   let concurrency = 0
   let bIdx = 0
   let segStart = null
-  let blockStart = 0
+  let blockStart = rangeStart
   let blockEnd = rangeEnd
 
   for (let i = 0; i < timePoints.length; i++) {
@@ -194,8 +190,8 @@ function measureFreeBlock(slotStart, slotEnd, existingEvents, rangeEnd) {
     } else if (!hasCap && segStart !== null) {
       // This segment ends here — check if slotStart is inside it
       if (slotStart >= segStart && slotStart < t) {
-        blockStart = segStart
-        blockEnd = t
+        blockStart = Math.max(segStart, rangeStart)
+        blockEnd = Math.min(t, rangeEnd)
         break
       }
       segStart = null
@@ -203,8 +199,8 @@ function measureFreeBlock(slotStart, slotEnd, existingEvents, rangeEnd) {
 
     // Last point: close any still-open segment
     if (i === timePoints.length - 1 && segStart !== null && slotStart >= segStart) {
-      blockStart = segStart
-      blockEnd = t
+      blockStart = Math.max(segStart, rangeStart)
+      blockEnd = Math.min(t, rangeEnd)
     }
   }
 
