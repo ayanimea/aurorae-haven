@@ -2086,7 +2086,7 @@ Ask for clarification or preserve the existing structure.
  * FullCalendar's default DOM or its click handlers.
  *
  * Accessibility: high-load and over-capacity days include a visually-hidden
- * `.sr-only` text node (injected via dayHeaderContent) alongside the default
+ * `.sr-only` text node (injected via dayHeaderDidMount) alongside the default
  * day label so screen readers announce the load state.
  *
  * Uses design tokens only — no hardcoded colours or rgba.
@@ -2124,7 +2124,7 @@ Ask for clarification or preserve the existing structure.
 
 /* Over-capacity warning icon — rendered before the day text as supplementary visual cue.
  * The ⚠ character is read by modern screen readers as "warning sign".
- * A visually-hidden sr-only label is injected via dayHeaderContent for all AT. */
+ * A visually-hidden sr-only label is injected via dayHeaderDidMount for all AT. */
 .fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::before {
   content: '⚠\00a0';
   font-size: 0.75em;

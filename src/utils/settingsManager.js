@@ -5,6 +5,16 @@ import { tryCatch } from './errorHandler'
 /** Allowed values for schedulingGuidanceLevel */
 export const VALID_GUIDANCE_LEVELS = ['full', 'header-only', 'off']
 
+/**
+ * Returns true if value is a plain (non-null, non-array) object.
+ * Used to guard against corrupted localStorage values.
+ * @param {*} value
+ * @returns {boolean}
+ */
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
 const SETTINGS_KEY = 'aurorae_settings'
 
 // Default settings
@@ -68,11 +78,13 @@ export function getSettings() {
       // - Blocks prototype pollution keys (__proto__, constructor, prototype)
       const merged = deepMerge(DEFAULT_SETTINGS, parsed)
       // Clamp schedule.schedulingGuidanceLevel to allowed enum at read time
-      // so corrupted/old stored values never propagate into the app
-      if (
-        merged.schedule &&
-        !VALID_GUIDANCE_LEVELS.includes(merged.schedule.schedulingGuidanceLevel)
-      ) {
+      // so corrupted/old stored values never propagate into the app.
+      // Guard against corrupted localStorage where merged.schedule is not a plain
+      // object (e.g. stored as a string/number) — reset to default in that case.
+      if (!isPlainObject(merged.schedule)) {
+        merged.schedule = { ...DEFAULT_SETTINGS.schedule }
+      }
+      if (!VALID_GUIDANCE_LEVELS.includes(merged.schedule.schedulingGuidanceLevel)) {
         merged.schedule.schedulingGuidanceLevel = 'full'
       }
       return merged
@@ -326,7 +338,12 @@ export function validateSettings(settings) {
   }
 
   // Validate schedule sub-settings
-  if (settings.schedule) {
+  if (settings.schedule !== undefined) {
+    // Reject non-plain-object values (string, number, array, null) that would
+    // silently pass through and later break code expecting an object
+    if (!isPlainObject(settings.schedule)) {
+      return false
+    }
     const { schedulingGuidanceLevel } = settings.schedule
     if (
       schedulingGuidanceLevel !== undefined &&

@@ -455,5 +455,40 @@ describe('Settings Manager', () => {
       expect(validateSettings({ schedule: {} })).toBe(true)
       expect(validateSettings({})).toBe(true)
     })
+
+    it('getSettings resets schedule to default when stored schedule is a string', () => {
+      // Simulate corrupted localStorage where schedule is a string
+      localStorage.setItem(
+        'aurorae_settings',
+        JSON.stringify({ schedule: 'corrupted' })
+      )
+      const settings = getSettings()
+      expect(typeof settings.schedule).toBe('object')
+      expect(settings.schedule).not.toBeNull()
+      expect(Array.isArray(settings.schedule)).toBe(false)
+      expect(settings.schedule.schedulingGuidanceLevel).toBe('full')
+    })
+
+    it('getSettings resets schedule to default when stored schedule is a number', () => {
+      localStorage.setItem(
+        'aurorae_settings',
+        JSON.stringify({ schedule: 42 })
+      )
+      const settings = getSettings()
+      expect(typeof settings.schedule).toBe('object')
+      expect(settings.schedule.schedulingGuidanceLevel).toBe('full')
+    })
+
+    it('validateSettings returns false when schedule is a string', () => {
+      expect(validateSettings({ schedule: 'bad' })).toBe(false)
+    })
+
+    it('validateSettings returns false when schedule is null', () => {
+      expect(validateSettings({ schedule: null })).toBe(false)
+    })
+
+    it('validateSettings returns false when schedule is an array', () => {
+      expect(validateSettings({ schedule: [] })).toBe(false)
+    })
   })
 })
