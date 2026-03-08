@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { getSettings, updateSetting } from '../utils/settingsManager'
+import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
   requestDirectoryAccess,
@@ -504,6 +504,46 @@ function Settings() {
             </label>
             <small id='24hour-format-hint' className='settings-checkbox-hint'>
               Display times in 24-hour format (e.g., 14:00 instead of 2:00 PM)
+            </small>
+          </div>
+
+          {/* Load Awareness Guidance Level */}
+          <div className='settings-field'>
+            <label className='settings-label' htmlFor='scheduling-guidance-level'>
+              <strong>Load Awareness Guidance</strong>
+            </label>
+            <select
+              id='scheduling-guidance-level'
+              className='settings-select'
+              value={settings.schedule?.schedulingGuidanceLevel ?? 'full'}
+              onChange={(e) => {
+                const level = VALID_GUIDANCE_LEVELS.includes(e.target.value)
+                  ? e.target.value
+                  : 'full'
+                const newSettings = {
+                  ...settings,
+                  schedule: {
+                    ...settings.schedule,
+                    schedulingGuidanceLevel: level
+                  }
+                }
+                setSettingsState(newSettings)
+                updateSetting('schedule', newSettings.schedule)
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('settingsUpdated'))
+                }
+                showMessage('Load awareness level updated')
+              }}
+              aria-describedby='guidance-level-hint'
+            >
+              <option value='full'>Full — header indicators, warnings &amp; suggestions</option>
+              <option value='header-only'>Header only — indicators only, no warnings</option>
+              <option value='off'>Off — indicators disabled</option>
+            </select>
+            <small id='guidance-level-hint' className='settings-checkbox-hint'>
+              Week-view headers show a coloured underline when a day reaches 80 %
+              of capacity, and a ⚠ icon at 100 %. Structural limits (max 2
+              simultaneous events) always apply regardless of this setting.
             </small>
           </div>
         </div>
