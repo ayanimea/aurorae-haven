@@ -5,11 +5,18 @@
  */
 
 export const SCHEDULING_CONFIG = {
-  /** Load ratio at which a day is considered highly scheduled (0–1) */
-  loadThresholdHigh: 0.8,
+  /**
+   * Load ratio at which a day is considered highly scheduled (0–1).
+   * Based on the 8/8/8 rule: 8 h sleep · 8 h work · 8 h leisure.
+   * Amber header underline appears when the scheduled work block is full (≥ 8 h / 24 h ≈ 0.333).
+   */
+  loadThresholdHigh: 8 / 24,
 
-  /** Load ratio at which a day is considered over capacity (0–1) */
-  loadThresholdOver: 1.0,
+  /**
+   * Load ratio at which a day is considered over capacity (0–1).
+   * Red underline + ⚠ icon appears when scheduling spills into leisure time (≥ 9 h / 24 h = 0.375).
+   */
+  loadThresholdOver: 9 / 24,
 
   /** Maximum simultaneous (overlapping) events allowed */
   maxSimultaneousEvents: 2,

@@ -541,9 +541,10 @@ function Settings() {
               <option value='off'>Off: indicators disabled</option>
             </select>
             <small id='guidance-level-hint' className='settings-checkbox-hint'>
-              Week-view headers show a colored underline when a day reaches 80 %
-              of capacity, and a ⚠ icon at 100 %. Structural limits (max 2
-              simultaneous events) always apply regardless of this setting.
+              Week-view headers show an amber underline when 8 h of events are
+              scheduled (end of the work block), and a ⚠ icon at 9 h (into
+              leisure time). Structural limits (max 2 simultaneous events) always
+              apply regardless of this setting.
             </small>
           </div>
         </div>
