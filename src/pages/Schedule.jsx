@@ -89,10 +89,11 @@ import { getSettings, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
 import { addTaskToStorage } from '../utils/scheduleHelpers'
 import { createRoutine } from '../utils/routinesManager'
-import { timeToMinutes } from '../utils/timeUtils'
+import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
 import { getMemoizedDayLoad } from '../schedule/loadComputation'
 import { SCHEDULING_CONFIG } from '../schedule/config'
 import { validateStructural } from '../schedule/structuralConstraints'
+import { generateSuggestions } from '../schedule/suggestionEngine'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -112,7 +113,7 @@ const EVENT_COLUMN_GAP_FALLBACK_PX = 3
  * @returns {string|null}
  */
 function checkStructural(candidate, allEvents, excludeId) {
-  if (!candidate.startTime || !candidate.endTime) return null
+  if (!candidate.day) return null
   const dayEvents = allEvents.filter(
     (e) => e.day === candidate.day && e.id !== excludeId
   )
@@ -155,6 +156,7 @@ function Schedule() {
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [suggestions, setSuggestions] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
 
   // Modal states
@@ -351,8 +353,39 @@ function Schedule() {
       const structuralError = checkStructural(cleanEventData, events, cleanEventData.id)
       if (structuralError) {
         setError(structuralError)
+        // In 'full' guidance mode, surface available time slots for this day.
+        // Only generate suggestions for timed events (all-day events have no duration).
+        if (
+          schedulingGuidanceLevel === 'full' &&
+          cleanEventData.day &&
+          cleanEventData.startTime &&
+          cleanEventData.endTime
+        ) {
+          const dayStr = cleanEventData.day
+          const parts = dayStr.split('-').map(Number)
+          const eventDate =
+            parts.length === 3 && parts.every((n) => !Number.isNaN(n))
+              ? new Date(parts[0], parts[1] - 1, parts[2])
+              : new Date(dayStr)
+          const dayEvents = events.filter(
+            (e) => e.day === dayStr && e.id !== cleanEventData.id
+          )
+          const duration =
+            timeToMinutes(cleanEventData.endTime) -
+            timeToMinutes(cleanEventData.startTime)
+          if (duration > 0) {
+            setSuggestions(
+              generateSuggestions({
+                existingEvents: dayEvents,
+                durationMinutes: duration,
+                date: eventDate
+              })
+            )
+          }
+        }
         return
       }
+      setSuggestions([])
 
       if (isUpdate) {
         await EventService.updateEvent(cleanEventData)
@@ -434,6 +467,11 @@ function Schedule() {
     } catch (_err) {
       setError('Failed to edit event. Please try again.')
     }
+  }
+
+  const handleDismissError = () => {
+    setError('')
+    setSuggestions([])
   }
 
   const handleCloseModal = () => {
@@ -1030,9 +1068,21 @@ function Schedule() {
           {error && (
             <div className='fc-error-toast' role='alert'>
               {error}
+              {suggestions.length > 0 && (
+                <div className='fc-error-suggestions' role='group' aria-label='Available time slots'>
+                  <span className='fc-error-suggestions-label'>Try instead:</span>
+                  <ul className='fc-error-suggestions-list'>
+                    {suggestions.map((s) => (
+                      <li key={s.startMinutes} className='fc-error-suggestion-slot'>
+                        {minutesToTime(s.startMinutes)} – {minutesToTime(s.endMinutes)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <button
                 type='button'
-                onClick={() => setError('')}
+                onClick={handleDismissError}
                 className='error-dismiss'
                 aria-label='Dismiss error'
               >

@@ -2123,8 +2123,8 @@ Ask for clarification or preserve the existing structure.
 }
 
 /* Over-capacity warning icon — rendered before the day text as supplementary visual cue.
- * The ⚠ character is read by modern screen readers as "warning sign".
- * A visually-hidden sr-only label is injected via dayHeaderDidMount for all AT. */
+ * Pseudo-element generated content is NOT reliably exposed to the accessibility tree.
+ * A visually-hidden sr-only label injected via dayHeaderDidMount provides AT support. */
 .fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::before {
   content: '⚠\00a0';
   font-size: 0.75em;
