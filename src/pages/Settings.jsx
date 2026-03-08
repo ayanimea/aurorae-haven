@@ -536,12 +536,12 @@ function Settings() {
               }}
               aria-describedby='guidance-level-hint'
             >
-              <option value='full'>Full — header indicators, warnings &amp; suggestions</option>
-              <option value='header-only'>Header only — indicators only, no warnings</option>
-              <option value='off'>Off — indicators disabled</option>
+              <option value='full'>Full: header indicators, warnings &amp; suggestions</option>
+              <option value='header-only'>Header only: indicators only, no warnings</option>
+              <option value='off'>Off: indicators disabled</option>
             </select>
             <small id='guidance-level-hint' className='settings-checkbox-hint'>
-              Week-view headers show a coloured underline when a day reaches 80 %
+              Week-view headers show a colored underline when a day reaches 80 %
               of capacity, and a ⚠ icon at 100 %. Structural limits (max 2
               simultaneous events) always apply regardless of this setting.
             </small>
