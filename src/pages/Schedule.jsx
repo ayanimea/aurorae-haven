@@ -92,6 +92,7 @@ import { createRoutine } from '../utils/routinesManager'
 import { timeToMinutes } from '../utils/timeUtils'
 import { getMemoizedDayLoad } from '../schedule/loadComputation'
 import { SCHEDULING_CONFIG } from '../schedule/config'
+import { validateStructural } from '../schedule/structuralConstraints'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -99,6 +100,25 @@ import '../components/ErrorBoundary.css'
 const MILLISECONDS_PER_MINUTE = 60000
 // Default column gap (px) used as fallback when CSS token is unavailable
 const EVENT_COLUMN_GAP_FALLBACK_PX = 3
+
+/**
+ * Check structural constraints for a candidate event against the current
+ * events state, excluding `excludeId` (used during edit/move to avoid
+ * self-conflict). Returns null when valid, or an error message string.
+ *
+ * @param {object}   candidate  - The event being created/moved/resized
+ * @param {object[]} allEvents  - Current events state
+ * @param {string}   [excludeId] - ID of the event to exclude (edit/drag/resize)
+ * @returns {string|null}
+ */
+function checkStructural(candidate, allEvents, excludeId) {
+  if (!candidate.startTime || !candidate.endTime) return null
+  const dayEvents = allEvents.filter(
+    (e) => e.day === candidate.day && e.id !== excludeId
+  )
+  const check = validateStructural(candidate, dayEvents)
+  return check.valid ? null : (check.reason ?? 'Scheduling conflict: too many simultaneous events')
+}
 
 // Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
 // With Vite, these modules are still included in the production build as separate
@@ -325,6 +345,14 @@ function Schedule() {
         cleanEventData.id &&
         (typeof cleanEventData.id === 'string' ||
           typeof cleanEventData.id === 'number')
+
+      // Structural validation: enforce simultaneous-event limits before saving.
+      // Exclude the event being updated (by ID) so edits don't self-conflict.
+      const structuralError = checkStructural(cleanEventData, events, cleanEventData.id)
+      if (structuralError) {
+        setError(structuralError)
+        return
+      }
 
       if (isUpdate) {
         await EventService.updateEvent(cleanEventData)
@@ -694,6 +722,16 @@ function Schedule() {
           // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
           endTime: format(mainEnd, 'HH:mm')
         }
+
+        // Structural validation: reject the drop if it would exceed the
+        // simultaneous-event limit (exclude the event being moved by ID).
+        const structuralError = checkStructural(updated, events, updated.id)
+        if (structuralError) {
+          dropInfo.revert()
+          setError(structuralError)
+          return
+        }
+
         await EventService.updateEvent(updated)
         await loadEvents()
       } catch (_err) {
@@ -701,7 +739,7 @@ function Schedule() {
         setError('Failed to move event. Please try again.')
       }
     },
-    [loadEvents]
+    [loadEvents, events]
   )
 
   // Handle event resize (FullCalendar) — main duration only.
@@ -752,6 +790,16 @@ function Schedule() {
           // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
           endTime: format(mainEnd ?? defaultEnd, 'HH:mm')
         }
+
+        // Structural validation: reject the resize if it would create too many
+        // simultaneous events (exclude the event being resized by ID).
+        const structuralError = checkStructural(updated, events, updated.id)
+        if (structuralError) {
+          resizeInfo.revert()
+          setError(structuralError)
+          return
+        }
+
         await EventService.updateEvent(updated)
         await loadEvents()
       } catch (_err) {
@@ -759,7 +807,7 @@ function Schedule() {
         setError('Failed to resize event. Please try again.')
       }
     },
-    [loadEvents]
+    [loadEvents, events]
   )
 
   // Week-view day header class names for load indicators.

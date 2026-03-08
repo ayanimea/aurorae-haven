@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import React from 'react'
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 import EventService from '../services/EventService'
@@ -9,7 +9,10 @@ import EventService from '../services/EventService'
 const capturedHandlers = vi.hoisted(() => ({
   eventDidMount: null,
   eventDrop: null,
-  eventResize: null
+  eventResize: null,
+  dayHeaderClassNames: null,
+  dayHeaderDidMount: null,
+  dayHeaderWillUnmount: null
 }))
 
 // Mock FullCalendar to avoid ESM parsing issues
@@ -19,6 +22,9 @@ vi.mock('@fullcalendar/react', () => {
       capturedHandlers.eventDidMount = props.eventDidMount
       capturedHandlers.eventDrop = props.eventDrop
       capturedHandlers.eventResize = props.eventResize
+      capturedHandlers.dayHeaderClassNames = props.dayHeaderClassNames
+      capturedHandlers.dayHeaderDidMount = props.dayHeaderDidMount
+      capturedHandlers.dayHeaderWillUnmount = props.dayHeaderWillUnmount
       return (
         <div className='fc' data-testid='fullcalendar'>
           <div className='fc-view'>{props.initialView}</div>
@@ -548,5 +554,198 @@ describe('handleEventDrop and handleEventResize', () => {
       })
     )
     expect(resizeInfo.revert).not.toHaveBeenCalled()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests for week-view load indicator callbacks
+// (dayHeaderClassNames, dayHeaderDidMount, dayHeaderWillUnmount)
+// ---------------------------------------------------------------------------
+describe('week-view load indicator callbacks', () => {
+  beforeEach(async () => {
+    capturedHandlers.dayHeaderClassNames = null
+    capturedHandlers.dayHeaderDidMount = null
+    capturedHandlers.dayHeaderWillUnmount = null
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue([])
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+    EventService.getEventsForDays.mockResolvedValue([])
+    render(<Schedule />)
+    await waitFor(() => expect(capturedHandlers.dayHeaderClassNames).not.toBeNull())
+  })
+
+  afterEach(() => jest.useRealTimers())
+
+  // dayHeaderClassNames prop is passed to FullCalendar
+  test('dayHeaderClassNames prop is captured from FullCalendar', () => {
+    expect(capturedHandlers.dayHeaderClassNames).toBeTypeOf('function')
+  })
+
+  // In day view (default) dayHeaderClassNames returns []
+  test('dayHeaderClassNames returns [] in day view (default)', () => {
+    const result = capturedHandlers.dayHeaderClassNames({
+      date: new Date('2025-09-16T00:00:00')
+    })
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(0)
+  })
+
+  // In week view with no load data, dayHeaderClassNames returns []
+  test('dayHeaderClassNames returns [] for a day with no load data in week view', async () => {
+    // Switch to week view via the mock toolbar's <select>
+    const select = screen.getByRole('combobox')
+    await act(async () => {
+      fireEvent.change(select, { target: { value: 'timeGridWeek' } })
+    })
+    await waitFor(() => expect(EventService.getEventsForWeek).toHaveBeenCalled())
+
+    const result = capturedHandlers.dayHeaderClassNames({
+      date: new Date('2025-09-16T00:00:00')
+    })
+    // No events → load = 0 → no class
+    expect(result).toEqual([])
+  })
+
+  // dayHeaderDidMount prop is a function
+  test('dayHeaderDidMount prop is captured as a function', () => {
+    expect(capturedHandlers.dayHeaderDidMount).toBeTypeOf('function')
+  })
+
+  // dayHeaderDidMount does NOT inject span in day view (default)
+  test('dayHeaderDidMount does not inject sr-only span in day view', () => {
+    const cushion = document.createElement('a')
+    cushion.className = 'fc-col-header-cell-cushion'
+    const el = document.createElement('th')
+    el.appendChild(cushion)
+
+    capturedHandlers.dayHeaderDidMount({
+      el,
+      date: new Date('2025-09-16T00:00:00')
+    })
+
+    expect(cushion.querySelector('.sr-only-day-header')).toBeNull()
+  })
+
+  // dayHeaderWillUnmount removes an existing .sr-only-day-header span
+  test('dayHeaderWillUnmount removes existing sr-only span', () => {
+    const el = document.createElement('th')
+    const srSpan = document.createElement('span')
+    srSpan.className = 'sr-only sr-only-day-header'
+    el.appendChild(srSpan)
+
+    capturedHandlers.dayHeaderWillUnmount({ el })
+
+    expect(el.querySelector('.sr-only-day-header')).toBeNull()
+  })
+
+  // dayHeaderWillUnmount is safe when no span exists
+  test('dayHeaderWillUnmount is a no-op when no sr-only span present', () => {
+    const el = document.createElement('th')
+    expect(() => capturedHandlers.dayHeaderWillUnmount({ el })).not.toThrow()
+    expect(el.childNodes).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests for structural validation wired into handleEventDrop / handleEventResize
+// ---------------------------------------------------------------------------
+describe('structural validation in handleEventDrop and handleEventResize', () => {
+  // Two events on 2025-09-16 both at 09:00–10:00 (concurrent)
+  const existingEvents = [
+    { id: '1', day: '2025-09-16', startTime: '09:00', endTime: '10:00', title: 'A', type: 'task' },
+    { id: '2', day: '2025-09-16', startTime: '09:00', endTime: '10:00', title: 'B', type: 'task' }
+  ]
+
+  beforeEach(async () => {
+    capturedHandlers.eventDrop = null
+    capturedHandlers.eventResize = null
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue(existingEvents)
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+    EventService.getEventsForDays.mockResolvedValue([])
+    EventService.updateEvent = vi.fn().mockResolvedValue(undefined)
+    render(<Schedule />)
+    await waitFor(() => expect(capturedHandlers.eventDrop).not.toBeNull())
+    // Wait for events to be loaded into state
+    await waitFor(() => expect(EventService.getEventsForDate).toHaveBeenCalled())
+  })
+
+  afterEach(() => jest.useRealTimers())
+
+  test('handleEventDrop reverts when dragging a 3rd timed event into a full slot', async () => {
+    const revert = vi.fn()
+    const originalEvent = {
+      id: '3',
+      day: '2025-09-16',
+      startTime: '08:00',
+      endTime: '09:00',
+      title: 'C',
+      type: 'task'
+    }
+
+    // Drag event 3 to overlap with both existing events (09:00–10:00)
+    const dropInfo = {
+      event: {
+        start: new Date('2025-09-16T09:00:00'), // renderStart = mainStart (no buffers)
+        end: new Date('2025-09-16T10:00:00'),
+        extendedProps: {
+          originalEvent,
+          prepDuration: 0,
+          travelDuration: 0
+        }
+      },
+      revert
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventDrop(dropInfo)
+    })
+
+    // Should revert because limit of 2 simultaneous events is exceeded
+    expect(revert).toHaveBeenCalled()
+    expect(EventService.updateEvent).not.toHaveBeenCalled()
+  })
+
+  test('handleEventResize reverts when resize creates a structural conflict', async () => {
+    const revert = vi.fn()
+    const originalEvent = {
+      id: '3',
+      day: '2025-09-16',
+      startTime: '08:00',
+      endTime: '08:30',
+      title: 'C',
+      type: 'task'
+    }
+
+    // Resize event 3 end down to overlap with both existing events
+    const resizeInfo = {
+      event: {
+        start: new Date('2025-09-16T08:00:00'),
+        end: new Date('2025-09-16T10:00:00'), // extended into the full slot
+        extendedProps: {
+          originalEvent,
+          prepDuration: 0,
+          travelDuration: 0,
+          mainStart: new Date('2025-09-16T08:00:00'),
+          mainEnd: new Date('2025-09-16T08:30:00')
+        }
+      },
+      startDelta: { valueOf: () => 0 },
+      endDelta: { valueOf: () => 90 * 60000 }, // extended by 90min
+      revert
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventResize(resizeInfo)
+    })
+
+    expect(revert).toHaveBeenCalled()
+    expect(EventService.updateEvent).not.toHaveBeenCalled()
   })
 })

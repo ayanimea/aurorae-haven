@@ -27,9 +27,9 @@ import { timeToMinutes } from '../utils/timeUtils'
  * Prep time shifts the window earlier; travel time shifts the window later.
  *
  * Special cases:
- *  - All-day events (allDay === true or missing start/end) occupy the full day
- *    [0, 1440) so they always trigger the all-day simultaneous limit but never
- *    block creation of timed events by themselves.
+ *  - All-day events (allDay === true, or missing startTime, or missing endTime)
+ *    occupy the full day [0, 1440) so they always trigger the all-day simultaneous
+ *    limit but never block creation of timed events by themselves.
  *  - Midnight-spanning events (endTime parses to ≤ startTime) have 1440 added
  *    to their end so overlap checks work across the day boundary.
  *
@@ -38,7 +38,7 @@ import { timeToMinutes } from '../utils/timeUtils'
  */
 export function getEffectiveWindow(event) {
   // All-day events: treat as occupying [0, 1440) with no buffer
-  if (event.allDay === true || (!event.startTime && !event.endTime)) {
+  if (event.allDay === true || !event.startTime || !event.endTime) {
     return { start: 0, end: 1440, isAllDay: true }
   }
 
