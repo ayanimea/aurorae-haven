@@ -370,9 +370,10 @@ function Schedule() {
           const dayEvents = events.filter(
             (e) => e.day === dayStr && e.id !== cleanEventData.id
           )
+          const endMins = timeToMinutes(cleanEventData.endTime)
+          const startMins = timeToMinutes(cleanEventData.startTime)
           const duration =
-            timeToMinutes(cleanEventData.endTime) -
-            timeToMinutes(cleanEventData.startTime)
+            endMins <= startMins ? endMins + 1440 - startMins : endMins - startMins
           if (duration > 0) {
             setSuggestions(
               generateSuggestions({
@@ -879,15 +880,25 @@ function Schedule() {
       const isOver = load >= SCHEDULING_CONFIG.loadThresholdOver
       const isHigh = load >= SCHEDULING_CONFIG.loadThresholdHigh
 
-      if (!isOver && !isHigh) return
-
       const srOnlyClass = 'sr-only-day-header'
       // Append to cushion (inner text element) so positioning is relative to it
       const cushion = arg.el.querySelector('.fc-col-header-cell-cushion') ?? arg.el
-      if (!cushion.querySelector(`.${srOnlyClass}`)) {
+      const existing = cushion.querySelector(`.${srOnlyClass}`)
+
+      if (!isOver && !isHigh) {
+        // Load dropped below threshold — remove stale label if present
+        if (existing?.parentNode) existing.parentNode.removeChild(existing)
+        return
+      }
+
+      const label = isOver ? ' — over capacity' : ' — high load'
+      if (existing) {
+        // Update text in case load level changed (high → over or vice versa)
+        if (existing.textContent !== label) existing.textContent = label
+      } else {
         const srSpan = document.createElement('span')
         srSpan.className = `sr-only ${srOnlyClass}`
-        srSpan.textContent = isOver ? ' — over capacity' : ' — high load'
+        srSpan.textContent = label
         cushion.appendChild(srSpan)
       }
     },
@@ -1074,7 +1085,7 @@ function Schedule() {
                   <ul className='fc-error-suggestions-list'>
                     {suggestions.map((s) => (
                       <li key={s.startMinutes} className='fc-error-suggestion-slot'>
-                        {minutesToTime(s.startMinutes)} – {minutesToTime(s.endMinutes)}
+                        {minutesToTime(s.startMinutes)} – {s.endMinutes === 1440 ? '24:00' : minutesToTime(s.endMinutes)}
                       </li>
                     ))}
                   </ul>

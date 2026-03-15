@@ -647,6 +647,63 @@ describe('week-view load indicator callbacks', () => {
     expect(() => capturedHandlers.dayHeaderWillUnmount({ el })).not.toThrow()
     expect(el.childNodes).toHaveLength(0)
   })
+
+  // dayHeaderDidMount removes stale span in week view when load drops to 0
+  test('dayHeaderDidMount removes stale sr-only span in week view when load is 0', async () => {
+    // Switch to week view
+    const select = screen.getByRole('combobox')
+    await act(async () => {
+      fireEvent.change(select, { target: { value: 'timeGridWeek' } })
+    })
+    await waitFor(() => expect(EventService.getEventsForWeek).toHaveBeenCalled())
+
+    // Pre-populate a stale sr-only span on the cushion
+    const cushion = document.createElement('a')
+    cushion.className = 'fc-col-header-cell-cushion'
+    const srSpan = document.createElement('span')
+    srSpan.className = 'sr-only sr-only-day-header'
+    srSpan.textContent = ' — high load'
+    cushion.appendChild(srSpan)
+    const el = document.createElement('th')
+    el.appendChild(cushion)
+
+    // No events → load = 0 → span should be removed
+    capturedHandlers.dayHeaderDidMount({
+      el,
+      date: new Date('2025-09-16T00:00:00')
+    })
+
+    expect(cushion.querySelector('.sr-only-day-header')).toBeNull()
+  })
+
+  // dayHeaderDidMount removes stale span in week view even when a prior span existed
+  test('dayHeaderDidMount removes existing sr-only span even when one was previously created', async () => {
+    // Switch to week view
+    const select = screen.getByRole('combobox')
+    await act(async () => {
+      fireEvent.change(select, { target: { value: 'timeGridWeek' } })
+    })
+    await waitFor(() => expect(EventService.getEventsForWeek).toHaveBeenCalled())
+
+    // span already exists from a previous high-load state
+    const cushion = document.createElement('a')
+    cushion.className = 'fc-col-header-cell-cushion'
+    const srSpan = document.createElement('span')
+    srSpan.className = 'sr-only sr-only-day-header'
+    srSpan.textContent = ' — high load'
+    cushion.appendChild(srSpan)
+    const el = document.createElement('th')
+    el.appendChild(cushion)
+
+    // load = 0 in week view → span should be removed, not duplicated
+    capturedHandlers.dayHeaderDidMount({
+      el,
+      date: new Date('2025-09-16T00:00:00')
+    })
+
+    // Should have been removed, not duplicated
+    expect(cushion.querySelectorAll('.sr-only-day-header')).toHaveLength(0)
+  })
 })
 
 // ---------------------------------------------------------------------------
