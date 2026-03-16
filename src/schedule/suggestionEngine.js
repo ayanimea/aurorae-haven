@@ -42,6 +42,8 @@ const DEFAULT_RANGE_END = 24 * 60 // 24:00
  *   Events already scheduled for the day.
  * @param {number}   params.durationMinutes   - Required duration for the new event
  * @param {Date}     params.date              - Calendar day (for load computation)
+ * @param {number}   [params.preparationTime] - Prep buffer (minutes) for the candidate event
+ * @param {number}   [params.travelTime]      - Travel buffer (minutes) for the candidate event
  * @param {number}   [params.fromMinutes]     - Earliest start (default: current local time, snapped up)
  * @param {number}   [params.rangeStartMinutes] - Visible range start (default 07:00)
  * @param {number}   [params.rangeEndMinutes]   - Visible range end (default 24:00)
@@ -52,6 +54,8 @@ export function generateSuggestions({
   existingEvents,
   durationMinutes,
   date,
+  preparationTime,
+  travelTime,
   fromMinutes,
   rangeStartMinutes = DEFAULT_RANGE_START,
   rangeEndMinutes = DEFAULT_RANGE_END,
@@ -80,7 +84,9 @@ export function generateSuggestions({
     if (end <= rangeEndMinutes) {
       const candidate = {
         startTime: minutesToHHMM(start),
-        endTime: minutesToHHMM(end)
+        endTime: minutesToHHMM(end),
+        ...(typeof preparationTime === 'number' && { preparationTime }),
+        ...(typeof travelTime === 'number' && { travelTime })
       }
 
       const { valid } = validateStructural(candidate, existingEvents)

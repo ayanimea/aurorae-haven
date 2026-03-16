@@ -82,7 +82,7 @@ export const LOAD_CACHE_MAX_SIZE = 200
  */
 function buildCacheKey(events, dateStr) {
   const signatures = events.map(
-    (e) => `${e.id ?? ''}|${e.startTime}|${e.endTime}|${e.preparationTime ?? 0}|${e.travelTime ?? 0}`
+    (e) => `${e.id ?? ''}|${e.startTime}|${e.endTime}|${e.preparationTime ?? 0}|${e.travelTime ?? 0}|${e.allDay ? '1' : '0'}`
   )
   signatures.sort()
   return `${dateStr}::${signatures.join(',')}`

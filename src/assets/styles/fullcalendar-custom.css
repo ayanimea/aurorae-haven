@@ -431,7 +431,7 @@
 }
 
 .fc-error-suggestion-slot {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--glass-chip-bg);
   border-radius: 4px;
   padding: 0.1rem 0.4rem;
   font-variant-numeric: tabular-nums;

@@ -206,6 +206,7 @@
   --glass-accent-bg: rgba(134, 245, 224, 0.09);      /* Accent gradient — base (bottom) */
   --glass-border-soft: rgba(255, 255, 255, 0.07);    /* Shared soft border — all glass surfaces */
   --glass-border-hover: rgba(255, 255, 255, 0.13);   /* Border lift on hover — inputs, nav tabs */
+  --glass-chip-bg: rgba(255, 255, 255, 0.20);        /* Inline chip / pill surface — suggestion slots */
   --glass-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.22);  /* Base button shadow */
   --glass-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.28); /* Hover lift shadow — 1px translateY */
   --glass-shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.46), 0 4px 12px rgba(0, 0, 0, 0.32); /* Dropdown — deepest */

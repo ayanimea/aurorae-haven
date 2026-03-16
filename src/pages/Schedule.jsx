@@ -379,7 +379,13 @@ function Schedule() {
               generateSuggestions({
                 existingEvents: dayEvents,
                 durationMinutes: duration,
-                date: eventDate
+                date: eventDate,
+                ...(typeof cleanEventData.preparationTime === 'number' && {
+                  preparationTime: cleanEventData.preparationTime
+                }),
+                ...(typeof cleanEventData.travelTime === 'number' && {
+                  travelTime: cleanEventData.travelTime
+                })
               })
             )
           }
