@@ -90,8 +90,7 @@ import { isDevelopment } from '../utils/environment'
 import { addTaskToStorage } from '../utils/scheduleHelpers'
 import { createRoutine } from '../utils/routinesManager'
 import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
-import { getMemoizedDayLoad } from '../schedule/loadComputation'
-import { SCHEDULING_CONFIG } from '../schedule/config'
+import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
 import { validateStructural } from '../schedule/structuralConstraints'
 import { generateSuggestions } from '../schedule/suggestionEngine'
 import '../assets/styles/fullcalendar-custom.css'
@@ -353,6 +352,8 @@ function Schedule() {
       const structuralError = checkStructural(cleanEventData, events, cleanEventData.id)
       if (structuralError) {
         setError(structuralError)
+        // Clear any stale suggestions from a previous failure before generating new ones.
+        setSuggestions([])
         // In 'full' guidance mode, surface available time slots for this day.
         // Only generate suggestions for timed events (all-day events have no duration).
         if (
@@ -773,6 +774,7 @@ function Schedule() {
         const structuralError = checkStructural(updated, events, updated.id)
         if (structuralError) {
           dropInfo.revert()
+          setSuggestions([])
           setError(structuralError)
           return
         }
@@ -841,6 +843,7 @@ function Schedule() {
         const structuralError = checkStructural(updated, events, updated.id)
         if (structuralError) {
           resizeInfo.revert()
+          setSuggestions([])
           setError(structuralError)
           return
         }
@@ -866,8 +869,14 @@ function Schedule() {
       const dateStr = format(arg.date, 'yyyy-MM-dd')
       const load = dayLoadMap[dateStr] ?? 0
 
-      if (load >= SCHEDULING_CONFIG.loadThresholdOver) return ['day-header--over']
-      if (load >= SCHEDULING_CONFIG.loadThresholdHigh) return ['day-header--high']
+      // Derive per-day thresholds in minutes so that "8 h" and "9 h" remain
+      // semantically consistent even on DST transition days (23 h / 25 h).
+      const dayMins = getDayDurationMinutes(arg.date)
+      const thresholdOver = (9 * 60) / dayMins
+      const thresholdHigh = (8 * 60) / dayMins
+
+      if (load >= thresholdOver) return ['day-header--over']
+      if (load >= thresholdHigh) return ['day-header--high']
       return []
     },
     [view, schedulingGuidanceLevel, dayLoadMap]
@@ -883,8 +892,13 @@ function Schedule() {
       const dateStr = format(arg.date, 'yyyy-MM-dd')
       const load = dayLoadMap[dateStr] ?? 0
 
-      const isOver = load >= SCHEDULING_CONFIG.loadThresholdOver
-      const isHigh = load >= SCHEDULING_CONFIG.loadThresholdHigh
+      // Derive per-day thresholds in minutes for DST consistency (same as dayHeaderClassNames)
+      const dayMins = getDayDurationMinutes(arg.date)
+      const thresholdOver = (9 * 60) / dayMins
+      const thresholdHigh = (8 * 60) / dayMins
+
+      const isOver = load >= thresholdOver
+      const isHigh = load >= thresholdHigh
 
       const srOnlyClass = 'sr-only-day-header'
       // Append to cushion (inner text element) so positioning is relative to it

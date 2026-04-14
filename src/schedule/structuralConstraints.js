@@ -47,8 +47,9 @@ export function getEffectiveWindow(event) {
   const prep = typeof event.preparationTime === 'number' ? event.preparationTime : 0
   const travel = typeof event.travelTime === 'number' ? event.travelTime : 0
 
-  // Midnight-spanning: end wraps past midnight (e.g. 23:00–01:00)
-  const normalEnd = rawEnd <= rawStart ? rawEnd + 1440 : rawEnd
+  // Midnight-spanning: end wraps past midnight (e.g. 23:00–01:00).
+  // Equal start/end times remain valid zero-duration events (not 24-hour blocks).
+  const normalEnd = rawEnd < rawStart ? rawEnd + 1440 : rawEnd
 
   return {
     start: rawStart - prep,

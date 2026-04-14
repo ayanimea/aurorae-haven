@@ -52,8 +52,9 @@ export function computeDayLoad(events, date) {
     const rawStart = timeToMinutes(event.startTime)
     let rawEnd = timeToMinutes(event.endTime)
 
-    // Midnight-spanning event: end wraps past midnight (e.g. 23:00–01:00)
-    if (rawEnd <= rawStart) rawEnd += 1440
+    // Midnight-spanning event: end wraps past midnight (e.g. 23:00–01:00).
+    // Equal start/end times remain valid zero-duration events (not 24-hour blocks).
+    if (rawEnd < rawStart) rawEnd += 1440
 
     const { start, end } = snapEventTime(rawStart, rawEnd)
     const mainDuration = Math.max(0, end - start)
