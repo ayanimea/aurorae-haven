@@ -93,6 +93,7 @@ import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
 import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
 import { validateStructural } from '../schedule/structuralConstraints'
 import { generateSuggestions } from '../schedule/suggestionEngine'
+import { SCHEDULING_CONFIG } from '../schedule/config'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -869,11 +870,13 @@ function Schedule() {
       const dateStr = format(arg.date, 'yyyy-MM-dd')
       const load = dayLoadMap[dateStr] ?? 0
 
-      // Derive per-day thresholds in minutes so that "8 h" and "9 h" remain
+      // Derive per-day thresholds from config values so "8 h" and "9 h" remain
       // semantically consistent even on DST transition days (23 h / 25 h).
+      // SCHEDULING_CONFIG stores ratios against a 1440-min baseline; scaling by
+      // (1440 / dayMins) gives the correct ratio for today's actual day length.
       const dayMins = getDayDurationMinutes(arg.date)
-      const thresholdOver = (9 * 60) / dayMins
-      const thresholdHigh = (8 * 60) / dayMins
+      const thresholdOver = (SCHEDULING_CONFIG.loadThresholdOver * 1440) / dayMins
+      const thresholdHigh = (SCHEDULING_CONFIG.loadThresholdHigh * 1440) / dayMins
 
       if (load >= thresholdOver) return ['day-header--over']
       if (load >= thresholdHigh) return ['day-header--high']
@@ -892,10 +895,10 @@ function Schedule() {
       const dateStr = format(arg.date, 'yyyy-MM-dd')
       const load = dayLoadMap[dateStr] ?? 0
 
-      // Derive per-day thresholds in minutes for DST consistency (same as dayHeaderClassNames)
+      // Derive per-day thresholds from config for DST consistency (same as dayHeaderClassNames)
       const dayMins = getDayDurationMinutes(arg.date)
-      const thresholdOver = (9 * 60) / dayMins
-      const thresholdHigh = (8 * 60) / dayMins
+      const thresholdOver = (SCHEDULING_CONFIG.loadThresholdOver * 1440) / dayMins
+      const thresholdHigh = (SCHEDULING_CONFIG.loadThresholdHigh * 1440) / dayMins
 
       const isOver = load >= thresholdOver
       const isHigh = load >= thresholdHigh
