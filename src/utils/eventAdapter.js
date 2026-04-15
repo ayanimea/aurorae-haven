@@ -20,6 +20,7 @@ import { timeToMinutes } from './timeUtils'
 const logger = createLogger('EventAdapter')
 
 const MILLISECONDS_PER_MINUTE = 60000
+// Accept canonical HH:mm plus the explicit end-of-day sentinel "24:00".
 const EVENT_TIME_PATTERN = /^(?:24:00|(?:[01]\d|2[0-3]):[0-5]\d)$/
 
 const toDateAtStartOfDay = (date) => {
@@ -28,6 +29,16 @@ const toDateAtStartOfDay = (date) => {
   return normalizedDate
 }
 
+/**
+ * Parse an event time against a specific day baseline.
+ * When `allowEndOfDay` is true, "24:00" is treated as next-day midnight.
+ * When false, "24:00" is rejected and null is returned.
+ *
+ * @param {Date} dayDate
+ * @param {string} timeString
+ * @param {{allowEndOfDay?: boolean}} [options]
+ * @returns {Date|null}
+ */
 const parseEventTime = (dayDate, timeString, { allowEndOfDay = false } = {}) => {
   if (timeString === '24:00') {
     return allowEndOfDay ? addDays(dayDate, 1) : null
@@ -40,6 +51,15 @@ const parseEventTime = (dayDate, timeString, { allowEndOfDay = false } = {}) => 
   return new Date(dayDate.getTime() + timeToMinutes(timeString) * MILLISECONDS_PER_MINUTE)
 }
 
+/**
+ * Determine whether an event should be treated as same-day for overlap clustering.
+ * Events ending exactly at next-day 00:00 are considered same-day boundaries so
+ * they can still participate in day-view column clustering.
+ *
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @returns {boolean}
+ */
 const isSingleDayForClustering = (startDate, endDate) => {
   const startDay = format(startDate, 'yyyy-MM-dd')
   const endDay = format(endDate, 'yyyy-MM-dd')

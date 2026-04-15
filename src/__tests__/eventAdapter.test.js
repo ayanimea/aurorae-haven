@@ -78,7 +78,7 @@ describe('eventAdapter', () => {
       expect(rbcEvent.end.getDate()).toBe(rbcEvent.start.getDate() + 1)
     })
 
-    it('should support end-of-day sentinel endTime 24:00', () => {
+    it('should parse endTime 24:00 as next-day midnight', () => {
       const event = {
         id: '3b',
         title: 'End Of Day Sentinel',
@@ -337,7 +337,7 @@ describe('eventAdapter', () => {
       expect(fcEvent.classNames).toEqual(['event-routine'])
     })
 
-    it('should support end-of-day sentinel endTime 24:00', () => {
+    it('should parse endTime 24:00 as next-day midnight in FullCalendar format', () => {
       const event = {
         id: '3b',
         title: 'Until End Of Day',
