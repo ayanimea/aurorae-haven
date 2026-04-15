@@ -154,6 +154,7 @@ function checkStructural(candidate, allEvents, excludeId) {
 function Schedule() {
   // FullCalendar ref for API access
   const calendarRef = useRef(null)
+  const scheduleContainerRef = useRef(null)
 
   // WeakMap for storing context menu handlers (better memory management than DOM properties)
   const contextMenuHandlersRef = useRef(new WeakMap())
@@ -906,6 +907,44 @@ function Schedule() {
     setFcRenderCount((c) => c + 1)
   }, [])
 
+  useEffect(() => {
+    // Used as a re-measure trigger when FullCalendar re-renders timegrid DOM.
+    void fcRenderCount
+    if (view !== 'day' && view !== 'week') return
+    const containerEl = scheduleContainerRef.current
+    const calendarEl = calendarRef.current?.getApi()?.el
+    if (!containerEl || !calendarEl) return
+
+    const syncTimeBandBounds = () => {
+      const timegridBody = calendarEl.querySelector('.fc-timegrid-body')
+      if (!timegridBody) return
+      const containerRect = containerEl.getBoundingClientRect()
+      const bodyRect = timegridBody.getBoundingClientRect()
+      const topOffset = Math.max(0, bodyRect.top - containerRect.top)
+      const bodyHeight = Math.max(0, bodyRect.height)
+      containerEl.style.setProperty('--time-bands-top-offset', `${topOffset}px`)
+      containerEl.style.setProperty('--time-bands-height', `${bodyHeight}px`)
+    }
+
+    syncTimeBandBounds()
+    window.addEventListener('resize', syncTimeBandBounds)
+
+    let resizeObserver = null
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(syncTimeBandBounds)
+      resizeObserver.observe(containerEl)
+      const timegridBody = calendarEl.querySelector('.fc-timegrid-body')
+      if (timegridBody) {
+        resizeObserver.observe(timegridBody)
+      }
+    }
+
+    return () => {
+      window.removeEventListener('resize', syncTimeBandBounds)
+      resizeObserver?.disconnect()
+    }
+  }, [view, fcRenderCount])
+
   // Apply load-indicator classes and sr-only labels directly to the FullCalendar
   // DOM after events load or after the calendar renders new cells (datesSet).
   // This replaces the earlier dayHeaderClassNames / dayHeaderDidMount approach,
@@ -1027,7 +1066,7 @@ function Schedule() {
             {/* Calendar area: TimeBands + FullCalendar wrapped in a positioned container
                  so bands (z-index: 0, position: absolute) sit behind .fc which renders
                  on top via DOM order within the same stack level. */}
-            <div className='schedule-calendar-container'>
+            <div className='schedule-calendar-container' ref={scheduleContainerRef}>
               {/* Only render time-of-day bands for time grid views (not month view) */}
               {(view === 'day' || view === 'week') && <TimeBands />}
 

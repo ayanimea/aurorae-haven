@@ -58,6 +58,8 @@ const DEFAULT_SETTINGS = {
     schedulingGuidanceLevel: 'full'
   }
 }
+const DEFAULT_SCHEDULING_GUIDANCE_LEVEL =
+  DEFAULT_SETTINGS.schedule.schedulingGuidanceLevel
 
 /**
  * Get all settings
@@ -86,7 +88,7 @@ export function getSettings() {
         merged.schedule = { ...DEFAULT_SETTINGS.schedule }
       }
       if (!VALID_GUIDANCE_LEVELS.includes(merged.schedule.schedulingGuidanceLevel)) {
-        merged.schedule.schedulingGuidanceLevel = 'full'
+        merged.schedule.schedulingGuidanceLevel = DEFAULT_SCHEDULING_GUIDANCE_LEVEL
       }
       return merged
     },
@@ -175,7 +177,7 @@ export function updateSetting(key, value) {
     key === 'schedule.schedulingGuidanceLevel' &&
     !VALID_GUIDANCE_LEVELS.includes(value)
   ) {
-    target[lastKey] = 'full'
+    target[lastKey] = DEFAULT_SCHEDULING_GUIDANCE_LEVEL
   }
 
   return updateSettings(settings)

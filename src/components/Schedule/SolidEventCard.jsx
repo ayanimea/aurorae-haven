@@ -3,7 +3,8 @@
  *
  * Renders a single FullCalendar event as a segmented block:
  *   travel segment (top) → prep segment → main segment (bottom)
- * Heights are strictly proportional to durations — no minimums, no padding.
+ * Heights are strictly proportional to durations with a 1-minute safety floor
+ * for the main segment to avoid zero/negative-height rendering edge cases.
  * Glow/shadow/border are applied once at the wrapper level only.
  *
  * Data model (canonical):
@@ -45,7 +46,7 @@ function SolidEventCard({ event, onContextMenu }) {
   const mainStart = resource?.mainStart ?? null
   const mainEnd = resource?.mainEnd ?? null
 
-  // Strict proportional ratios — no minimum height, no clamping, no artificial padding.
+  // Strict proportional ratios with a minimal safety floor for mainDuration.
   // If canonical mainStart/mainEnd are missing, assume a 60-minute main segment so that
   // proportions remain reasonable regardless of buffer values.
   const mainDuration = mainStart && mainEnd

@@ -531,6 +531,12 @@ describe('scheduleHelpers', () => {
       expect(saved.not_urgent_not_important[0].text).toBe('Trimmed Task')
     })
 
+    it('skips storage when title is empty after trimming', () => {
+      const created = addTaskToStorage('   ')
+      expect(created).toBeNull()
+      expect(localStorage.getItem('aurorae_tasks')).toBeNull()
+    })
+
     it('preserves existing tasks when adding a new one', () => {
       localStorage.setItem(
         'aurorae_tasks',

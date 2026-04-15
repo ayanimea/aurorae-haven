@@ -26,7 +26,10 @@
  * which carries z-index: 1, keeping the required band → grid → event stacking order. */
 .schedule-bands {
   position: absolute;
-  inset: 0;
+  top: var(--time-bands-top-offset, 0);
+  left: 0;
+  right: 0;
+  height: var(--time-bands-height, 100%);
   z-index: 0;
   pointer-events: none;
   overflow: hidden;

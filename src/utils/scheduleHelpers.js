@@ -23,13 +23,18 @@ const logger = createLogger('ScheduleHelpers')
  * appears in the Tasks tab without requiring a separate entry.
  *
  * @param {string} title - Task title/text
- * @returns {Object} The created task object
+ * @returns {Object|null} The created task object, or null when title is empty
  * @throws {Error} If localStorage write fails
  */
 export function addTaskToStorage(title) {
+  const normalizedTitle = typeof title === 'string' ? title.trim() : ''
+  if (normalizedTitle.length === 0) {
+    return null
+  }
+
   const task = {
     id: generateSecureUUID(),
-    text: title.trim(),
+    text: normalizedTitle,
     completed: false,
     createdAt: new Date().toISOString(),
     dueDate: null,

@@ -22,13 +22,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--event-radius);
-  backdrop-filter: var(--event-blur);
-  background:
-    var(--event-glass-gradient),
-    var(--event-base-surface);
-  border: var(--border-thin) solid var(--event-border);
-  box-shadow: var(--event-shadow);
+  border-radius: inherit;
+  backdrop-filter: none;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   color: var(--event-text);
 }
 
@@ -121,4 +119,3 @@
     transition: none;
   }
 }
-
