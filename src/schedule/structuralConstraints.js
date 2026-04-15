@@ -11,6 +11,7 @@
 
 import { SCHEDULING_CONFIG } from './config'
 import { timeToMinutes } from '../utils/timeUtils'
+import { snapDown, snapUp } from './timeUtils'
 
 /**
  * @typedef {Object} ScheduleEvent
@@ -51,9 +52,14 @@ export function getEffectiveWindow(event) {
   // Equal start/end times remain valid zero-duration events (not 24-hour blocks).
   const normalEnd = rawEnd < rawStart ? rawEnd + 1440 : rawEnd
 
+  // Snap main start/end to stay consistent with computeDayLoad() which also snaps
+  // before computing the used-minute tally (start snapped down, end snapped up).
+  const snappedStart = snapDown(rawStart)
+  const snappedEnd = snapUp(normalEnd)
+
   return {
-    start: rawStart - prep,
-    end: normalEnd + travel,
+    start: snappedStart - prep,
+    end: snappedEnd + travel,
     isAllDay: false
   }
 }

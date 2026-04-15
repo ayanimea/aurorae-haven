@@ -99,8 +99,6 @@ export function generateSuggestions({
         const freeBlock = measureFreeBlock(start, end, existingEvents, rangeStartMinutes, rangeEndMinutes)
 
         suggestions.push({ startMinutes: start, endMinutes: end, load, freeBlock })
-
-        if (suggestions.length >= MAX_SUGGESTIONS * 10) break // inner scan cap
       }
     }
 

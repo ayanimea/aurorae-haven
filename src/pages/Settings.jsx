@@ -528,7 +528,7 @@ function Settings() {
                   }
                 }
                 setSettingsState(newSettings)
-                updateSetting('schedule', newSettings.schedule)
+                updateSetting('schedule.schedulingGuidanceLevel', level)
                 if (typeof window !== 'undefined') {
                   window.dispatchEvent(new CustomEvent('settingsUpdated'))
                 }
