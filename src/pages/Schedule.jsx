@@ -85,11 +85,16 @@ import {
   createEventFromSlot
 } from '../utils/eventAdapter'
 import { EVENT_TYPES, TIME_ZONE_HOURS, DEFAULT_EVENT_DURATION_MINUTES } from '../utils/scheduleConstants'
-import { getSettings } from '../utils/settingsManager'
+import { getSettings, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
 import { addTaskToStorage } from '../utils/scheduleHelpers'
 import { createRoutine } from '../utils/routinesManager'
-import { timeToMinutes } from '../utils/timeUtils'
+import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
+import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
+import { validateStructural } from '../schedule/structuralConstraints'
+import { generateSuggestions } from '../schedule/suggestionEngine'
+import { SCHEDULING_CONFIG } from '../schedule/config'
+import { snapDown, snapUp } from '../schedule/timeUtils'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -97,6 +102,42 @@ import '../components/ErrorBoundary.css'
 const MILLISECONDS_PER_MINUTE = 60000
 // Default column gap (px) used as fallback when CSS token is unavailable
 const EVENT_COLUMN_GAP_FALLBACK_PX = 3
+
+/**
+ * Convert a snapped end-minute value back to a stored time string.
+ *
+ * - Midnight-spanning: end was normalised to > 1440, wrap it back via modulo.
+ * - Non-spanning: if snapped end hits exactly 1440, use the '24:00' sentinel
+ *   (end-of-day); otherwise convert normally.
+ *
+ * @param {number}  snappedEnd          - Snapped end in minutes (may be > 1440 for midnight-spanning)
+ * @param {boolean} wasMidnightSpanning - Whether the original event spanned midnight
+ * @returns {string} Time in 'HH:MM' or '24:00' format
+ */
+function formatSnappedEndTime(snappedEnd, wasMidnightSpanning) {
+  if (wasMidnightSpanning) return minutesToTime(snappedEnd % 1440)
+  if (snappedEnd >= 1440) return '24:00'
+  return minutesToTime(snappedEnd)
+}
+
+/**
+ * Check structural constraints for a candidate event against the current
+ * events state, excluding `excludeId` (used during edit/move to avoid
+ * self-conflict). Returns null when valid, or an error message string.
+ *
+ * @param {object}   candidate  - The event being created/moved/resized
+ * @param {object[]} allEvents  - Current events state
+ * @param {string}   [excludeId] - ID of the event to exclude (edit/drag/resize)
+ * @returns {string|null}
+ */
+function checkStructural(candidate, allEvents, excludeId) {
+  if (!candidate.day) return null
+  const dayEvents = allEvents.filter(
+    (e) => e.day === candidate.day && e.id !== excludeId
+  )
+  const check = validateStructural(candidate, dayEvents)
+  return check.valid ? null : (check.reason ?? 'Scheduling conflict: too many simultaneous events')
+}
 
 // Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
 // With Vite, these modules are still included in the production build as separate
@@ -133,7 +174,11 @@ function Schedule() {
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [suggestions, setSuggestions] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
+  // Incremented by FullCalendar's datesSet callback so the load-indicator useEffect
+  // re-runs after every view/date render (header cells mount fresh on each navigation).
+  const [fcRenderCount, setFcRenderCount] = useState(0)
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -152,13 +197,22 @@ function Schedule() {
     () => getSettings().schedule?.use24HourFormat ?? true
   )
 
+  const [schedulingGuidanceLevel, setSchedulingGuidanceLevel] = useState(() => {
+    const stored = getSettings().schedule?.schedulingGuidanceLevel
+    return VALID_GUIDANCE_LEVELS.includes(stored) ? stored : 'full'
+  })
+
   useEffect(() => {
     // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
     const handleStorage = (event) => {
       try {
-        const updatedValue = getSettings().schedule?.use24HourFormat
-        if (typeof updatedValue === 'boolean') {
-          setUse24HourFormat(updatedValue)
+        const scheduleSettings = getSettings().schedule
+        if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
+          setUse24HourFormat(scheduleSettings.use24HourFormat)
+        }
+        const level = scheduleSettings?.schedulingGuidanceLevel
+        if (VALID_GUIDANCE_LEVELS.includes(level)) {
+          setSchedulingGuidanceLevel(level)
         }
       } catch (_err) {}
 
@@ -175,9 +229,13 @@ function Schedule() {
     // Settings page should dispatch: window.dispatchEvent(new CustomEvent('settingsUpdated'))
     const handleSettingsUpdated = () => {
       try {
-        const updatedValue = getSettings().schedule?.use24HourFormat
-        if (typeof updatedValue === 'boolean') {
-          setUse24HourFormat(updatedValue)
+        const scheduleSettings = getSettings().schedule
+        if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
+          setUse24HourFormat(scheduleSettings.use24HourFormat)
+        }
+        const level = scheduleSettings?.schedulingGuidanceLevel
+        if (VALID_GUIDANCE_LEVELS.includes(level)) {
+          setSchedulingGuidanceLevel(level)
         }
       } catch (_err) {}
     }
@@ -209,6 +267,24 @@ function Schedule() {
     () => toFullCalendarEvents(events),
     [events]
   )
+
+  // Per-day load map for all-view header/cell indicators.
+  // Not computed during scroll/hover — only recomputed when events or guidance level changes.
+  const dayLoadMap = useMemo(() => {
+    if (schedulingGuidanceLevel === 'off') return {}
+    const map = {}
+    for (const event of events) {
+      const day = event.day
+      if (!day) continue
+      if (!map[day]) map[day] = []
+      map[day].push(event)
+    }
+    const result = {}
+    for (const [day, dayEvents] of Object.entries(map)) {
+      result[day] = getMemoizedDayLoad(dayEvents, day)
+    }
+    return result
+  }, [events, schedulingGuidanceLevel])
 
   // Load events based on current view and date
   const loadEvents = useCallback(async () => {
@@ -284,7 +360,25 @@ function Schedule() {
       }
 
       // Strip the internal flag before persisting to avoid polluting IndexedDB
-      const { _isNewCreation, ...cleanEventData } = eventData
+      const { _isNewCreation, ...rawCleanData } = eventData
+
+      // Snap timed event start/end to the configured interval (start down, end up).
+      // This keeps stored values consistent with structural validation and load
+      // computation, which both apply the same snapping internally.
+      let cleanEventData = rawCleanData
+      if (rawCleanData.startTime && rawCleanData.endTime && !rawCleanData.allDay) {
+        const rawStart = timeToMinutes(rawCleanData.startTime)
+        const rawEnd = timeToMinutes(rawCleanData.endTime)
+        const wasMidnightSpanning = rawEnd < rawStart
+        const normalEnd = wasMidnightSpanning ? rawEnd + 1440 : rawEnd
+        const snappedStart = snapDown(rawStart)
+        const snappedEnd = snapUp(normalEnd)
+        cleanEventData = {
+          ...rawCleanData,
+          startTime: minutesToTime(snappedStart),
+          endTime: formatSnappedEndTime(snappedEnd, wasMidnightSpanning)
+        }
+      }
 
       // Check if this is an update or create
       // For updates, we need both an ID and it must be a string/number
@@ -292,6 +386,54 @@ function Schedule() {
         cleanEventData.id &&
         (typeof cleanEventData.id === 'string' ||
           typeof cleanEventData.id === 'number')
+
+      // Structural validation: enforce simultaneous-event limits before saving.
+      // Exclude the event being updated (by ID) so edits don't self-conflict.
+      const structuralError = checkStructural(cleanEventData, events, cleanEventData.id)
+      if (structuralError) {
+        setError(structuralError)
+        // Clear any stale suggestions from a previous failure before generating new ones.
+        setSuggestions([])
+        // In 'full' guidance mode, surface available time slots for this day.
+        // Only generate suggestions for timed events (all-day events have no duration).
+        if (
+          schedulingGuidanceLevel === 'full' &&
+          cleanEventData.day &&
+          cleanEventData.startTime &&
+          cleanEventData.endTime
+        ) {
+          const dayStr = cleanEventData.day
+          const parts = dayStr.split('-').map(Number)
+          const eventDate =
+            parts.length === 3 && parts.every((n) => !Number.isNaN(n))
+              ? new Date(parts[0], parts[1] - 1, parts[2])
+              : new Date(dayStr)
+          const dayEvents = events.filter(
+            (e) => e.day === dayStr && e.id !== cleanEventData.id
+          )
+          const endMins = timeToMinutes(cleanEventData.endTime)
+          const startMins = timeToMinutes(cleanEventData.startTime)
+          const duration =
+            endMins < startMins ? endMins + 1440 - startMins : endMins - startMins
+          if (duration > 0) {
+            setSuggestions(
+              generateSuggestions({
+                existingEvents: dayEvents,
+                durationMinutes: duration,
+                date: eventDate,
+                ...(typeof cleanEventData.preparationTime === 'number' && {
+                  preparationTime: cleanEventData.preparationTime
+                }),
+                ...(typeof cleanEventData.travelTime === 'number' && {
+                  travelTime: cleanEventData.travelTime
+                })
+              })
+            )
+          }
+        }
+        return
+      }
+      setSuggestions([])
 
       if (isUpdate) {
         await EventService.updateEvent(cleanEventData)
@@ -373,6 +515,11 @@ function Schedule() {
     } catch (_err) {
       setError('Failed to edit event. Please try again.')
     }
+  }
+
+  const handleDismissError = () => {
+    setError('')
+    setSuggestions([])
   }
 
   const handleCloseModal = () => {
@@ -661,14 +808,26 @@ function Schedule() {
           // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
           endTime: format(mainEnd, 'HH:mm')
         }
+
+        // Structural validation: reject the drop if it would exceed the
+        // simultaneous-event limit (exclude the event being moved by ID).
+        const structuralError = checkStructural(updated, events, updated.id)
+        if (structuralError) {
+          dropInfo.revert()
+          setSuggestions([])
+          setError(structuralError)
+          return
+        }
+
         await EventService.updateEvent(updated)
         await loadEvents()
       } catch (_err) {
         dropInfo.revert()
+        setSuggestions([])
         setError('Failed to move event. Please try again.')
       }
     },
-    [loadEvents]
+    [loadEvents, events]
   )
 
   // Handle event resize (FullCalendar) — main duration only.
@@ -719,15 +878,112 @@ function Schedule() {
           // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
           endTime: format(mainEnd ?? defaultEnd, 'HH:mm')
         }
+
+        // Structural validation: reject the resize if it would create too many
+        // simultaneous events (exclude the event being resized by ID).
+        const structuralError = checkStructural(updated, events, updated.id)
+        if (structuralError) {
+          resizeInfo.revert()
+          setSuggestions([])
+          setError(structuralError)
+          return
+        }
+
         await EventService.updateEvent(updated)
         await loadEvents()
       } catch (_err) {
         resizeInfo.revert()
+        setSuggestions([])
         setError('Failed to resize event. Please try again.')
       }
     },
-    [loadEvents]
+    [loadEvents, events]
   )
+
+  // Called by FullCalendar after every view/date render so the load-indicator
+  // useEffect re-runs against freshly mounted DOM elements.
+  const handleDatesSet = useCallback(() => {
+    setFcRenderCount((c) => c + 1)
+  }, [])
+
+  // Apply load-indicator classes and sr-only labels directly to the FullCalendar
+  // DOM after events load or after the calendar renders new cells (datesSet).
+  // This replaces the earlier dayHeaderClassNames / dayHeaderDidMount approach,
+  // which only ran at cell mount time and therefore missed updates when the
+  // dayLoadMap changed after cells were already on screen.
+  // Works for all calendar views:
+  //  - Week / Day view: targets .fc-col-header-cell[data-date] (column headers)
+  //  - Month view:      targets .fc-daygrid-day[data-date]     (day cells)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fcRenderCount is a trigger-only dep — it increments each time FullCalendar renders new DOM cells so the effect re-runs on view/date navigation even when dayLoadMap is unchanged.
+  useEffect(() => {
+    const calendarApi = calendarRef.current?.getApi()
+    if (!calendarApi?.el) return
+    const calendarEl = calendarApi.el
+
+    // When guidance is off, strip any previously applied indicators and labels
+    if (schedulingGuidanceLevel === 'off') {
+      calendarEl.querySelectorAll('.day-load--high, .day-load--over').forEach((el) => {
+        el.classList.remove('day-load--high', 'day-load--over')
+        el.querySelectorAll('.sr-only-load-label').forEach((s) => {
+          s.parentNode?.removeChild(s)
+        })
+      })
+      return
+    }
+
+    const applyIndicator = (el, dateStr) => {
+      const load = dayLoadMap[dateStr] ?? 0
+      const parts = dateStr.split('-').map(Number)
+      const dayDate =
+        parts.length === 3 && parts.every((n) => !Number.isNaN(n))
+          ? new Date(parts[0], parts[1] - 1, parts[2])
+          : new Date(dateStr)
+      const dayMins = getDayDurationMinutes(dayDate)
+      // Derive per-day thresholds from config so "8 h / 9 h" semantics stay
+      // consistent on DST transition days (23 h / 25 h).
+      const thresholdOver = (SCHEDULING_CONFIG.loadThresholdOver * 1440) / dayMins
+      const thresholdHigh = (SCHEDULING_CONFIG.loadThresholdHigh * 1440) / dayMins
+
+      const isOver = load >= thresholdOver
+      const isHigh = isOver || load >= thresholdHigh
+
+      el.classList.toggle('day-load--over', isOver)
+      el.classList.toggle('day-load--high', isHigh && !isOver)
+
+      // Accessible sr-only label — upsert on each call so text stays current
+      const srClass = 'sr-only-load-label'
+      const anchor =
+        el.querySelector('.fc-col-header-cell-cushion') ??
+        el.querySelector('.fc-daygrid-day-number') ??
+        el
+      const existing = anchor.querySelector(`.${srClass}`)
+
+      if (!isHigh) {
+        if (existing?.parentNode) existing.parentNode.removeChild(existing)
+        return
+      }
+
+      const label = isOver ? ' — over capacity' : ' — high load'
+      if (existing) {
+        if (existing.textContent !== label) existing.textContent = label
+      } else {
+        const span = document.createElement('span')
+        span.className = `sr-only ${srClass}`
+        span.textContent = label
+        anchor.appendChild(span)
+      }
+    }
+
+    // Week / Day view column headers
+    calendarEl.querySelectorAll('.fc-col-header-cell[data-date]').forEach((cell) => {
+      applyIndicator(cell, cell.dataset.date)
+    })
+
+    // Month view day cells
+    calendarEl.querySelectorAll('.fc-daygrid-day[data-date]').forEach((cell) => {
+      applyIndicator(cell, cell.dataset.date)
+    })
+  }, [dayLoadMap, schedulingGuidanceLevel, fcRenderCount])
 
   return (
     <ErrorBoundary>
@@ -814,6 +1070,7 @@ function Schedule() {
                   select={handleDateSelect}
                   eventMouseEnter={handleEventMouseEnter}
                   eventWillUnmount={handleEventWillUnmount}
+                  datesSet={handleDatesSet}
                   eventDidMount={(info) => {
                     // Use mainStart (actual event time) for timezone band classification,
                     // not event.start which equals renderStart (includes buffer offset).
@@ -895,9 +1152,21 @@ function Schedule() {
           {error && (
             <div className='fc-error-toast' role='alert'>
               {error}
+              {suggestions.length > 0 && (
+                <div className='fc-error-suggestions' role='group' aria-label='Available time slots'>
+                  <span className='fc-error-suggestions-label'>Try instead:</span>
+                  <ul className='fc-error-suggestions-list'>
+                    {suggestions.map((s) => (
+                      <li key={s.startMinutes} className='fc-error-suggestion-slot'>
+                        {minutesToTime(s.startMinutes)} – {s.endMinutes === 1440 ? '24:00' : minutesToTime(s.endMinutes)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <button
                 type='button'
-                onClick={() => setError('')}
+                onClick={handleDismissError}
                 className='error-dismiss'
                 aria-label='Dismiss error'
               >

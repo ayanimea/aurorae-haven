@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { getSettings, updateSetting } from '../utils/settingsManager'
+import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
   requestDirectoryAccess,
@@ -504,6 +504,48 @@ function Settings() {
             </label>
             <small id='24hour-format-hint' className='settings-checkbox-hint'>
               Display times in 24-hour format (e.g., 14:00 instead of 2:00 PM)
+            </small>
+          </div>
+
+          {/* Load Awareness Guidance Level */}
+          <div className='settings-field'>
+            <label className='settings-label' htmlFor='scheduling-guidance-level'>
+              <strong>Load Awareness Guidance</strong>
+            </label>
+            <select
+              id='scheduling-guidance-level'
+              className='settings-select'
+              value={settings.schedule?.schedulingGuidanceLevel ?? 'full'}
+              onChange={(e) => {
+                const level = VALID_GUIDANCE_LEVELS.includes(e.target.value)
+                  ? e.target.value
+                  : 'full'
+                const newSettings = {
+                  ...settings,
+                  schedule: {
+                    ...settings.schedule,
+                    schedulingGuidanceLevel: level
+                  }
+                }
+                setSettingsState(newSettings)
+                updateSetting('schedule.schedulingGuidanceLevel', level)
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('settingsUpdated'))
+                }
+                showMessage('Load awareness level updated')
+              }}
+              aria-describedby='guidance-level-hint'
+            >
+              <option value='full'>Full: header indicators, warnings &amp; suggestions</option>
+              <option value='header-only'>Header only: indicators only, no warnings</option>
+              <option value='off'>Off: indicators disabled</option>
+            </select>
+            <small id='guidance-level-hint' className='settings-checkbox-hint'>
+              Week and day headers, plus month cells, show an amber underline
+              when 8 h of events are scheduled (end of the work block), and a
+              ⚠ icon at 9 h (into leisure time). Structural limits still apply
+              regardless of this setting: max 2 simultaneous events, or up to
+              3 when one event is all-day.
             </small>
           </div>
         </div>

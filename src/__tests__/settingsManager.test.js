@@ -9,7 +9,8 @@ import {
   resetSettings,
   exportSettings,
   importSettings,
-  validateSettings
+  validateSettings,
+  VALID_GUIDANCE_LEVELS
 } from '../utils/settingsManager'
 
 describe('Settings Manager', () => {
@@ -392,5 +393,102 @@ describe('Settings Manager', () => {
     test.todo(
       'should validate nested settings - currently only does shallow checks'
     )
+  })
+
+  // ── schedulingGuidanceLevel validation ─────────────────────────────────────
+
+  describe('schedulingGuidanceLevel clamping', () => {
+    it('VALID_GUIDANCE_LEVELS exports the correct enum', () => {
+      expect(VALID_GUIDANCE_LEVELS).toEqual(['full', 'header-only', 'off'])
+    })
+
+    it('getSettings clamps an invalid stored schedulingGuidanceLevel to "full"', () => {
+      // Simulate a corrupted / legacy stored value
+      localStorage.setItem(
+        'aurorae_settings',
+        JSON.stringify({ schedule: { schedulingGuidanceLevel: 'invalid-value' } })
+      )
+      const settings = getSettings()
+      expect(settings.schedule.schedulingGuidanceLevel).toBe('full')
+    })
+
+    it('getSettings preserves valid stored schedulingGuidanceLevel values', () => {
+      for (const level of VALID_GUIDANCE_LEVELS) {
+        localStorage.setItem(
+          'aurorae_settings',
+          JSON.stringify({ schedule: { schedulingGuidanceLevel: level } })
+        )
+        const settings = getSettings()
+        expect(settings.schedule.schedulingGuidanceLevel).toBe(level)
+      }
+    })
+
+    it('updateSetting clamps invalid schedulingGuidanceLevel to "full"', () => {
+      const result = updateSetting('schedule.schedulingGuidanceLevel', 'bogus')
+      expect(result.schedule.schedulingGuidanceLevel).toBe('full')
+    })
+
+    it('updateSetting preserves valid schedulingGuidanceLevel values', () => {
+      for (const level of VALID_GUIDANCE_LEVELS) {
+        const result = updateSetting('schedule.schedulingGuidanceLevel', level)
+        expect(result.schedule.schedulingGuidanceLevel).toBe(level)
+      }
+    })
+
+    it('validateSettings returns false for invalid schedulingGuidanceLevel', () => {
+      const result = validateSettings({
+        schedule: { schedulingGuidanceLevel: 'unknown' }
+      })
+      expect(result).toBe(false)
+    })
+
+    it('validateSettings returns true when schedulingGuidanceLevel is valid', () => {
+      for (const level of VALID_GUIDANCE_LEVELS) {
+        const result = validateSettings({
+          schedule: { schedulingGuidanceLevel: level }
+        })
+        expect(result).toBe(true)
+      }
+    })
+
+    it('validateSettings returns true when schedulingGuidanceLevel is absent', () => {
+      expect(validateSettings({ schedule: {} })).toBe(true)
+      expect(validateSettings({})).toBe(true)
+    })
+
+    it('getSettings resets schedule to default when stored schedule is a string', () => {
+      // Simulate corrupted localStorage where schedule is a string
+      localStorage.setItem(
+        'aurorae_settings',
+        JSON.stringify({ schedule: 'corrupted' })
+      )
+      const settings = getSettings()
+      expect(typeof settings.schedule).toBe('object')
+      expect(settings.schedule).not.toBeNull()
+      expect(Array.isArray(settings.schedule)).toBe(false)
+      expect(settings.schedule.schedulingGuidanceLevel).toBe('full')
+    })
+
+    it('getSettings resets schedule to default when stored schedule is a number', () => {
+      localStorage.setItem(
+        'aurorae_settings',
+        JSON.stringify({ schedule: 42 })
+      )
+      const settings = getSettings()
+      expect(typeof settings.schedule).toBe('object')
+      expect(settings.schedule.schedulingGuidanceLevel).toBe('full')
+    })
+
+    it('validateSettings returns false when schedule is a string', () => {
+      expect(validateSettings({ schedule: 'bad' })).toBe(false)
+    })
+
+    it('validateSettings returns false when schedule is null', () => {
+      expect(validateSettings({ schedule: null })).toBe(false)
+    })
+
+    it('validateSettings returns false when schedule is an array', () => {
+      expect(validateSettings({ schedule: [] })).toBe(false)
+    })
   })
 })

@@ -115,6 +115,10 @@ describe('timeUtils', () => {
       expect(timeToMinutes('invalid')).toBe(0)
       expect(timeToMinutes('25:00')).toBe(0) // out-of-range
     })
+
+    test('should return 1440 for end-of-day sentinel "24:00"', () => {
+      expect(timeToMinutes('24:00')).toBe(1440)
+    })
   })
 
   describe('minutesToTime', () => {

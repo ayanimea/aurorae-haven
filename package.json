@@ -39,7 +39,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",
-    "dompurify": "^3.2.7",
+    "dompurify": "^3.3.2",
     "express": "^4.18.2",
     "express-rate-limit": "^8.1.0",
     "katex": "^0.16.23",
@@ -75,12 +75,14 @@
     "vitest": "^4.0.18"
   },
   "overrides": {
-    "glob": "^13.0.1",
+    "glob": "^13.0.6",
+    "minimatch": "^10.2.4",
+    "@rollup/plugin-terser": "^1.0.0",
     "source-map": "^0.7.4",
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.5",
     "magic-string": "^0.30.19",
     "filelist": {
-      "minimatch": "^10.2.1"
+      "minimatch": "^10.2.4"
     },
     "workbox-build": {
       "source-map": "^0.7.4"

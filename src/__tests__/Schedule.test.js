@@ -9,7 +9,8 @@ import EventService from '../services/EventService'
 const capturedHandlers = vi.hoisted(() => ({
   eventDidMount: null,
   eventDrop: null,
-  eventResize: null
+  eventResize: null,
+  datesSet: null
 }))
 
 // Mock FullCalendar to avoid ESM parsing issues
@@ -19,6 +20,7 @@ vi.mock('@fullcalendar/react', () => {
       capturedHandlers.eventDidMount = props.eventDidMount
       capturedHandlers.eventDrop = props.eventDrop
       capturedHandlers.eventResize = props.eventResize
+      capturedHandlers.datesSet = props.datesSet
       return (
         <div className='fc' data-testid='fullcalendar'>
           <div className='fc-view'>{props.initialView}</div>
@@ -548,5 +550,141 @@ describe('handleEventDrop and handleEventResize', () => {
       })
     )
     expect(resizeInfo.revert).not.toHaveBeenCalled()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests for load indicator datesSet handler
+// (replaces the removed dayHeaderClassNames / dayHeaderDidMount / dayHeaderWillUnmount suite)
+// ---------------------------------------------------------------------------
+describe('load indicator datesSet handler', () => {
+  beforeEach(async () => {
+    capturedHandlers.datesSet = null
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue([])
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+    EventService.getEventsForDays.mockResolvedValue([])
+    render(<Schedule />)
+    await waitFor(() => expect(capturedHandlers.datesSet).not.toBeNull())
+  })
+
+  afterEach(() => jest.useRealTimers())
+
+  // datesSet prop is passed to FullCalendar
+  test('datesSet prop is captured from FullCalendar', () => {
+    expect(capturedHandlers.datesSet).toBeTypeOf('function')
+  })
+
+  // Calling datesSet does not throw
+  test('calling datesSet does not throw', async () => {
+    await act(async () => {
+      capturedHandlers.datesSet({})
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests for structural validation wired into handleEventDrop / handleEventResize
+// ---------------------------------------------------------------------------
+describe('structural validation in handleEventDrop and handleEventResize', () => {
+  // Two events on 2025-09-16 both at 09:00–10:00 (concurrent)
+  const existingEvents = [
+    { id: '1', day: '2025-09-16', startTime: '09:00', endTime: '10:00', title: 'A', type: 'task' },
+    { id: '2', day: '2025-09-16', startTime: '09:00', endTime: '10:00', title: 'B', type: 'task' }
+  ]
+
+  beforeEach(async () => {
+    capturedHandlers.eventDrop = null
+    capturedHandlers.eventResize = null
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue(existingEvents)
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+    EventService.getEventsForDays.mockResolvedValue([])
+    EventService.updateEvent = vi.fn().mockResolvedValue(undefined)
+    render(<Schedule />)
+    await waitFor(() => expect(capturedHandlers.eventDrop).not.toBeNull())
+    // Wait for events to be loaded into state (getEventsForDate called + React re-render)
+    await waitFor(() => expect(EventService.getEventsForDate).toHaveBeenCalled())
+    // Flush any pending microtasks so setEvents() has been applied before tests run
+    await act(async () => {})
+  })
+
+  afterEach(() => jest.useRealTimers())
+
+  test('handleEventDrop reverts when dragging a 3rd timed event into a full slot', async () => {
+    const revert = vi.fn()
+    const originalEvent = {
+      id: '3',
+      day: '2025-09-16',
+      startTime: '08:00',
+      endTime: '09:00',
+      title: 'C',
+      type: 'task'
+    }
+
+    // Drag event 3 to overlap with both existing events (09:00–10:00)
+    const dropInfo = {
+      event: {
+        start: new Date('2025-09-16T09:00:00'), // renderStart = mainStart (no buffers)
+        end: new Date('2025-09-16T10:00:00'),
+        extendedProps: {
+          originalEvent,
+          prepDuration: 0,
+          travelDuration: 0
+        }
+      },
+      revert
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventDrop(dropInfo)
+    })
+
+    // Should revert because limit of 2 simultaneous events is exceeded
+    expect(revert).toHaveBeenCalled()
+    expect(EventService.updateEvent).not.toHaveBeenCalled()
+  })
+
+  test('handleEventResize reverts when resize creates a structural conflict', async () => {
+    const revert = vi.fn()
+    const originalEvent = {
+      id: '3',
+      day: '2025-09-16',
+      startTime: '08:00',
+      endTime: '08:30',
+      title: 'C',
+      type: 'task'
+    }
+
+    // Resize event 3 end down to overlap with both existing events
+    const resizeInfo = {
+      event: {
+        start: new Date('2025-09-16T08:00:00'),
+        end: new Date('2025-09-16T10:00:00'), // extended into the full slot
+        extendedProps: {
+          originalEvent,
+          prepDuration: 0,
+          travelDuration: 0,
+          mainStart: new Date('2025-09-16T08:00:00'),
+          mainEnd: new Date('2025-09-16T08:30:00')
+        }
+      },
+      startDelta: { valueOf: () => 0 },
+      endDelta: { valueOf: () => 90 * 60000 }, // extended by 90min
+      revert
+    }
+
+    await act(async () => {
+      await capturedHandlers.eventResize(resizeInfo)
+    })
+
+    expect(revert).toHaveBeenCalled()
+    expect(EventService.updateEvent).not.toHaveBeenCalled()
   })
 })

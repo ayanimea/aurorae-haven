@@ -394,8 +394,9 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   z-index: var(--z-toast);
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 320px;
 }
 
 .error-dismiss {
@@ -406,6 +407,34 @@
   cursor: pointer;
   padding: 0;
   line-height: 1;
+  align-self: flex-end;
+}
+
+.fc-error-suggestions {
+  font-size: 0.85em;
+  opacity: 0.95;
+}
+
+.fc-error-suggestions-label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.fc-error-suggestions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+}
+
+.fc-error-suggestion-slot {
+  background: var(--glass-chip-bg);
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Success message styles */

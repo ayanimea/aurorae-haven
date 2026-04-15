@@ -1,0 +1,625 @@
+/**
+ * Tests for the Scheduling System:
+ *  - Config invariant
+ *  - Snap rounding (timeUtils)
+ *  - Load computation (thresholds + DST)
+ *  - Structural constraints (simultaneous limits, overlap with prep/travel)
+ *  - Suggestion engine (deterministic output)
+ */
+
+import { describe, it, expect, beforeEach } from 'vitest'
+import { SCHEDULING_CONFIG } from '../schedule/config'
+import { snapDown, snapUp, snapEventTime } from '../schedule/timeUtils'
+import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
+import {
+  computeDayLoad,
+  getDayDurationMinutes,
+  getMemoizedDayLoad,
+  clearLoadCache,
+  getLoadCacheSize,
+  LOAD_CACHE_MAX_SIZE
+} from '../schedule/loadComputation'
+import {
+  getEffectiveWindow,
+  eventsOverlap,
+  validateStructural
+} from '../schedule/structuralConstraints'
+import { generateSuggestions } from '../schedule/suggestionEngine'
+
+// ── Config ────────────────────────────────────────────────────────────────────
+
+describe('SCHEDULING_CONFIG invariant', () => {
+  it('loadThresholdOver must be greater than loadThresholdHigh', () => {
+    expect(SCHEDULING_CONFIG.loadThresholdOver).toBeGreaterThan(
+      SCHEDULING_CONFIG.loadThresholdHigh
+    )
+  })
+
+  it('has required keys with correct types', () => {
+    expect(typeof SCHEDULING_CONFIG.loadThresholdHigh).toBe('number')
+    expect(typeof SCHEDULING_CONFIG.loadThresholdOver).toBe('number')
+    expect(typeof SCHEDULING_CONFIG.maxSimultaneousEvents).toBe('number')
+    expect(typeof SCHEDULING_CONFIG.maxSimultaneousWithAllDay).toBe('number')
+    expect(typeof SCHEDULING_CONFIG.snapIntervalMinutes).toBe('number')
+  })
+
+  it('maxSimultaneousWithAllDay > maxSimultaneousEvents', () => {
+    expect(SCHEDULING_CONFIG.maxSimultaneousWithAllDay).toBeGreaterThan(
+      SCHEDULING_CONFIG.maxSimultaneousEvents
+    )
+  })
+})
+
+// ── Snap Rounding ─────────────────────────────────────────────────────────────
+
+describe('snapDown', () => {
+  it('returns value unchanged when already on boundary', () => {
+    expect(snapDown(0)).toBe(0)
+    expect(snapDown(15)).toBe(15)
+    expect(snapDown(60)).toBe(60)
+    expect(snapDown(90)).toBe(90)
+  })
+
+  it('rounds down to the nearest interval', () => {
+    expect(snapDown(1)).toBe(0)
+    expect(snapDown(14)).toBe(0)
+    expect(snapDown(16)).toBe(15)
+    expect(snapDown(29)).toBe(15)
+    expect(snapDown(61)).toBe(60)
+  })
+
+  it('handles large values', () => {
+    expect(snapDown(1439)).toBe(1425) // 23:59 → 23:45
+    expect(snapDown(1440)).toBe(1440) // 24:00 → 24:00
+  })
+})
+
+describe('snapUp', () => {
+  it('returns value unchanged when already on boundary', () => {
+    expect(snapUp(0)).toBe(0)
+    expect(snapUp(15)).toBe(15)
+    expect(snapUp(60)).toBe(60)
+  })
+
+  it('rounds up to the nearest interval', () => {
+    expect(snapUp(1)).toBe(15)
+    expect(snapUp(14)).toBe(15)
+    expect(snapUp(16)).toBe(30)
+    expect(snapUp(31)).toBe(45)
+  })
+
+  it('handles large values', () => {
+    expect(snapUp(1441)).toBe(1455) // just past 24:00 → round up
+  })
+})
+
+describe('snapEventTime', () => {
+  it('snaps start down and end up', () => {
+    expect(snapEventTime(7, 68)).toEqual({ start: 0, end: 75 })
+    expect(snapEventTime(60, 120)).toEqual({ start: 60, end: 120 })
+    expect(snapEventTime(61, 119)).toEqual({ start: 60, end: 120 })
+  })
+
+  it('returns a new object — does not mutate inputs', () => {
+    const result = snapEventTime(10, 70)
+    expect(result).toEqual({ start: 0, end: 75 })
+  })
+})
+
+// ── Load Computation ──────────────────────────────────────────────────────────
+
+describe('getDayDurationMinutes', () => {
+  it('returns 1440 for a normal day', () => {
+    expect(getDayDurationMinutes(new Date(2025, 5, 15))).toBe(1440) // June 15
+  })
+})
+
+describe('computeDayLoad', () => {
+  it('returns 0 for empty event list', () => {
+    expect(computeDayLoad([], new Date(2025, 0, 1))).toBe(0)
+  })
+
+  it('includes prep + travel in load', () => {
+    const events = [
+      {
+        startTime: '09:00',
+        endTime: '10:00',
+        preparationTime: 30,
+        travelTime: 30
+      }
+    ]
+    // Snapped duration = 60 min, prep = 30, travel = 30 → total = 120
+    const load = computeDayLoad(events, new Date(2025, 0, 1))
+    expect(load).toBeCloseTo(120 / 1440, 5)
+  })
+
+  it('snaps event duration correctly', () => {
+    // 09:07–10:53 raw = 106 min; snapDown(547)=540 start, snapUp(653)=660 end → 120 min snapped
+    const events = [{ startTime: '09:07', endTime: '10:53' }]
+    const load = computeDayLoad(events, new Date(2025, 0, 1))
+    expect(load).toBeCloseTo(120 / 1440, 5)
+  })
+
+  it('reflects loadThresholdHigh boundary correctly', () => {
+    const highMinutes = SCHEDULING_CONFIG.loadThresholdHigh * 1440
+    const events = [{ startTime: '00:00', endTime: minutesToHHMM(highMinutes) }]
+    const load = computeDayLoad(events, new Date(2025, 0, 1))
+    expect(load).toBeGreaterThanOrEqual(SCHEDULING_CONFIG.loadThresholdHigh - 0.01)
+  })
+
+  it('can exceed 1.0 when over capacity', () => {
+    // 24 events of 60 min each with 30 min prep = 90 min each = 24 * 90 = 2160 min / 1440 > 1.0
+    const events = Array.from({ length: 24 }, (_, i) => ({
+      startTime: `${String(i).padStart(2, '0')}:00`,
+      endTime: `${String(i).padStart(2, '0')}:59`,
+      preparationTime: 30,
+      travelTime: 0
+    }))
+    const load = computeDayLoad(events, new Date(2025, 0, 1))
+    expect(load).toBeGreaterThan(1.0)
+  })
+})
+
+describe('getMemoizedDayLoad', () => {
+  beforeEach(() => {
+    clearLoadCache()
+  })
+
+  it('returns the same value as computeDayLoad', () => {
+    const events = [{ startTime: '09:00', endTime: '10:00' }]
+    const direct = computeDayLoad(events, new Date(2025, 0, 15))
+    const memoised = getMemoizedDayLoad(events, '2025-01-15')
+    expect(memoised).toBeCloseTo(direct, 10)
+  })
+
+  it('returns cached result on second call', () => {
+    const events = [{ startTime: '10:00', endTime: '11:00' }]
+    const first = getMemoizedDayLoad(events, '2025-06-01')
+    const second = getMemoizedDayLoad(events, '2025-06-01')
+    expect(first).toBe(second)
+  })
+
+  it('uses local date construction (no UTC offset shift)', () => {
+    // computeDayLoad with a locally-constructed Date must match getMemoizedDayLoad.
+    // If getMemoizedDayLoad used new Date("YYYY-MM-DDT00:00:00") it would be UTC,
+    // which can shift the day in non-UTC timezones producing a DST mismatch.
+    const events = [{ startTime: '08:00', endTime: '09:00' }]
+    const localDate = new Date(2025, 5, 15) // local midnight
+    const directLoad = computeDayLoad(events, localDate)
+    const memoLoad = getMemoizedDayLoad(events, '2025-06-15')
+    expect(memoLoad).toBeCloseTo(directLoad, 10)
+  })
+
+  it('LRU: cache size stays bounded at MAX_SIZE; evictions occur on every insertion beyond limit', () => {
+    const base = [{ startTime: '09:00', endTime: '10:00' }]
+
+    // Fill cache exactly to LOAD_CACHE_MAX_SIZE using genuinely unique date strings
+    // (increment day-of-year from a fixed base to avoid duplicate mm/dd combos)
+    for (let i = 0; i < LOAD_CACHE_MAX_SIZE; i++) {
+      const d = new Date(2000, 0, 1 + i) // 2000-01-01 + i days
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      getMemoizedDayLoad(base, dateStr)
+    }
+    expect(getLoadCacheSize()).toBe(LOAD_CACHE_MAX_SIZE)
+
+    // Add 5 more entries — each one must trigger an eviction so size stays bounded
+    for (let i = 1; i <= 5; i++) {
+      getMemoizedDayLoad(
+        [{ startTime: '08:00', endTime: `0${8 + i}:00` }],
+        `2099-12-${String(i).padStart(2, '0')}`
+      )
+      expect(getLoadCacheSize()).toBe(LOAD_CACHE_MAX_SIZE)
+    }
+  })
+})
+
+// ── Structural Constraints ────────────────────────────────────────────────────
+
+describe('getEffectiveWindow', () => {
+  it('expands window by prep (earlier) and travel (later)', () => {
+    const event = {
+      startTime: '10:00',
+      endTime: '11:00',
+      preparationTime: 30,
+      travelTime: 15
+    }
+    const w = getEffectiveWindow(event)
+    expect(w.start).toBe(10 * 60 - 30) // 570
+    expect(w.end).toBe(11 * 60 + 15) // 675
+  })
+
+  it('defaults prep/travel to 0 when absent', () => {
+    const event = { startTime: '09:00', endTime: '10:00' }
+    const w = getEffectiveWindow(event)
+    expect(w.start).toBe(540)
+    expect(w.end).toBe(600)
+  })
+})
+
+describe('eventsOverlap', () => {
+  it('detects overlap', () => {
+    const a = { startTime: '09:00', endTime: '10:00' }
+    const b = { startTime: '09:30', endTime: '10:30' }
+    expect(eventsOverlap(a, b)).toBe(true)
+  })
+
+  it('touching boundaries are NOT overlap', () => {
+    const a = { startTime: '09:00', endTime: '10:00' }
+    const b = { startTime: '10:00', endTime: '11:00' }
+    expect(eventsOverlap(a, b)).toBe(false)
+  })
+
+  it('detects overlap via prep time', () => {
+    // a ends at 10:00, b starts at 10:00 but has 30 min prep → effective start = 09:30
+    const a = { startTime: '09:00', endTime: '10:00' }
+    const b = { startTime: '10:00', endTime: '11:00', preparationTime: 30 }
+    expect(eventsOverlap(a, b)).toBe(true)
+  })
+
+  it('detects overlap via travel time', () => {
+    // a ends at 10:00 with 30 min travel → effective end = 10:30; b starts at 10:15
+    const a = { startTime: '09:00', endTime: '10:00', travelTime: 30 }
+    const b = { startTime: '10:15', endTime: '11:00' }
+    expect(eventsOverlap(a, b)).toBe(true)
+  })
+})
+
+describe('validateStructural', () => {
+  it('allows a single event with no existing events', () => {
+    const candidate = { startTime: '09:00', endTime: '10:00' }
+    const result = validateStructural(candidate, [])
+    expect(result.valid).toBe(true)
+    expect(result.simultaneousCount).toBe(1)
+  })
+
+  it('allows up to maxSimultaneousEvents overlapping events', () => {
+    const existing = [{ startTime: '09:00', endTime: '10:00' }]
+    const candidate = { startTime: '09:30', endTime: '10:30' }
+    // 1 existing + candidate = 2 → exactly at limit
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(true)
+    expect(result.simultaneousCount).toBe(2)
+  })
+
+  it('rejects when exceeding maxSimultaneousEvents', () => {
+    const existing = [
+      { startTime: '09:00', endTime: '10:00' },
+      { startTime: '09:15', endTime: '10:15' }
+    ]
+    const candidate = { startTime: '09:30', endTime: '10:30' }
+    // 2 existing + candidate = 3, but limit is 2
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(false)
+    expect(result.simultaneousCount).toBe(3)
+  })
+
+  it('allows up to maxSimultaneousWithAllDay when an all-day event is present', () => {
+    const existing = [
+      { startTime: '09:00', endTime: '10:00', allDay: true },
+      { startTime: '09:00', endTime: '10:00' }
+    ]
+    const candidate = { startTime: '09:30', endTime: '10:30' }
+    // 2 existing + candidate = 3, allowed because one is all-day
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(true)
+    expect(result.simultaneousCount).toBe(3)
+  })
+
+  it('rejects when exceeding maxSimultaneousWithAllDay even with all-day', () => {
+    const existing = [
+      { startTime: '09:00', endTime: '10:00', allDay: true },
+      { startTime: '09:00', endTime: '10:00' },
+      { startTime: '09:00', endTime: '10:00' }
+    ]
+    const candidate = { startTime: '09:30', endTime: '10:30' }
+    // 3 existing + candidate = 4, exceeds maxSimultaneousWithAllDay (3)
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(false)
+    expect(result.simultaneousCount).toBe(4)
+  })
+
+  it('non-overlapping events do not count toward limit', () => {
+    const existing = [
+      { startTime: '07:00', endTime: '08:00' },
+      { startTime: '08:00', endTime: '09:00' }
+    ]
+    const candidate = { startTime: '10:00', endTime: '11:00' }
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(true)
+    expect(result.simultaneousCount).toBe(1)
+  })
+
+  it('all-day via missing startTime/endTime triggers the all-day simultaneous limit', () => {
+    // An event with no startTime/endTime is treated as all-day by getEffectiveWindow.
+    // validateStructural must use getEffectiveWindow().isAllDay to detect this,
+    // not just event.allDay === true, so the higher limit applies.
+    const existing = [
+      { /* no startTime, no endTime — all-day via missing times */ },
+      { startTime: '09:00', endTime: '10:00' }
+    ]
+    const candidate = { startTime: '09:30', endTime: '10:30' }
+    // 2 existing + candidate = 3; allowed because one is all-day (by missing times)
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(true)
+    expect(result.simultaneousCount).toBe(3)
+  })
+})
+
+// ── Suggestion Engine ─────────────────────────────────────────────────────────
+
+describe('generateSuggestions', () => {
+  const date = new Date(2025, 5, 15) // 2025-06-15, non-DST
+
+  it('returns an array of suggestions', () => {
+    const suggestions = generateSuggestions({
+      existingEvents: [],
+      durationMinutes: 60,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: 7 * 60,
+      rangeEndMinutes: 22 * 60
+    })
+    expect(Array.isArray(suggestions)).toBe(true)
+    expect(suggestions.length).toBeGreaterThan(0)
+  })
+
+  it('all suggestions have startMinutes snapped to interval', () => {
+    const interval = SCHEDULING_CONFIG.snapIntervalMinutes
+    const suggestions = generateSuggestions({
+      existingEvents: [],
+      durationMinutes: 30,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: 7 * 60,
+      rangeEndMinutes: 10 * 60
+    })
+    for (const s of suggestions) {
+      expect(s.startMinutes % interval).toBe(0)
+      expect(s.endMinutes % interval).toBe(0)
+    }
+  })
+
+  it('respects structural limits — no suggestion overlaps too many events', () => {
+    const existingEvents = [
+      { startTime: '09:00', endTime: '10:00' },
+      { startTime: '09:00', endTime: '10:00' }
+    ]
+    const suggestions = generateSuggestions({
+      existingEvents,
+      durationMinutes: 30,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: 8 * 60,
+      rangeEndMinutes: 12 * 60
+    })
+    // No suggestion should land inside 09:00–10:00 (would make 3 simultaneous)
+    for (const s of suggestions) {
+      const overlapsBlocked =
+        s.startMinutes < 600 && s.endMinutes > 540 // 10:00 > 09:00
+      expect(overlapsBlocked).toBe(false)
+    }
+  })
+
+  it('results are deterministic — same input yields same output', () => {
+    const params = {
+      existingEvents: [{ startTime: '10:00', endTime: '11:00' }],
+      durationMinutes: 45,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: 7 * 60,
+      rangeEndMinutes: 20 * 60
+    }
+    const first = generateSuggestions(params)
+    const second = generateSuggestions(params)
+    expect(first.map((s) => s.startMinutes)).toEqual(
+      second.map((s) => s.startMinutes)
+    )
+  })
+
+  it('returns at most 5 suggestions', () => {
+    const suggestions = generateSuggestions({
+      existingEvents: [],
+      durationMinutes: 15,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: 7 * 60,
+      rangeEndMinutes: 22 * 60
+    })
+    expect(suggestions.length).toBeLessThanOrEqual(5)
+  })
+
+  it('does not start before fromMinutes', () => {
+    const fromMinutes = 11 * 60 // 11:00
+    const suggestions = generateSuggestions({
+      existingEvents: [],
+      durationMinutes: 60,
+      date,
+      fromMinutes,
+      nowMinutes: 0,
+      rangeStartMinutes: 7 * 60,
+      rangeEndMinutes: 22 * 60
+    })
+    for (const s of suggestions) {
+      expect(s.startMinutes).toBeGreaterThanOrEqual(fromMinutes)
+    }
+  })
+
+  it('results sorted by load then free block then earliest start', () => {
+    const suggestions = generateSuggestions({
+      existingEvents: [],
+      durationMinutes: 60,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: 7 * 60,
+      rangeEndMinutes: 12 * 60
+    })
+    // With no existing events all loads are equal; sorted by free block (all same) then start
+    for (let i = 1; i < suggestions.length; i++) {
+      const prev = suggestions[i - 1]
+      const curr = suggestions[i]
+      if (prev.load === curr.load && prev.freeBlock === curr.freeBlock) {
+        expect(curr.startMinutes).toBeGreaterThanOrEqual(prev.startMinutes)
+      }
+    }
+  })
+
+  it('freeBlock is clamped to rangeStart — does not extend before visible range', () => {
+    // With rangeStart=7*60 and no existing events, the free block must be
+    // (rangeEnd - rangeStart), not (rangeEnd - 0).  Previously measureFreeBlock
+    // anchored blockStart to 0, inflating freeBlock by rangeStartMinutes.
+    const rangeStart = 7 * 60
+    const rangeEnd = 10 * 60
+    const suggestions = generateSuggestions({
+      existingEvents: [],
+      durationMinutes: 60,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: rangeStart,
+      rangeEndMinutes: rangeEnd
+    })
+    // Every suggestion's freeBlock must be ≤ (rangeEnd - rangeStart)
+    const maxPossibleBlock = rangeEnd - rangeStart
+    for (const s of suggestions) {
+      expect(s.freeBlock).toBeLessThanOrEqual(maxPossibleBlock)
+    }
+  })
+})
+
+// ── PR-review regression tests ────────────────────────────────────────────────
+
+describe('midnight-spanning events in computeDayLoad', () => {
+  it('correctly accounts for an event that spans midnight (e.g. 23:00–01:00)', () => {
+    const date = new Date(2025, 5, 15)
+    // 23:00–01:00 = 2h = 120min; without the midnight fix rawEnd (60) < rawStart (1380)
+    // snapEventTime would return end-start = 0, losing the duration
+    const events = [{ startTime: '23:00', endTime: '01:00' }]
+    const load = computeDayLoad(events, date)
+    // 120 min / 1440 min ≈ 0.0833
+    expect(load).toBeCloseTo(120 / 1440, 4)
+  })
+})
+
+describe('getEffectiveWindow — all-day and midnight-spanning', () => {
+  it('returns [0, 1440) for an all-day event (allDay flag)', () => {
+    const w = getEffectiveWindow({ allDay: true })
+    expect(w.start).toBe(0)
+    expect(w.end).toBe(1440)
+    expect(w.isAllDay).toBe(true)
+  })
+
+  it('returns [0, 1440) when startTime and endTime are missing', () => {
+    const w = getEffectiveWindow({})
+    expect(w.start).toBe(0)
+    expect(w.end).toBe(1440)
+    expect(w.isAllDay).toBe(true)
+  })
+
+  it('handles midnight-spanning event (end < start) without prep/travel', () => {
+    const w = getEffectiveWindow({ startTime: '23:00', endTime: '01:00' })
+    // rawStart=1380, rawEnd=60 → normalEnd=60+1440=1500
+    expect(w.start).toBe(1380)
+    expect(w.end).toBe(1500)
+    expect(w.isAllDay).toBe(false)
+  })
+})
+
+describe('validateStructural — sweep-line (disjoint overlaps)', () => {
+  it('does not over-reject disjoint overlapping pairs (sweep-line fix)', () => {
+    // A: 09:00–10:00, B: 10:00–11:00, candidate: 09:30–10:30
+    // Old count: A + B + candidate = 3 → wrongly rejected at limit=2
+    // Sweep-line: A overlaps candidate only in [09:30,10:00], B only in [10:00,10:30].
+    // These sub-intervals are non-overlapping, so peak concurrency = 1 existing + candidate = 2.
+    const existing = [
+      { startTime: '09:00', endTime: '10:00' },
+      { startTime: '10:00', endTime: '11:00' }
+    ]
+    const candidate = { startTime: '09:30', endTime: '10:30' }
+    const result = validateStructural(candidate, existing)
+    expect(result.valid).toBe(true)
+    expect(result.simultaneousCount).toBe(2)
+  })
+})
+
+describe('getMemoizedDayLoad — order-independent cache key', () => {
+  it('returns the same load regardless of event order', () => {
+    clearLoadCache()
+    const a = { startTime: '09:00', endTime: '10:00' }
+    const b = { startTime: '14:00', endTime: '15:00' }
+    const dateStr = '2025-06-15'
+    const load1 = getMemoizedDayLoad([a, b], dateStr)
+    const load2 = getMemoizedDayLoad([b, a], dateStr)
+    expect(load1).toBeCloseTo(load2, 10)
+  })
+})
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function minutesToHHMM(minutes) {
+  const h = Math.floor(minutes / 60) % 24
+  const m = Math.floor(minutes % 60)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+// ── Snap-on-save normalisation ────────────────────────────────────────────────
+// Mirrors the handleSaveEvent logic in Schedule.jsx so the three edge-cases
+// (normal, midnight-spanning, 24:00 sentinel) are covered by unit tests.
+
+function computeSnappedTimes(startTime, endTime) {
+  const rawStart = timeToMinutes(startTime)
+  const rawEnd = timeToMinutes(endTime)
+  const wasMidnightSpanning = rawEnd < rawStart
+  const normalEnd = wasMidnightSpanning ? rawEnd + 1440 : rawEnd
+  const snappedStart = snapDown(rawStart)
+  const snappedEnd = snapUp(normalEnd)
+  let snappedEndTime
+  if (wasMidnightSpanning) {
+    snappedEndTime = minutesToTime(snappedEnd % 1440)
+  } else if (snappedEnd >= 1440) {
+    snappedEndTime = '24:00'
+  } else {
+    snappedEndTime = minutesToTime(snappedEnd)
+  }
+  return { startTime: minutesToTime(snappedStart), endTime: snappedEndTime }
+}
+
+describe('snap-on-save time normalisation', () => {
+  it('snaps a normal event: start down, end up', () => {
+    const result = computeSnappedTimes('09:22', '10:37')
+    expect(result.startTime).toBe('09:15')
+    expect(result.endTime).toBe('10:45')
+  })
+
+  it('leaves already-aligned times unchanged', () => {
+    const result = computeSnappedTimes('09:00', '10:00')
+    expect(result.startTime).toBe('09:00')
+    expect(result.endTime).toBe('10:00')
+  })
+
+  it('preserves the 24:00 sentinel when snapped end reaches exactly 1440', () => {
+    // 23:55 → snapUp(1435) = 1440 → '24:00'
+    const result = computeSnappedTimes('09:00', '23:55')
+    expect(result.endTime).toBe('24:00')
+  })
+
+  it('midnight-spanning: end wraps back after snapping', () => {
+    // start: 23:50 → snapDown(1430) = 1425 → '23:45'
+    // end:   00:05 → normalEnd = 5 + 1440 = 1445 → snapUp(1445) = 1455 → 1455 % 1440 = 15 → '00:15'
+    const result = computeSnappedTimes('23:50', '00:05')
+    expect(result.startTime).toBe('23:45')
+    expect(result.endTime).toBe('00:15')
+  })
+
+  it('zero-duration event: equal start/end snaps to the same boundary', () => {
+    // 09:00 is already on a 15-min boundary; snapDown = snapUp = 540
+    const result = computeSnappedTimes('09:00', '09:00')
+    expect(result.startTime).toBe('09:00')
+    expect(result.endTime).toBe('09:00')
+  })
+
+  it('zero-duration off-boundary: start snaps down, end snaps up', () => {
+    // 09:07 → snapDown(547) = 540 → '09:00'; snapUp(547) = 555 → '09:15'
+    const result = computeSnappedTimes('09:07', '09:07')
+    expect(result.startTime).toBe('09:00')
+    expect(result.endTime).toBe('09:15')
+  })
+})
