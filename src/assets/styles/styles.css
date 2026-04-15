@@ -2,6 +2,10 @@
  * Refactored for maintainability - each module < 400 lines (target) / 700 lines (max)
  */
 
+/* Figma revamp foundations */
+@import './fonts.css';
+@import './theme.css';
+
 /* Design tokens: CSS custom properties for consistent sizing/spacing */
 @import './tokens.css';
 

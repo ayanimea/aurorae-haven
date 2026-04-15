@@ -1,0 +1,19 @@
+:root {
+  --font-primary:
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Ubuntu,
+    Cantarell,
+    'Noto Sans',
+    sans-serif;
+  --font-heading:
+    'Space Grotesk',
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}

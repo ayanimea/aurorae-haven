@@ -5,6 +5,7 @@ import Icon from './common/Icon'
 import MobileMenu from './Layout/MobileMenu'
 import MoreMenu from './Layout/MoreMenu'
 import FileInputButton from './common/FileInputButton'
+import StarryBackground from './StarryBackground'
 
 function Layout({ children, onExport, onImport }) {
   const location = useLocation()
@@ -224,6 +225,10 @@ function Layout({ children, onExport, onImport }) {
 
   return (
     <>
+      <StarryBackground />
+      <div className='figma-nebula figma-nebula-a' aria-hidden='true' />
+      <div className='figma-nebula figma-nebula-b' aria-hidden='true' />
+      <div className='figma-nebula figma-nebula-c' aria-hidden='true' />
       {/* Fixed atmospheric background — sky gradient + star field. Sits below everything else.
           The planet (.planet-wrap) renders above this in DOM order at the same z-index. */}
       <div className='app-background' aria-hidden='true' />

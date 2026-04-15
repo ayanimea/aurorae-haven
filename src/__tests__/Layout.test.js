@@ -30,6 +30,16 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   })
 
   describe('TAB-NAV-01: Three-zone structure', () => {
+    test('renders figma-inspired animated background layer', () => {
+      renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      expect(screen.getByTestId('starry-background-canvas')).toBeInTheDocument()
+    })
+
     test('renders left zone with logo and title', () => {
       renderWithRouter(
         <Layout onExport={mockOnExport} onImport={mockOnImport}>
