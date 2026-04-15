@@ -378,7 +378,7 @@ function Schedule() {
           const endMins = timeToMinutes(cleanEventData.endTime)
           const startMins = timeToMinutes(cleanEventData.startTime)
           const duration =
-            endMins <= startMins ? endMins + 1440 - startMins : endMins - startMins
+            endMins < startMins ? endMins + 1440 - startMins : endMins - startMins
           if (duration > 0) {
             setSuggestions(
               generateSuggestions({
