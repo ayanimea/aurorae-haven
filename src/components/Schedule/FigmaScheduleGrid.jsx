@@ -10,7 +10,7 @@
  *   - viewMode: 'day' | 'week' | 'month'
  */
 import { Fragment } from 'react'
-import { format, startOfWeek, addDays, getDaysInMonth, startOfMonth } from 'date-fns'
+import { format, startOfWeek, addDays, startOfMonth } from 'date-fns'
 import PropTypes from 'prop-types'
 
 /* ── Period colours (from Figma Schedule.tsx) ───────────────────────────── */
@@ -213,12 +213,14 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date }) {
                   })
                 }
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ')
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
                     onSlotClick({
                       day: dateStr,
                       startTime: `${String(hour).padStart(2, '0')}:00`,
                       endTime: `${String((hour + 1) % 24).padStart(2, '0')}:00`
                     })
+                  }
                 }}
                 aria-label={`${String(hour).padStart(2, '0')}:00 slot`}
               >
@@ -462,12 +464,14 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date }) {
                       })
                     }
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ')
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
                         onSlotClick({
                           day: dayStr,
                           startTime: `${String(hour).padStart(2, '0')}:00`,
                           endTime: `${String((hour + 1) % 24).padStart(2, '0')}:00`
                         })
+                      }
                     }}
                     aria-label={`${dayStr} ${String(hour).padStart(2, '0')}:00 slot`}
                   >
@@ -593,7 +597,6 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
   const monthLabel = format(date, 'MMMM yyyy').toUpperCase()
   const todayStr = format(new Date(), 'yyyy-MM-dd')
   const monthNum = date.getMonth()
-  const daysInMonth = getDaysInMonth(date)
 
   return (
     <div style={{ padding: '1.25rem' }}>
@@ -669,8 +672,10 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
                 })
               }
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ')
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
                   onSlotClick({ day: dayStr, startTime: '09:00', endTime: '10:00' })
+                }
               }}
               aria-label={`${dayStr} — ${dayEvents.length} event${dayEvents.length !== 1 ? 's' : ''}`}
             >
@@ -685,7 +690,7 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
                   marginBottom: '0.3rem'
                 }}
               >
-                {day <= daysInMonth || isThisMonth ? day : ''}
+                {isThisMonth ? day : ''}
               </div>
               <div>
                 {dayEvents.slice(0, 2).map((evt) => {

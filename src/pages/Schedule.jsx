@@ -81,13 +81,6 @@ import { generateSuggestions } from '../schedule/suggestionEngine'
 import { snapDown, snapUp } from '../schedule/timeUtils'
 import '../components/ErrorBoundary.css'
 
-// Constant for buffer conversions — avoids magic number repetition
-// biome-ignore lint/correctness/noUnusedVariables: retained for future drag-drop re-implementation
-const MILLISECONDS_PER_MINUTE = 60000
-// Default column gap (px) used as fallback when CSS token is unavailable
-// biome-ignore lint/correctness/noUnusedVariables: retained for future overlap layout re-implementation
-const EVENT_COLUMN_GAP_FALLBACK_PX = 3
-
 /**
  * Convert a snapped end-minute value back to a stored time string.
  *
@@ -157,14 +150,6 @@ function Schedule() {
   // Dev-only: Lazy-loaded FloatingDevButtons component
   const [FloatingDevButtons, setFloatingDevButtons] = useState(null)
 
-  // Get time format preference from settings (default to 24-hour)
-  // Reactive settings: useState + storage listener for cross-tab updates
-  // Settings changes in Settings page or other tabs now reflect immediately
-  // biome-ignore lint/correctness/noUnusedVariables: kept for future 12/24h time display in event cards
-  const [use24HourFormat, setUse24HourFormat] = useState(
-    () => getSettings().schedule?.use24HourFormat ?? true
-  )
-
   const [schedulingGuidanceLevel, setSchedulingGuidanceLevel] = useState(() => {
     const stored = getSettings().schedule?.schedulingGuidanceLevel
     return VALID_GUIDANCE_LEVELS.includes(stored) ? stored : 'full'
@@ -175,9 +160,6 @@ function Schedule() {
     const handleStorage = (event) => {
       try {
         const scheduleSettings = getSettings().schedule
-        if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
-          setUse24HourFormat(scheduleSettings.use24HourFormat)
-        }
         const level = scheduleSettings?.schedulingGuidanceLevel
         if (VALID_GUIDANCE_LEVELS.includes(level)) {
           setSchedulingGuidanceLevel(level)
@@ -198,9 +180,6 @@ function Schedule() {
     const handleSettingsUpdated = () => {
       try {
         const scheduleSettings = getSettings().schedule
-        if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
-          setUse24HourFormat(scheduleSettings.use24HourFormat)
-        }
         const level = scheduleSettings?.schedulingGuidanceLevel
         if (VALID_GUIDANCE_LEVELS.includes(level)) {
           setSchedulingGuidanceLevel(level)
@@ -636,9 +615,6 @@ function Schedule() {
 
   const todayFmtStr = format(new Date(), 'd/MM/yyyy')
   const isToday = view === 'day' && headerDateLabel === todayFmtStr
-
-  // schedulingGuidanceLevel is used by handleSaveEvent to gate suggestion generation
-  void schedulingGuidanceLevel
 
   return (
     <ErrorBoundary>

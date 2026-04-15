@@ -24,7 +24,7 @@ const accentBg = {
   emerald: 'rgba(12,26,20,0.55)'
 }
 
-function GlassPanel({ children, className, style, accent, hover }) {
+function GlassPanel({ children, className = '', style, accent = 'none', hover = false }) {
   const borderColor = accentBorders[accent]
 
   return (
@@ -50,13 +50,6 @@ GlassPanel.propTypes = {
   style: PropTypes.object,
   accent: PropTypes.oneOf(['none', 'red', 'blue', 'amber', 'purple', 'cyan', 'emerald']),
   hover: PropTypes.bool
-}
-
-GlassPanel.defaultProps = {
-  className: '',
-  style: undefined,
-  accent: 'none',
-  hover: false
 }
 
 export default GlassPanel
