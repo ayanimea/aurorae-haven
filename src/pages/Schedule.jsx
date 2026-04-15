@@ -914,14 +914,12 @@ function Schedule() {
     const containerEl = scheduleContainerRef.current
     const calendarEl = calendarRef.current?.getApi()?.el
     if (!containerEl || !calendarEl) return
-    let observedTimegridBody = null
+    const observedTimegridBody = calendarEl.querySelector('.fc-timegrid-body')
+    if (!observedTimegridBody) return
 
     const syncTimeBandBounds = () => {
-      const timegridBody = calendarEl.querySelector('.fc-timegrid-body')
-      if (!timegridBody) return
-      observedTimegridBody = timegridBody
       const containerRect = containerEl.getBoundingClientRect()
-      const bodyRect = timegridBody.getBoundingClientRect()
+      const bodyRect = observedTimegridBody.getBoundingClientRect()
       const topOffset = Math.max(0, bodyRect.top - containerRect.top)
       const bodyHeight = Math.max(0, bodyRect.height)
       containerEl.style.setProperty('--time-bands-top-offset', `${topOffset}px`)
