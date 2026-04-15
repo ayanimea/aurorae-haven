@@ -141,7 +141,7 @@ select:focus {
     rgba(56, 48, 120, 0.12) 0%,
     transparent 70%
   );
-  animation: figmaDriftA 30s ease-in-out infinite alternate;
+  animation: none;
 }
 
 .figma-nebula-b {
@@ -154,7 +154,7 @@ select:focus {
     rgba(30, 58, 120, 0.1) 0%,
     transparent 70%
   );
-  animation: figmaDriftB 35s ease-in-out infinite alternate;
+  animation: none;
 }
 
 .figma-nebula-c {
@@ -167,7 +167,7 @@ select:focus {
     rgba(80, 40, 100, 0.06) 0%,
     transparent 70%
   );
-  animation: figmaDriftC 25s ease-in-out infinite alternate;
+  animation: none;
 }
 
 @keyframes figmaDriftA {
@@ -194,6 +194,20 @@ select:focus {
   }
   to {
     transform: translate(-1vw, 2vh) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .figma-nebula-a {
+    animation: figmaDriftA 30s ease-in-out infinite alternate;
+  }
+
+  .figma-nebula-b {
+    animation: figmaDriftB 35s ease-in-out infinite alternate;
+  }
+
+  .figma-nebula-c {
+    animation: figmaDriftC 25s ease-in-out infinite alternate;
   }
 }
 

@@ -6,6 +6,7 @@
 import { vi } from 'vitest'
 import React from 'react'
 import { render, screen } from '@testing-library/react'
+import Home from '../pages/Home.jsx'
 import Tasks from '../pages/Tasks.jsx'
 
 // Mock all page components
@@ -102,10 +103,11 @@ describe('Application Routing Configuration', () => {
     test('validates that / route points to Tasks and /home points to Home', () => {
       const routes = {
         root: { path: '/', element: Tasks },
-        home: { path: '/home', element: 'Home' }
+        home: { path: '/home', element: Home }
       }
 
       expect(routes.root.element).toBe(Tasks)
+      expect(routes.home.element).toBe(Home)
       expect(routes.home.path).toBe('/home')
     })
 
