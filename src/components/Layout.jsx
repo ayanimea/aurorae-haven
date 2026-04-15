@@ -245,7 +245,7 @@ function Layout({ children, onExport, onImport }) {
               type='button'
               className='logo-button'
               onClick={handleLogoClick}
-              aria-label='Return to Tasks'
+              aria-label='Aurorae Haven — Return to Tasks'
               title='Stellar-Journey'
             >
               <span className='figma-brand-text'>AURORAE HAVEN</span>

@@ -134,17 +134,17 @@ body.density-cozy {
 }
 
 /* TAB-NAV-07: Figma pill-shaped nav tabs — text only, compact, glassmorphism active state */
-/* TAB-LIB-23: Touch targets ≥48×48px for better accessibility */
+/* TAB-LIB-23: Touch targets ≥44px (WCAG 2.2 AA) */
 .nav-tab {
   display: inline-flex;
   gap: 6px;
   align-items: center;
   padding: 6px 14px;
-  min-height: 32px;
+  min-height: var(--touch-min);
   border-radius: 6px;
-  color: rgba(185, 190, 210, 0.8);
+  color: rgba(185, 190, 210, 0.9);
   font-weight: 400;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   background: transparent;
   border: 1px solid transparent;
   text-decoration: none;
