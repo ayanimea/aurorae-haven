@@ -147,7 +147,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       expect(tabs).toHaveLength(7) // Library removed from main navigation
     })
 
-    test('tabs have proper structure with icons and text', () => {
+    test('tabs have proper structure with text labels', () => {
       renderWithRouter(
         <Layout onExport={mockOnExport} onImport={mockOnImport}>
           <div>Content</div>
@@ -156,8 +156,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
       const tasksTab = screen.getByRole('tab', { name: /^tasks$/i })
 
-      // Check for icon (SVG) and text
-      expect(tasksTab.querySelector('svg')).toBeInTheDocument()
+      // Figma navbar uses text-only tabs (no icons on desktop nav)
       expect(tasksTab.querySelector('span')).toHaveTextContent('Tasks')
     })
   })
