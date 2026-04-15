@@ -1,6 +1,7 @@
 :root {
   --figma-bg-start: #06060f;
   --figma-bg-mid: #0a0a1a;
+  --figma-bg-deep: #0d0b1e;
   --figma-bg-end: #080816;
   --figma-surface: rgba(8, 8, 20, 0.65);
   --figma-border: rgba(255, 255, 255, 0.08);
@@ -10,6 +11,9 @@
   --figma-panel-border: rgba(255, 255, 255, 0.08);
   --figma-panel-radius: 14px;
   --figma-panel-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  --figma-input-bg: rgba(14, 14, 28, 0.6);
+  --figma-input-text: rgba(210, 215, 235, 0.92);
+  --figma-input-focus-border: rgba(130, 160, 255, 0.24);
 }
 
 body {
@@ -19,7 +23,7 @@ body {
     135deg,
     var(--figma-bg-start) 0%,
     var(--figma-bg-mid) 30%,
-    #0d0b1e 60%,
+    var(--figma-bg-deep) 60%,
     var(--figma-bg-end) 100%
   );
 }
@@ -102,15 +106,15 @@ input[type='time'],
 input[type='date'],
 textarea,
 select {
-  background: rgba(14, 14, 28, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(210, 215, 235, 0.92);
+  background: var(--figma-input-bg);
+  border: 1px solid var(--figma-panel-border);
+  color: var(--figma-input-text);
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: rgba(130, 160, 255, 0.24);
+  border-color: var(--figma-input-focus-border);
   outline: none;
 }
 
