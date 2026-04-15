@@ -31,8 +31,9 @@ import { snapDown, snapUp } from './timeUtils'
  *  - All-day events (allDay === true, or missing startTime, or missing endTime)
  *    occupy the full day [0, 1440) so they always trigger the all-day simultaneous
  *    limit but never block creation of timed events by themselves.
- *  - Midnight-spanning events (endTime parses to ≤ startTime) have 1440 added
- *    to their end so overlap checks work across the day boundary.
+ *  - Midnight-spanning events (endTime parses to < startTime) have 1440 added
+ *    to their end so overlap checks work across the day boundary; equal
+ *    start/end times remain zero-duration events.
  *
  * @param {ScheduleEvent} event
  * @returns {{ start: number, end: number, isAllDay: boolean }}

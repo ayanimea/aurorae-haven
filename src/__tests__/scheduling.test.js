@@ -10,6 +10,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { SCHEDULING_CONFIG } from '../schedule/config'
 import { snapDown, snapUp, snapEventTime } from '../schedule/timeUtils'
+import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
 import {
   computeDayLoad,
   getDayDurationMinutes,
@@ -558,3 +559,67 @@ function minutesToHHMM(minutes) {
   const m = Math.floor(minutes % 60)
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
+
+// ── Snap-on-save normalisation ────────────────────────────────────────────────
+// Mirrors the handleSaveEvent logic in Schedule.jsx so the three edge-cases
+// (normal, midnight-spanning, 24:00 sentinel) are covered by unit tests.
+
+function computeSnappedTimes(startTime, endTime) {
+  const rawStart = timeToMinutes(startTime)
+  const rawEnd = timeToMinutes(endTime)
+  const wasMidnightSpanning = rawEnd < rawStart
+  const normalEnd = wasMidnightSpanning ? rawEnd + 1440 : rawEnd
+  const snappedStart = snapDown(rawStart)
+  const snappedEnd = snapUp(normalEnd)
+  let snappedEndTime
+  if (wasMidnightSpanning) {
+    snappedEndTime = minutesToTime(snappedEnd % 1440)
+  } else if (snappedEnd >= 1440) {
+    snappedEndTime = '24:00'
+  } else {
+    snappedEndTime = minutesToTime(snappedEnd)
+  }
+  return { startTime: minutesToTime(snappedStart), endTime: snappedEndTime }
+}
+
+describe('snap-on-save time normalisation', () => {
+  it('snaps a normal event: start down, end up', () => {
+    const result = computeSnappedTimes('09:22', '10:37')
+    expect(result.startTime).toBe('09:15')
+    expect(result.endTime).toBe('10:45')
+  })
+
+  it('leaves already-aligned times unchanged', () => {
+    const result = computeSnappedTimes('09:00', '10:00')
+    expect(result.startTime).toBe('09:00')
+    expect(result.endTime).toBe('10:00')
+  })
+
+  it('preserves the 24:00 sentinel when snapped end reaches exactly 1440', () => {
+    // 23:55 → snapUp(1435) = 1440 → '24:00'
+    const result = computeSnappedTimes('09:00', '23:55')
+    expect(result.endTime).toBe('24:00')
+  })
+
+  it('midnight-spanning: end wraps back after snapping', () => {
+    // start: 23:50 → snapDown(1430) = 1425 → '23:45'
+    // end:   00:05 → normalEnd = 5 + 1440 = 1445 → snapUp(1445) = 1455 → 1455 % 1440 = 15 → '00:15'
+    const result = computeSnappedTimes('23:50', '00:05')
+    expect(result.startTime).toBe('23:45')
+    expect(result.endTime).toBe('00:15')
+  })
+
+  it('zero-duration event: equal start/end snaps to the same boundary', () => {
+    // 09:00 is already on a 15-min boundary; snapDown = snapUp = 540
+    const result = computeSnappedTimes('09:00', '09:00')
+    expect(result.startTime).toBe('09:00')
+    expect(result.endTime).toBe('09:00')
+  })
+
+  it('zero-duration off-boundary: start snaps down, end snaps up', () => {
+    // 09:07 → snapDown(547) = 540 → '09:00'; snapUp(547) = 555 → '09:15'
+    const result = computeSnappedTimes('09:07', '09:07')
+    expect(result.startTime).toBe('09:00')
+    expect(result.endTime).toBe('09:15')
+  })
+})

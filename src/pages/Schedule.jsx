@@ -94,6 +94,7 @@ import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadCompu
 import { validateStructural } from '../schedule/structuralConstraints'
 import { generateSuggestions } from '../schedule/suggestionEngine'
 import { SCHEDULING_CONFIG } from '../schedule/config'
+import { snapDown, snapUp } from '../schedule/timeUtils'
 import '../assets/styles/fullcalendar-custom.css'
 import '../components/ErrorBoundary.css'
 
@@ -101,6 +102,23 @@ import '../components/ErrorBoundary.css'
 const MILLISECONDS_PER_MINUTE = 60000
 // Default column gap (px) used as fallback when CSS token is unavailable
 const EVENT_COLUMN_GAP_FALLBACK_PX = 3
+
+/**
+ * Convert a snapped end-minute value back to a stored time string.
+ *
+ * - Midnight-spanning: end was normalised to > 1440, wrap it back via modulo.
+ * - Non-spanning: if snapped end hits exactly 1440, use the '24:00' sentinel
+ *   (end-of-day); otherwise convert normally.
+ *
+ * @param {number}  snappedEnd          - Snapped end in minutes (may be > 1440 for midnight-spanning)
+ * @param {boolean} wasMidnightSpanning - Whether the original event spanned midnight
+ * @returns {string} Time in 'HH:MM' or '24:00' format
+ */
+function formatSnappedEndTime(snappedEnd, wasMidnightSpanning) {
+  if (wasMidnightSpanning) return minutesToTime(snappedEnd % 1440)
+  if (snappedEnd >= 1440) return '24:00'
+  return minutesToTime(snappedEnd)
+}
 
 /**
  * Check structural constraints for a candidate event against the current
@@ -342,7 +360,25 @@ function Schedule() {
       }
 
       // Strip the internal flag before persisting to avoid polluting IndexedDB
-      const { _isNewCreation, ...cleanEventData } = eventData
+      const { _isNewCreation, ...rawCleanData } = eventData
+
+      // Snap timed event start/end to the configured interval (start down, end up).
+      // This keeps stored values consistent with structural validation and load
+      // computation, which both apply the same snapping internally.
+      let cleanEventData = rawCleanData
+      if (rawCleanData.startTime && rawCleanData.endTime && !rawCleanData.allDay) {
+        const rawStart = timeToMinutes(rawCleanData.startTime)
+        const rawEnd = timeToMinutes(rawCleanData.endTime)
+        const wasMidnightSpanning = rawEnd < rawStart
+        const normalEnd = wasMidnightSpanning ? rawEnd + 1440 : rawEnd
+        const snappedStart = snapDown(rawStart)
+        const snappedEnd = snapUp(normalEnd)
+        cleanEventData = {
+          ...rawCleanData,
+          startTime: minutesToTime(snappedStart),
+          endTime: formatSnappedEndTime(snappedEnd, wasMidnightSpanning)
+        }
+      }
 
       // Check if this is an update or create
       // For updates, we need both an ID and it must be a string/number
@@ -787,6 +823,7 @@ function Schedule() {
         await loadEvents()
       } catch (_err) {
         dropInfo.revert()
+        setSuggestions([])
         setError('Failed to move event. Please try again.')
       }
     },
@@ -856,6 +893,7 @@ function Schedule() {
         await loadEvents()
       } catch (_err) {
         resizeInfo.revert()
+        setSuggestions([])
         setError('Failed to resize event. Please try again.')
       }
     },
