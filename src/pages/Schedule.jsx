@@ -878,10 +878,20 @@ function Schedule() {
   //  - Month view:      targets .fc-daygrid-day[data-date]     (day cells)
   // biome-ignore lint/correctness/useExhaustiveDependencies: fcRenderCount is a trigger-only dep — it increments each time FullCalendar renders new DOM cells so the effect re-runs on view/date navigation even when dayLoadMap is unchanged.
   useEffect(() => {
-    if (schedulingGuidanceLevel === 'off') return
     const calendarApi = calendarRef.current?.getApi()
     if (!calendarApi?.el) return
     const calendarEl = calendarApi.el
+
+    // When guidance is off, strip any previously applied indicators and labels
+    if (schedulingGuidanceLevel === 'off') {
+      calendarEl.querySelectorAll('.day-load--high, .day-load--over').forEach((el) => {
+        el.classList.remove('day-load--high', 'day-load--over')
+        el.querySelectorAll('.sr-only-load-label').forEach((s) => {
+          s.parentNode?.removeChild(s)
+        })
+      })
+      return
+    }
 
     const applyIndicator = (el, dateStr) => {
       const load = dayLoadMap[dateStr] ?? 0

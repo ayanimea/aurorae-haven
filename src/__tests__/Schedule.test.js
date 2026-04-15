@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import React from 'react'
-import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 import EventService from '../services/EventService'
