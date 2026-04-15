@@ -150,8 +150,8 @@ function RouterApp() {
       <RedirectHandler />
       <Layout onExport={handleExport} onImport={handleImport}>
         <Routes>
-          {/* Show Home page at root */}
-          <Route path='/' element={<Home />} />
+          {/* Figma-aligned landing: Tasks at root */}
+          <Route path='/' element={<Tasks />} />
 
           {/* Explicit routes */}
           <Route path='/home' element={<Home />} />
@@ -163,6 +163,7 @@ function RouterApp() {
             element={<Navigate to='/routines' replace />}
           />
           <Route path='/braindump' element={<Notes />} />
+          <Route path='/brain-dump' element={<Notes />} />
           <Route path='/tasks' element={<Tasks />} />
           <Route path='/habits' element={<Habits />} />
           <Route path='/stats' element={<Stats />} />

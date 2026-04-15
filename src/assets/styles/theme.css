@@ -6,10 +6,22 @@
   --figma-border: rgba(255, 255, 255, 0.08);
   --figma-text: rgba(235, 238, 255, 0.95);
   --figma-text-muted: rgba(170, 175, 195, 0.6);
+  --figma-panel-bg: rgba(14, 14, 28, 0.56);
+  --figma-panel-border: rgba(255, 255, 255, 0.08);
+  --figma-panel-radius: 14px;
+  --figma-panel-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 body {
   font-family: var(--font-primary);
+  color: var(--figma-text);
+  background: linear-gradient(
+    135deg,
+    var(--figma-bg-start) 0%,
+    var(--figma-bg-mid) 30%,
+    #0d0b1e 60%,
+    var(--figma-bg-end) 100%
+  );
 }
 
 h1,
@@ -23,6 +35,83 @@ h4 {
   background: var(--figma-surface);
   border-bottom-color: var(--figma-border);
   backdrop-filter: blur(24px) saturate(1.2);
+}
+
+.appbar .brand b {
+  letter-spacing: 0.12em;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--figma-text);
+}
+
+.shell {
+  max-width: min(100%, 1920px);
+}
+
+.card,
+.tasks-info,
+.routine-player,
+.note-list,
+.note-editor,
+.notes-toolbar,
+.habit-overview-card,
+.habit-empty-state,
+.stats-card {
+  background: var(--figma-panel-bg);
+  border: 1px solid var(--figma-panel-border);
+  border-radius: var(--figma-panel-radius);
+  box-shadow: var(--figma-panel-shadow);
+  backdrop-filter: blur(20px) saturate(1.1);
+}
+
+.card .card-h {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.card .card-h strong {
+  color: var(--figma-text);
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.card .card-b,
+.small,
+p,
+label,
+li {
+  color: var(--figma-text-muted);
+}
+
+.btn,
+button,
+select,
+input,
+textarea {
+  font-family: var(--font-primary);
+}
+
+button,
+.btn {
+  border-radius: 10px;
+}
+
+input[type='text'],
+input[type='search'],
+input[type='number'],
+input[type='time'],
+input[type='date'],
+textarea,
+select {
+  background: rgba(14, 14, 28, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(210, 215, 235, 0.92);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(130, 160, 255, 0.24);
+  outline: none;
 }
 
 .starry-background-canvas {
@@ -48,6 +137,7 @@ h4 {
     rgba(56, 48, 120, 0.12) 0%,
     transparent 70%
   );
+  animation: figmaDriftA 30s ease-in-out infinite alternate;
 }
 
 .figma-nebula-b {
@@ -60,6 +150,7 @@ h4 {
     rgba(30, 58, 120, 0.1) 0%,
     transparent 70%
   );
+  animation: figmaDriftB 35s ease-in-out infinite alternate;
 }
 
 .figma-nebula-c {
@@ -72,4 +163,40 @@ h4 {
     rgba(80, 40, 100, 0.06) 0%,
     transparent 70%
   );
+  animation: figmaDriftC 25s ease-in-out infinite alternate;
+}
+
+@keyframes figmaDriftA {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(3vw, 2vh) scale(1.05);
+  }
+}
+
+@keyframes figmaDriftB {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(-2vw, -3vh) scale(1.03);
+  }
+}
+
+@keyframes figmaDriftC {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(-1vw, 2vh) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .figma-nebula-a,
+  .figma-nebula-b,
+  .figma-nebula-c {
+    animation: none;
+  }
 }

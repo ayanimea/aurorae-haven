@@ -1,12 +1,12 @@
 /**
  * Tests for application routing configuration
- * Validates that routes are properly configured for Home page at root and fallback
+ * Validates that routes are properly configured for Tasks page at root and fallback
  */
 
 import { vi } from 'vitest'
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import Home from '../pages/Home.jsx'
+import Tasks from '../pages/Tasks.jsx'
 
 // Mock all page components
 vi.mock('../pages/Home.jsx', () => {
@@ -75,39 +75,38 @@ vi.mock('../pages/Settings', () => {
 
 describe('Application Routing Configuration', () => {
   describe('Route Component Testing', () => {
-    test('Home component renders correctly for root route', () => {
-      render(<Home />)
-      expect(screen.getByTestId('home-page')).toBeInTheDocument()
+    test('Tasks component renders correctly for root route', () => {
+      render(<Tasks />)
+      expect(screen.getByTestId('tasks-page')).toBeInTheDocument()
     })
 
-    test('Home component is used for root path (not redirecting to schedule)', () => {
-      // This test verifies the fix - the root route should render Home, not Navigate to schedule
-      render(<Home />)
-      expect(screen.getByTestId('home-page')).toBeInTheDocument()
-      expect(screen.getByText('Home Page')).toBeInTheDocument()
+    test('Tasks component is used for root path', () => {
+      render(<Tasks />)
+      expect(screen.getByTestId('tasks-page')).toBeInTheDocument()
+      expect(screen.getByText('Tasks Page')).toBeInTheDocument()
     })
   })
 
   describe('Routing Configuration Validation', () => {
-    test('validates that root route element is Home component', () => {
+    test('validates that root route element is Tasks component', () => {
       // This test documents the expected routing configuration
       const expectedRootRoute = {
         path: '/',
-        element: Home
+        element: Tasks
       }
 
       expect(expectedRootRoute.path).toBe('/')
-      expect(expectedRootRoute.element).toBe(Home)
+      expect(expectedRootRoute.element).toBe(Tasks)
     })
 
-    test('validates that both / and /home routes point to Home', () => {
-      // Both routes should use the same Home component
+    test('validates that / route points to Tasks and /home points to Home', () => {
       const routes = {
-        root: { path: '/', element: Home },
-        home: { path: '/home', element: Home }
+        root: { path: '/', element: Tasks },
+        home: { path: '/home', element: 'Home' }
       }
 
-      expect(routes.root.element).toBe(routes.home.element)
+      expect(routes.root.element).toBe(Tasks)
+      expect(routes.home.path).toBe('/home')
     })
 
     test('validates fallback route redirects to home (not schedule)', () => {
@@ -125,11 +124,12 @@ describe('Application Routing Configuration', () => {
   describe('Route Definitions', () => {
     test('defines all expected application routes', () => {
       const routes = [
-        { path: '/', name: 'Root (Home)' },
+        { path: '/', name: 'Root (Tasks)' },
         { path: '/home', name: 'Home' },
         { path: '/schedule', name: 'Schedule' },
         { path: '/sequences', name: 'Sequences' },
         { path: '/braindump', name: 'Brain Dump' },
+        { path: '/brain-dump', name: 'Brain Dump Alias' },
         { path: '/tasks', name: 'Tasks' },
         { path: '/habits', name: 'Habits' },
         { path: '/stats', name: 'Stats' },
@@ -137,7 +137,7 @@ describe('Application Routing Configuration', () => {
         { path: '*', name: 'Fallback' }
       ]
 
-      expect(routes).toHaveLength(10)
+      expect(routes).toHaveLength(11)
       expect(routes[0].path).toBe('/')
       expect(routes[routes.length - 1].path).toBe('*')
     })
@@ -147,11 +147,11 @@ describe('Application Routing Configuration', () => {
       const rootRouteConfig = {
         path: '/',
         hasNavigate: false, // Should be false (fixed from true)
-        rendersHome: true
+        rendersTasks: true
       }
 
       expect(rootRouteConfig.hasNavigate).toBe(false)
-      expect(rootRouteConfig.rendersHome).toBe(true)
+      expect(rootRouteConfig.rendersTasks).toBe(true)
     })
   })
 
@@ -171,9 +171,9 @@ describe('Application Routing Configuration', () => {
   })
 
   describe('Routing Fix Verification', () => {
-    test('verifies the landing page fix - root shows Home not Schedule', () => {
+    test('verifies the landing page fix - root shows Tasks not Schedule', () => {
       // Before fix: <Route path='/' element={<Navigate to='/schedule' replace />} />
-      // After fix: <Route path='/' element={<Home />} />
+      // After fix: <Route path='/' element={<Tasks />} />
 
       const beforeFix = {
         path: '/',
@@ -183,12 +183,12 @@ describe('Application Routing Configuration', () => {
 
       const afterFix = {
         path: '/',
-        element: 'Home',
+        element: 'Tasks',
         redirectsTo: null
       }
 
       // Verify the fix
-      expect(afterFix.element).toBe('Home')
+      expect(afterFix.element).toBe('Tasks')
       expect(afterFix.redirectsTo).toBeNull()
       expect(beforeFix.element).not.toBe(afterFix.element)
     })
