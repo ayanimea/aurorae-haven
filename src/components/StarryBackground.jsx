@@ -101,7 +101,6 @@ export default function StarryBackground() {
   return (
     <canvas
       ref={canvasRef}
-      aria-hidden='true'
       data-testid='starry-background-canvas'
       className='starry-background-canvas'
     />
