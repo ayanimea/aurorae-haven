@@ -11,6 +11,12 @@
   --figma-panel-border: rgba(255, 255, 255, 0.08);
   --figma-panel-radius: 14px;
   --figma-panel-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  --figma-panel-filter: blur(20px) saturate(1.1);
+  --figma-panel-divider: color-mix(in srgb, var(--figma-panel-border) 75%, transparent);
+  --figma-button-bg: color-mix(in srgb, var(--figma-panel-border) 45%, transparent);
+  --figma-button-hover-border: color-mix(in srgb, var(--figma-panel-border) 70%, rgba(255, 255, 255, 0.2));
+  --figma-button-hover-bg: color-mix(in srgb, var(--figma-panel-border) 65%, transparent);
+  --figma-button-hover-shadow: 0 6px 18px color-mix(in srgb, var(--figma-bg-start) 70%, transparent);
   --figma-input-bg: rgba(14, 14, 28, 0.6);
   --figma-input-text: rgba(210, 215, 235, 0.92);
   --figma-input-focus-border: rgba(130, 160, 255, 0.24);
@@ -65,7 +71,7 @@ h4 {
   border: 1px solid var(--figma-panel-border);
   border-radius: var(--figma-panel-radius);
   box-shadow: var(--figma-panel-shadow);
-  backdrop-filter: blur(20px) saturate(1.1);
+  backdrop-filter: var(--figma-panel-filter);
 }
 
 .card .card-h {

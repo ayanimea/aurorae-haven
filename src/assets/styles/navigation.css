@@ -926,11 +926,11 @@ body.mobile-menu-open .shell {
 }
 
 .card {
-  background: rgba(14, 14, 28, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(20px) saturate(1.1);
+  background: var(--figma-panel-bg);
+  border: 1px solid var(--figma-panel-border);
+  border-radius: var(--figma-panel-radius);
+  box-shadow: var(--figma-panel-shadow);
+  backdrop-filter: var(--figma-panel-filter);
   overflow: hidden;
   transition:
     width 0.3s ease,
@@ -938,13 +938,13 @@ body.mobile-menu-open .shell {
 }
 .card .card-h {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--figma-panel-divider);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .card .card-h strong {
-  color: rgba(235, 238, 255, 0.95);
+  color: var(--figma-text);
   font-size: 1rem;
   font-weight: 400;
 }
@@ -953,7 +953,7 @@ body.mobile-menu-open .shell {
 }
 .small {
   font-size: 0.8125rem;
-  color: rgba(170, 175, 195, 0.65);
+  color: var(--figma-text-muted);
 }
 
 /* Airy buttons */
@@ -963,14 +963,14 @@ body.mobile-menu-open .shell {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: rgba(195, 200, 220, 0.9);
+  color: var(--figma-input-text);
   font-weight: 400;
   font-size: 0.8125rem;
   padding: 0.45rem 0.9rem;
   min-height: var(--touch-comfortable);
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--figma-panel-border);
+  background: var(--figma-button-bg);
   box-shadow: none;
   transition:
     transform var(--dur) var(--ease),
@@ -981,10 +981,10 @@ body.mobile-menu-open .shell {
 }
 .btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: rgba(220, 225, 245, 0.95);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  border-color: var(--figma-button-hover-border);
+  color: var(--figma-text);
+  background: var(--figma-button-hover-bg);
+  box-shadow: var(--figma-button-hover-shadow);
 }
 
 /* Icons */
