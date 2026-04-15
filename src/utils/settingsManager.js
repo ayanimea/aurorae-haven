@@ -51,9 +51,10 @@ const DEFAULT_SETTINGS = {
   schedule: {
     use24HourFormat: true, // Default to 24-hour format (neurodivergent-friendly, clearer)
     // Controls how much scheduling guidance is shown to the user.
-    // "full"        — all currently implemented scheduling guidance (week-view header load indicators)
-    // "header-only" — header load indicators only (reserved for future differentiation from "full")
-    // "off"         — guidance disabled (structural rules still apply)
+    // "full"        — all currently implemented scheduling guidance, including load indicators
+    //                 in supported views and structural-blocking toasts with suggestions
+    // "header-only" — load indicators only, without structural-blocking toast guidance
+    // "off"         — optional scheduling guidance UI disabled; baseline structural enforcement may still apply
     schedulingGuidanceLevel: 'full'
   }
 }
