@@ -20,7 +20,7 @@ import { timeToMinutes } from './timeUtils'
 const logger = createLogger('EventAdapter')
 
 const MILLISECONDS_PER_MINUTE = 60000
-const HHMM_24H_PATTERN = /^(?:24:00|(?:[01]\d|2[0-3]):[0-5]\d)$/
+const EVENT_TIME_PATTERN = /^(?:24:00|(?:[01]\d|2[0-3]):[0-5]\d)$/
 
 const toDateAtStartOfDay = (date) => {
   const normalizedDate = new Date(date)
@@ -33,7 +33,7 @@ const parseEventTime = (dayDate, timeString, { allowEndOfDay = false } = {}) => 
     return allowEndOfDay ? addDays(dayDate, 1) : null
   }
 
-  if (!HHMM_24H_PATTERN.test(timeString)) {
+  if (!EVENT_TIME_PATTERN.test(timeString)) {
     return null
   }
 
@@ -242,17 +242,16 @@ export const toFullCalendarEvents = (events) => {
   try {
     const MINUTES_PER_DAY = 24 * 60
     const singleDayEvents = fcEvents.filter((e) => isSingleDayForClustering(e.start, e.end))
-    const eventSlots = singleDayEvents.map((e) => ({
-      id: e.id,
-      start: Math.min(e.start.getHours() * 60 + e.start.getMinutes(), MINUTES_PER_DAY - 1),
-      end: (() => {
-        const spansDayBoundary =
-          format(e.start, 'yyyy-MM-dd') !== format(e.end, 'yyyy-MM-dd')
-        return spansDayBoundary
+    const eventSlots = singleDayEvents.map((e) => {
+      const spansDayBoundary = format(e.start, 'yyyy-MM-dd') !== format(e.end, 'yyyy-MM-dd')
+      return {
+        id: e.id,
+        start: Math.min(e.start.getHours() * 60 + e.start.getMinutes(), MINUTES_PER_DAY - 1),
+        end: spansDayBoundary
           ? MINUTES_PER_DAY
           : Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
-      })()
-    }))
+      }
+    })
     const clusters = clusterEvents(eventSlots)
     for (const cluster of clusters) assignColumns(cluster)
     const columnMap = Object.fromEntries(
