@@ -125,8 +125,8 @@
   --planet-edge: rgba(120, 150, 255, 0.03);
 
   /* Event glass surface — brighter cards per Figma schedule card treatment */
-  --event-glass-top: rgba(255, 255, 255, 0.78);
-  --event-glass-bottom: rgba(246, 247, 255, 0.58);
+  --event-glass-top: rgba(255, 255, 255, 0.88);
+  --event-glass-bottom: rgba(246, 247, 255, 0.72);
   --event-border: rgba(255, 255, 255, 0.44);
 
   /* Event wrapper tokens — used by fc-event-wrapper */
@@ -155,13 +155,13 @@
   --event-evening-accent: rgba(180, 145, 195, 0.50);
   --event-night-accent: rgba(60, 55, 100, 0.46);
 
-  /* Neutral event body overlay — stacked above glass, provides dark depth without colour */
-  --event-body-overlay: rgba(255, 255, 255, 0.24);
+  /* Neutral event body overlay — stacked above glass, adds subtle brightening */
+  --event-body-overlay: rgba(255, 255, 255, 0.08);
 
   /* Event card text colours */
-  --event-text: rgba(24, 30, 43, 0.92);
-  --event-text-dim: rgba(44, 54, 69, 0.78);
-  --event-text-secondary: rgba(54, 66, 82, 0.72);
+  --event-text: rgba(16, 20, 30, 0.98);
+  --event-text-dim: rgba(24, 36, 52, 0.88);
+  --event-text-secondary: rgba(30, 44, 64, 0.84);
 
   /* Event card measurements */
   --event-radius: 0.875rem;
