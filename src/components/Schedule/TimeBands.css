@@ -46,38 +46,49 @@
 .schedule-band.morning {
   top: 0%;
   height: 29.41%;
-  background: linear-gradient(
-    180deg,
-    var(--zone-morning),
-    transparent
-  );
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--zone-morning) 92%, rgba(255, 245, 220, 0.32)),
+      color-mix(in srgb, var(--zone-morning) 70%, transparent) 58%,
+      transparent 100%
+    );
 }
 
 /* Afternoon: 12:00–18:00 — 6h / 17h ≈ 35.29% */
 .schedule-band.afternoon {
   top: 29.41%;
   height: 35.29%;
-  background: linear-gradient(
-    180deg,
-    var(--zone-afternoon),
-    transparent
-  );
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--zone-afternoon) 95%, rgba(208, 232, 238, 0.22)),
+      color-mix(in srgb, var(--zone-afternoon) 75%, transparent) 56%,
+      transparent 100%
+    );
 }
 
 /* Evening: 18:00–23:00 — 5h / 17h ≈ 29.41% */
 .schedule-band.evening {
   top: 64.70%;
   height: 29.41%;
-  background: linear-gradient(
-    180deg,
-    var(--zone-evening),
-    transparent
-  );
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--zone-evening) 95%, rgba(220, 192, 236, 0.18)),
+      color-mix(in srgb, var(--zone-evening) 76%, transparent) 56%,
+      transparent 100%
+    );
 }
 
 /* Night: 23:00–24:00 — 1h / 17h ≈ 5.89% */
 .schedule-band.night {
   top: 94.11%;
   height: 5.89%;
-  background: linear-gradient(180deg, var(--zone-night), transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--zone-night) 90%, rgba(56, 58, 96, 0.42)),
+    color-mix(in srgb, var(--zone-night) 72%, transparent) 58%,
+    transparent 100%
+  );
 }

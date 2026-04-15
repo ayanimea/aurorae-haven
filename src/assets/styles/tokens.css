@@ -113,21 +113,21 @@
   --bg-sky-mid: #16213e;
   --bg-sky-bottom: #1a1f3c;
 
-  /* Time-of-day zone overlays — semantic orientation bands (alpha 0.05–0.065) */
-  --zone-morning: rgba(255, 200, 120, 0.06);
-  --zone-afternoon: rgba(100, 160, 255, 0.05);
-  --zone-evening: rgba(120, 100, 200, 0.055);
-  --zone-night: rgba(80, 120, 200, 0.045);
+  /* Time-of-day zone overlays — aligned to Figma Schedule source */
+  --zone-morning: rgba(210, 160, 110, 0.34);
+  --zone-afternoon: rgba(140, 190, 200, 0.30);
+  --zone-evening: rgba(160, 120, 170, 0.30);
+  --zone-night: rgba(20, 18, 45, 0.60);
 
   /* Planet glow layers — combined effective opacity ≤ 0.08 */
   --planet-core: rgba(180, 200, 255, 0.08);
   --planet-mid: rgba(150, 180, 255, 0.05);
   --planet-edge: rgba(120, 150, 255, 0.03);
 
-  /* Event glass surface */
-  --event-glass-top: rgba(255, 255, 255, 0.05);
-  --event-glass-bottom: rgba(255, 255, 255, 0.025);
-  --event-border: rgba(255, 255, 255, 0.10);
+  /* Event glass surface — brighter cards per Figma schedule card treatment */
+  --event-glass-top: rgba(255, 255, 255, 0.78);
+  --event-glass-bottom: rgba(246, 247, 255, 0.58);
+  --event-border: rgba(255, 255, 255, 0.44);
 
   /* Event wrapper tokens — used by fc-event-wrapper */
   --event-glass-gradient: linear-gradient(180deg, var(--event-glass-top) 0%, var(--event-glass-bottom) 100%);
@@ -150,18 +150,18 @@
   /* Event time-of-day accent tints — applied as top layer over the glass base.
    * Body uses neutral glass (no colour fill). Left-edge strip uses saturated accent
    * (alpha 0.58–0.62) for semantic scan speed. Must not overpower text. */
-  --event-morning-accent: rgba(255, 200, 120, 0.60);
-  --event-afternoon-accent: rgba(100, 160, 255, 0.58);
-  --event-evening-accent: rgba(170, 100, 255, 0.60);
-  --event-night-accent: rgba(60, 80, 200, 0.58);
+  --event-morning-accent: rgba(230, 180, 130, 0.55);
+  --event-afternoon-accent: rgba(160, 210, 220, 0.52);
+  --event-evening-accent: rgba(180, 145, 195, 0.50);
+  --event-night-accent: rgba(60, 55, 100, 0.46);
 
   /* Neutral event body overlay — stacked above glass, provides dark depth without colour */
-  --event-body-overlay: rgba(16, 20, 44, 0.42);
+  --event-body-overlay: rgba(255, 255, 255, 0.24);
 
   /* Event card text colours */
-  --event-text: rgba(255, 255, 255, 0.92);
-  --event-text-dim: rgba(230, 237, 243, 0.7);
-  --event-text-secondary: rgba(255, 255, 255, 0.60);
+  --event-text: rgba(24, 30, 43, 0.92);
+  --event-text-dim: rgba(44, 54, 69, 0.78);
+  --event-text-secondary: rgba(54, 66, 82, 0.72);
 
   /* Event card measurements */
   --event-radius: 0.875rem;

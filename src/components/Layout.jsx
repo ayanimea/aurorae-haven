@@ -226,6 +226,7 @@ function Layout({ children, onExport, onImport }) {
   return (
     <>
       <StarryBackground />
+      <div className='figma-grain' aria-hidden='true' />
       <div className='figma-nebula figma-nebula-a' aria-hidden='true' />
       <div className='figma-nebula figma-nebula-b' aria-hidden='true' />
       <div className='figma-nebula figma-nebula-c' aria-hidden='true' />
