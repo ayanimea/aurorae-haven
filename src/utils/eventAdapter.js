@@ -20,7 +20,7 @@ import { timeToMinutes } from './timeUtils'
 const logger = createLogger('EventAdapter')
 
 const MILLISECONDS_PER_MINUTE = 60000
-const HHMM_24H_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/
+const HHMM_24H_PATTERN = /^(?:24:00|(?:[01]\d|2[0-3]):[0-5]\d)$/
 
 const toDateAtStartOfDay = (date) => {
   const normalizedDate = new Date(date)
@@ -245,10 +245,13 @@ export const toFullCalendarEvents = (events) => {
     const eventSlots = singleDayEvents.map((e) => ({
       id: e.id,
       start: Math.min(e.start.getHours() * 60 + e.start.getMinutes(), MINUTES_PER_DAY - 1),
-      end:
-        e.end.getDate() !== e.start.getDate()
+      end: (() => {
+        const spansDayBoundary =
+          format(e.start, 'yyyy-MM-dd') !== format(e.end, 'yyyy-MM-dd')
+        return spansDayBoundary
           ? MINUTES_PER_DAY
           : Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
+      })()
     }))
     const clusters = clusterEvents(eventSlots)
     for (const cluster of clusters) assignColumns(cluster)
