@@ -78,6 +78,23 @@ describe('eventAdapter', () => {
       expect(rbcEvent.end.getDate()).toBe(rbcEvent.start.getDate() + 1)
     })
 
+    it('should support end-of-day sentinel endTime 24:00', () => {
+      const event = {
+        id: '3b',
+        title: 'End Of Day Sentinel',
+        day: '2026-02-03',
+        startTime: '22:00',
+        endTime: '24:00',
+        type: 'routine'
+      }
+
+      const rbcEvent = toRBCEvent(event)
+
+      expect(rbcEvent).toBeTruthy()
+      expect(rbcEvent.start).toEqual(parseISO('2026-02-03T22:00:00'))
+      expect(rbcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
+    })
+
     it('should include preparation and travel time in resource', () => {
       const event = {
         id: '4',
@@ -318,6 +335,24 @@ describe('eventAdapter', () => {
       expect(fcEvent.end.getHours()).toBe(0)
       expect(fcEvent.end.getDate()).toBe(fcEvent.start.getDate() + 1)
       expect(fcEvent.classNames).toEqual(['event-routine'])
+    })
+
+    it('should support end-of-day sentinel endTime 24:00', () => {
+      const event = {
+        id: '3b',
+        title: 'Until End Of Day',
+        day: '2026-02-03',
+        startTime: '22:00',
+        endTime: '24:00',
+        type: 'routine'
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent).toBeTruthy()
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T22:00:00'))
+      expect(fcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
+      expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-04T00:00:00'))
     })
 
     it('should include preparation and travel time in extendedProps', () => {
@@ -640,6 +675,35 @@ describe('eventAdapter', () => {
       expect(fcEvents).toHaveLength(3)
       expect(fcEvents[1].end.getDate()).toBe(fcEvents[1].start.getDate() + 1)
       expect(fcEvents[2].extendedProps.preparationTime).toBe(10)
+    })
+
+    it('should include end-of-day boundary events in overlap column clustering', () => {
+      const events = [
+        {
+          id: 'e1',
+          title: 'Late Event',
+          day: '2026-02-03',
+          startTime: '23:00',
+          endTime: '24:00',
+          type: 'task'
+        },
+        {
+          id: 'e2',
+          title: 'Overlap Near Midnight',
+          day: '2026-02-03',
+          startTime: '23:30',
+          endTime: '23:45',
+          type: 'meeting'
+        }
+      ]
+
+      const fcEvents = toFullCalendarEvents(events)
+      const eventA = fcEvents.find((event) => event.id === 'e1')
+      const eventB = fcEvents.find((event) => event.id === 'e2')
+
+      expect(eventA.extendedProps.totalColumns).toBe(2)
+      expect(eventB.extendedProps.totalColumns).toBe(2)
+      expect(eventA.extendedProps.column).not.toBe(eventB.extendedProps.column)
     })
   })
 })

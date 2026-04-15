@@ -15,10 +15,41 @@ import { parse, format, addDays } from 'date-fns'
 import { createLogger } from './logger'
 import { VALID_EVENT_TYPES } from './scheduleConstants'
 import { clusterEvents, assignColumns } from './scheduleHelpers'
+import { timeToMinutes } from './timeUtils'
 
 const logger = createLogger('EventAdapter')
 
 const MILLISECONDS_PER_MINUTE = 60000
+const HHMM_24H_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/
+
+const toDateAtStartOfDay = (date) => {
+  const normalizedDate = new Date(date)
+  normalizedDate.setHours(0, 0, 0, 0)
+  return normalizedDate
+}
+
+const parseEventTime = (dayDate, timeString, { allowEndOfDay = false } = {}) => {
+  if (timeString === '24:00') {
+    return allowEndOfDay ? addDays(dayDate, 1) : null
+  }
+
+  if (!HHMM_24H_PATTERN.test(timeString)) {
+    return null
+  }
+
+  return new Date(dayDate.getTime() + timeToMinutes(timeString) * MILLISECONDS_PER_MINUTE)
+}
+
+const isSingleDayForClustering = (startDate, endDate) => {
+  const startDay = format(startDate, 'yyyy-MM-dd')
+  const endDay = format(endDate, 'yyyy-MM-dd')
+  if (startDay === endDay) {
+    return true
+  }
+
+  const nextDayStart = addDays(toDateAtStartOfDay(startDate), 1)
+  return endDate.getTime() === nextDayStart.getTime()
+}
 
 /**
  * Convert our event format to React Big Calendar format
@@ -34,7 +65,7 @@ export const toRBCEvent = (event) => {
 
     // Parse the day (YYYY-MM-DD format) as local date to avoid UTC timezone shifts
     // parseISO treats date-only strings as UTC, which can shift the day in non-UTC zones
-    const dayDate = parse(event.day, 'yyyy-MM-dd', new Date())
+    const dayDate = toDateAtStartOfDay(parse(event.day, 'yyyy-MM-dd', new Date()))
 
     // Validate the parsed date
     if (Number.isNaN(dayDate.getTime())) {
@@ -42,8 +73,8 @@ export const toRBCEvent = (event) => {
     }
 
     // Parse start and end times (HH:mm format)
-    const startTime = parse(event.startTime, 'HH:mm', dayDate)
-    let endTime = parse(event.endTime, 'HH:mm', dayDate)
+    const startTime = parseEventTime(dayDate, event.startTime)
+    let endTime = parseEventTime(dayDate, event.endTime, { allowEndOfDay: true })
 
     // Validate parsed times
     if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
@@ -89,7 +120,7 @@ export const toFullCalendarEvent = (event) => {
 
     // Parse the day (YYYY-MM-DD format) as local date to avoid UTC timezone shifts
     // parseISO treats date-only strings as UTC, which can shift the day in non-UTC zones
-    const dayDate = parse(event.day, 'yyyy-MM-dd', new Date())
+    const dayDate = toDateAtStartOfDay(parse(event.day, 'yyyy-MM-dd', new Date()))
 
     // Validate the parsed date
     if (Number.isNaN(dayDate.getTime())) {
@@ -97,8 +128,8 @@ export const toFullCalendarEvent = (event) => {
     }
 
     // Parse start and end times (HH:mm format)
-    const startTime = parse(event.startTime, 'HH:mm', dayDate)
-    let endTime = parse(event.endTime, 'HH:mm', dayDate)
+    const startTime = parseEventTime(dayDate, event.startTime)
+    let endTime = parseEventTime(dayDate, event.endTime, { allowEndOfDay: true })
 
     // Validate parsed times
     if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
@@ -200,15 +231,13 @@ export const toFullCalendarEvents = (events) => {
   // handles their layout separately and minute offsets would be incorrect for them.
   try {
     const MINUTES_PER_DAY = 24 * 60
-    const singleDayEvents = fcEvents.filter((e) => {
-      const startDay = format(e.start, 'yyyy-MM-dd')
-      const endDay = format(e.end, 'yyyy-MM-dd')
-      return startDay === endDay
-    })
+    const singleDayEvents = fcEvents.filter((e) => isSingleDayForClustering(e.start, e.end))
     const eventSlots = singleDayEvents.map((e) => ({
       id: e.id,
       start: Math.min(e.start.getHours() * 60 + e.start.getMinutes(), MINUTES_PER_DAY - 1),
-      end: Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
+      end: isSingleDayForClustering(e.start, e.end) && e.end.getDate() !== e.start.getDate()
+        ? MINUTES_PER_DAY
+        : Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
     }))
     const clusters = clusterEvents(eventSlots)
     for (const cluster of clusters) assignColumns(cluster)
