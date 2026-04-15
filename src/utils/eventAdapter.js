@@ -77,7 +77,12 @@ export const toRBCEvent = (event) => {
     let endTime = parseEventTime(dayDate, event.endTime, { allowEndOfDay: true })
 
     // Validate parsed times
-    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+    if (
+      !startTime ||
+      !endTime ||
+      Number.isNaN(startTime.getTime()) ||
+      Number.isNaN(endTime.getTime())
+    ) {
       return null
     }
 
@@ -132,7 +137,12 @@ export const toFullCalendarEvent = (event) => {
     let endTime = parseEventTime(dayDate, event.endTime, { allowEndOfDay: true })
 
     // Validate parsed times
-    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+    if (
+      !startTime ||
+      !endTime ||
+      Number.isNaN(startTime.getTime()) ||
+      Number.isNaN(endTime.getTime())
+    ) {
       return null
     }
 
@@ -235,9 +245,10 @@ export const toFullCalendarEvents = (events) => {
     const eventSlots = singleDayEvents.map((e) => ({
       id: e.id,
       start: Math.min(e.start.getHours() * 60 + e.start.getMinutes(), MINUTES_PER_DAY - 1),
-      end: isSingleDayForClustering(e.start, e.end) && e.end.getDate() !== e.start.getDate()
-        ? MINUTES_PER_DAY
-        : Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
+      end:
+        e.end.getDate() !== e.start.getDate()
+          ? MINUTES_PER_DAY
+          : Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
     }))
     const clusters = clusterEvents(eventSlots)
     for (const cluster of clusters) assignColumns(cluster)
