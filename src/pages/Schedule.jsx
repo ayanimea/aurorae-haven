@@ -914,10 +914,12 @@ function Schedule() {
     const containerEl = scheduleContainerRef.current
     const calendarEl = calendarRef.current?.getApi()?.el
     if (!containerEl || !calendarEl) return
+    let observedTimegridBody = null
 
     const syncTimeBandBounds = () => {
       const timegridBody = calendarEl.querySelector('.fc-timegrid-body')
       if (!timegridBody) return
+      observedTimegridBody = timegridBody
       const containerRect = containerEl.getBoundingClientRect()
       const bodyRect = timegridBody.getBoundingClientRect()
       const topOffset = Math.max(0, bodyRect.top - containerRect.top)
@@ -933,9 +935,8 @@ function Schedule() {
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(syncTimeBandBounds)
       resizeObserver.observe(containerEl)
-      const timegridBody = calendarEl.querySelector('.fc-timegrid-body')
-      if (timegridBody) {
-        resizeObserver.observe(timegridBody)
+      if (observedTimegridBody) {
+        resizeObserver.observe(observedTimegridBody)
       }
     }
 
