@@ -1,4 +1,21 @@
+@font-face {
+  font-family: Inter;
+  src:
+    local('Inter'),
+    local('Inter Regular');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src:
+    local('Space Grotesk'),
+    local('Space Grotesk Regular');
+  font-display: swap;
+}
+
 :root {
+  /* Inter / Space Grotesk are optional; if unavailable, system font fallbacks are used. */
   --font-primary:
     Inter,
     system-ui,

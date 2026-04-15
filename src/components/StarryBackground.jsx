@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react'
 
 function buildStars(width, height) {
   const stars = []
+  const starCount = Math.max(140, Math.min(320, Math.floor((width * height) / 6000)))
 
-  for (let i = 0; i < 300; i += 1) {
+  for (let starIndex = 0; starIndex < starCount; starIndex += 1) {
     const isBright = Math.random() < 0.08
     stars.push({
       x: Math.random() * width,
@@ -36,6 +37,7 @@ export default function StarryBackground() {
     let stars = []
     let animationFrameId
     let time = 0
+    let lastTimestamp = 0
 
     const setSize = () => {
       width = window.innerWidth
@@ -45,12 +47,15 @@ export default function StarryBackground() {
       stars = buildStars(width, height)
     }
 
-    const draw = () => {
+    const draw = (timestamp = 0) => {
       context.clearRect(0, 0, width, height)
-      time += 0.016
+      if (!lastTimestamp) lastTimestamp = timestamp
+      const deltaSeconds = (timestamp - lastTimestamp) / 1000
+      lastTimestamp = timestamp
+      time += deltaSeconds
 
       for (const star of stars) {
-        const flicker = Math.sin(time * star.twinkleSpeed * 60 + star.twinklePhase)
+        const flicker = Math.sin(time * star.twinkleSpeed + star.twinklePhase)
         const alpha = star.opacity * (0.5 + 0.5 * flicker)
 
         if (star.hue === 0) {
@@ -89,7 +94,7 @@ export default function StarryBackground() {
     }
 
     setSize()
-    draw()
+    animationFrameId = window.requestAnimationFrame(draw)
     window.addEventListener('resize', setSize)
 
     return () => {
