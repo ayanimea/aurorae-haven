@@ -926,29 +926,34 @@ body.mobile-menu-open .shell {
 }
 
 .card {
-  background: linear-gradient(180deg, var(--glass-lo), rgba(18, 22, 52, 0.22));
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  backdrop-filter: var(--blur);
+  background: rgba(14, 14, 28, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(20px) saturate(1.1);
   overflow: hidden;
   transition:
     width 0.3s ease,
     max-width 0.3s ease;
 }
 .card .card-h {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+.card .card-h strong {
+  color: rgba(235, 238, 255, 0.95);
+  font-size: 1rem;
+  font-weight: 400;
+}
 .card .card-b {
-  padding: 14px;
+  padding: 16px;
 }
 .small {
-  font-size: 0.92rem;
-  color: var(--dim);
+  font-size: 0.8125rem;
+  color: rgba(170, 175, 195, 0.65);
 }
 
 /* Airy buttons */
@@ -958,28 +963,28 @@ body.mobile-menu-open .shell {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: var(--text-bright);
-  font-weight: 500;
-  padding: 9px 12px;
+  color: rgba(195, 200, 220, 0.9);
+  font-weight: 400;
+  font-size: 0.8125rem;
+  padding: 0.45rem 0.9rem;
   min-height: var(--touch-comfortable);
-  border-radius: 12px;
-  border: 1px solid var(--glass-border-soft);
-  background:
-    linear-gradient(
-      180deg,
-      var(--glass-light-top) 0%,
-      var(--glass-light-mid) 35%,
-      var(--glass-light-shade) 100%
-    ),
-    var(--glass-base-bg);
-  box-shadow: var(--glass-shadow-base);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
   transition:
     transform var(--dur) var(--ease),
-    box-shadow var(--dur) var(--ease);
+    box-shadow var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
 }
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: var(--glass-shadow-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(220, 225, 245, 0.95);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
 }
 
 /* Icons */
