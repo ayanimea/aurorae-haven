@@ -139,7 +139,8 @@
   --planet-edge: rgba(120, 150, 255, 0.03);
 
   /* Event glass surface — brighter cards per Figma schedule card treatment.
-   * Contrast verified (worst sampled case): 9.15:1+ against --event-text. */
+   * Contrast verified against final composited card background in the darkest
+   * sampled night-band case: 9.15:1+ against --event-text. */
   --event-glass-top: rgba(255, 255, 255, 0.88);
   --event-glass-bottom: rgba(246, 247, 255, 0.72);
   --event-border: rgba(255, 255, 255, 0.44);
@@ -170,7 +171,7 @@
   --event-evening-accent: rgba(180, 145, 195, 0.50);
   --event-night-accent: rgba(60, 55, 100, 0.46);
 
-  /* Neutral event body overlay — stacked above glass, adds subtle brightening */
+  /* Light event body overlay — stacked above glass, adds subtle brightening */
   --event-body-overlay: rgba(255, 255, 255, 0.08);
 
   /* Event card text colours */
