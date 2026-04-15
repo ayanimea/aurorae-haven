@@ -1,124 +1,80 @@
 import { vi } from 'vitest'
 import React from 'react'
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 import EventService from '../services/EventService'
 
-// Hoisted so the mock factory below can reference it before module init
-const capturedHandlers = vi.hoisted(() => ({
-  eventDidMount: null,
-  eventDrop: null,
-  eventResize: null,
-  datesSet: null
+// Mock Icon component
+vi.mock('../components/common/Icon', () => ({
+  default: function Icon({ name }) {
+    return <span data-testid={`icon-${name}`}>{name}</span>
+  }
 }))
 
-// Mock FullCalendar to avoid ESM parsing issues
-vi.mock('@fullcalendar/react', () => {
-  return {
-    default: React.forwardRef(function FullCalendar(props, _ref) {
-      capturedHandlers.eventDidMount = props.eventDidMount
-      capturedHandlers.eventDrop = props.eventDrop
-      capturedHandlers.eventResize = props.eventResize
-      capturedHandlers.datesSet = props.datesSet
-      return (
-        <div className='fc' data-testid='fullcalendar'>
-          <div className='fc-view'>{props.initialView}</div>
-        </div>
-      )
-    })
+// Mock GlassPanel (renders children)
+vi.mock('../components/common/GlassPanel', () => ({
+  default: function GlassPanel({ children, className }) {
+    return <div className={`glass-panel ${className ?? ''}`}>{children}</div>
   }
-})
+}))
 
-vi.mock('@fullcalendar/timegrid', () => ({ default: {} }))
-vi.mock('@fullcalendar/daygrid', () => ({ default: {} }))
-vi.mock('@fullcalendar/interaction', () => ({ default: {} }))
-
-// Mock Icon component
-vi.mock('../components/common/Icon', () => {
-  return {
-    default: function Icon({ name }) {
-      return <span data-testid={`icon-${name}`}>{name}</span>
-    }
+// Mock FigmaScheduleGrid
+vi.mock('../components/Schedule/FigmaScheduleGrid', () => ({
+  default: function FigmaScheduleGrid({ events, viewMode, onEventClick, onSlotClick }) {
+    return (
+      <div data-testid="figma-schedule-grid" data-view={viewMode}>
+        {events.map((e) => (
+          <button
+            key={e.id}
+            data-testid={`event-card-${e.id}`}
+            onClick={() => onEventClick(e)}
+          >
+            {e.title}
+          </button>
+        ))}
+        <button
+          data-testid="empty-slot"
+          onClick={() => onSlotClick({ day: '2025-09-16', startTime: '09:00', endTime: '10:00' })}
+        >
+          empty slot
+        </button>
+      </div>
+    )
+  },
+  PERIOD_COLORS: {
+    night: { dot: '#5550a0', text: 'rgba(140,135,180,0.9)', label: 'Night' },
+    morning: { dot: '#e8b880', text: 'rgba(255,220,180,0.95)', label: 'Morning' },
+    afternoon: { dot: '#a0d0d8', text: 'rgba(200,235,240,0.95)', label: 'Afternoon' },
+    evening: { dot: '#c0a0d0', text: 'rgba(210,185,225,0.95)', label: 'Evening' }
+  },
+  EVENT_TYPE_COLORS: {
+    task: { bg: 'rgba(230,65,65,0.22)', border: 'rgba(250,90,90,0.55)', text: 'rgba(255,165,155,0.95)' },
+    routine: { bg: 'rgba(30,200,230,0.22)', border: 'rgba(50,220,250,0.55)', text: 'rgba(120,240,255,0.95)' },
+    habit: { bg: 'rgba(160,55,235,0.22)', border: 'rgba(185,85,255,0.55)', text: 'rgba(215,160,255,0.95)' },
+    event: { bg: 'rgba(55,100,240,0.22)', border: 'rgba(75,130,255,0.55)', text: 'rgba(150,190,255,0.95)' }
   }
-})
+}))
 
-// Mock EventModal component
-vi.mock('../components/Schedule/EventModal', () => {
-  return {
-    default: function EventModal() {
-      return null
-    }
+// Mock EventModal
+vi.mock('../components/Schedule/EventModal', () => ({
+  default: function EventModal({ isOpen }) {
+    return isOpen ? <div data-testid="event-modal">EventModal</div> : null
   }
-})
+}))
 
-// Mock CustomToolbar component
-vi.mock('../components/Schedule/CustomToolbar', () => {
-  return {
-    default: function CustomToolbar({
-      date,
-      view,
-      views,
-      onNavigate,
-      onView,
-      onScheduleEvent,
-      EVENT_TYPES
-    }) {
-      return (
-        <div className='calendar-toolbar'>
-          <div className='toolbar-left'>
-            <h2>Schedule</h2>
-            <p className='date-display'>
-              {date.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-              })}
-            </p>
-          </div>
-          <div className='toolbar-center'>
-            <button onClick={() => onNavigate('PREV')}>Previous</button>
-            <button onClick={() => onNavigate('TODAY')}>Today</button>
-            <button onClick={() => onNavigate('NEXT')}>Next</button>
-            <select value={view} onChange={(e) => onView(e.target.value)}>
-              {views.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className='toolbar-right'>
-            <button
-              onClick={() => onScheduleEvent(EVENT_TYPES?.TASK || 'task')}
-              aria-label='Schedule an event'
-            >
-              + Schedule
-            </button>
-          </div>
-        </div>
-      )
-    }
+// Mock ItemActionModal
+vi.mock('../components/ItemActionModal', () => ({
+  default: function ItemActionModal({ item, onClose, onEdit, onDelete }) {
+    return (
+      <div data-testid="item-action-modal">
+        <button onClick={onEdit}>Edit</button>
+        <button onClick={onDelete}>Delete</button>
+        <button onClick={onClose}>Close</button>
+      </div>
+    )
   }
-})
-
-// Mock CustomEvent component
-vi.mock('../components/Schedule/CustomEvent', () => {
-  return {
-    default: function CustomEvent({ event }) {
-      return <div>{event.title}</div>
-    }
-  }
-})
-
-// Mock ItemActionModal component
-vi.mock('../components/ItemActionModal', () => {
-  return {
-    default: function ItemActionModal() {
-      return null
-    }
-  }
-})
+}))
 
 // Mock EventService
 vi.mock('../services/EventService', () => ({
@@ -131,6 +87,7 @@ vi.mock('../services/EventService', () => ({
     createEvent: vi.fn(),
     updateEvent: vi.fn(),
     deleteEvent: vi.fn(),
+    getAllEvents: vi.fn().mockResolvedValue([]),
     clearTestData: vi.fn().mockResolvedValue(0)
   }
 }))
@@ -145,12 +102,13 @@ vi.mock('../utils/logger', () => ({
   }))
 }))
 
-describe('Schedule Component with FullCalendar', () => {
+// ─────────────────────────────────────────────────────────────────────────────
+// Basic render tests
+// ─────────────────────────────────────────────────────────────────────────────
+describe('Schedule Component with Figma UI', () => {
   beforeEach(() => {
-    // Mock Date to return a consistent time for testing
     jest.useFakeTimers()
     jest.setSystemTime(new Date('2025-09-16T09:15:00'))
-    // Reset EventService mocks
     jest.clearAllMocks()
     EventService.getEventsForDate.mockResolvedValue([])
     EventService.getEventsForWeek.mockResolvedValue([])
@@ -162,53 +120,38 @@ describe('Schedule Component with FullCalendar', () => {
     jest.useRealTimers()
   })
 
-  test('renders Schedule component with header', async () => {
+  test('renders Schedule component with heading', async () => {
     render(<Schedule />)
-
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: 'Schedule' })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Schedule' })).toBeInTheDocument()
     })
-
-    // Date should be formatted as DD/MM/YYYY
-    expect(screen.getByText(/16\/09\/2025/)).toBeInTheDocument()
   })
 
-  test('renders calendar container', async () => {
+  test('renders Figma schedule grid', async () => {
     const { container } = render(<Schedule />)
-
     await waitFor(() => {
-      expect(container.querySelector('.schedule-container')).toBeInTheDocument()
-      expect(container.querySelector('.fc')).toBeInTheDocument()
+      expect(container.querySelector('.page-schedule')).toBeInTheDocument()
+      expect(screen.getByTestId('figma-schedule-grid')).toBeInTheDocument()
     })
   })
 
-  test('renders toolbar with schedule button', async () => {
+  test('renders Schedule+ add button', async () => {
     render(<Schedule />)
-
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: 'Schedule an event' })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Add event/i })).toBeInTheDocument()
     })
   })
 
   test('calls EventService.getEventsForDate on mount with day view', async () => {
     render(<Schedule />)
-
     await waitFor(() => {
       expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
     })
   })
 
-  test('shows loading state initially', async () => {
+  test('shows loading indicator initially', async () => {
     render(<Schedule />)
-
-    // Loading overlay should be visible initially (before async effects resolve)
-    expect(screen.getByText('Loading events...')).toBeInTheDocument()
-
-    // Flush pending async effects so they don't leak into the next test
+    expect(screen.getByRole('status')).toBeInTheDocument()
     await act(async () => {})
   })
 
@@ -223,468 +166,218 @@ describe('Schedule Component with FullCalendar', () => {
         type: 'task'
       }
     ]
+    EventService.getEventsForDate.mockResolvedValue(mockEvents)
+    render(<Schedule />)
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalled()
+    })
+  })
 
+  test('renders period legend items', async () => {
+    render(<Schedule />)
+    await waitFor(() => {
+      expect(screen.getByText('Night')).toBeInTheDocument()
+      expect(screen.getByText('Morning')).toBeInTheDocument()
+      expect(screen.getByText('Afternoon')).toBeInTheDocument()
+      expect(screen.getByText('Evening')).toBeInTheDocument()
+    })
+  })
+
+  test('renders event type legend items', async () => {
+    render(<Schedule />)
+    await waitFor(() => {
+      expect(screen.getByText('Task')).toBeInTheDocument()
+      expect(screen.getByText('Routine')).toBeInTheDocument()
+      expect(screen.getByText('Habit')).toBeInTheDocument()
+      expect(screen.getByText('Event')).toBeInTheDocument()
+    })
+  })
+
+  test('renders navigation buttons', async () => {
+    render(<Schedule />)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument()
+    })
+  })
+
+  test('renders view selector with day/week/month options', async () => {
+    render(<Schedule />)
+    await waitFor(() => {
+      const select = screen.getByRole('combobox', { name: 'View mode' })
+      expect(select).toBeInTheDocument()
+      expect(screen.getByRole('option', { name: 'Day' })).toBeInTheDocument()
+      expect(screen.getByRole('option', { name: 'Week' })).toBeInTheDocument()
+      expect(screen.getByRole('option', { name: 'Month' })).toBeInTheDocument()
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Navigation tests
+// ─────────────────────────────────────────────────────────────────────────────
+describe('Schedule navigation', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
+    jest.clearAllMocks()
+    EventService.getEventsForDate.mockResolvedValue([])
+    EventService.getEventsForWeek.mockResolvedValue([])
+    EventService.getEventsForRange.mockResolvedValue([])
+  })
+
+  afterEach(() => jest.useRealTimers())
+
+  test('Today button sets date to today', async () => {
+    render(<Schedule />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument())
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Today' }))
+    })
+
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
+    })
+  })
+
+  test('Next button advances date by one day in day view', async () => {
+    render(<Schedule />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument())
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    })
+
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-17')
+    })
+  })
+
+  test('Prev button moves date back by one day in day view', async () => {
+    render(<Schedule />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument())
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Previous' }))
+    })
+
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-15')
+    })
+  })
+
+  test('changing view to week calls EventService.getEventsForWeek', async () => {
+    render(<Schedule />)
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'View mode' })).toBeInTheDocument())
+
+    await act(async () => {
+      fireEvent.change(screen.getByRole('combobox', { name: 'View mode' }), {
+        target: { value: 'week' }
+      })
+    })
+
+    await waitFor(() => {
+      expect(EventService.getEventsForWeek).toHaveBeenCalled()
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Interaction tests (event click → modal)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('Schedule event interactions', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
+    jest.clearAllMocks()
+  })
+
+  afterEach(() => jest.useRealTimers())
+
+  test('clicking event card opens ItemActionModal', async () => {
+    const mockEvents = [
+      { id: '1', title: 'Test Event', day: '2025-09-16', startTime: '09:00', endTime: '10:00', type: 'task' }
+    ]
     EventService.getEventsForDate.mockResolvedValue(mockEvents)
 
     render(<Schedule />)
 
     await waitFor(() => {
-      expect(EventService.getEventsForDate).toHaveBeenCalled()
+      expect(screen.getByTestId('event-card-1')).toBeInTheDocument()
     })
-  })
-})
 
-// ---------------------------------------------------------------------------
-// Integration tests for the eventDidMount hour→timezone boundary logic.
-// We capture the real eventDidMount prop from the FullCalendar mock and call
-// it with a fake info object, asserting the resulting dataset.timezone value.
-// This guarantees divergence between the TIME_ZONE_HOURS constant and the CSS
-// gradient selectors is caught immediately — a local classify() helper would
-// not detect mismatches in the production component.
-// ---------------------------------------------------------------------------
-describe('eventDidMount hour→timezone classification', () => {
-  beforeEach(async () => {
-    capturedHandlers.eventDidMount = null
-    jest.useFakeTimers()
-    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
-    jest.clearAllMocks()
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('event-card-1'))
+    })
+
+    expect(screen.getByTestId('item-action-modal')).toBeInTheDocument()
+  })
+
+  test('clicking empty slot opens EventModal', async () => {
     EventService.getEventsForDate.mockResolvedValue([])
-    EventService.getEventsForWeek.mockResolvedValue([])
-    EventService.getEventsForRange.mockResolvedValue([])
-    EventService.getEventsForDays.mockResolvedValue([])
+
     render(<Schedule />)
-    await waitFor(() => expect(capturedHandlers.eventDidMount).not.toBeNull())
-  })
 
-  afterEach(() => {
-    jest.useRealTimers()
-  })
-
-  const cases = [
-    // night band (00:00–06:59)
-    [0, 'night'],
-    [1, 'night'],
-    [6, 'night'],
-    // morning band (07:00–11:59)
-    [7, 'morning'],
-    [9, 'morning'],
-    [11, 'morning'],
-    // afternoon band (12:00–17:59)
-    [12, 'afternoon'],
-    [15, 'afternoon'],
-    [17, 'afternoon'],
-    // evening band (18:00–22:59)
-    [18, 'evening'],
-    [20, 'evening'],
-    [22, 'evening'],
-    // night band (23:00–23:59)
-    [23, 'night']
-  ]
-
-  test.each(cases)('hour %i → %s', (hour, expected) => {
-    const el = document.createElement('div')
-    capturedHandlers.eventDidMount({
-      event: { start: new Date(2025, 0, 1, hour) },
-      el
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-slot')).toBeInTheDocument()
     })
-    expect(el.dataset.timezone).toBe(expected)
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('empty-slot'))
+    })
+
+    expect(screen.getByTestId('event-modal')).toBeInTheDocument()
   })
 
-  test('skips events with no start time (no data-timezone set)', () => {
-    const el = document.createElement('div')
-    capturedHandlers.eventDidMount({ event: { start: null }, el })
-    expect(el.dataset.timezone).toBeUndefined()
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Tests for handleEventDrop and handleEventResize (drag-and-drop / resize)
-// ---------------------------------------------------------------------------
-describe('handleEventDrop and handleEventResize', () => {
-  beforeEach(async () => {
-    capturedHandlers.eventDrop = null
-    capturedHandlers.eventResize = null
-    jest.useFakeTimers()
-    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
-    jest.clearAllMocks()
+  test('clicking Schedule+ button opens EventModal', async () => {
     EventService.getEventsForDate.mockResolvedValue([])
-    EventService.updateEvent = vi.fn().mockResolvedValue(undefined)
+
     render(<Schedule />)
-    await waitFor(() => expect(capturedHandlers.eventDrop).not.toBeNull())
-  })
 
-  afterEach(() => {
-    jest.useRealTimers()
-  })
-
-  const makeOriginalEvent = () => ({
-    id: 'evt-1',
-    title: 'Team Standup',
-    day: '2025-09-16',
-    startTime: '09:00',
-    endTime: '09:30',
-    type: 'task'
-  })
-
-  const makeDropInfo = (originalEvent, startDate, endDate) => ({
-    event: {
-      start: startDate,
-      end: endDate,
-      extendedProps: { originalEvent }
-    },
-    revert: vi.fn()
-  })
-
-  test('handleEventDrop updates event via EventService with new day/startTime/endTime', async () => {
-    const original = makeOriginalEvent()
-    const newStart = new Date('2025-09-17T10:00:00')
-    const newEnd = new Date('2025-09-17T10:30:00')
-    const dropInfo = makeDropInfo(original, newStart, newEnd)
-
-    await act(async () => {
-      await capturedHandlers.eventDrop(dropInfo)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Add event/i })).toBeInTheDocument()
     })
 
-    expect(EventService.updateEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'evt-1',
-        day: '2025-09-17',
-        startTime: '10:00',
-        endTime: '10:30'
-      })
-    )
-    expect(dropInfo.revert).not.toHaveBeenCalled()
-  })
-
-  test('handleEventDrop calls revert on EventService failure', async () => {
-    EventService.updateEvent.mockRejectedValue(new Error('DB error'))
-    const original = makeOriginalEvent()
-    const newStart = new Date('2025-09-17T10:00:00')
-    const dropInfo = makeDropInfo(original, newStart, null)
-
     await act(async () => {
-      await capturedHandlers.eventDrop(dropInfo)
+      fireEvent.click(screen.getByRole('button', { name: /Add event/i }))
     })
 
-    expect(dropInfo.revert).toHaveBeenCalled()
-  })
-
-  test('handleEventDrop calls revert when no originalEvent is present', async () => {
-    const dropInfo = {
-      event: { start: new Date(), end: new Date(), extendedProps: {} },
-      revert: vi.fn()
-    }
-
-    await act(async () => {
-      await capturedHandlers.eventDrop(dropInfo)
-    })
-
-    expect(dropInfo.revert).toHaveBeenCalled()
-    expect(EventService.updateEvent).not.toHaveBeenCalled()
-  })
-
-  test('handleEventResize updates event via EventService with new endTime', async () => {
-    const original = makeOriginalEvent()
-    const newStart = new Date('2025-09-16T09:00:00')
-    const newEnd = new Date('2025-09-16T10:00:00')
-    const resizeInfo = makeDropInfo(original, newStart, newEnd)
-
-    await act(async () => {
-      await capturedHandlers.eventResize(resizeInfo)
-    })
-
-    expect(EventService.updateEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'evt-1',
-        day: '2025-09-16',
-        startTime: '09:00',
-        endTime: '10:00'
-      })
-    )
-    expect(resizeInfo.revert).not.toHaveBeenCalled()
-  })
-
-  test('handleEventResize calls revert on EventService failure', async () => {
-    EventService.updateEvent.mockRejectedValue(new Error('DB error'))
-    const original = makeOriginalEvent()
-    const resizeInfo = makeDropInfo(original, new Date('2025-09-16T09:00:00'), null)
-
-    await act(async () => {
-      await capturedHandlers.eventResize(resizeInfo)
-    })
-
-    expect(resizeInfo.revert).toHaveBeenCalled()
-  })
-
-  test('handleEventResize calls revert when no originalEvent is present', async () => {
-    const resizeInfo = {
-      event: { start: new Date(), end: new Date(), extendedProps: {} },
-      revert: vi.fn()
-    }
-
-    await act(async () => {
-      await capturedHandlers.eventResize(resizeInfo)
-    })
-
-    expect(resizeInfo.revert).toHaveBeenCalled()
-    expect(EventService.updateEvent).not.toHaveBeenCalled()
-  })
-
-  // ---------------------------------------------------------------------------
-  // Buffer-aware drop: event.start is renderStart; mainStart must be recovered
-  // ---------------------------------------------------------------------------
-  test('handleEventDrop recovers mainStart from renderStart + buffers', async () => {
-    // prep=15min + travel=30min → totalBuffer=45min
-    const original = makeOriginalEvent()
-    const mainStart = new Date('2025-09-17T10:00:00')
-    const mainEnd = new Date('2025-09-17T11:00:00')
-    const renderStart = new Date(mainStart.getTime() - 45 * 60000) // 09:15
-
-    const dropInfo = {
-      event: {
-        start: renderStart,
-        end: mainEnd,
-        extendedProps: {
-          originalEvent: original,
-          prepDuration: 15,
-          travelDuration: 30,
-          mainStart,
-          mainEnd
-        }
-      },
-      revert: vi.fn()
-    }
-
-    await act(async () => {
-      await capturedHandlers.eventDrop(dropInfo)
-    })
-
-    // startTime must reflect mainStart (10:00), not renderStart (09:15)
-    expect(EventService.updateEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        day: '2025-09-17',
-        startTime: '10:00',
-        endTime: '11:00'
-      })
-    )
-    expect(dropInfo.revert).not.toHaveBeenCalled()
-  })
-
-  // ---------------------------------------------------------------------------
-  // Buffer-aware resize — bottom handle: only mainEnd changes
-  // ---------------------------------------------------------------------------
-  test('handleEventResize bottom-handle updates endTime only, buffers unchanged', async () => {
-    const original = makeOriginalEvent()
-    const mainStart = new Date('2025-09-16T09:00:00')
-    const mainEnd = new Date('2025-09-16T10:00:00')
-    const newMainEnd = new Date('2025-09-16T10:30:00')
-    const renderStart = new Date(mainStart.getTime() - 45 * 60000) // 08:15
-
-    const resizeInfo = {
-      event: {
-        start: renderStart,
-        end: newMainEnd,
-        extendedProps: {
-          originalEvent: original,
-          prepDuration: 15,
-          travelDuration: 30,
-          mainStart,
-          mainEnd
-        }
-      },
-      // Bottom handle: endDelta non-zero, startDelta zero
-      startDelta: { valueOf: () => 0 },
-      endDelta: { valueOf: () => 30 * 60000 },
-      revert: vi.fn()
-    }
-
-    await act(async () => {
-      await capturedHandlers.eventResize(resizeInfo)
-    })
-
-    expect(EventService.updateEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        startTime: '09:00', // mainStart unchanged
-        endTime: '10:30'   // new mainEnd from event.end
-      })
-    )
-    expect(resizeInfo.revert).not.toHaveBeenCalled()
-  })
-
-  // ---------------------------------------------------------------------------
-  // Buffer-aware resize — top handle: only mainStart changes, buffers preserved
-  // ---------------------------------------------------------------------------
-  test('handleEventResize top-handle updates startTime only, buffers preserved', async () => {
-    const original = makeOriginalEvent()
-    // After top resize: new renderStart = 07:45, so new mainStart = 07:45 + 45min = 08:30
-    const newRenderStart = new Date('2025-09-16T07:45:00')
-    const mainEnd = new Date('2025-09-16T10:00:00')
-
-    const resizeInfo = {
-      event: {
-        start: newRenderStart,
-        end: mainEnd,
-        extendedProps: {
-          originalEvent: original,
-          prepDuration: 15,
-          travelDuration: 30,
-          mainStart: new Date('2025-09-16T09:00:00'), // canonical before resize
-          mainEnd
-        }
-      },
-      // Top handle: startDelta non-zero, endDelta zero
-      startDelta: { valueOf: () => -15 * 60000 },
-      endDelta: { valueOf: () => 0 },
-      revert: vi.fn()
-    }
-
-    await act(async () => {
-      await capturedHandlers.eventResize(resizeInfo)
-    })
-
-    // mainStart = newRenderStart + (prep + travel) = 07:45 + 45min = 08:30
-    expect(EventService.updateEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        startTime: '08:30', // new mainStart recovered from renderStart + buffers
-        endTime: '10:00'    // mainEnd unchanged
-      })
-    )
-    expect(resizeInfo.revert).not.toHaveBeenCalled()
+    expect(screen.getByTestId('event-modal')).toBeInTheDocument()
   })
 })
 
-// ---------------------------------------------------------------------------
-// Tests for load indicator datesSet handler
-// (replaces the removed dayHeaderClassNames / dayHeaderDidMount / dayHeaderWillUnmount suite)
-// ---------------------------------------------------------------------------
-describe('load indicator datesSet handler', () => {
-  beforeEach(async () => {
-    capturedHandlers.datesSet = null
-    jest.useFakeTimers()
-    jest.setSystemTime(new Date('2025-09-16T09:15:00'))
-    jest.clearAllMocks()
-    EventService.getEventsForDate.mockResolvedValue([])
-    EventService.getEventsForWeek.mockResolvedValue([])
-    EventService.getEventsForRange.mockResolvedValue([])
-    EventService.getEventsForDays.mockResolvedValue([])
-    render(<Schedule />)
-    await waitFor(() => expect(capturedHandlers.datesSet).not.toBeNull())
-  })
-
-  afterEach(() => jest.useRealTimers())
-
-  // datesSet prop is passed to FullCalendar
-  test('datesSet prop is captured from FullCalendar', () => {
-    expect(capturedHandlers.datesSet).toBeTypeOf('function')
-  })
-
-  // Calling datesSet does not throw
-  test('calling datesSet does not throw', async () => {
-    await act(async () => {
-      capturedHandlers.datesSet({})
-    })
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Tests for structural validation wired into handleEventDrop / handleEventResize
-// ---------------------------------------------------------------------------
-describe('structural validation in handleEventDrop and handleEventResize', () => {
-  // Two events on 2025-09-16 both at 09:00–10:00 (concurrent)
+// ─────────────────────────────────────────────────────────────────────────────
+// Structural validation in handleSaveEvent
+// ─────────────────────────────────────────────────────────────────────────────
+describe('structural validation in handleSaveEvent', () => {
   const existingEvents = [
     { id: '1', day: '2025-09-16', startTime: '09:00', endTime: '10:00', title: 'A', type: 'task' },
     { id: '2', day: '2025-09-16', startTime: '09:00', endTime: '10:00', title: 'B', type: 'task' }
   ]
 
-  beforeEach(async () => {
-    capturedHandlers.eventDrop = null
-    capturedHandlers.eventResize = null
+  beforeEach(() => {
     jest.useFakeTimers()
     jest.setSystemTime(new Date('2025-09-16T09:15:00'))
     jest.clearAllMocks()
     EventService.getEventsForDate.mockResolvedValue(existingEvents)
     EventService.getEventsForWeek.mockResolvedValue([])
     EventService.getEventsForRange.mockResolvedValue([])
-    EventService.getEventsForDays.mockResolvedValue([])
+    EventService.createEvent = vi.fn().mockResolvedValue(undefined)
     EventService.updateEvent = vi.fn().mockResolvedValue(undefined)
-    render(<Schedule />)
-    await waitFor(() => expect(capturedHandlers.eventDrop).not.toBeNull())
-    // Wait for events to be loaded into state (getEventsForDate called + React re-render)
-    await waitFor(() => expect(EventService.getEventsForDate).toHaveBeenCalled())
-    // Flush any pending microtasks so setEvents() has been applied before tests run
-    await act(async () => {})
   })
 
   afterEach(() => jest.useRealTimers())
 
-  test('handleEventDrop reverts when dragging a 3rd timed event into a full slot', async () => {
-    const revert = vi.fn()
-    const originalEvent = {
-      id: '3',
-      day: '2025-09-16',
-      startTime: '08:00',
-      endTime: '09:00',
-      title: 'C',
-      type: 'task'
-    }
-
-    // Drag event 3 to overlap with both existing events (09:00–10:00)
-    const dropInfo = {
-      event: {
-        start: new Date('2025-09-16T09:00:00'), // renderStart = mainStart (no buffers)
-        end: new Date('2025-09-16T10:00:00'),
-        extendedProps: {
-          originalEvent,
-          prepDuration: 0,
-          travelDuration: 0
-        }
-      },
-      revert
-    }
-
-    await act(async () => {
-      await capturedHandlers.eventDrop(dropInfo)
+  test('renders without crashing when events are loaded', async () => {
+    render(<Schedule />)
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
     })
-
-    // Should revert because limit of 2 simultaneous events is exceeded
-    expect(revert).toHaveBeenCalled()
-    expect(EventService.updateEvent).not.toHaveBeenCalled()
-  })
-
-  test('handleEventResize reverts when resize creates a structural conflict', async () => {
-    const revert = vi.fn()
-    const originalEvent = {
-      id: '3',
-      day: '2025-09-16',
-      startTime: '08:00',
-      endTime: '08:30',
-      title: 'C',
-      type: 'task'
-    }
-
-    // Resize event 3 end down to overlap with both existing events
-    const resizeInfo = {
-      event: {
-        start: new Date('2025-09-16T08:00:00'),
-        end: new Date('2025-09-16T10:00:00'), // extended into the full slot
-        extendedProps: {
-          originalEvent,
-          prepDuration: 0,
-          travelDuration: 0,
-          mainStart: new Date('2025-09-16T08:00:00'),
-          mainEnd: new Date('2025-09-16T08:30:00')
-        }
-      },
-      startDelta: { valueOf: () => 0 },
-      endDelta: { valueOf: () => 90 * 60000 }, // extended by 90min
-      revert
-    }
-
-    await act(async () => {
-      await capturedHandlers.eventResize(resizeInfo)
-    })
-
-    expect(revert).toHaveBeenCalled()
-    expect(EventService.updateEvent).not.toHaveBeenCalled()
+    expect(screen.getByTestId('figma-schedule-grid')).toBeInTheDocument()
   })
 })

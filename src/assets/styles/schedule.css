@@ -2177,3 +2177,215 @@ Ask for clarification or preserve the existing structure.
   transition: none !important;
 }
 
+
+
+/* ===================================================================
+   FIGMA SCHEDULE UI — ported from Figma ZIP src/app/pages/Schedule.tsx
+   =================================================================== */
+
+/* ── Page root ──────────────────────────────────────────────────────── */
+.page-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+/* ── Figma header row ───────────────────────────────────────────────── */
+.figma-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.figma-schedule-title {
+  color: rgba(235, 238, 255, 0.95);
+  font-size: 1.35rem;
+  font-weight: 300;
+  margin: 0;
+}
+
+.figma-schedule-subtitle {
+  color: rgba(170, 175, 195, 0.55);
+  font-size: 0.8rem;
+  margin: 0.15rem 0 0;
+}
+
+/* ── Control bar ────────────────────────────────────────────────────── */
+.figma-schedule-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.figma-schedule-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: rgba(185, 190, 210, 0.6);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  min-width: 44px;
+  min-height: 44px;
+}
+.figma-schedule-nav-btn:hover {
+  color: rgba(220, 225, 245, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-schedule-today-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  color: rgba(220, 225, 245, 0.9);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-height: 44px;
+}
+.figma-schedule-today-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.figma-schedule-sep {
+  display: inline-block;
+  width: 1px;
+  height: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 0.25rem;
+}
+
+/* ── Period legend ─────────────────────────────────────────────────── */
+.figma-period-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.figma-period-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.figma-period-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.figma-period-label {
+  font-size: 0.6875rem;
+  opacity: 0.7;
+}
+
+/* ── View selector ────────────────────────────────────────────────── */
+.figma-schedule-view-select {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  color: rgba(195, 200, 220, 0.9);
+  background: rgba(14, 14, 28, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  min-height: 44px;
+}
+.figma-schedule-view-select:focus {
+  outline: 2px solid rgba(130, 160, 255, 0.4);
+  outline-offset: 2px;
+}
+
+/* ── Schedule+ add button ─────────────────────────────────────────── */
+.figma-schedule-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8125rem;
+  color: rgba(140, 170, 240, 0.95);
+  background: rgba(60, 100, 200, 0.1);
+  border: 1px solid rgba(60, 100, 200, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+.figma-schedule-add-btn:hover {
+  background: rgba(60, 100, 200, 0.18);
+  transform: scale(1.03);
+}
+
+/* ── Grid panel ───────────────────────────────────────────────────── */
+.figma-schedule-grid-panel {
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Loading indicator ────────────────────────────────────────────── */
+.figma-schedule-loading {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  color: rgba(170, 175, 195, 0.55);
+  font-size: 0.75rem;
+  z-index: 20;
+}
+
+/* ── Event type legend panel ──────────────────────────────────────── */
+.figma-event-legend-panel {
+  padding: 0.875rem 1.25rem;
+}
+.figma-event-legend {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.figma-event-legend-label {
+  color: rgba(170, 175, 195, 0.55);
+  font-size: 0.75rem;
+}
+.figma-event-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.figma-event-legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.figma-event-legend-text {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .figma-schedule-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .figma-period-legend {
+    display: none;
+  }
+  .figma-schedule-sep {
+    display: none;
+  }
+}
+
+
+/* ── GlassPanel hover utility ─────────────────────────────────────── */
+.glass-panel--hover:hover {
+  transform: scale(1.01);
+}
