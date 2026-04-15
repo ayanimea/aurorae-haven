@@ -933,9 +933,7 @@ function Schedule() {
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(syncTimeBandBounds)
       resizeObserver.observe(containerEl)
-      if (observedTimegridBody) {
-        resizeObserver.observe(observedTimegridBody)
-      }
+      resizeObserver.observe(observedTimegridBody)
     }
 
     return () => {
