@@ -158,6 +158,9 @@ function Schedule() {
   const [error, setError] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
+  // Incremented by FullCalendar's datesSet callback so the load-indicator useEffect
+  // re-runs after every view/date render (header cells mount fresh on each navigation).
+  const [fcRenderCount, setFcRenderCount] = useState(0)
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -247,10 +250,10 @@ function Schedule() {
     [events]
   )
 
-  // Per-day load map for week-view header indicators (only computed in week view)
-  // Not computed during scroll/hover — only recomputed when events or view changes.
+  // Per-day load map for all-view header/cell indicators.
+  // Not computed during scroll/hover — only recomputed when events or guidance level changes.
   const dayLoadMap = useMemo(() => {
-    if (view !== 'week' || schedulingGuidanceLevel === 'off') return {}
+    if (schedulingGuidanceLevel === 'off') return {}
     const map = {}
     for (const event of events) {
       const day = event.day
@@ -263,7 +266,7 @@ function Schedule() {
       result[day] = getMemoizedDayLoad(dayEvents, day)
     }
     return result
-  }, [events, view, schedulingGuidanceLevel])
+  }, [events, schedulingGuidanceLevel])
 
   // Load events based on current view and date
   const loadEvents = useCallback(async () => {
@@ -859,79 +862,80 @@ function Schedule() {
     [loadEvents, events]
   )
 
-  // Week-view day header class names for load indicators.
-  // Only applied in week view when guidance is not "off".
-  // Uses dayHeaderClassNames (safer than dayHeaderContent) to add CSS classes
-  // without replacing FullCalendar's default header DOM or its click handlers.
-  const dayHeaderClassNames = useCallback(
-    (arg) => {
-      if (view !== 'week' || schedulingGuidanceLevel === 'off') return []
+  // Called by FullCalendar after every view/date render so the load-indicator
+  // useEffect re-runs against freshly mounted DOM elements.
+  const handleDatesSet = useCallback(() => {
+    setFcRenderCount((c) => c + 1)
+  }, [])
 
-      const dateStr = format(arg.date, 'yyyy-MM-dd')
+  // Apply load-indicator classes and sr-only labels directly to the FullCalendar
+  // DOM after events load or after the calendar renders new cells (datesSet).
+  // This replaces the earlier dayHeaderClassNames / dayHeaderDidMount approach,
+  // which only ran at cell mount time and therefore missed updates when the
+  // dayLoadMap changed after cells were already on screen.
+  // Works for all calendar views:
+  //  - Week / Day view: targets .fc-col-header-cell[data-date] (column headers)
+  //  - Month view:      targets .fc-daygrid-day[data-date]     (day cells)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fcRenderCount is a trigger-only dep — it increments each time FullCalendar renders new DOM cells so the effect re-runs on view/date navigation even when dayLoadMap is unchanged.
+  useEffect(() => {
+    if (schedulingGuidanceLevel === 'off') return
+    const calendarApi = calendarRef.current?.getApi()
+    if (!calendarApi?.el) return
+    const calendarEl = calendarApi.el
+
+    const applyIndicator = (el, dateStr) => {
       const load = dayLoadMap[dateStr] ?? 0
-
-      // Derive per-day thresholds from config values so "8 h" and "9 h" remain
-      // semantically consistent even on DST transition days (23 h / 25 h).
-      // SCHEDULING_CONFIG stores ratios against a 1440-min baseline; scaling by
-      // (1440 / dayMins) gives the correct ratio for today's actual day length.
-      const dayMins = getDayDurationMinutes(arg.date)
-      const thresholdOver = (SCHEDULING_CONFIG.loadThresholdOver * 1440) / dayMins
-      const thresholdHigh = (SCHEDULING_CONFIG.loadThresholdHigh * 1440) / dayMins
-
-      if (load >= thresholdOver) return ['day-header--over']
-      if (load >= thresholdHigh) return ['day-header--high']
-      return []
-    },
-    [view, schedulingGuidanceLevel, dayLoadMap]
-  )
-
-  // Week-view accessible load label — appends a .sr-only span to the cushion
-  // element of high-load or over-capacity header cells without replacing
-  // FullCalendar's default header DOM (preserving all internal click handlers).
-  const dayHeaderDidMount = useCallback(
-    (arg) => {
-      if (view !== 'week' || schedulingGuidanceLevel === 'off') return
-
-      const dateStr = format(arg.date, 'yyyy-MM-dd')
-      const load = dayLoadMap[dateStr] ?? 0
-
-      // Derive per-day thresholds from config for DST consistency (same as dayHeaderClassNames)
-      const dayMins = getDayDurationMinutes(arg.date)
+      const parts = dateStr.split('-').map(Number)
+      const dayDate =
+        parts.length === 3 && parts.every((n) => !Number.isNaN(n))
+          ? new Date(parts[0], parts[1] - 1, parts[2])
+          : new Date(dateStr)
+      const dayMins = getDayDurationMinutes(dayDate)
+      // Derive per-day thresholds from config so "8 h / 9 h" semantics stay
+      // consistent on DST transition days (23 h / 25 h).
       const thresholdOver = (SCHEDULING_CONFIG.loadThresholdOver * 1440) / dayMins
       const thresholdHigh = (SCHEDULING_CONFIG.loadThresholdHigh * 1440) / dayMins
 
       const isOver = load >= thresholdOver
-      const isHigh = load >= thresholdHigh
+      const isHigh = isOver || load >= thresholdHigh
 
-      const srOnlyClass = 'sr-only-day-header'
-      // Append to cushion (inner text element) so positioning is relative to it
-      const cushion = arg.el.querySelector('.fc-col-header-cell-cushion') ?? arg.el
-      const existing = cushion.querySelector(`.${srOnlyClass}`)
+      el.classList.toggle('day-load--over', isOver)
+      el.classList.toggle('day-load--high', isHigh && !isOver)
 
-      if (!isOver && !isHigh) {
-        // Load dropped below threshold — remove stale label if present
+      // Accessible sr-only label — upsert on each call so text stays current
+      const srClass = 'sr-only-load-label'
+      const anchor =
+        el.querySelector('.fc-col-header-cell-cushion') ??
+        el.querySelector('.fc-daygrid-day-number') ??
+        el
+      const existing = anchor.querySelector(`.${srClass}`)
+
+      if (!isHigh) {
         if (existing?.parentNode) existing.parentNode.removeChild(existing)
         return
       }
 
       const label = isOver ? ' — over capacity' : ' — high load'
       if (existing) {
-        // Update text in case load level changed (high → over or vice versa)
         if (existing.textContent !== label) existing.textContent = label
       } else {
-        const srSpan = document.createElement('span')
-        srSpan.className = `sr-only ${srOnlyClass}`
-        srSpan.textContent = label
-        cushion.appendChild(srSpan)
+        const span = document.createElement('span')
+        span.className = `sr-only ${srClass}`
+        span.textContent = label
+        anchor.appendChild(span)
       }
-    },
-    [view, schedulingGuidanceLevel, dayLoadMap]
-  )
+    }
 
-  const dayHeaderWillUnmount = useCallback((arg) => {
-    const srSpan = arg.el.querySelector('.sr-only-day-header')
-    if (srSpan?.parentNode) srSpan.parentNode.removeChild(srSpan)
-  }, [])
+    // Week / Day view column headers
+    calendarEl.querySelectorAll('.fc-col-header-cell[data-date]').forEach((cell) => {
+      applyIndicator(cell, cell.dataset.date)
+    })
+
+    // Month view day cells
+    calendarEl.querySelectorAll('.fc-daygrid-day[data-date]').forEach((cell) => {
+      applyIndicator(cell, cell.dataset.date)
+    })
+  }, [dayLoadMap, schedulingGuidanceLevel, fcRenderCount])
 
   return (
     <ErrorBoundary>
@@ -1018,9 +1022,7 @@ function Schedule() {
                   select={handleDateSelect}
                   eventMouseEnter={handleEventMouseEnter}
                   eventWillUnmount={handleEventWillUnmount}
-                  dayHeaderClassNames={dayHeaderClassNames}
-                  dayHeaderDidMount={dayHeaderDidMount}
-                  dayHeaderWillUnmount={dayHeaderWillUnmount}
+                  datesSet={handleDatesSet}
                   eventDidMount={(info) => {
                     // Use mainStart (actual event time) for timezone band classification,
                     // not event.start which equals renderStart (includes buffer offset).

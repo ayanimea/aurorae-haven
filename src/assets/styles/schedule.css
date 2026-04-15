@@ -2079,31 +2079,34 @@ Ask for clarification or preserve the existing structure.
   }
 }
 
-/* ===== Week-View Load Indicators (Week View Only) =====
- * Uses dayHeaderClassNames to add .day-header--high / .day-header--over to the
- * FullCalendar .fc-col-header-cell element.  CSS pseudo-elements on the cushion
- * (the inner text element) then create the visual indicator without touching
- * FullCalendar's default DOM or its click handlers.
+/* ===== Load Indicators (All Calendar Views) =====
+ * Classes day-load--high and day-load--over are applied directly to FullCalendar
+ * DOM elements via a useEffect in Schedule.jsx (not via dayHeaderClassNames which
+ * only fires on cell mount and therefore misses post-load data changes):
  *
- * Accessibility: high-load and over-capacity days include a visually-hidden
- * `.sr-only` text node (injected via dayHeaderDidMount) alongside the default
- * day label so screen readers announce the load state.
+ *  - Week / Day view: .fc-col-header-cell[data-date]  (column headers)
+ *  - Month view:      .fc-daygrid-day[data-date]      (day cells)
+ *
+ * Accessibility: a visually-hidden .sr-only-load-label span is injected by the
+ * same useEffect so screen readers announce "— high load" / "— over capacity".
  *
  * Uses design tokens only — no hardcoded colours or rgba.
  * Indicators are static (animation: none, transition: none).
  */
 
+/* ── Week / Day view: column header underline ── */
+
 /* Allow ::after pseudo-element to be positioned below the day label */
-.fc-col-header-cell.day-header--high .fc-col-header-cell-cushion,
-.fc-col-header-cell.day-header--over .fc-col-header-cell-cushion {
+.fc-col-header-cell.day-load--high .fc-col-header-cell-cushion,
+.fc-col-header-cell.day-load--over .fc-col-header-cell-cushion {
   position: relative;
 }
 
 /* High load (≥ loadThresholdHigh) — subtle amber underline.
  * Absolutely positioned so it sits flush at the bottom of the cushion without
  * increasing the cushion's layout height (no layout shift when indicator appears). */
-.fc-col-header-cell.day-header--high .fc-col-header-cell-cushion::after,
-.fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::after {
+.fc-col-header-cell.day-load--high .fc-col-header-cell-cushion::after,
+.fc-col-header-cell.day-load--over .fc-col-header-cell-cushion::after {
   content: '';
   position: absolute;
   left: 0;
@@ -2118,14 +2121,14 @@ Ask for clarification or preserve the existing structure.
 }
 
 /* Over-capacity (≥ loadThresholdOver) — red underline */
-.fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::after {
+.fc-col-header-cell.day-load--over .fc-col-header-cell-cushion::after {
   background-color: var(--danger);
 }
 
 /* Over-capacity warning icon — rendered before the day text as supplementary visual cue.
  * Pseudo-element generated content is NOT reliably exposed to the accessibility tree.
- * A visually-hidden sr-only label injected via dayHeaderDidMount provides AT support. */
-.fc-col-header-cell.day-header--over .fc-col-header-cell-cushion::before {
+ * A visually-hidden sr-only label injected via the useEffect provides AT support. */
+.fc-col-header-cell.day-load--over .fc-col-header-cell-cushion::before {
   content: '⚠\00a0';
   font-size: 0.75em;
   color: var(--danger);
@@ -2134,3 +2137,43 @@ Ask for clarification or preserve the existing structure.
   animation: none !important;
   transition: none !important;
 }
+
+/* ── Month view: day cell underline ── */
+
+/* Allow ::after pseudo-element to be positioned below the day number */
+.fc-daygrid-day.day-load--high .fc-daygrid-day-number,
+.fc-daygrid-day.day-load--over .fc-daygrid-day-number {
+  position: relative;
+  display: inline-block;
+}
+
+/* High load — amber underline on the day number */
+.fc-daygrid-day.day-load--high .fc-daygrid-day-number::after,
+.fc-daygrid-day.day-load--over .fc-daygrid-day-number::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: var(--warning);
+  border-radius: 1px;
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Over-capacity — red underline */
+.fc-daygrid-day.day-load--over .fc-daygrid-day-number::after {
+  background-color: var(--danger);
+}
+
+/* Over-capacity warning icon on month-view day number */
+.fc-daygrid-day.day-load--over .fc-daygrid-day-number::before {
+  content: '⚠\00a0';
+  font-size: 0.65em;
+  color: var(--danger);
+  vertical-align: super;
+  animation: none !important;
+  transition: none !important;
+}
+

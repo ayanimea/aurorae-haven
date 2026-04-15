@@ -10,9 +10,7 @@ const capturedHandlers = vi.hoisted(() => ({
   eventDidMount: null,
   eventDrop: null,
   eventResize: null,
-  dayHeaderClassNames: null,
-  dayHeaderDidMount: null,
-  dayHeaderWillUnmount: null
+  datesSet: null
 }))
 
 // Mock FullCalendar to avoid ESM parsing issues
@@ -22,9 +20,7 @@ vi.mock('@fullcalendar/react', () => {
       capturedHandlers.eventDidMount = props.eventDidMount
       capturedHandlers.eventDrop = props.eventDrop
       capturedHandlers.eventResize = props.eventResize
-      capturedHandlers.dayHeaderClassNames = props.dayHeaderClassNames
-      capturedHandlers.dayHeaderDidMount = props.dayHeaderDidMount
-      capturedHandlers.dayHeaderWillUnmount = props.dayHeaderWillUnmount
+      capturedHandlers.datesSet = props.datesSet
       return (
         <div className='fc' data-testid='fullcalendar'>
           <div className='fc-view'>{props.initialView}</div>
@@ -558,14 +554,12 @@ describe('handleEventDrop and handleEventResize', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Tests for week-view load indicator callbacks
-// (dayHeaderClassNames, dayHeaderDidMount, dayHeaderWillUnmount)
+// Tests for load indicator datesSet handler
+// (replaces the removed dayHeaderClassNames / dayHeaderDidMount / dayHeaderWillUnmount suite)
 // ---------------------------------------------------------------------------
-describe('week-view load indicator callbacks', () => {
+describe('load indicator datesSet handler', () => {
   beforeEach(async () => {
-    capturedHandlers.dayHeaderClassNames = null
-    capturedHandlers.dayHeaderDidMount = null
-    capturedHandlers.dayHeaderWillUnmount = null
+    capturedHandlers.datesSet = null
     jest.useFakeTimers()
     jest.setSystemTime(new Date('2025-09-16T09:15:00'))
     jest.clearAllMocks()
@@ -574,135 +568,21 @@ describe('week-view load indicator callbacks', () => {
     EventService.getEventsForRange.mockResolvedValue([])
     EventService.getEventsForDays.mockResolvedValue([])
     render(<Schedule />)
-    await waitFor(() => expect(capturedHandlers.dayHeaderClassNames).not.toBeNull())
+    await waitFor(() => expect(capturedHandlers.datesSet).not.toBeNull())
   })
 
   afterEach(() => jest.useRealTimers())
 
-  // dayHeaderClassNames prop is passed to FullCalendar
-  test('dayHeaderClassNames prop is captured from FullCalendar', () => {
-    expect(capturedHandlers.dayHeaderClassNames).toBeTypeOf('function')
+  // datesSet prop is passed to FullCalendar
+  test('datesSet prop is captured from FullCalendar', () => {
+    expect(capturedHandlers.datesSet).toBeTypeOf('function')
   })
 
-  // In day view (default) dayHeaderClassNames returns []
-  test('dayHeaderClassNames returns [] in day view (default)', () => {
-    const result = capturedHandlers.dayHeaderClassNames({
-      date: new Date('2025-09-16T00:00:00')
-    })
-    expect(Array.isArray(result)).toBe(true)
-    expect(result).toHaveLength(0)
-  })
-
-  // In week view with no load data, dayHeaderClassNames returns []
-  test('dayHeaderClassNames returns [] for a day with no load data in week view', async () => {
-    // Switch to week view via the mock toolbar's <select>
-    const select = screen.getByRole('combobox')
+  // Calling datesSet does not throw
+  test('calling datesSet does not throw', async () => {
     await act(async () => {
-      fireEvent.change(select, { target: { value: 'timeGridWeek' } })
+      capturedHandlers.datesSet({})
     })
-    await waitFor(() => expect(EventService.getEventsForWeek).toHaveBeenCalled())
-
-    const result = capturedHandlers.dayHeaderClassNames({
-      date: new Date('2025-09-16T00:00:00')
-    })
-    // No events → load = 0 → no class
-    expect(result).toEqual([])
-  })
-
-  // dayHeaderDidMount prop is a function
-  test('dayHeaderDidMount prop is captured as a function', () => {
-    expect(capturedHandlers.dayHeaderDidMount).toBeTypeOf('function')
-  })
-
-  // dayHeaderDidMount does NOT inject span in day view (default)
-  test('dayHeaderDidMount does not inject sr-only span in day view', () => {
-    const cushion = document.createElement('a')
-    cushion.className = 'fc-col-header-cell-cushion'
-    const el = document.createElement('th')
-    el.appendChild(cushion)
-
-    capturedHandlers.dayHeaderDidMount({
-      el,
-      date: new Date('2025-09-16T00:00:00')
-    })
-
-    expect(cushion.querySelector('.sr-only-day-header')).toBeNull()
-  })
-
-  // dayHeaderWillUnmount removes an existing .sr-only-day-header span
-  test('dayHeaderWillUnmount removes existing sr-only span', () => {
-    const el = document.createElement('th')
-    const srSpan = document.createElement('span')
-    srSpan.className = 'sr-only sr-only-day-header'
-    el.appendChild(srSpan)
-
-    capturedHandlers.dayHeaderWillUnmount({ el })
-
-    expect(el.querySelector('.sr-only-day-header')).toBeNull()
-  })
-
-  // dayHeaderWillUnmount is safe when no span exists
-  test('dayHeaderWillUnmount is a no-op when no sr-only span present', () => {
-    const el = document.createElement('th')
-    expect(() => capturedHandlers.dayHeaderWillUnmount({ el })).not.toThrow()
-    expect(el.childNodes).toHaveLength(0)
-  })
-
-  // dayHeaderDidMount removes stale span in week view when load drops to 0
-  test('dayHeaderDidMount removes stale sr-only span in week view when load is 0', async () => {
-    // Switch to week view
-    const select = screen.getByRole('combobox')
-    await act(async () => {
-      fireEvent.change(select, { target: { value: 'timeGridWeek' } })
-    })
-    await waitFor(() => expect(EventService.getEventsForWeek).toHaveBeenCalled())
-
-    // Pre-populate a stale sr-only span on the cushion
-    const cushion = document.createElement('a')
-    cushion.className = 'fc-col-header-cell-cushion'
-    const srSpan = document.createElement('span')
-    srSpan.className = 'sr-only sr-only-day-header'
-    srSpan.textContent = ' — high load'
-    cushion.appendChild(srSpan)
-    const el = document.createElement('th')
-    el.appendChild(cushion)
-
-    // No events → load = 0 → span should be removed
-    capturedHandlers.dayHeaderDidMount({
-      el,
-      date: new Date('2025-09-16T00:00:00')
-    })
-
-    expect(cushion.querySelector('.sr-only-day-header')).toBeNull()
-  })
-
-  // dayHeaderDidMount removes stale span in week view even when a prior span existed
-  test('dayHeaderDidMount removes existing sr-only span even when one was previously created', async () => {
-    // Switch to week view
-    const select = screen.getByRole('combobox')
-    await act(async () => {
-      fireEvent.change(select, { target: { value: 'timeGridWeek' } })
-    })
-    await waitFor(() => expect(EventService.getEventsForWeek).toHaveBeenCalled())
-
-    // span already exists from a previous high-load state
-    const cushion = document.createElement('a')
-    cushion.className = 'fc-col-header-cell-cushion'
-    const srSpan = document.createElement('span')
-    srSpan.className = 'sr-only sr-only-day-header'
-    srSpan.textContent = ' — high load'
-    cushion.appendChild(srSpan)
-    const el = document.createElement('th')
-    el.appendChild(cushion)
-
-    // load = 0 in week view → span should be removed, not duplicated
-    capturedHandlers.dayHeaderDidMount({
-      el,
-      date: new Date('2025-09-16T00:00:00')
-    })
-
-    // Should have been removed, not duplicated
-    expect(cushion.querySelectorAll('.sr-only-day-header')).toHaveLength(0)
   })
 })
 
@@ -729,8 +609,10 @@ describe('structural validation in handleEventDrop and handleEventResize', () =>
     EventService.updateEvent = vi.fn().mockResolvedValue(undefined)
     render(<Schedule />)
     await waitFor(() => expect(capturedHandlers.eventDrop).not.toBeNull())
-    // Wait for events to be loaded into state
+    // Wait for events to be loaded into state (getEventsForDate called + React re-render)
     await waitFor(() => expect(EventService.getEventsForDate).toHaveBeenCalled())
+    // Flush any pending microtasks so setEvents() has been applied before tests run
+    await act(async () => {})
   })
 
   afterEach(() => jest.useRealTimers())
