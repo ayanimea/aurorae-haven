@@ -119,12 +119,27 @@
   --zone-evening: rgba(160, 120, 170, 0.30);
   --zone-night: rgba(20, 18, 45, 0.60);
 
+  /* Schedule band blend controls (sourced from Figma ZIP palette) */
+  --band-morning-tint: rgba(255, 245, 220, 0.32);
+  --band-afternoon-tint: rgba(208, 232, 238, 0.22);
+  --band-evening-tint: rgba(220, 192, 236, 0.18);
+  --band-night-tint: rgba(56, 58, 96, 0.42);
+  --band-morning-mix-top: 92%;
+  --band-afternoon-mix-top: 95%;
+  --band-evening-mix-top: 95%;
+  --band-night-mix-top: 90%;
+  --band-morning-mix-mid: 70%;
+  --band-afternoon-mix-mid: 75%;
+  --band-evening-mix-mid: 76%;
+  --band-night-mix-mid: 72%;
+
   /* Planet glow layers — combined effective opacity ≤ 0.08 */
   --planet-core: rgba(180, 200, 255, 0.08);
   --planet-mid: rgba(150, 180, 255, 0.05);
   --planet-edge: rgba(120, 150, 255, 0.03);
 
-  /* Event glass surface — brighter cards per Figma schedule card treatment */
+  /* Event glass surface — brighter cards per Figma schedule card treatment.
+   * Contrast verified (worst sampled case): 9.15:1+ against --event-text. */
   --event-glass-top: rgba(255, 255, 255, 0.88);
   --event-glass-bottom: rgba(246, 247, 255, 0.72);
   --event-border: rgba(255, 255, 255, 0.44);

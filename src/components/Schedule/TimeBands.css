@@ -49,8 +49,16 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--zone-morning) 92%, rgba(255, 245, 220, 0.32)),
-      color-mix(in srgb, var(--zone-morning) 70%, transparent) 58%,
+      color-mix(
+        in srgb,
+        var(--zone-morning) var(--band-morning-mix-top),
+        var(--band-morning-tint)
+      ),
+      color-mix(
+        in srgb,
+        var(--zone-morning) var(--band-morning-mix-mid),
+        transparent
+      ) 58%,
       transparent 100%
     );
 }
@@ -62,8 +70,16 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--zone-afternoon) 95%, rgba(208, 232, 238, 0.22)),
-      color-mix(in srgb, var(--zone-afternoon) 75%, transparent) 56%,
+      color-mix(
+        in srgb,
+        var(--zone-afternoon) var(--band-afternoon-mix-top),
+        var(--band-afternoon-tint)
+      ),
+      color-mix(
+        in srgb,
+        var(--zone-afternoon) var(--band-afternoon-mix-mid),
+        transparent
+      ) 56%,
       transparent 100%
     );
 }
@@ -75,8 +91,16 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--zone-evening) 95%, rgba(220, 192, 236, 0.18)),
-      color-mix(in srgb, var(--zone-evening) 76%, transparent) 56%,
+      color-mix(
+        in srgb,
+        var(--zone-evening) var(--band-evening-mix-top),
+        var(--band-evening-tint)
+      ),
+      color-mix(
+        in srgb,
+        var(--zone-evening) var(--band-evening-mix-mid),
+        transparent
+      ) 56%,
       transparent 100%
     );
 }
@@ -87,8 +111,16 @@
   height: 5.89%;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--zone-night) 90%, rgba(56, 58, 96, 0.42)),
-    color-mix(in srgb, var(--zone-night) 72%, transparent) 58%,
+    color-mix(
+      in srgb,
+      var(--zone-night) var(--band-night-mix-top),
+      var(--band-night-tint)
+    ),
+    color-mix(
+      in srgb,
+      var(--zone-night) var(--band-night-mix-mid),
+      transparent
+    ) 58%,
     transparent 100%
   );
 }
