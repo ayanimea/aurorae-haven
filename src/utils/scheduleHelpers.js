@@ -16,6 +16,16 @@ import { getPredefinedTemplates } from './predefinedTemplates'
 import { createLogger } from './logger'
 
 const logger = createLogger('ScheduleHelpers')
+const TASK_STORAGE_QUADRANTS = [
+  'urgent_important',
+  'not_urgent_important',
+  'urgent_not_important',
+  'not_urgent_not_important'
+]
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
 
 /**
  * Add a new task directly to localStorage storage (not_urgent_not_important quadrant).
@@ -50,16 +60,24 @@ export function addTaskToStorage(title) {
   let tasks
   try {
     const savedStr = localStorage.getItem('aurorae_tasks')
-    tasks = savedStr ? JSON.parse(savedStr) : defaultStructure()
+    const parsedTasks = savedStr ? JSON.parse(savedStr) : defaultStructure()
+    if (!isPlainObject(parsedTasks)) {
+      logger.warn('aurorae_tasks had invalid shape; resetting to empty structure.')
+      tasks = defaultStructure()
+    } else {
+      tasks = parsedTasks
+      TASK_STORAGE_QUADRANTS.forEach((quadrant) => {
+        if (!Array.isArray(tasks[quadrant])) {
+          tasks[quadrant] = []
+        }
+      })
+    }
   } catch (_parseErr) {
     // Corrupted or invalid JSON — start fresh rather than failing the whole save.
     logger.warn('aurorae_tasks contained invalid JSON; resetting to empty structure.')
     tasks = defaultStructure()
   }
 
-  if (!tasks.not_urgent_not_important) {
-    tasks.not_urgent_not_important = []
-  }
   tasks.not_urgent_not_important.push(task)
 
   try {

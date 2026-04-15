@@ -546,6 +546,23 @@ describe('SearchableEventSelector Component', () => {
   })
 
   describe('Null EventType (Drag-to-Schedule)', () => {
+    it('defaults to null eventType when omitted', async () => {
+      render(
+        <SearchableEventSelector
+          onSelect={mockOnSelect}
+          onCreateNew={mockOnCreateNew}
+        />
+      )
+
+      await waitFor(() => {
+        expect(scheduleHelpers.getAllRoutinesAndTasks).toHaveBeenCalledWith(null)
+      })
+
+      expect(
+        screen.getByPlaceholderText('Search for an existing routine or task...')
+      ).toBeInTheDocument()
+    })
+
     it('should render search input for null event type with "routine or task" text', async () => {
       await act(async () => {
         render(

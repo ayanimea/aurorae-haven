@@ -30,8 +30,8 @@
   color: var(--event-text);
 }
 
-/* Focus state for accessibility */
-.fc-event-wrapper:focus-visible {
+/* Focus state for accessibility (FullCalendar focuses .fc-event) */
+.fc-event:focus-visible {
   outline: var(--border-focus) solid var(--event-focus-ring);
   outline-offset: var(--focus-outline-offset);
 }

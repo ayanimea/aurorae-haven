@@ -572,5 +572,38 @@ describe('scheduleHelpers', () => {
       // Other quadrants should be empty (fresh structure)
       expect(saved.urgent_important).toEqual([])
     })
+
+    it('resets to default structure when parsed localStorage shape is invalid', () => {
+      localStorage.setItem('aurorae_tasks', JSON.stringify('invalid-shape'))
+      const task = addTaskToStorage('Recovered Task')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+
+      expect(task?.text).toBe('Recovered Task')
+      expect(saved.urgent_important).toEqual([])
+      expect(saved.not_urgent_important).toEqual([])
+      expect(saved.urgent_not_important).toEqual([])
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important[0].text).toBe('Recovered Task')
+    })
+
+    it('normalizes non-array quadrant fields before appending new task', () => {
+      localStorage.setItem(
+        'aurorae_tasks',
+        JSON.stringify({
+          urgent_important: 'bad',
+          not_urgent_important: null,
+          urgent_not_important: {},
+          not_urgent_not_important: 7
+        })
+      )
+      addTaskToStorage('Normalized Task')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+
+      expect(Array.isArray(saved.urgent_important)).toBe(true)
+      expect(Array.isArray(saved.not_urgent_important)).toBe(true)
+      expect(Array.isArray(saved.urgent_not_important)).toBe(true)
+      expect(Array.isArray(saved.not_urgent_not_important)).toBe(true)
+      expect(saved.not_urgent_not_important[0].text).toBe('Normalized Task')
+    })
   })
 })
