@@ -436,8 +436,10 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       fireEvent.click(hamburgerButton)
 
       await waitFor(() => {
-        // Mobile menu items are links, not menuitems (accessibility fix)
-        const tasksMenuItem = screen.getByRole('link', { name: /tasks/i })
+        // Mobile menu items are links — scope to the mobile menu nav to avoid
+        // matching the identical desktop/bottom-bar link with the same aria-label
+        const mobileMenu = screen.getByRole('navigation', { name: /mobile navigation menu/i })
+        const tasksMenuItem = within(mobileMenu).getByRole('link', { name: /tasks/i })
         fireEvent.click(tasksMenuItem)
       })
 
