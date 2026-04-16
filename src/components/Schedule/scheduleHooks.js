@@ -26,7 +26,7 @@ export function useScheduleHourHeight() {
   const [rowHeight, setRowHeight] = useState(() => getScheduleHourHeight())
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined
+    if (typeof window === 'undefined') return () => {}
 
     const update = () => {
       const next = getScheduleHourHeight()
