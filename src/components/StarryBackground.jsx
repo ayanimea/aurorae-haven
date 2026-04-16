@@ -40,10 +40,14 @@ export default function StarryBackground() {
     let lastTimestamp = 0
 
     const setSize = () => {
+      const dpr = window.devicePixelRatio || 1
       width = window.innerWidth
       height = window.innerHeight
-      canvas.width = width
-      canvas.height = height
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
+      canvas.width = Math.floor(width * dpr)
+      canvas.height = Math.floor(height * dpr)
+      context.setTransform(dpr, 0, 0, dpr, 0, 0)
       stars = buildStars(width, height)
     }
 
@@ -104,10 +108,14 @@ export default function StarryBackground() {
   }, [])
 
   return (
-    <canvas
-      ref={canvasRef}
-      data-testid='starry-background-canvas'
-      className='starry-background-canvas'
-    />
+    <>
+      {/* biome-ignore lint/a11y/noAriaHiddenOnFocusable: decorative canvas has no tabIndex and is not keyboard-accessible */}
+      <canvas
+        ref={canvasRef}
+        data-testid='starry-background-canvas'
+        className='starry-background-canvas'
+        aria-hidden='true'
+      />
+    </>
   )
 }

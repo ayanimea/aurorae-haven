@@ -57,7 +57,7 @@ Ask for clarification or preserve the existing structure.
 */
 
 /**
- * Schedule Page - Calendar view for events using FullCalendar
+ * Schedule Page - Calendar view for events using Figma-sourced custom grid
  * Manages routines, tasks, meetings, and habits with a clean, accessible interface
  */
 
@@ -155,6 +155,10 @@ function Schedule() {
     return VALID_GUIDANCE_LEVELS.includes(stored) ? stored : 'full'
   })
 
+  const [use24HourFormat, setUse24HourFormat] = useState(
+    () => getSettings().schedule?.use24HourFormat !== false
+  )
+
   useEffect(() => {
     // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
     const handleStorage = (event) => {
@@ -164,6 +168,7 @@ function Schedule() {
         if (VALID_GUIDANCE_LEVELS.includes(level)) {
           setSchedulingGuidanceLevel(level)
         }
+        setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
       } catch (_err) {}
 
       // Reload schedule events when tasks are modified in another tab so the
@@ -184,6 +189,7 @@ function Schedule() {
         if (VALID_GUIDANCE_LEVELS.includes(level)) {
           setSchedulingGuidanceLevel(level)
         }
+        setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
       } catch (_err) {}
     }
 
@@ -712,6 +718,7 @@ function Schedule() {
               date={date}
               onEventClick={handleGridEventClick}
               onSlotClick={handleSlotClick}
+              use24HourFormat={use24HourFormat}
             />
           </div>
         </GlassPanel>

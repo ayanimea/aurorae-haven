@@ -9,7 +9,7 @@
  *   - date: current navigation Date
  *   - viewMode: 'day' | 'week' | 'month'
  */
-import { Fragment } from 'react'
+import { Fragment, useId, useMemo } from 'react'
 import { format, startOfWeek, addDays, startOfMonth } from 'date-fns'
 import PropTypes from 'prop-types'
 
@@ -84,8 +84,19 @@ function parseHour(timeStr) {
   return h + (m || 0) / 60
 }
 
-/** Noise SVG overlay - same as Figma */
+/** Format an hour number as a time label, respecting 24h/12h user preference */
+function formatHourLabel(hour, use24h) {
+  if (use24h !== false) return `${String(hour).padStart(2, '0')}:00`
+  if (hour === 0) return '12 AM'
+  if (hour < 12) return `${hour} AM`
+  if (hour === 12) return '12 PM'
+  return `${hour - 12} PM`
+}
+
+/** Noise SVG overlay - same as Figma. Uses useId() to avoid duplicate filter IDs across instances. */
 function NoiseOverlay() {
+  const uid = useId()
+  const filterId = `figmaEventNoise-${uid.replace(/:/g, '')}`
   return (
     <svg
       style={{
@@ -100,7 +111,7 @@ function NoiseOverlay() {
       }}
       aria-hidden='true'
     >
-      <filter id='figmaEventNoise'>
+      <filter id={filterId}>
         <feTurbulence
           type='fractalNoise'
           baseFrequency='0.85'
@@ -108,12 +119,14 @@ function NoiseOverlay() {
           stitchTiles='stitch'
         />
       </filter>
-      <rect width='100%' height='100%' filter='url(#figmaEventNoise)' />
+      <rect width='100%' height='100%' filter={`url(#${filterId})`} />
     </svg>
   )
 }
 
 function CellNoise() {
+  const uid = useId()
+  const filterId = `figmaCellNoise-${uid.replace(/:/g, '')}`
   return (
     <svg
       style={{
@@ -127,7 +140,7 @@ function CellNoise() {
       }}
       aria-hidden='true'
     >
-      <filter id='figmaCellNoise'>
+      <filter id={filterId}>
         <feTurbulence
           type='fractalNoise'
           baseFrequency='0.65'
@@ -135,7 +148,7 @@ function CellNoise() {
           stitchTiles='stitch'
         />
       </filter>
-      <rect width='100%' height='100%' filter='url(#figmaCellNoise)' />
+      <rect width='100%' height='100%' filter={`url(#${filterId})`} />
     </svg>
   )
 }
@@ -146,7 +159,7 @@ const LINE_COLOR = 'rgba(255,255,255,0.04)'
 const TIME_COL_W = 60
 
 /* ── Day View ────────────────────────────────────────────────────────────── */
-function DayView({ events, nowHour, onEventClick, onSlotClick, date }) {
+function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFormat }) {
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const dateStr = format(date, 'yyyy-MM-dd')
   const dayName = format(date, 'EEEE').toUpperCase()
@@ -192,24 +205,27 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date }) {
                   paddingTop: '0.15rem'
                 }}
               >
-                {String(hour).padStart(2, '0')}:00
+                {formatHourLabel(hour, use24HourFormat)}
               </div>
               {/* Hour cell */}
-              <div
-                role='button'
-                tabIndex={0}
+              <button
+                type='button'
                 style={{
                   position: 'relative',
                   overflow: 'hidden',
                   height: `${ROW_H}px`,
                   background: pc.bg,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  border: 'none',
+                  padding: 0,
+                  width: '100%',
+                  display: 'block'
                 }}
                 onClick={() =>
                   onSlotClick({
                     day: dateStr,
                     startTime: `${String(hour).padStart(2, '0')}:00`,
-                    endTime: `${String((hour + 1) % 24).padStart(2, '0')}:00`
+                    endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
                   })
                 }
                 onKeyDown={(e) => {
@@ -218,7 +234,7 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date }) {
                     onSlotClick({
                       day: dateStr,
                       startTime: `${String(hour).padStart(2, '0')}:00`,
-                      endTime: `${String((hour + 1) % 24).padStart(2, '0')}:00`
+                      endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
                     })
                   }
                 }}
@@ -245,7 +261,7 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date }) {
                     background: 'rgba(255,255,255,0.04)'
                   }}
                 />
-              </div>
+              </button>
             </Fragment>
           )
         })}
@@ -359,14 +375,26 @@ DayView.propTypes = {
   nowHour: PropTypes.number.isRequired,
   onEventClick: PropTypes.func.isRequired,
   onSlotClick: PropTypes.func.isRequired,
-  date: PropTypes.instanceOf(Date).isRequired
+  date: PropTypes.instanceOf(Date).isRequired,
+  use24HourFormat: PropTypes.bool
 }
 
 /* ── Week View ───────────────────────────────────────────────────────────── */
-function WeekView({ events, nowHour, onEventClick, onSlotClick, date }) {
+function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFormat }) {
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Mon
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-  const hours = Array.from({ length: 17 }, (_, i) => i + 6) // 06:00–22:00
+  const hours = Array.from({ length: 24 }, (_, i) => i) // 00:00–23:00
+
+  /* Pre-index events by "day-hour" key so cell lookups are O(1) */
+  const eventsByDayHour = useMemo(() => {
+    const map = {}
+    for (const evt of events) {
+      const key = `${evt.day}-${Math.floor(parseHour(evt.startTime))}`
+      if (!map[key]) map[key] = []
+      map[key].push(evt)
+    }
+    return map
+  }, [events])
 
   return (
     <div style={{ padding: '1.25rem' }}>
@@ -434,45 +462,32 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date }) {
                   height: `${ROW_H}px`
                 }}
               >
-                {String(hour).padStart(2, '0')}:00
+                {formatHourLabel(hour, use24HourFormat)}
               </div>
               {weekDays.map((dayDate, di) => {
                 const dayStr = format(dayDate, 'yyyy-MM-dd')
-                const cellEvents = events.filter((e) => {
-                  if (e.day !== dayStr) return false
-                  const h = parseHour(e.startTime)
-                  return Math.floor(h) === hour
-                })
+                const cellEvents = eventsByDayHour[`${dayStr}-${hour}`] || []
                 return (
-                  <div
+                  <button
+                    type='button'
                     key={`${di}-${hour}`}
-                    role='button'
-                    tabIndex={0}
                     style={{
                       position: 'relative',
                       borderRight: `1px solid ${LINE_COLOR}`,
                       borderBottom: `1px solid ${LINE_COLOR}`,
                       height: `${ROW_H}px`,
                       background: pc.bg,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      border: 'none',
+                      padding: 0
                     }}
                     onClick={() =>
                       onSlotClick({
                         day: dayStr,
                         startTime: `${String(hour).padStart(2, '0')}:00`,
-                        endTime: `${String((hour + 1) % 24).padStart(2, '0')}:00`
+                        endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
                       })
                     }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        onSlotClick({
-                          day: dayStr,
-                          startTime: `${String(hour).padStart(2, '0')}:00`,
-                          endTime: `${String((hour + 1) % 24).padStart(2, '0')}:00`
-                        })
-                      }
-                    }}
                     aria-label={`${dayStr} ${String(hour).padStart(2, '0')}:00 slot`}
                   >
                     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -534,26 +549,25 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date }) {
                         </button>
                       )
                     })}
-                  </div>
-                )
-              })}
-            </Fragment>
-          )
-        })}
+                </button>
+              )
+            })}
+          </Fragment>
+        )
+      })}
 
         {/* Now indicator for week view */}
-        {nowHour >= 6 && nowHour < 23 && (
-          <div
-            style={{
-              position: 'absolute',
-              top: `calc(${(nowHour - 6) * ROW_H}px + 2.1rem)`,
-              left: `${TIME_COL_W - 6}px`,
-              right: 0,
-              zIndex: 15,
-              pointerEvents: 'none'
-            }}
-            aria-hidden='true'
-          >
+        <div
+          style={{
+            position: 'absolute',
+            top: `calc(${nowHour * ROW_H}px + 2.1rem)`,
+            left: `${TIME_COL_W - 6}px`,
+            right: 0,
+            zIndex: 15,
+            pointerEvents: 'none'
+          }}
+          aria-hidden='true'
+        >
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div
                 style={{
@@ -575,7 +589,6 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date }) {
               />
             </div>
           </div>
-        )}
       </div>
     </div>
   )
@@ -586,7 +599,8 @@ WeekView.propTypes = {
   nowHour: PropTypes.number.isRequired,
   onEventClick: PropTypes.func.isRequired,
   onSlotClick: PropTypes.func.isRequired,
-  date: PropTypes.instanceOf(Date).isRequired
+  date: PropTypes.instanceOf(Date).isRequired,
+  use24HourFormat: PropTypes.bool
 }
 
 /* ── Month View ──────────────────────────────────────────────────────────── */
@@ -597,6 +611,16 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
   const monthLabel = format(date, 'MMMM yyyy').toUpperCase()
   const todayStr = format(new Date(), 'yyyy-MM-dd')
   const monthNum = date.getMonth()
+
+  /* Pre-index events by day so each cell does an O(1) lookup */
+  const eventsByDay = useMemo(() => {
+    const map = {}
+    for (const evt of events) {
+      if (!map[evt.day]) map[evt.day] = []
+      map[evt.day].push(evt)
+    }
+    return map
+  }, [events])
 
   return (
     <div style={{ padding: '1.25rem' }}>
@@ -645,13 +669,12 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
           const isThisMonth = cellDate.getMonth() === monthNum
           const isToday = dayStr === todayStr
           const day = cellDate.getDate()
-          const dayEvents = events.filter((e) => e.day === dayStr)
+          const dayEvents = eventsByDay[dayStr] || []
 
           return (
-            <div
+            <button
+              type='button'
               key={i}
-              role='button'
-              tabIndex={0}
               style={{
                 position: 'relative',
                 overflow: 'hidden',
@@ -662,7 +685,8 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
                 height: '6rem',
                 background: isToday ? 'rgba(70,110,210,0.06)' : undefined,
                 opacity: isThisMonth ? 1 : 0.35,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                textAlign: 'left'
               }}
               onClick={() =>
                 onSlotClick({
@@ -671,12 +695,6 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
                   endTime: '10:00'
                 })
               }
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  onSlotClick({ day: dayStr, startTime: '09:00', endTime: '10:00' })
-                }
-              }}
               aria-label={`${dayStr} — ${dayEvents.length} event${dayEvents.length !== 1 ? 's' : ''}`}
             >
               <CellNoise />
@@ -753,7 +771,7 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
                   </div>
                 )}
               </div>
-            </div>
+            </button>
           )
         })}
       </div>
@@ -769,7 +787,7 @@ MonthView.propTypes = {
 }
 
 /* ── Main grid component ─────────────────────────────────────────────────── */
-function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick }) {
+function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, use24HourFormat }) {
   const now = new Date()
   const nowHour = now.getHours() + now.getMinutes() / 60
 
@@ -781,6 +799,7 @@ function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick }
         onEventClick={onEventClick}
         onSlotClick={onSlotClick}
         date={date}
+        use24HourFormat={use24HourFormat}
       />
     )
   }
@@ -793,6 +812,7 @@ function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick }
         onEventClick={onEventClick}
         onSlotClick={onSlotClick}
         date={date}
+        use24HourFormat={use24HourFormat}
       />
     )
   }
@@ -812,7 +832,8 @@ FigmaScheduleGrid.propTypes = {
   viewMode: PropTypes.oneOf(['day', 'week', 'month']).isRequired,
   date: PropTypes.instanceOf(Date).isRequired,
   onEventClick: PropTypes.func.isRequired,
-  onSlotClick: PropTypes.func.isRequired
+  onSlotClick: PropTypes.func.isRequired,
+  use24HourFormat: PropTypes.bool
 }
 
 export default FigmaScheduleGrid
