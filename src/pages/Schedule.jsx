@@ -485,6 +485,33 @@ function Schedule() {
     setShowActionModal(true)
   }, [])
 
+  // Drag an event card to a new time slot → preserve duration, update day + startTime
+  const handleEventDrop = useCallback(async (evtId, newDay, newHour) => {
+    const evt = events.find((e) => String(e.id) === String(evtId))
+    if (!evt) return
+    try {
+      const oldStartMins = timeToMinutes(evt.startTime)
+      const oldEndMins = timeToMinutes(evt.endTime)
+      const duration = oldEndMins >= oldStartMins
+        ? oldEndMins - oldStartMins
+        : oldEndMins + 1440 - oldStartMins
+      const newStartMins = newHour * 60
+      const newEndMins = newStartMins + duration
+      const newStartTime = minutesToTime(newStartMins)
+      const newEndTime = newEndMins >= 1440 ? '24:00' : minutesToTime(newEndMins)
+      const updatedEvt = { ...evt, day: newDay, startTime: newStartTime, endTime: newEndTime }
+      const structuralError = checkStructural(updatedEvt, events, evt.id)
+      if (structuralError) {
+        setError(structuralError)
+        return
+      }
+      await EventService.updateEvent(updatedEvt)
+      await loadEvents()
+    } catch (_err) {
+      setError('Failed to move event. Please try again.')
+    }
+  }, [events, loadEvents])
+
   // Click on an empty slot → open EventModal to create new event
   const handleSlotClick = useCallback(({ day, startTime, endTime }) => {
     setSelectedEvent({ day, startTime, endTime })
@@ -719,6 +746,7 @@ function Schedule() {
               date={date}
               onEventClick={handleGridEventClick}
               onSlotClick={handleSlotClick}
+              onEventDrop={handleEventDrop}
               use24HourFormat={use24HourFormat}
             />
           </div>

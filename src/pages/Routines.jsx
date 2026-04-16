@@ -346,7 +346,10 @@ function Routines() {
   }
 
   // Derive per-run stats for the gamified stats bar
-  const completedCount = runner.state?.completedSteps?.length ?? 0
+  // Count both completed AND skipped steps so the "Done" badge matches the progress bar
+  const completedCount =
+    (runner.state?.completedSteps?.length ?? 0) +
+    (runner.state?.skippedSteps?.length ?? 0)
   const xpSoFar = runner.state?.completedSteps?.reduce(
     (sum, s) => sum + (s.xp ?? 0),
     0
@@ -484,18 +487,30 @@ function Routines() {
                   <div className='rseq-card-title'>
                     {runner.previousStep.label}
                   </div>
-                  <div className='rseq-completed-badge'>
-                    <svg
-                      viewBox='0 0 16 16'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      aria-hidden='true'
-                    >
-                      <path d='M13 4 6 11 3 8' />
-                    </svg>
-                    Completed
-                  </div>
+                  {(() => {
+                    const prevIdx = (runner.state?.currentStepIndex ?? 1) - 1
+                    const wasSkipped = runner.state?.skippedSteps?.some(
+                      (s) => s.stepIndex === prevIdx
+                    )
+                    return (
+                      <div
+                        className={`rseq-completed-badge${wasSkipped ? ' rseq-completed-badge--skipped' : ''}`}
+                      >
+                        {!wasSkipped && (
+                          <svg
+                            viewBox='0 0 16 16'
+                            fill='none'
+                            stroke='currentColor'
+                            strokeWidth='2'
+                            aria-hidden='true'
+                          >
+                            <path d='M13 4 6 11 3 8' />
+                          </svg>
+                        )}
+                        {wasSkipped ? 'Skipped' : 'Completed'}
+                      </div>
+                    )
+                  })()}
                 </>
               ) : (
                 <div className='rseq-card-label'>—</div>
@@ -645,15 +660,22 @@ function Routines() {
             }}
           >
             {allSteps.map((step, index) => {
-              const isCompleted = index < currentStepIndex
+              // Derive per-step status from actual runner logs (not index comparison)
+              const isSkipped = runner.state?.skippedSteps?.some(
+                (s) => s.stepIndex === index
+              ) ?? false
+              const isCompleted = runner.state?.completedSteps?.some(
+                (s) => s.stepIndex === index
+              ) ?? false
+              const isDone = isCompleted || isSkipped
               const isCurrent = index === currentStepIndex
               const stepColor = STEP_COLORS[index % STEP_COLORS.length]
               return (
                 <div
                   key={step.id ?? index}
-                  className={`rseq-step-card ${isCurrent ? 'rseq-step-card--current' : ''} ${isCompleted ? 'rseq-step-card--done' : ''}`}
+                  className={`rseq-step-card ${isCurrent ? 'rseq-step-card--current' : ''} ${isDone ? 'rseq-step-card--done' : ''}`}
                   role='region'
-                  aria-label={`Step ${index + 1}: ${step.label}${isCompleted ? ', completed' : isCurrent ? ', current' : ', pending'}`}
+                  aria-label={`Step ${index + 1}: ${step.label}${isCompleted ? ', completed' : isSkipped ? ', skipped' : isCurrent ? ', current' : ', pending'}`}
                   style={
                     isCurrent
                       ? {
@@ -683,6 +705,11 @@ function Routines() {
                       Done
                     </div>
                   )}
+                  {isSkipped && (
+                    <div className='rseq-step-status rseq-step-status--skipped'>
+                      Skipped
+                    </div>
+                  )}
                   {isCurrent && (
                     <div className='rseq-step-progress'>
                       <div
@@ -694,7 +721,7 @@ function Routines() {
                       />
                     </div>
                   )}
-                  {!isCompleted && !isCurrent && (
+                  {!isDone && !isCurrent && (
                     <div className='rseq-step-status rseq-step-status--pending'>
                       Pending
                     </div>

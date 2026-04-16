@@ -366,6 +366,10 @@
   margin-top: 4px;
 }
 
+.rseq-completed-badge.rseq-completed-badge--skipped {
+  color: rgba(251, 146, 60, 0.8);
+}
+
 .rseq-completed-badge svg {
   width: 14px;
   height: 14px;
@@ -528,6 +532,11 @@
 
 .rseq-step-status--done {
   color: rgba(74, 222, 128, 0.65);
+}
+
+.rseq-step-status--skipped {
+  color: rgba(251, 146, 60, 0.75);
+  opacity: 0.9;
 }
 
 .rseq-step-status--pending {

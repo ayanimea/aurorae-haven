@@ -9,7 +9,7 @@
  *   - date: current navigation Date
  *   - viewMode: 'day' | 'week' | 'month'
  */
-import { Fragment, useId, useMemo, useState, useRef, useCallback } from 'react'
+import { Fragment, useId, useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { format, startOfWeek, addDays, startOfMonth } from 'date-fns'
 import PropTypes from 'prop-types'
 
@@ -172,10 +172,34 @@ const LINE_COLOR = 'rgba(255,255,255,0.04)'
 const TIME_COL_W = 60
 
 /* ── Day View ────────────────────────────────────────────────────────────── */
-function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFormat }) {
+function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date, use24HourFormat }) {
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const dateStr = format(date, 'yyyy-MM-dd')
   const dayName = format(date, 'EEEE').toUpperCase()
+
+  /* ── Time-range drag selection ── */
+  const selRef = useRef(null)           // { startHour, endHour } while dragging
+  const [selection, setSelection] = useState(null)
+
+  // Commit selection on mouse-up anywhere in the document
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (!selRef.current) return
+      const { startHour, endHour } = selRef.current
+      const minH = Math.min(startHour, endHour)
+      const maxH = Math.max(startHour, endHour)
+      const endTime = maxH === 23 ? '24:00' : `${String(maxH + 1).padStart(2, '0')}:00`
+      onSlotClick({
+        day: dateStr,
+        startTime: `${String(minH).padStart(2, '0')}:00`,
+        endTime
+      })
+      selRef.current = null
+      setSelection(null)
+    }
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => document.removeEventListener('mouseup', handleMouseUp)
+  }, [dateStr, onSlotClick])
 
   /* Overlap-aware column layout — handles up to maxSimultaneousEvents (2) per slot */
   const eventLayout = useMemo(() => {
@@ -233,6 +257,10 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
         {hours.map((hour) => {
           const period = getPeriod(hour)
           const pc = PERIOD_COLORS[period]
+          const isSelected =
+            selection &&
+            hour >= Math.min(selection.startHour, selection.endHour) &&
+            hour <= Math.max(selection.startHour, selection.endHour)
           return (
             <Fragment key={hour}>
               {/* Time label */}
@@ -252,27 +280,35 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
               >
                 {formatHourLabel(hour, use24HourFormat)}
               </div>
-              {/* Hour cell */}
+              {/* Hour cell — drag-to-select range; also a drop zone for event cards */}
               <button
                 type='button'
                 style={{
                   position: 'relative',
                   overflow: 'hidden',
                   height: `${ROW_H}px`,
-                  background: pc.bg,
+                  background: isSelected
+                    ? 'rgba(99,122,255,0.18)'
+                    : pc.bg,
                   cursor: 'pointer',
                   border: 'none',
+                  outline: isSelected ? '1px solid rgba(99,122,255,0.45)' : 'none',
                   padding: 0,
                   width: '100%',
                   display: 'block'
                 }}
-                onClick={() =>
-                  onSlotClick({
-                    day: dateStr,
-                    startTime: `${String(hour).padStart(2, '0')}:00`,
-                    endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
-                  })
-                }
+                /* Start drag selection on mouse-down */
+                onMouseDown={(e) => {
+                  if (e.button !== 0) return
+                  selRef.current = { startHour: hour, endHour: hour }
+                  setSelection({ startHour: hour, endHour: hour })
+                }}
+                /* Extend selection while holding mouse button */
+                onMouseEnter={() => {
+                  if (!selRef.current) return
+                  selRef.current.endHour = hour
+                  setSelection({ ...selRef.current })
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
@@ -281,6 +317,15 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
                       startTime: `${String(hour).padStart(2, '0')}:00`,
                       endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
                     })
+                  }
+                }}
+                /* Drop zone: accept dragged event cards */
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const evtId = e.dataTransfer.getData('text/plain')
+                  if (evtId && onEventDrop) {
+                    onEventDrop(evtId, dateStr, hour)
                   }
                 }}
                 aria-label={`${String(hour).padStart(2, '0')}:00 slot`}
@@ -315,7 +360,9 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
         {events.map((evt) => {
           const ec = EVENT_TYPE_COLORS[evt.type] || EVENT_TYPE_COLORS.event
           const startH = parseHour(evt.startTime)
-          const endH = parseHour(evt.endTime || evt.startTime)
+          // Normalize midnight-spanning events (endH < startH → cap at 24)
+          let endH = parseHour(evt.endTime || evt.startTime)
+          if (endH < startH) endH = Math.min(endH + 24, 24)
           const dur = Math.max(endH - startH, 0.25)
           const top = startH * ROW_H
           const height = dur * ROW_H
@@ -327,6 +374,7 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
             <button
               key={evt.id}
               type='button'
+              draggable
               style={{
                 position: 'absolute',
                 top: `${top}px`,
@@ -339,14 +387,29 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
                 borderRadius: '6px',
                 padding: '0.4rem 0.6rem',
                 zIndex: 2,
-                cursor: 'pointer',
+                cursor: 'grab',
                 overflow: 'hidden',
                 textAlign: 'left',
-                transition: 'transform 0.2s ease'
+                transition: 'transform 0.2s ease, opacity 0.15s ease'
               }}
               onClick={() => onEventClick(evt)}
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/plain', String(evt.id))
+                e.dataTransfer.effectAllowed = 'move'
+                // Store original duration for hour-preserving drop
+                e.dataTransfer.setData('application/json', JSON.stringify({
+                  id: evt.id,
+                  startTime: evt.startTime,
+                  endTime: evt.endTime,
+                  day: evt.day
+                }))
+                e.currentTarget.style.opacity = '0.5'
+              }}
+              onDragEnd={(e) => {
+                e.currentTarget.style.opacity = '1'
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scaleX(1.01)'
+                if (!e.currentTarget.dragging) e.currentTarget.style.transform = 'scaleX(1.01)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scaleX(1)'
@@ -424,12 +487,13 @@ DayView.propTypes = {
   nowHour: PropTypes.number.isRequired,
   onEventClick: PropTypes.func.isRequired,
   onSlotClick: PropTypes.func.isRequired,
+  onEventDrop: PropTypes.func,
   date: PropTypes.instanceOf(Date).isRequired,
   use24HourFormat: PropTypes.bool
 }
 
 /* ── Week View ───────────────────────────────────────────────────────────── */
-function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFormat }) {
+function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date, use24HourFormat }) {
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Mon
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const hours = Array.from({ length: 24 }, (_, i) => i) // 00:00–23:00
@@ -579,6 +643,16 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
                       })
                     }}
                     onKeyDown={(e) => handleCellKeyDown(e, di, hour)}
+                    /* Drop zone: accept dragged event cards */
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      const evtId = e.dataTransfer.getData('text/plain')
+                      if (evtId && onEventDrop) {
+                        onEventDrop(evtId, dayStr, hour)
+                      }
+                    }}
                     aria-label={`${dayStr} ${formatHourLabel(hour, use24HourFormat)} slot`}
                   >
                     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -587,7 +661,9 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
                     {cellEvents.map((evt) => {
                       const ec = EVENT_TYPE_COLORS[evt.type] || EVENT_TYPE_COLORS.event
                       const startH = parseHour(evt.startTime)
-                      const endH = parseHour(evt.endTime || evt.startTime)
+                      // Normalize midnight-spanning events
+                      let endH = parseHour(evt.endTime || evt.startTime)
+                      if (endH < startH) endH = Math.min(endH + 24, 24)
                       const dur = Math.max(endH - startH, 0.25)
                       const offsetPx = (startH - hour) * ROW_H
                       const height = dur * ROW_H
@@ -595,6 +671,7 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
                         <button
                           key={evt.id}
                           type='button'
+                          draggable
                           style={{
                             position: 'absolute',
                             left: '2px',
@@ -606,15 +683,30 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
                             borderLeft: `2px solid ${ec.border}`,
                             borderRadius: '4px',
                             padding: '0.25rem 0.35rem',
-                            cursor: 'pointer',
+                            cursor: 'grab',
                             zIndex: 10,
                             overflow: 'hidden',
                             textAlign: 'left',
-                            transition: 'transform 0.2s ease'
+                            transition: 'transform 0.2s ease, opacity 0.15s ease'
                           }}
                           onClick={(e) => {
                             e.stopPropagation()
                             onEventClick(evt)
+                          }}
+                          onDragStart={(e) => {
+                            e.stopPropagation()
+                            e.dataTransfer.setData('text/plain', String(evt.id))
+                            e.dataTransfer.effectAllowed = 'move'
+                            e.dataTransfer.setData('application/json', JSON.stringify({
+                              id: evt.id,
+                              startTime: evt.startTime,
+                              endTime: evt.endTime,
+                              day: evt.day
+                            }))
+                            e.currentTarget.style.opacity = '0.5'
+                          }}
+                          onDragEnd={(e) => {
+                            e.currentTarget.style.opacity = '1'
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.transform = 'scale(1.02)'
@@ -692,6 +784,7 @@ WeekView.propTypes = {
   nowHour: PropTypes.number.isRequired,
   onEventClick: PropTypes.func.isRequired,
   onSlotClick: PropTypes.func.isRequired,
+  onEventDrop: PropTypes.func,
   date: PropTypes.instanceOf(Date).isRequired,
   use24HourFormat: PropTypes.bool
 }
@@ -915,8 +1008,13 @@ MonthView.propTypes = {
 }
 
 /* ── Main grid component ─────────────────────────────────────────────────── */
-function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, use24HourFormat }) {
-  const now = new Date()
+function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, onEventDrop, use24HourFormat }) {
+  /* Update "now" every 60 s so the indicator stays accurate without stale renders */
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [])
   const nowHour = now.getHours() + now.getMinutes() / 60
 
   if (viewMode === 'day') {
@@ -926,6 +1024,7 @@ function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, 
         nowHour={nowHour}
         onEventClick={onEventClick}
         onSlotClick={onSlotClick}
+        onEventDrop={onEventDrop}
         date={date}
         use24HourFormat={use24HourFormat}
       />
@@ -939,6 +1038,7 @@ function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, 
         nowHour={nowHour}
         onEventClick={onEventClick}
         onSlotClick={onSlotClick}
+        onEventDrop={onEventDrop}
         date={date}
         use24HourFormat={use24HourFormat}
       />
@@ -961,6 +1061,7 @@ FigmaScheduleGrid.propTypes = {
   date: PropTypes.instanceOf(Date).isRequired,
   onEventClick: PropTypes.func.isRequired,
   onSlotClick: PropTypes.func.isRequired,
+  onEventDrop: PropTypes.func,
   use24HourFormat: PropTypes.bool
 }
 
