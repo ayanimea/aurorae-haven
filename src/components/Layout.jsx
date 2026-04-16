@@ -248,6 +248,12 @@ function Layout({ children, onExport, onImport }) {
               aria-label='Aurorae Haven — Return to Tasks'
               title='Stellar-Journey'
             >
+              {/* Icon shown on mobile where brand text is hidden */}
+              <span className='logo-icon' aria-hidden='true'>
+                <svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                  <path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z' />
+                </svg>
+              </span>
               <span className='figma-brand-text'>AURORAE HAVEN</span>
             </button>
 
@@ -279,8 +285,6 @@ function Layout({ children, onExport, onImport }) {
             {/* Mobile portrait bottom bar: Primary tabs + More button */}
             <div
               className='mobile-bottom-tabs'
-              role='presentation'
-              aria-hidden='true'
               data-testid='mobile-tabs'
             >
               {primaryTabs.map((tab) => (
@@ -288,8 +292,8 @@ function Layout({ children, onExport, onImport }) {
                   key={`mobile-${tab.path}`}
                   className={`nav-tab ${isActive(tab.path) ? 'active' : ''}`}
                   to={tab.path}
-                  tabIndex={-1}
-                  aria-hidden='true'
+                  aria-label={tab.label}
+                  aria-current={isActive(tab.path) ? 'page' : undefined}
                   onClick={() => setMoreMenuOpen(false)}
                 >
                   <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
@@ -306,8 +310,6 @@ function Layout({ children, onExport, onImport }) {
                 aria-haspopup='true'
                 aria-expanded={moreMenuOpen}
                 aria-label='More options'
-                tabIndex={-1}
-                aria-hidden='true'
               >
                 <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
                   <path d='M4 6h16M4 12h16M4 18h16' />

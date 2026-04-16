@@ -606,10 +606,10 @@ body.density-cozy {
     z-index: var(--z-mobile-menu);
   }
 
-  /* Auto-hide appbar when scrolling down (Priority 1 adaptation for portrait) */
-  body.scrolling-down .appbar {
+  /* Auto-hide appbar when scrolling down (Priority 1 adaptation for portrait) — disabled; keep always visible */
+  /* body.scrolling-down .appbar {
     transform: translateY(100%);
-  }
+  } */
 
   body.scrolling-up .appbar,
   body.at-top .appbar {
