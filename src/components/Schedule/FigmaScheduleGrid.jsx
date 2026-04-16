@@ -198,7 +198,7 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
       if (!selRef.current) return
       const { startHour, endHour } = selRef.current
       const minH = Math.min(startHour, endHour)
-      // End time is the END of the last selected hour (+ 1 hour for whole-hour drags)
+      // End time is the upper boundary of the selection (may be a fractional hour for 15-min snapping)
       const maxH = Math.max(startHour, endHour) + 1
       const toHHMM = (h) => {
         const capped = Math.min(h, 24)
@@ -474,10 +474,14 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
                 }}
               >
                 {formatEventTime(evt.startTime, use24HourFormat)} — {formatEventTime(evt.endTime, use24HourFormat)}
-                {(evt.preparationTime > 0 || evt.travelTime > 0) && (
+                {((evt.travelTime ?? 0) > 0 || (evt.preparationTime ?? 0) > 0) && (
                   <span style={{ marginLeft: '0.25rem', opacity: 0.75 }}>
-                    {evt.travelTime > 0 && `🚗${evt.travelTime}m`}
-                    {evt.preparationTime > 0 && `${evt.travelTime > 0 ? ' ' : ''}🎯${evt.preparationTime}m`}
+                    {(evt.travelTime ?? 0) > 0 && (
+                      <><span aria-hidden='true'>🚗</span><span className='sr-only'>Travel </span>{evt.travelTime}m</>
+                    )}
+                    {(evt.preparationTime ?? 0) > 0 && (
+                      <>{(evt.travelTime ?? 0) > 0 ? ' ' : ''}<span aria-hidden='true'>🎯</span><span className='sr-only'>Prep </span>{evt.preparationTime}m</>
+                    )}
                   </span>
                 )}
               </div>
