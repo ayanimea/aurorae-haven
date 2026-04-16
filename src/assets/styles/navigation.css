@@ -115,6 +115,14 @@ body.density-cozy {
   color: rgba(245, 248, 255, 1);
 }
 
+/* Logo icon — hidden on desktop; shown on mobile portrait in place of brand text */
+.logo-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: rgba(230, 235, 255, 0.95);
+}
+
 /* TAB-NAV-06: Center Zone - Desktop Nav tabs (Figma layout: alongside brand in left zone) */
 .navbar-center {
   display: flex;
@@ -614,6 +622,15 @@ body.density-cozy {
   body.scrolling-up .appbar,
   body.at-top .appbar {
     transform: translateY(0);
+  }
+
+  /* On mobile portrait: swap brand text for compact icon */
+  .logo-icon {
+    display: flex;
+  }
+
+  .figma-brand-text {
+    display: none;
   }
 
   /* Keep appbar visible when More menu is open (portrait) */
