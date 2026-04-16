@@ -488,7 +488,7 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
                         endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
                       })
                     }
-                    aria-label={`${dayStr} ${String(hour).padStart(2, '0')}:00 slot`}
+                    aria-label={`${dayStr} ${formatHourLabel(hour, use24HourFormat)} slot`}
                   >
                     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
                       <CellNoise />
@@ -556,39 +556,41 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
         )
       })}
 
-        {/* Now indicator for week view */}
-        <div
-          style={{
-            position: 'absolute',
-            top: `calc(${nowHour * ROW_H}px + 2.1rem)`,
-            left: `${TIME_COL_W - 6}px`,
-            right: 0,
-            zIndex: 15,
-            pointerEvents: 'none'
-          }}
-          aria-hidden='true'
-        >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: '#f06060',
-                  boxShadow: '0 0 8px rgba(240,96,96,0.6)',
-                  flexShrink: 0
-                }}
-              />
-              <div
-                style={{
-                  flex: 1,
-                  height: '1px',
-                  background:
-                    'linear-gradient(90deg, rgba(240,96,96,0.7), rgba(240,96,96,0.15))'
-                }}
-              />
+        {/* Now indicator for week view — only render when within the 24-hour grid */}
+        {nowHour >= 0 && nowHour < 24 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: `calc(${nowHour * ROW_H}px + 2.1rem)`,
+              left: `${TIME_COL_W - 6}px`,
+              right: 0,
+              zIndex: 15,
+              pointerEvents: 'none'
+            }}
+            aria-hidden='true'
+          >
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#f06060',
+                    boxShadow: '0 0 8px rgba(240,96,96,0.6)',
+                    flexShrink: 0
+                  }}
+                />
+                <div
+                  style={{
+                    flex: 1,
+                    height: '1px',
+                    background:
+                      'linear-gradient(90deg, rgba(240,96,96,0.7), rgba(240,96,96,0.15))'
+                  }}
+                />
+              </div>
             </div>
-          </div>
+        )}
       </div>
     </div>
   )

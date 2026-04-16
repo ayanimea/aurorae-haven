@@ -108,14 +108,12 @@ export default function StarryBackground() {
   }, [])
 
   return (
-    <>
-      {/* biome-ignore lint/a11y/noAriaHiddenOnFocusable: decorative canvas has no tabIndex and is not keyboard-accessible */}
-      <canvas
-        ref={canvasRef}
-        data-testid='starry-background-canvas'
-        className='starry-background-canvas'
-        aria-hidden='true'
-      />
-    </>
+    // biome-ignore lint/a11y/noAriaHiddenOnFocusable: decorative canvas has no tabIndex and is not keyboard-accessible
+    <canvas
+      ref={canvasRef}
+      data-testid='starry-background-canvas'
+      className='starry-background-canvas'
+      aria-hidden='true'
+    />
   )
 }
