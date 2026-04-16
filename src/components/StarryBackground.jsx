@@ -39,7 +39,7 @@ export default function StarryBackground() {
     let width = 0
     let height = 0
     let stars = []
-    let animationFrameId
+    let animationFrameId = 0
     let time = 0
     let lastTimestamp = 0
 
@@ -95,22 +95,44 @@ export default function StarryBackground() {
       }
     }
 
-    const draw = (timestamp = 0) => {
+    let draw = null
+
+    const startAnimation = () => {
+      if (prefersReducedMotion || document.visibilityState !== 'visible' || animationFrameId) {
+        return
+      }
+      animationFrameId = window.requestAnimationFrame(draw)
+    }
+
+    draw = (timestamp = 0) => {
       /* Pause animation when the tab/window is hidden to save CPU/battery.
-         Reset lastTimestamp to 0 so the next visible frame doesn't accumulate
+         Reset lastTimestamp so the next visible frame doesn't accumulate
          a large delta that would cause an abrupt jump in twinkle state. */
       if (document.visibilityState !== 'visible') {
         lastTimestamp = 0
-        animationFrameId = window.requestAnimationFrame(draw)
+        animationFrameId = 0
         return
       }
+      animationFrameId = 0
       if (!lastTimestamp) lastTimestamp = timestamp
       const deltaSeconds = (timestamp - lastTimestamp) / 1000
       lastTimestamp = timestamp
       time += deltaSeconds
 
       drawFrame(false)
-      animationFrameId = window.requestAnimationFrame(draw)
+      startAnimation()
+    }
+
+    const handleVisibilityChange = () => {
+      lastTimestamp = 0
+      if (document.visibilityState === 'visible') {
+        startAnimation()
+        return
+      }
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId)
+        animationFrameId = 0
+      }
     }
 
     setSize()
@@ -119,14 +141,18 @@ export default function StarryBackground() {
       /* Static starfield — no animation loop */
       drawFrame(true)
     } else {
-      animationFrameId = window.requestAnimationFrame(draw)
+      startAnimation()
     }
 
     window.addEventListener('resize', setSize)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.removeEventListener('resize', setSize)
-      window.cancelAnimationFrame(animationFrameId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId)
+      }
     }
   }, [])
 

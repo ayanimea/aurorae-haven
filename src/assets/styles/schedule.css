@@ -2389,3 +2389,27 @@ Ask for clarification or preserve the existing structure.
 .glass-panel--hover:hover {
   transform: scale(1.01);
 }
+
+/* ── Load awareness indicator ─────────────────────────────────────── */
+.figma-load-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.figma-load-indicator--high {
+  background: rgba(251, 146, 60, 0.15);
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  color: rgba(255, 200, 130, 0.95);
+}
+
+.figma-load-indicator--over {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: rgba(255, 160, 150, 0.95);
+}

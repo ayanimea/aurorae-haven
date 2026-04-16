@@ -16,29 +16,29 @@ import PropTypes from 'prop-types'
 /* ── Period colours (from Figma Schedule.tsx) ───────────────────────────── */
 export const PERIOD_COLORS = {
   night: {
-    bg: 'rgba(20,18,45,0.6)',
-    border: 'rgba(60,55,100,0.4)',
+    bg: 'rgba(10, 5, 40, 0.88)',
+    border: 'rgba(40, 35, 80, 0.6)',
     text: 'rgba(140,135,180,0.9)',
     label: 'Night',
     dot: '#5550a0'
   },
   morning: {
-    bg: 'rgba(210,160,110,0.35)',
-    border: 'rgba(230,180,130,0.55)',
+    bg: 'rgba(130, 70, 15, 0.80)',
+    border: 'rgba(200, 140, 60, 0.6)',
     text: 'rgba(255,220,180,0.95)',
     label: 'Morning',
     dot: '#e8b880'
   },
   afternoon: {
-    bg: 'rgba(140,190,200,0.3)',
-    border: 'rgba(160,210,220,0.5)',
+    bg: 'rgba(10, 90, 105, 0.80)',
+    border: 'rgba(30, 170, 195, 0.55)',
     text: 'rgba(200,235,240,0.95)',
     label: 'Afternoon',
     dot: '#a0d0d8'
   },
   evening: {
-    bg: 'rgba(160,120,170,0.3)',
-    border: 'rgba(180,145,195,0.5)',
+    bg: 'rgba(65, 15, 85, 0.80)',
+    border: 'rgba(140, 60, 170, 0.55)',
     text: 'rgba(210,185,225,0.95)',
     label: 'Evening',
     dot: '#c0a0d0'
@@ -187,23 +187,27 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const dateStr = format(date, 'yyyy-MM-dd')
   const dayName = format(date, 'EEEE').toUpperCase()
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+  const isDayToday = dateStr === todayStr
 
   /* ── Time-range drag selection ── */
-  const selRef = useRef(null)           // { startHour, endHour } while dragging
+  const selRef = useRef(null)           // { startBoundary, endBoundary, startHour, endHour } while dragging
   const [selection, setSelection] = useState(null)
 
   // Commit selection on mouse-up anywhere in the document
   useEffect(() => {
     const handleMouseUp = () => {
       if (!selRef.current) return
-      const { startHour, endHour } = selRef.current
-      const minH = Math.min(startHour, endHour)
-      // End time is the upper boundary of the selection (may be a fractional hour for 15-min snapping)
-      const maxH = Math.max(startHour, endHour) + 1
+      const { startBoundary, endBoundary, startHour, endHour } = selRef.current
+      const resolvedStart = typeof startBoundary === 'number' ? startBoundary : startHour
+      const resolvedEnd = typeof endBoundary === 'number' ? endBoundary : endHour + 1
+      const minH = Math.min(resolvedStart, resolvedEnd)
+      const maxH = Math.max(resolvedStart, resolvedEnd)
       const toHHMM = (h) => {
-        const capped = Math.min(h, 24)
-        const hr = Math.floor(capped)
-        const min = Math.round((capped - hr) * 60)
+        const capped = Math.max(0, Math.min(h, 24))
+        let hr = Math.floor(capped)
+        let min = Math.round((capped - hr) * 60)
+        if (min === 60) { hr += 1; min = 0 }
         if (hr >= 24) return '24:00'
         return `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`
       }
@@ -312,7 +316,8 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
                   outline: isSelected ? '1px solid rgba(99,122,255,0.45)' : 'none',
                   padding: 0,
                   width: '100%',
-                  display: 'block'
+                  display: 'block',
+                  borderRadius: 0
                 }}
                 /* Start drag selection on mouse-down — snap to 15-min boundary */
                 onMouseDown={(e) => {
@@ -320,14 +325,19 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
                   const offsetY = e.nativeEvent.offsetY
                   const quarter = Math.floor((offsetY / ROW_H) * 4)
                   const fractHour = hour + (quarter * 15) / 60
-                  selRef.current = { startHour: fractHour, endHour: fractHour }
+                  selRef.current = { startBoundary: fractHour, endBoundary: undefined, startHour: fractHour, endHour: fractHour }
                   setSelection({ startHour: fractHour, endHour: fractHour })
                 }}
                 /* Extend selection while holding mouse button */
-                onMouseEnter={() => {
+                onMouseEnter={(e) => {
                   if (!selRef.current) return
+                  // Snap end boundary to 15-min precision based on cursor position within the row
+                  const offsetY = e.nativeEvent.offsetY
+                  const quarter = Math.floor((offsetY / ROW_H) * 4)
+                  const endBoundary = hour + (quarter * 15) / 60
+                  selRef.current.endBoundary = endBoundary
                   selRef.current.endHour = hour
-                  setSelection({ ...selRef.current })
+                  setSelection({ startHour: selRef.current.startHour, endHour: hour })
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -438,13 +448,16 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
                   endTime: evt.endTime,
                   day: evt.day
                 }))
+                e.currentTarget.dataset.dragging = 'true'
                 e.currentTarget.style.opacity = '0.5'
               }}
               onDragEnd={(e) => {
+                delete e.currentTarget.dataset.dragging
                 e.currentTarget.style.opacity = '1'
+                e.currentTarget.style.transform = 'scaleX(1)'
               }}
               onMouseEnter={(e) => {
-                if (!e.currentTarget.dragging) e.currentTarget.style.transform = 'scaleX(1.01)'
+                if (e.currentTarget.dataset.dragging !== 'true') e.currentTarget.style.transform = 'scaleX(1.01)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scaleX(1)'
@@ -489,7 +502,8 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
           )
         })}
 
-        {/* Now indicator */}
+        {/* Now indicator — only on today */}
+        {isDayToday && (
         <div
           style={{
             position: 'absolute',
@@ -522,6 +536,7 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
             />
           </div>
         </div>
+        )}
       </div>
     </div>
   )
@@ -579,12 +594,53 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, dat
   const eventsByDayHour = useMemo(() => {
     const map = {}
     for (const evt of events) {
-      const key = `${evt.day}-${Math.floor(parseHour(evt.startTime))}`
+      if (!evt || evt.allDay || !evt.day || !evt.startTime || !evt.endTime) continue
+      const startHour = parseHour(evt.startTime)
+      if (!Number.isFinite(startHour)) continue
+      const key = `${evt.day}-${Math.floor(startHour)}`
       if (!map[key]) map[key] = []
       map[key].push(evt)
     }
     return map
   }, [events])
+
+  /* Per-day overlap layout — same algorithm as DayView but keyed by day string */
+  const overlapByDay = useMemo(() => {
+    const result = {}
+    for (const dayDate of weekDays) {
+      const dayStr = format(dayDate, 'yyyy-MM-dd')
+      const dayEvts = events
+        .filter((e) => e.day === dayStr && !e.allDay && e.startTime && e.endTime)
+        .map((e) => ({ evt: e, startH: parseHour(e.startTime), endH: parseHour(e.endTime || e.startTime) }))
+        .sort((a, b) => (a.startH !== b.startH ? a.startH - b.startH : a.endH - b.endH))
+
+      const layoutMap = new Map()
+      let cluster = []
+      let active = []
+
+      const finalizeCluster = () => {
+        if (cluster.length === 0) return
+        const cols = Math.max(...cluster.map((x) => x.column + 1), 1)
+        for (const item of cluster) layoutMap.set(item.evt.id, { column: item.column, columns: cols })
+        cluster = []
+        active = []
+      }
+
+      for (const item of dayEvts) {
+        active = active.filter((a) => a.endH > item.startH)
+        if (cluster.length > 0 && active.length === 0) finalizeCluster()
+        const usedCols = new Set(active.map((a) => a.column))
+        let col = 0
+        while (usedCols.has(col)) col++
+        const positioned = { ...item, column: col }
+        cluster.push(positioned)
+        active.push(positioned)
+      }
+      finalizeCluster()
+      result[dayStr] = layoutMap
+    }
+    return result
+  }, [events, weekDays])
 
   return (
     <div style={{ padding: '1.25rem' }}>
@@ -677,7 +733,8 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, dat
                       height: `${ROW_H}px`,
                       background: pc.bg,
                       cursor: 'pointer',
-                      padding: 0
+                      padding: 0,
+                      borderRadius: 0
                     }}
                     onClick={() => {
                       setFocusedCell({ day: di, hour })
@@ -727,6 +784,7 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, dat
                       const dur = Math.max(endH - startH, 0.25)
                       const offsetPx = (startH - hour) * ROW_H
                       const height = dur * ROW_H
+                      const evtLayout = overlapByDay[dayStr]?.get(evt.id) ?? { column: 0, columns: 1 }
                       return (
                         <button
                           key={evt.id}
@@ -734,8 +792,8 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, dat
                           draggable
                           style={{
                             position: 'absolute',
-                            left: '2px',
-                            right: '2px',
+                            left: `${(evtLayout.column / evtLayout.columns) * 100}%`,
+                            width: `calc(${100 / evtLayout.columns}% - 4px)`,
                             top: `${2 + offsetPx}px`,
                             height: `${height - 4}px`,
                             background: ec.bg,
@@ -799,8 +857,8 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, dat
         )
       })}
 
-        {/* Now indicator for week view — only render when within the 24-hour grid */}
-        {nowHour >= 0 && nowHour < 24 && (
+        {/* Now indicator — only if today is in the displayed week */}
+        {todayDayIdx >= 0 && nowHour >= 0 && nowHour < 24 && (
           <div
             style={{
               position: 'absolute',

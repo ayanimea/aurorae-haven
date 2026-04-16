@@ -61,7 +61,7 @@ Ask for clarification or preserve the existing structure.
  * Manages routines, tasks, meetings, and habits with a clean, accessible interface
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { format, startOfWeek, addDays, subDays, addMonths, subMonths } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
@@ -79,6 +79,8 @@ import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
 import { validateStructural } from '../schedule/structuralConstraints'
 import { generateSuggestions } from '../schedule/suggestionEngine'
 import { snapDown, snapUp } from '../schedule/timeUtils'
+import { getMemoizedDayLoad } from '../schedule/loadComputation'
+import { SCHEDULING_CONFIG } from '../schedule/config'
 import '../components/ErrorBoundary.css'
 
 /**
@@ -254,6 +256,18 @@ function Schedule() {
   useEffect(() => {
     loadEvents()
   }, [loadEvents])
+
+  // Compute load ratio for visible day(s) to show load awareness indicator
+  const { loadThresholdHigh, loadThresholdOver } = SCHEDULING_CONFIG
+  const visibleLoadState = useMemo(() => {
+    if (view === 'day') {
+      const dayStr = format(date, 'yyyy-MM-dd')
+      const dayEvents = events.filter(e => e.day === dayStr)
+      const load = getMemoizedDayLoad(dayEvents, dayStr)
+      return load >= loadThresholdOver ? 'over' : load >= loadThresholdHigh ? 'high' : 'ok'
+    }
+    return 'ok'
+  }, [events, date, view])
 
   // Cleanup success message timeout on unmount to prevent setState on unmounted component
   useEffect(() => {
@@ -498,7 +512,10 @@ function Schedule() {
       const newStartMins = newHour * 60
       const newEndMins = newStartMins + duration
       const newStartTime = minutesToTime(newStartMins)
-      const newEndTime = newEndMins >= 1440 ? '24:00' : minutesToTime(newEndMins)
+      const normalizedEndMins = newEndMins % 1440
+      const newEndTime = normalizedEndMins === 0 && newEndMins >= 1440
+        ? '24:00'
+        : minutesToTime(normalizedEndMins)
       const updatedEvt = { ...evt, day: newDay, startTime: newStartTime, endTime: newEndTime }
       const structuralError = checkStructural(updatedEvt, events, evt.id)
       if (structuralError) {
@@ -661,6 +678,16 @@ function Schedule() {
             <p className='figma-schedule-subtitle'>
               {isToday ? `Today — ${headerDateLabel}` : headerDateLabel}
             </p>
+            {view === 'day' && schedulingGuidanceLevel !== 'off' && visibleLoadState !== 'ok' && (
+              <div
+                className={`figma-load-indicator figma-load-indicator--${visibleLoadState}`}
+                role='status'
+                aria-live='polite'
+                aria-label={visibleLoadState === 'over' ? 'Day over capacity' : 'Day highly scheduled'}
+              >
+                {visibleLoadState === 'over' ? '⚠ Over capacity' : '↑ High load'}
+              </div>
+            )}
           </div>
           <div className='figma-schedule-controls'>
             <button

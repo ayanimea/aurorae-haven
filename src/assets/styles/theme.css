@@ -47,13 +47,6 @@ h4 {
   backdrop-filter: blur(24px) saturate(1.2);
 }
 
-.appbar .brand b {
-  letter-spacing: 0.12em;
-  font-size: 0.95rem;
-  font-weight: 400;
-  color: var(--figma-text);
-}
-
 .shell {
   max-width: min(100%, 1920px);
 }

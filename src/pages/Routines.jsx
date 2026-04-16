@@ -18,12 +18,12 @@ const logger = createLogger('Routines')
 
 // Figma-sourced step color palette (cycles by step index)
 const STEP_COLORS = [
-  'rgba(239, 68, 68, 0.7)',
-  'rgba(59, 130, 246, 0.7)',
-  'rgba(168, 85, 247, 0.7)',
-  'rgba(236, 72, 153, 0.7)',
-  'rgba(34, 197, 94, 0.7)',
-  'rgba(251, 146, 60, 0.7)',
+  { base: 'rgba(239, 68, 68, 0.7)', glow: 'rgba(239, 68, 68, 0.15)', inset: 'rgba(239, 68, 68, 0.04)' },
+  { base: 'rgba(59, 130, 246, 0.7)', glow: 'rgba(59, 130, 246, 0.15)', inset: 'rgba(59, 130, 246, 0.04)' },
+  { base: 'rgba(168, 85, 247, 0.7)', glow: 'rgba(168, 85, 247, 0.15)', inset: 'rgba(168, 85, 247, 0.04)' },
+  { base: 'rgba(236, 72, 153, 0.7)', glow: 'rgba(236, 72, 153, 0.15)', inset: 'rgba(236, 72, 153, 0.04)' },
+  { base: 'rgba(34, 197, 94, 0.7)', glow: 'rgba(34, 197, 94, 0.15)', inset: 'rgba(34, 197, 94, 0.04)' },
+  { base: 'rgba(251, 146, 60, 0.7)', glow: 'rgba(251, 146, 60, 0.15)', inset: 'rgba(251, 146, 60, 0.04)' },
 ]
 
 // Circular timer constants
@@ -525,14 +525,14 @@ function Routines() {
             <div
               className='rseq-card rseq-card--current'
               style={{
-                borderColor: currentStepColor,
-                boxShadow: `0 0 40px ${currentStepColor.replace('0.7', '0.15')}, inset 0 0 60px ${currentStepColor.replace('0.7', '0.04')}`,
+                borderColor: currentStepColor.base,
+                boxShadow: `0 0 40px ${currentStepColor.glow}, inset 0 0 60px ${currentStepColor.inset}`,
               }}
             >
               {/* Step status label */}
               <div
                 className='rseq-current-status'
-                style={{ color: currentStepColor }}
+                style={{ color: currentStepColor.base }}
               >
                 Current &bull;{' '}
                 {runner.state.isPaused ? 'Paused' : 'Running'}
@@ -562,7 +562,7 @@ function Routines() {
                     cx='96'
                     cy='96'
                     r={TIMER_RADIUS}
-                    stroke={currentStepColor}
+                    stroke={currentStepColor.base}
                     strokeWidth='8'
                     fill='none'
                     strokeLinecap='round'
@@ -571,7 +571,7 @@ function Routines() {
                       strokeDashoffset: timerDashOffset,
                       transform: 'rotate(-90deg)',
                       transformOrigin: '50% 50%',
-                      filter: `drop-shadow(0 0 6px ${currentStepColor})`,
+                      filter: `drop-shadow(0 0 6px ${currentStepColor.base})`,
                       transition: prefersReducedMotion
                         ? 'none'
                         : 'stroke-dashoffset 0.5s ease',
@@ -660,7 +660,7 @@ function Routines() {
           <div
             className='rseq-steps-grid'
             style={{
-              gridTemplateColumns: `repeat(${Math.min(allSteps.length, 5)}, 1fr)`,
+              gridTemplateColumns: `repeat(${Math.max(1, Math.min(allSteps.length, 5))}, 1fr)`,
             }}
           >
             {allSteps.map((step, index) => {
@@ -683,8 +683,8 @@ function Routines() {
                   style={
                     isCurrent
                       ? {
-                          borderColor: stepColor,
-                          boxShadow: `0 0 20px ${stepColor.replace('0.7', '0.15')}`,
+                          borderColor: stepColor.base,
+                          boxShadow: `0 0 20px ${stepColor.glow}`,
                         }
                       : undefined
                   }
@@ -720,7 +720,7 @@ function Routines() {
                         className='rseq-step-progress-fill'
                         style={{
                           width: `${Math.round(stepProgress * 100)}%`,
-                          backgroundColor: stepColor,
+                          backgroundColor: stepColor.base,
                         }}
                       />
                     </div>
