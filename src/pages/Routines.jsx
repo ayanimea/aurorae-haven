@@ -584,7 +584,7 @@ function Routines() {
                   disabled={!runner.state.isRunning}
                 >
                   <Icon name='check' />
-                  Complete
+                  <span className='rseq-btn-label'>Complete</span>
                 </button>
                 <button
                   type='button'
@@ -595,7 +595,9 @@ function Routines() {
                   }
                 >
                   <Icon name={runner.state.isPaused ? 'play' : 'pause'} />
-                  {runner.state.isPaused ? 'Resume' : 'Pause'}
+                  <span className='rseq-btn-label'>
+                    {runner.state.isPaused ? 'Resume' : 'Pause'}
+                  </span>
                 </button>
                 <button
                   type='button'
@@ -605,7 +607,7 @@ function Routines() {
                   disabled={!runner.state.isRunning}
                 >
                   <Icon name='skip' />
-                  Skip
+                  <span className='rseq-btn-label'>Skip</span>
                 </button>
                 <button
                   type='button'
@@ -614,7 +616,7 @@ function Routines() {
                   aria-label='Cancel routine'
                 >
                   <Icon name='x' />
-                  Cancel
+                  <span className='rseq-btn-label'>Cancel</span>
                 </button>
               </div>
             </div>

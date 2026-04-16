@@ -657,20 +657,11 @@
     width: 100%;
   }
 
-  /* Figma sequence mobile */
+  /* Figma sequence mobile — stats bar stacks */
   .rseq-stats-bar {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-  }
-
-  .rseq-triptych {
-    grid-template-columns: 0.8fr 2.4fr 0.8fr;
-    gap: 10px;
-  }
-
-  .rseq-card--dim {
-    padding: 12px;
   }
 
   .rseq-card--current {
@@ -689,10 +680,6 @@
 
   .rseq-timer-digits {
     font-size: 2rem;
-  }
-
-  .rseq-steps-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
@@ -818,24 +805,50 @@
   }
 
   /* Figma sequence small phone */
-  .rseq-triptych {
-    grid-template-columns: 0.5fr 3fr 0.5fr;
+  .rseq-steps-grid {
+    grid-template-columns: 1fr !important;
   }
+}
 
-  .rseq-card--dim .rseq-card-title {
-    font-size: 0.75rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .rseq-card--dim .rseq-next-duration,
-  .rseq-card--dim .rseq-completed-badge {
+/* ── Figma ZIP: hide Previous/Next step cards below lg (1024px) ─────────── */
+@media (max-width: 1023px) {
+  .rseq-card--dim {
     display: none;
   }
 
+  .rseq-triptych {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Figma ZIP: 2-column steps grid on small tablets (640px–1023px) ──────── */
+@media (min-width: 640px) and (max-width: 1023px) {
   .rseq-steps-grid {
     grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ── Figma ZIP: icon-only controls + stretched badges below sm (640px) ───── */
+@media (max-width: 639px) {
+  .rseq-btn-label {
+    display: none;
+  }
+
+  /* Keep touch target large while showing only icon */
+  .rseq-btn {
+    min-width: 44px;
+    justify-content: center;
+    padding: 10px 12px;
+  }
+
+  /* Stretch stat badges across full width */
+  .rseq-stats-badges {
+    width: 100%;
+  }
+
+  .rseq-stat-badge {
+    flex: 1;
+    justify-content: center;
   }
 }
 
