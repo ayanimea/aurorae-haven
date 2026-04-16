@@ -16,6 +16,20 @@ import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
 
 const logger = createLogger('Routines')
 
+// Figma-sourced step color palette (cycles by step index)
+const STEP_COLORS = [
+  'rgba(239, 68, 68, 0.7)',
+  'rgba(59, 130, 246, 0.7)',
+  'rgba(168, 85, 247, 0.7)',
+  'rgba(236, 72, 153, 0.7)',
+  'rgba(34, 197, 94, 0.7)',
+  'rgba(251, 146, 60, 0.7)',
+]
+
+// Circular timer constants
+const TIMER_RADIUS = 88
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS // ≈ 553
+
 function Routines() {
   const [selectedRoutine, setSelectedRoutine] = useState(null)
   const [availableRoutines, setAvailableRoutines] = useState([])
@@ -331,203 +345,372 @@ function Routines() {
     }
   }
 
+  // Derive per-run stats for the gamified stats bar
+  const completedCount = runner.state?.completedSteps?.length ?? 0
+  const xpSoFar = runner.state?.completedSteps?.reduce(
+    (sum, s) => sum + (s.xp ?? 0),
+    0
+  ) ?? 0
+  const allSteps = runner.state?.routine?.steps ?? []
+  const currentStepIndex = runner.state?.currentStepIndex ?? 0
+  const currentStepColor =
+    STEP_COLORS[currentStepIndex % STEP_COLORS.length]
+  const stepDuration = runner.currentStep?.duration ?? 1
+  const stepProgress =
+    1 - (runner.state?.remainingSeconds ?? 0) / stepDuration
+  const timerDashOffset =
+    TIMER_CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, stepProgress)))
+
   return (
     <>
       {/* TAB-RTN-05: Toolbar for routine data management */}
-      <div className='card' style={{ marginBottom: '14px' }}>
-        <div className='card-b'>
-          <div
-            style={{
-              display: 'flex',
-              gap: '8px',
-              flexWrap: 'wrap',
-              alignItems: 'center'
-            }}
-          >
-            <button type="button"
-              className='btn'
-              onClick={handleExportRoutines}
-              aria-label='Export all routine data'
-            >
-              <Icon name='download' />
-              Export Routines
-            </button>
-            <button type="button"
-              className='btn'
-              onClick={() => fileInputRef.current?.click()}
-              aria-label='Import routine data'
-            >
-              <Icon name='upload' />
-              Import Routines
-            </button>
-            <input
-              ref={fileInputRef}
-              type='file'
-              accept='.json'
-              onChange={handleImportRoutines}
-              style={{ display: 'none' }}
-              aria-label='Choose routine data file to import'
-            />
-            <div style={{ marginLeft: 'auto', fontSize: '0.875rem' }}>
-              <span className='small'>
-                Import/Export your routine data (instances with execution
-                history)
-              </span>
-            </div>
-          </div>
-        </div>
+      <div className='rseq-toolbar'>
+        <button
+          type='button'
+          className='btn'
+          onClick={handleExportRoutines}
+          aria-label='Export all routine data'
+        >
+          <Icon name='download' />
+          Export
+        </button>
+        <button
+          type='button'
+          className='btn'
+          onClick={() => fileInputRef.current?.click()}
+          aria-label='Import routine data'
+        >
+          <Icon name='upload' />
+          Import
+        </button>
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='.json'
+          onChange={handleImportRoutines}
+          style={{ display: 'none' }}
+          aria-label='Choose routine data file to import'
+        />
       </div>
 
-      {/* TAB-RTN-03: Current Routine runner with progress bar */}
+      {/* ── Figma Gamified Sequence Runner ── */}
       {runner.state && runner.state.isRunning && (
-        <div className='card'>
-          <div className='card-h'>
-            <strong>Current Routine</strong>
-            <span className='small'>
-              {runner.state.routine.title || runner.state.routine.name}
-            </span>
-          </div>
-          {/* TAB-RTN-03 & TAB-RTN-42: Progress bar with ARIA */}
-          <div
-            className='routine-progress'
-            role='progressbar'
-            aria-valuenow={runner.progress}
-            aria-valuemin='0'
-            aria-valuemax='100'
-            aria-label='Routine progress'
-            aria-valuetext={`${runner.progress}% complete`}
-          >
-            <div
-              className='routine-progress-bar'
-              style={{ width: `${runner.progress}%` }}
-            ></div>
-          </div>
-          <div className='card-b runner-top'>
-            <div className='routine-time'>
-              <div className='small'>Step timer</div>
-              {/* TAB-RTN-43: Timer with aria-live for screen readers */}
-              <div style={{ fontWeight: '700' }}>
-                {runner.remainingTime}
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: '-9999px',
-                    width: '1px',
-                    height: '1px',
-                    overflow: 'hidden'
-                  }}
-                  aria-live='polite'
+        <div className='rseq-wrapper'>
+          {/* Stats Bar */}
+          <div className='rseq-stats-bar'>
+            <div className='rseq-stats-bar-info'>
+              <h2 className='rseq-routine-title'>
+                {runner.state.routine.title || runner.state.routine.name}
+              </h2>
+              <p className='rseq-routine-subtitle'>
+                {allSteps.length} step{allSteps.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <div className='rseq-stats-badges'>
+              {/* Steps completed */}
+              <div
+                className='rseq-stat-badge'
+                role='group'
+                aria-label={`${completedCount} steps completed`}
+              >
+                <svg
+                  className='rseq-stat-icon'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  aria-hidden='true'
                 >
-                  {formatTime(runner.remainingTime, { verbose: true })}
-                </span>
+                  <path d='M20 6 9 17l-5-5' />
+                </svg>
+                <div>
+                  <div className='rseq-stat-value'>{completedCount}</div>
+                  <div className='rseq-stat-label'>Done</div>
+                </div>
+              </div>
+
+              {/* XP earned */}
+              <div
+                className='rseq-stat-badge'
+                role='group'
+                aria-label={`${xpSoFar} XP earned`}
+              >
+                <svg
+                  className='rseq-stat-icon rseq-stat-icon--xp'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  aria-hidden='true'
+                >
+                  <polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2' />
+                </svg>
+                <div>
+                  <div className='rseq-stat-value'>{xpSoFar}</div>
+                  <div className='rseq-stat-label'>XP</div>
+                </div>
               </div>
             </div>
-            {/* TAB-RTN-09: Step triptych - Previous (dim), Current (glow), Next (preview) */}
-            <div className='triptych'>
-              {/* Previous step */}
+          </div>
+
+          {/* Overall Progress */}
+          <div className='rseq-overall-progress'>
+            <div
+              className='rseq-progress-track'
+              role='progressbar'
+              aria-valuenow={runner.progress}
+              aria-valuemin='0'
+              aria-valuemax='100'
+              aria-label='Overall routine progress'
+              aria-valuetext={`${Math.round(runner.progress)}% complete`}
+            >
+              <div
+                className='rseq-progress-fill'
+                style={{ width: `${runner.progress}%` }}
+              />
+            </div>
+            <p className='rseq-step-count'>
+              Step {currentStepIndex + 1} of {allSteps.length}
+            </p>
+          </div>
+
+          {/* TAB-RTN-09: Step triptych - Previous | Current (timer) | Next */}
+          <div className='rseq-triptych'>
+            {/* Previous step */}
+            <div className='rseq-card rseq-card--dim'>
               {runner.previousStep ? (
-                <div className='panel dim'>
-                  <div className='step-title'>{runner.previousStep.label}</div>
-                  <div className='step-meta'>
-                    <span className='small'>Previous</span>
-                    <span className='small'>
-                      {formatTime(runner.previousStep.duration)}
-                    </span>
+                <>
+                  <div className='rseq-card-label'>Previous</div>
+                  <div className='rseq-card-title'>
+                    {runner.previousStep.label}
                   </div>
-                </div>
+                  <div className='rseq-completed-badge'>
+                    <svg
+                      viewBox='0 0 16 16'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      aria-hidden='true'
+                    >
+                      <path d='M13 4 6 11 3 8' />
+                    </svg>
+                    Completed
+                  </div>
+                </>
               ) : (
-                <div className='panel dim' style={{ opacity: 0.3 }}>
-                  <div className='step-title'>—</div>
-                  <div className='step-meta'>
-                    <span className='small'>Start</span>
-                  </div>
-                </div>
+                <div className='rseq-card-label'>—</div>
               )}
+            </div>
 
-              {/* Current step - TAB-RTN-10 */}
-              <div className='panel panel-current'>
-                <div className='step-title'>{runner.currentStep?.label}</div>
-                <div className='step-meta'>
-                  <span className='small'>
-                    Current · {runner.state.isPaused ? 'Paused' : 'Running'}
-                  </span>
-                  <span className='small'>{runner.remainingTime}</span>
-                </div>
-                {/* TAB-RTN-11: Controls with accessible labels */}
-                <div className='controls'>
-                  <button type="button"
-                    className='btn'
-                    onClick={runner.complete}
-                    aria-label='Complete current step'
-                    disabled={!runner.state.isRunning}
-                  >
-                    <Icon name='check' />
-                    Complete
-                  </button>
-                  <button type="button"
-                    className='btn'
-                    onClick={runner.togglePause}
-                    aria-label={
-                      runner.state.isPaused ? 'Resume routine' : 'Pause routine'
-                    }
-                  >
-                    <Icon name={runner.state.isPaused ? 'play' : 'pause'} />
-                    {runner.state.isPaused ? 'Resume' : 'Pause'}
-                  </button>
-                  <button type="button"
-                    className='btn'
-                    onClick={() => runner.skip()}
-                    aria-label='Skip current step'
-                    disabled={!runner.state.isRunning}
-                  >
-                    <Icon name='skip' />
-                    Skip
-                  </button>
-                  <button type="button"
-                    className='btn'
-                    onClick={handleCancelRoutine}
-                    aria-label='Cancel routine'
+            {/* Current step - TAB-RTN-10 */}
+            <div
+              className='rseq-card rseq-card--current'
+              style={{
+                borderColor: currentStepColor,
+                boxShadow: `0 0 40px ${currentStepColor.replace('0.7', '0.15')}, inset 0 0 60px ${currentStepColor.replace('0.7', '0.04')}`,
+              }}
+            >
+              {/* Step status label */}
+              <div
+                className='rseq-current-status'
+                style={{ color: currentStepColor }}
+              >
+                Current &bull;{' '}
+                {runner.state.isPaused ? 'Paused' : 'Running'}
+              </div>
+              <div className='rseq-card-title rseq-current-title'>
+                {runner.currentStep?.label}
+              </div>
+
+              {/* Circular SVG Timer */}
+              <div className='rseq-timer-wrap' aria-hidden='true'>
+                <svg
+                  className='rseq-timer-svg'
+                  viewBox='0 0 192 192'
+                  role='presentation'
+                >
+                  {/* Background track */}
+                  <circle
+                    cx='96'
+                    cy='96'
+                    r={TIMER_RADIUS}
+                    stroke='rgba(255, 255, 255, 0.05)'
+                    strokeWidth='8'
+                    fill='none'
+                  />
+                  {/* Progress arc */}
+                  <circle
+                    cx='96'
+                    cy='96'
+                    r={TIMER_RADIUS}
+                    stroke={currentStepColor}
+                    strokeWidth='8'
+                    fill='none'
+                    strokeLinecap='round'
                     style={{
-                      borderColor: 'var(--alert)',
-                      color: 'var(--alert)'
+                      strokeDasharray: TIMER_CIRCUMFERENCE,
+                      strokeDashoffset: timerDashOffset,
+                      transform: 'rotate(-90deg)',
+                      transformOrigin: '50% 50%',
+                      filter: `drop-shadow(0 0 6px ${currentStepColor})`,
+                      transition: prefersReducedMotion
+                        ? 'none'
+                        : 'stroke-dashoffset 0.5s ease',
                     }}
-                  >
-                    <Icon name='x' />
-                    Cancel
-                  </button>
+                  />
+                </svg>
+                <div className='rseq-timer-text'>
+                  {/* TAB-RTN-43: visible timer + sr-only live region */}
+                  <span className='rseq-timer-digits'>
+                    {runner.remainingTime}
+                  </span>
+                  <span className='rseq-timer-label'>remaining</span>
+                  <span className='sr-only' aria-live='polite'>
+                    {formatTime(
+                      runner.state?.remainingSeconds ?? 0,
+                      { verbose: true }
+                    )}
+                  </span>
                 </div>
               </div>
 
-              {/* Next step */}
+              {/* TAB-RTN-11: Controls with accessible labels */}
+              <div className='rseq-controls'>
+                <button
+                  type='button'
+                  className='rseq-btn'
+                  onClick={runner.complete}
+                  aria-label='Complete current step'
+                  disabled={!runner.state.isRunning}
+                >
+                  <Icon name='check' />
+                  Complete
+                </button>
+                <button
+                  type='button'
+                  className='rseq-btn'
+                  onClick={runner.togglePause}
+                  aria-label={
+                    runner.state.isPaused ? 'Resume routine' : 'Pause routine'
+                  }
+                >
+                  <Icon name={runner.state.isPaused ? 'play' : 'pause'} />
+                  {runner.state.isPaused ? 'Resume' : 'Pause'}
+                </button>
+                <button
+                  type='button'
+                  className='rseq-btn'
+                  onClick={() => runner.skip()}
+                  aria-label='Skip current step'
+                  disabled={!runner.state.isRunning}
+                >
+                  <Icon name='skip' />
+                  Skip
+                </button>
+                <button
+                  type='button'
+                  className='rseq-btn rseq-btn--danger'
+                  onClick={handleCancelRoutine}
+                  aria-label='Cancel routine'
+                >
+                  <Icon name='x' />
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            {/* Next step */}
+            <div className='rseq-card rseq-card--dim'>
               {runner.nextStep ? (
-                <div className='panel dim'>
-                  <div className='step-title'>{runner.nextStep.label}</div>
-                  <div className='step-meta'>
-                    <span className='small'>Next</span>
-                    <span className='small'>
-                      {formatTime(runner.nextStep.duration)}
-                    </span>
+                <>
+                  <div className='rseq-card-label'>Next</div>
+                  <div className='rseq-card-title'>{runner.nextStep.label}</div>
+                  <div className='rseq-next-duration'>
+                    {formatTime(runner.nextStep.duration)}
                   </div>
-                </div>
+                </>
               ) : (
-                <div className='panel dim' style={{ opacity: 0.3 }}>
-                  <div className='step-title'>—</div>
-                  <div className='step-meta'>
-                    <span className='small'>Finish</span>
-                  </div>
-                </div>
+                <div className='rseq-card-label'>—</div>
               )}
             </div>
+          </div>
+
+          {/* All Steps Grid */}
+          <div
+            className='rseq-steps-grid'
+            style={{
+              gridTemplateColumns: `repeat(${Math.min(allSteps.length, 5)}, 1fr)`,
+            }}
+          >
+            {allSteps.map((step, index) => {
+              const isCompleted = index < currentStepIndex
+              const isCurrent = index === currentStepIndex
+              const stepColor = STEP_COLORS[index % STEP_COLORS.length]
+              return (
+                <div
+                  key={step.id ?? index}
+                  className={`rseq-step-card ${isCurrent ? 'rseq-step-card--current' : ''} ${isCompleted ? 'rseq-step-card--done' : ''}`}
+                  role='region'
+                  aria-label={`Step ${index + 1}: ${step.label}${isCompleted ? ', completed' : isCurrent ? ', current' : ', pending'}`}
+                  style={
+                    isCurrent
+                      ? {
+                          borderColor: stepColor,
+                          boxShadow: `0 0 20px ${stepColor.replace('0.7', '0.15')}`,
+                        }
+                      : undefined
+                  }
+                >
+                  <div className='rseq-step-card-header'>
+                    <span className='rseq-step-card-title'>{step.label}</span>
+                    <span className='rseq-step-card-duration'>
+                      {formatTime(step.duration)}
+                    </span>
+                  </div>
+                  {isCompleted && (
+                    <div className='rseq-step-status rseq-step-status--done'>
+                      <svg
+                        viewBox='0 0 16 16'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        aria-hidden='true'
+                      >
+                        <path d='M13 4 6 11 3 8' />
+                      </svg>
+                      Done
+                    </div>
+                  )}
+                  {isCurrent && (
+                    <div className='rseq-step-progress'>
+                      <div
+                        className='rseq-step-progress-fill'
+                        style={{
+                          width: `${Math.round(stepProgress * 100)}%`,
+                          backgroundColor: stepColor,
+                        }}
+                      />
+                    </div>
+                  )}
+                  {!isCompleted && !isCurrent && (
+                    <div className='rseq-step-status rseq-step-status--pending'>
+                      Pending
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
 
       {/* No routine running - show available routines list */}
-      {!runner.state || !runner.state.isRunning ? (
+      {(!runner.state || !runner.state.isRunning) && (
         <div className='card'>
           <div className='card-h'>
             <strong>Available Routines</strong>
-            <button type="button"
+            <button
+              type='button'
               className='btn btn-primary'
               onClick={() => setShowCreationModal(true)}
             >
@@ -559,7 +742,8 @@ function Routines() {
                 >
                   Create your first routine to get started
                 </p>
-                <button type="button"
+                <button
+                  type='button'
                   className='btn btn-primary'
                   onClick={() => setShowCreationModal(true)}
                 >
@@ -568,83 +752,56 @@ function Routines() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gap: '12px' }}>
+              <div className='rseq-routines-list'>
                 {availableRoutines.map((routine) => (
-                  <div
-                    key={routine.id}
-                    className='panel'
-                    style={{
-                      width: '100%'
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
+                  <div key={routine.id} className='rseq-routine-row'>
+                    <button
+                      type='button'
+                      className='rseq-routine-row-info'
+                      onClick={() => setSelectedRoutine(routine)}
+                      aria-label={`Start routine: ${routine.name || routine.title}`}
                     >
-                      <div
-                        style={{
-                          flex: 1,
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => setSelectedRoutine(routine)}
-                        role='button'
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            setSelectedRoutine(routine)
-                          }
-                        }}
-                        aria-label={`View routine: ${routine.name || routine.title}`}
-                      >
-                        <div className='step-title'>
-                          {routine.name || routine.title}
-                        </div>
-                        {routine.steps && routine.steps.length > 0 && (
-                          <div className='small dim'>
-                            {routine.steps.length} steps
-                            {routine.estimatedDuration &&
-                              ` · ${formatTime(routine.estimatedDuration)}`}
-                          </div>
-                        )}
-                        {routine.tags && routine.tags.length > 0 && (
-                          <div
-                            style={{
-                              display: 'flex',
-                              gap: '4px',
-                              marginTop: '4px'
-                            }}
-                          >
-                            {routine.tags.map((tag, i) => (
-                              <span key={i} className='tag'>
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                      <div className='rseq-routine-row-title'>
+                        {routine.name || routine.title}
                       </div>
-                      <button type="button"
-                        className='btn btn-primary'
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedRoutine(routine)
-                        }}
-                        aria-label={`Start ${routine.name || routine.title}`}
-                      >
-                        <Icon name='play' />
-                        Start
-                      </button>
-                    </div>
+                      {routine.steps && routine.steps.length > 0 && (
+                        <div className='small dim'>
+                          {routine.steps.length} step
+                          {routine.steps.length !== 1 ? 's' : ''}
+                          {routine.estimatedDuration
+                            ? ` · ${formatTime(routine.estimatedDuration)}`
+                            : ''}
+                        </div>
+                      )}
+                      {routine.tags && routine.tags.length > 0 && (
+                        <div className='rseq-routine-tags'>
+                          {routine.tags.map((tag, i) => (
+                            <span key={i} className='tag'>
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </button>
+                    <button
+                      type='button'
+                      className='btn btn-primary'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedRoutine(routine)
+                      }}
+                      aria-label={`Start ${routine.name || routine.title}`}
+                    >
+                      <Icon name='play' />
+                      Start
+                    </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
         </div>
-      ) : null}
+      )}
 
       {/* TAB-RTN-31: Completion Summary Modal */}
       {runner.isComplete && runner.summary && (
