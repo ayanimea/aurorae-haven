@@ -17,7 +17,7 @@ import {
   formatEventTime,
   buildOverlapLayout
 } from './scheduleConstants.js'
-import { useScheduleHourHeight } from './scheduleHooks.js'
+import { useScheduleHourHeight } from '../../hooks/schedule/useScheduleHourHeight.js'
 import { NoiseOverlay, CellNoise } from './NoiseOverlays.jsx'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
