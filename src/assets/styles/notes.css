@@ -408,6 +408,7 @@
   min-height: 0;
   overflow-y: auto;
   width: 100%;
+  color: var(--ink);
 }
 
 .preview a {
