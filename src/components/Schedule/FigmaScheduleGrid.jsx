@@ -165,25 +165,48 @@ function CellNoise() {
 }
 
 /* ── Row height (px per hour) — derived from CSS --hour-height variable with 52px fallback ─── */
-/* NOTE: ROW_H is read once at module load from the document's computed styles. It reflects
-   the value of --hour-height at import time and will not update if CSS variables change
-   dynamically. Re-render-based zoom or density changes are not supported without a remount. */
+const DEFAULT_ROW_H = 52
+
 function getScheduleHourHeight() {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return 52
+  if (typeof window === 'undefined' || typeof document === 'undefined') return DEFAULT_ROW_H
   const styles = window.getComputedStyle(document.documentElement)
   const hourHeight = Number.parseFloat(styles.getPropertyValue('--hour-height'))
   if (Number.isFinite(hourHeight) && hourHeight > 0) return hourHeight
   const minuteUnit = Number.parseFloat(styles.getPropertyValue('--minute-unit'))
   if (Number.isFinite(minuteUnit) && minuteUnit > 0) return minuteUnit * 60
-  return 52
+  return DEFAULT_ROW_H
 }
 
-const ROW_H = getScheduleHourHeight()
+/** Returns the current schedule row height and updates on resize/orientation change */
+function useScheduleHourHeight() {
+  const [rowHeight, setRowHeight] = useState(() => getScheduleHourHeight())
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const update = () => {
+      const next = getScheduleHourHeight()
+      setRowHeight(prev => (prev === next ? prev : next))
+    }
+
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+    }
+  }, [])
+
+  return rowHeight
+}
 const LINE_COLOR = 'rgba(255,255,255,0.04)'
 const TIME_COL_W = 60
 
 /* ── Day View ────────────────────────────────────────────────────────────── */
 function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date, use24HourFormat }) {
+  const ROW_H = useScheduleHourHeight()
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const dateStr = format(date, 'yyyy-MM-dd')
   const dayName = format(date, 'EEEE').toUpperCase()
@@ -323,21 +346,31 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
                 onMouseDown={(e) => {
                   if (e.button !== 0) return
                   const offsetY = e.nativeEvent.offsetY
-                  const quarter = Math.floor((offsetY / ROW_H) * 4)
+                  const quarter = Math.max(0, Math.min(3, Math.floor((offsetY / ROW_H) * 4)))
                   const fractHour = hour + (quarter * 15) / 60
-                  selRef.current = { startBoundary: fractHour, endBoundary: undefined, startHour: fractHour, endHour: fractHour }
-                  setSelection({ startHour: fractHour, endHour: fractHour })
+                  selRef.current = { startBoundary: fractHour, endBoundary: fractHour, startHour: fractHour, endHour: fractHour }
+                  setSelection({ startHour: fractHour, endHour: fractHour, startBoundary: fractHour, endBoundary: fractHour })
                 }}
-                /* Extend selection while holding mouse button */
+                /* Track pointer within the same row for sub-hour selection */
+                onMouseMove={(e) => {
+                  if (!selRef.current || (e.buttons & 1) !== 1) return
+                  const offsetY = e.nativeEvent.offsetY
+                  const quarter = Math.max(0, Math.min(3, Math.floor((offsetY / ROW_H) * 4)))
+                  const endBoundary = hour + (quarter * 15) / 60
+                  selRef.current.endBoundary = endBoundary
+                  selRef.current.endHour = endBoundary
+                  setSelection({ startHour: selRef.current.startHour, endHour: endBoundary, startBoundary: selRef.current.startBoundary, endBoundary })
+                }}
+                /* Extend selection across rows while holding mouse button */
                 onMouseEnter={(e) => {
                   if (!selRef.current) return
                   // Snap end boundary to 15-min precision based on cursor position within the row
                   const offsetY = e.nativeEvent.offsetY
-                  const quarter = Math.floor((offsetY / ROW_H) * 4)
+                  const quarter = Math.max(0, Math.min(3, Math.floor((offsetY / ROW_H) * 4)))
                   const endBoundary = hour + (quarter * 15) / 60
                   selRef.current.endBoundary = endBoundary
-                  selRef.current.endHour = hour
-                  setSelection({ startHour: selRef.current.startHour, endHour: hour })
+                  selRef.current.endHour = endBoundary
+                  setSelection({ startHour: selRef.current.startHour, endHour: endBoundary, startBoundary: selRef.current.startBoundary, endBoundary })
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -554,6 +587,7 @@ DayView.propTypes = {
 
 /* ── Week View ───────────────────────────────────────────────────────────── */
 function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date, use24HourFormat }) {
+  const ROW_H = useScheduleHourHeight()
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Mon
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const hours = Array.from({ length: 24 }, (_, i) => i) // 00:00–23:00

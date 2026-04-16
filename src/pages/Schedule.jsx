@@ -79,7 +79,7 @@ import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
 import { validateStructural } from '../schedule/structuralConstraints'
 import { generateSuggestions } from '../schedule/suggestionEngine'
 import { snapDown, snapUp } from '../schedule/timeUtils'
-import { getMemoizedDayLoad } from '../schedule/loadComputation'
+import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
 import { SCHEDULING_CONFIG } from '../schedule/config'
 import '../components/ErrorBoundary.css'
 
@@ -264,7 +264,11 @@ function Schedule() {
       const dayStr = format(date, 'yyyy-MM-dd')
       const dayEvents = events.filter(e => e.day === dayStr)
       const load = getMemoizedDayLoad(dayEvents, dayStr)
-      return load >= loadThresholdOver ? 'over' : load >= loadThresholdHigh ? 'high' : 'ok'
+      // Scale thresholds by actual day length to preserve 8h/9h semantics on DST transition days
+      const dayMinutes = getDayDurationMinutes(date)
+      const highThreshold = (loadThresholdHigh * 24 * 60) / dayMinutes
+      const overThreshold = (loadThresholdOver * 24 * 60) / dayMinutes
+      return load >= overThreshold ? 'over' : load >= highThreshold ? 'high' : 'ok'
     }
     return 'ok'
   }, [events, date, view])
