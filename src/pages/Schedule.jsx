@@ -229,7 +229,8 @@ function Schedule() {
         loadedEvents = await EventService.getEventsForWeek(dateStr)
       } else if (view === 'month') {
         const startOfMonth = startOfWeek(
-          new Date(date.getFullYear(), date.getMonth(), 1)
+          new Date(date.getFullYear(), date.getMonth(), 1),
+          { weekStartsOn: 1 } // Monday — matches MonthView grid
         )
         const endOfMonth = addDays(startOfMonth, 41) // 6 weeks
         loadedEvents = await EventService.getEventsForRange(

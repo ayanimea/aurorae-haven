@@ -25,13 +25,14 @@ const accentBg = {
 }
 
 function GlassPanel({ children, className = '', style, accent = 'none', hover = false }) {
-  const borderColor = accentBorders[accent]
+  const borderColor = accentBorders[accent] ?? accentBorders.none
+  const backgroundColor = accentBg[accent] ?? accentBg.none
 
   return (
     <div
       className={`glass-panel ${hover ? 'glass-panel--hover' : ''} ${className ?? ''}`}
       style={{
-        background: accentBg[accent],
+        background: backgroundColor,
         border: `1px solid ${borderColor}`,
         backdropFilter: 'blur(20px) saturate(1.1)',
         borderRadius: '12px',

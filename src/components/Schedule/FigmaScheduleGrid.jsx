@@ -4,12 +4,12 @@
  *
  * Data is wired to real events (not sample data):
  *   - events: array of {id, title, type, day (yyyy-MM-dd), startTime (HH:mm), endTime (HH:mm)}
- *   - onEventClick(event) → opens EventModal for edit
- *   - onSlotClick({day, startTime, endTime}) → opens EventModal to create
+ *   - onEventClick(event) → opens ItemActionModal for the selected event
+ *   - onSlotClick({day, startTime, endTime}) → opens EventModal to create a new event
  *   - date: current navigation Date
  *   - viewMode: 'day' | 'week' | 'month'
  */
-import { Fragment, useId, useMemo } from 'react'
+import { Fragment, useId, useMemo, useState, useRef, useCallback } from 'react'
 import { format, startOfWeek, addDays, startOfMonth } from 'date-fns'
 import PropTypes from 'prop-types'
 
@@ -153,8 +153,21 @@ function CellNoise() {
   )
 }
 
-/* ── Row height (px per hour) — matches Figma ROW_H = 52 ─────────────────── */
-const ROW_H = 52
+/* ── Row height (px per hour) — derived from CSS --hour-height variable with 52px fallback ─── */
+/* NOTE: ROW_H is read once at module load from the document's computed styles. It reflects
+   the value of --hour-height at import time and will not update if CSS variables change
+   dynamically. Re-render-based zoom or density changes are not supported without a remount. */
+function getScheduleHourHeight() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return 52
+  const styles = window.getComputedStyle(document.documentElement)
+  const hourHeight = Number.parseFloat(styles.getPropertyValue('--hour-height'))
+  if (Number.isFinite(hourHeight) && hourHeight > 0) return hourHeight
+  const minuteUnit = Number.parseFloat(styles.getPropertyValue('--minute-unit'))
+  if (Number.isFinite(minuteUnit) && minuteUnit > 0) return minuteUnit * 60
+  return 52
+}
+
+const ROW_H = getScheduleHourHeight()
 const LINE_COLOR = 'rgba(255,255,255,0.04)'
 const TIME_COL_W = 60
 
@@ -163,6 +176,38 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const dateStr = format(date, 'yyyy-MM-dd')
   const dayName = format(date, 'EEEE').toUpperCase()
+
+  /* Overlap-aware column layout — handles up to maxSimultaneousEvents (2) per slot */
+  const eventLayout = useMemo(() => {
+    const sorted = [...events]
+      .map((evt) => ({ evt, startH: parseHour(evt.startTime), endH: parseHour(evt.endTime || evt.startTime) }))
+      .sort((a, b) => a.startH !== b.startH ? a.startH - b.startH : a.endH - b.endH)
+
+    const layoutMap = new Map()
+    let cluster = [] // {evt, startH, endH, column}
+    let active = []  // currently overlapping items
+
+    const finalizeCluster = () => {
+      if (cluster.length === 0) return
+      const cols = Math.max(...cluster.map((x) => x.column + 1), 1)
+      for (const item of cluster) layoutMap.set(item.evt.id, { column: item.column, columns: cols })
+      cluster = []
+      active = []
+    }
+
+    for (const item of sorted) {
+      active = active.filter((a) => a.endH > item.startH)
+      if (cluster.length > 0 && active.length === 0) finalizeCluster()
+      const usedCols = new Set(active.map((a) => a.column))
+      let col = 0
+      while (usedCols.has(col)) col++
+      const positioned = { ...item, column: col }
+      cluster.push(positioned)
+      active.push(positioned)
+    }
+    finalizeCluster()
+    return layoutMap
+  }, [events])
 
   return (
     <div style={{ padding: '1.25rem' }}>
@@ -266,7 +311,7 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
           )
         })}
 
-        {/* Event cards overlay */}
+        {/* Event cards overlay — column-aware to handle simultaneous events */}
         {events.map((evt) => {
           const ec = EVENT_TYPE_COLORS[evt.type] || EVENT_TYPE_COLORS.event
           const startH = parseHour(evt.startTime)
@@ -274,6 +319,10 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
           const dur = Math.max(endH - startH, 0.25)
           const top = startH * ROW_H
           const height = dur * ROW_H
+          const layout = eventLayout.get(evt.id) || { column: 0, columns: 1 }
+          const contentWidth = `calc(100% - ${TIME_COL_W + 16}px)`
+          const colFrac = `calc(${contentWidth} / ${layout.columns})`
+          const leftPx = TIME_COL_W + 8
           return (
             <button
               key={evt.id}
@@ -281,8 +330,8 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, date, use24HourFo
               style={{
                 position: 'absolute',
                 top: `${top}px`,
-                left: `${TIME_COL_W + 8}px`,
-                right: '8px',
+                left: `calc(${leftPx}px + ${layout.column} * ${colFrac})`,
+                width: `calc(${colFrac} - 4px)`,
                 height: `${height - 2}px`,
                 background: ec.bg,
                 border: `1px solid ${ec.border}`,
@@ -384,6 +433,38 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Mon
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const hours = Array.from({ length: 24 }, (_, i) => i) // 00:00–23:00
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+  const todayDayIdx = weekDays.findIndex((d) => format(d, 'yyyy-MM-dd') === todayStr)
+  const defaultDay = todayDayIdx >= 0 ? todayDayIdx : 0
+
+  /* Roving tabindex — only one cell has tabIndex=0 at a time to reduce tab stops */
+  const [focusedCell, setFocusedCell] = useState({ day: defaultDay, hour: Math.min(nowHour >= 0 ? nowHour : 9, 23) })
+  const gridRef = useRef(null)
+
+  const focusCell = useCallback((day, hour) => {
+    const clamped = { day: Math.max(0, Math.min(6, day)), hour: Math.max(0, Math.min(23, hour)) }
+    setFocusedCell(clamped)
+    // Defer to next paint so the new tabIndex=0 element is in the DOM
+    requestAnimationFrame(() => {
+      gridRef.current?.querySelector(`[data-cell-key="${clamped.day}-${clamped.hour}"]`)?.focus()
+    })
+  }, [])
+
+  const handleCellKeyDown = useCallback((e, di, hour) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      const dayDate = weekDays[di]
+      const dayStr = format(dayDate, 'yyyy-MM-dd')
+      onSlotClick({
+        day: dayStr,
+        startTime: `${String(hour).padStart(2, '0')}:00`,
+        endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
+      })
+    } else if (e.key === 'ArrowRight') { e.preventDefault(); focusCell(di + 1, hour) }
+    else if (e.key === 'ArrowLeft')  { e.preventDefault(); focusCell(di - 1, hour) }
+    else if (e.key === 'ArrowDown')  { e.preventDefault(); focusCell(di, hour + 1) }
+    else if (e.key === 'ArrowUp')    { e.preventDefault(); focusCell(di, hour - 1) }
+  }, [weekDays, onSlotClick, focusCell])
 
   /* Pre-index events by "day-hour" key so cell lookups are O(1) */
   const eventsByDayHour = useMemo(() => {
@@ -399,6 +480,9 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
   return (
     <div style={{ padding: '1.25rem' }}>
       <div
+        ref={gridRef}
+        role='grid'
+        aria-label='Weekly schedule'
         style={{
           position: 'relative',
           display: 'grid',
@@ -467,10 +551,16 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
               {weekDays.map((dayDate, di) => {
                 const dayStr = format(dayDate, 'yyyy-MM-dd')
                 const cellEvents = eventsByDayHour[`${dayStr}-${hour}`] || []
+                const isActive = focusedCell.day === di && focusedCell.hour === hour
                 return (
-                  <button
-                    type='button'
+                  /* gridcell div avoids nested <button> (invalid HTML). Slot creation is
+                     handled via onClick/onKeyDown; event buttons inside remain valid.
+                     Roving tabindex: only the focused cell has tabIndex=0. */
+                  <div
                     key={`${di}-${hour}`}
+                    role='gridcell'
+                    data-cell-key={`${di}-${hour}`}
+                    tabIndex={isActive ? 0 : -1}
                     style={{
                       position: 'relative',
                       borderRight: `1px solid ${LINE_COLOR}`,
@@ -478,16 +568,17 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
                       height: `${ROW_H}px`,
                       background: pc.bg,
                       cursor: 'pointer',
-                      border: 'none',
                       padding: 0
                     }}
-                    onClick={() =>
+                    onClick={() => {
+                      setFocusedCell({ day: di, hour })
                       onSlotClick({
                         day: dayStr,
                         startTime: `${String(hour).padStart(2, '0')}:00`,
                         endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
                       })
-                    }
+                    }}
+                    onKeyDown={(e) => handleCellKeyDown(e, di, hour)}
                     aria-label={`${dayStr} ${formatHourLabel(hour, use24HourFormat)} slot`}
                   >
                     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -549,9 +640,9 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, date, use24HourF
                         </button>
                       )
                     })}
-                </button>
-              )
-            })}
+                  </div>
+                )
+              })}
           </Fragment>
         )
       })}
@@ -614,6 +705,31 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
   const todayStr = format(new Date(), 'yyyy-MM-dd')
   const monthNum = date.getMonth()
 
+  /* Roving tabindex — only one cell has tabIndex=0 at a time to reduce tab stops.
+     Default to today's cell, or the first cell if today is not in the grid. */
+  const todayCellIdx = cells.findIndex((d) => format(d, 'yyyy-MM-dd') === todayStr)
+  const [focusedIdx, setFocusedIdx] = useState(todayCellIdx >= 0 ? todayCellIdx : 0)
+  const gridRef = useRef(null)
+
+  const focusCellAt = useCallback((idx) => {
+    const clamped = Math.max(0, Math.min(41, idx))
+    setFocusedIdx(clamped)
+    requestAnimationFrame(() => {
+      gridRef.current?.querySelector(`[data-month-cell="${clamped}"]`)?.focus()
+    })
+  }, [])
+
+  const handleCellKeyDown = useCallback((e, i) => {
+    const dayStr = format(cells[i], 'yyyy-MM-dd')
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onSlotClick({ day: dayStr, startTime: '09:00', endTime: '10:00' })
+    } else if (e.key === 'ArrowRight') { e.preventDefault(); focusCellAt(i + 1) }
+    else if (e.key === 'ArrowLeft')   { e.preventDefault(); focusCellAt(i - 1) }
+    else if (e.key === 'ArrowDown')   { e.preventDefault(); focusCellAt(i + 7) }
+    else if (e.key === 'ArrowUp')     { e.preventDefault(); focusCellAt(i - 7) }
+  }, [cells, onSlotClick, focusCellAt])
+
   /* Pre-index events by day so each cell does an O(1) lookup */
   const eventsByDay = useMemo(() => {
     const map = {}
@@ -639,6 +755,9 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
         </h3>
       </div>
       <div
+        ref={gridRef}
+        role='grid'
+        aria-label='Monthly schedule'
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(7, 1fr)',
@@ -674,9 +793,14 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
           const dayEvents = eventsByDay[dayStr] || []
 
           return (
-            <button
-              type='button'
+            /* gridcell div avoids nested <button> (invalid HTML). Slot creation is
+               handled via onClick/onKeyDown; event buttons inside remain valid.
+               Roving tabindex: only the focused cell has tabIndex=0. */
+            <div
               key={i}
+              role='gridcell'
+              data-month-cell={i}
+              tabIndex={i === focusedIdx ? 0 : -1}
               style={{
                 position: 'relative',
                 overflow: 'hidden',
@@ -690,13 +814,15 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
                 cursor: 'pointer',
                 textAlign: 'left'
               }}
-              onClick={() =>
+              onClick={() => {
+                setFocusedIdx(i)
                 onSlotClick({
                   day: dayStr,
                   startTime: '09:00',
                   endTime: '10:00'
                 })
-              }
+              }}
+              onKeyDown={(e) => handleCellKeyDown(e, i)}
               aria-label={`${dayStr} — ${dayEvents.length} event${dayEvents.length !== 1 ? 's' : ''}`}
             >
               <CellNoise />
@@ -773,7 +899,7 @@ function MonthView({ events, onEventClick, onSlotClick, date }) {
                   </div>
                 )}
               </div>
-            </button>
+            </div>
           )
         })}
       </div>

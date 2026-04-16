@@ -32,6 +32,10 @@ export default function StarryBackground() {
     const context = canvas.getContext('2d')
     if (!context) return undefined
 
+    /* Respect prefers-reduced-motion: render a single static frame and skip the
+       animation loop so the canvas shows stars without twinkling/movement. */
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
     let width = 0
     let height = 0
     let stars = []
@@ -51,15 +55,11 @@ export default function StarryBackground() {
       stars = buildStars(width, height)
     }
 
-    const draw = (timestamp = 0) => {
+    const drawFrame = (staticAlpha = false) => {
       context.clearRect(0, 0, width, height)
-      if (!lastTimestamp) lastTimestamp = timestamp
-      const deltaSeconds = (timestamp - lastTimestamp) / 1000
-      lastTimestamp = timestamp
-      time += deltaSeconds
 
       for (const star of stars) {
-        const flicker = Math.sin(time * star.twinkleSpeed + star.twinklePhase)
+        const flicker = staticAlpha ? 0.8 : Math.sin(time * star.twinkleSpeed + star.twinklePhase)
         const alpha = star.opacity * (0.5 + 0.5 * flicker)
 
         if (star.hue === 0) {
@@ -93,12 +93,32 @@ export default function StarryBackground() {
           context.fill()
         }
       }
+    }
 
+    const draw = (timestamp = 0) => {
+      /* Pause animation when the tab/window is hidden to save CPU/battery */
+      if (document.visibilityState !== 'visible') {
+        animationFrameId = window.requestAnimationFrame(draw)
+        return
+      }
+      if (!lastTimestamp) lastTimestamp = timestamp
+      const deltaSeconds = (timestamp - lastTimestamp) / 1000
+      lastTimestamp = timestamp
+      time += deltaSeconds
+
+      drawFrame(false)
       animationFrameId = window.requestAnimationFrame(draw)
     }
 
     setSize()
-    animationFrameId = window.requestAnimationFrame(draw)
+
+    if (prefersReducedMotion) {
+      /* Static starfield — no animation loop */
+      drawFrame(true)
+    } else {
+      animationFrameId = window.requestAnimationFrame(draw)
+    }
+
     window.addEventListener('resize', setSize)
 
     return () => {
