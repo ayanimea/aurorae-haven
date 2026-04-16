@@ -93,6 +93,17 @@ function formatHourLabel(hour, use24h) {
   return `${hour - 12} PM`
 }
 
+/** Format an 'HH:mm' or '24:00' time string respecting the user's 12h/24h preference */
+function formatEventTime(timeStr, use24h) {
+  if (!timeStr) return ''
+  if (timeStr === '24:00') return use24h !== false ? '24:00' : '12:00 AM'
+  const [h, m] = timeStr.split(':').map(Number)
+  if (use24h !== false) return timeStr
+  const period = h < 12 ? 'AM' : 'PM'
+  const hour12 = h % 12 || 12
+  return `${hour12}:${String(m).padStart(2, '0')} ${period}`
+}
+
 /** Noise SVG overlay - same as Figma. Uses useId() to avoid duplicate filter IDs across instances. */
 function NoiseOverlay() {
   const uid = useId()
@@ -187,12 +198,19 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
       if (!selRef.current) return
       const { startHour, endHour } = selRef.current
       const minH = Math.min(startHour, endHour)
-      const maxH = Math.max(startHour, endHour)
-      const endTime = maxH === 23 ? '24:00' : `${String(maxH + 1).padStart(2, '0')}:00`
+      // End time is the END of the last selected hour (+ 1 hour for whole-hour drags)
+      const maxH = Math.max(startHour, endHour) + 1
+      const toHHMM = (h) => {
+        const capped = Math.min(h, 24)
+        const hr = Math.floor(capped)
+        const min = Math.round((capped - hr) * 60)
+        if (hr >= 24) return '24:00'
+        return `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`
+      }
       onSlotClick({
         day: dateStr,
-        startTime: `${String(minH).padStart(2, '0')}:00`,
-        endTime
+        startTime: toHHMM(minH),
+        endTime: toHHMM(maxH)
       })
       selRef.current = null
       setSelection(null)
@@ -257,10 +275,9 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
         {hours.map((hour) => {
           const period = getPeriod(hour)
           const pc = PERIOD_COLORS[period]
-          const isSelected =
-            selection &&
-            hour >= Math.min(selection.startHour, selection.endHour) &&
-            hour <= Math.max(selection.startHour, selection.endHour)
+          const minSel = selection ? Math.min(selection.startHour, selection.endHour) : 0
+          const maxSel = selection ? Math.max(selection.startHour, selection.endHour) + 1 : 0
+          const isSelected = !!selection && hour < maxSel && hour + 1 > minSel
           return (
             <Fragment key={hour}>
               {/* Time label */}
@@ -297,11 +314,14 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
                   width: '100%',
                   display: 'block'
                 }}
-                /* Start drag selection on mouse-down */
+                /* Start drag selection on mouse-down — snap to 15-min boundary */
                 onMouseDown={(e) => {
                   if (e.button !== 0) return
-                  selRef.current = { startHour: hour, endHour: hour }
-                  setSelection({ startHour: hour, endHour: hour })
+                  const offsetY = e.nativeEvent.offsetY
+                  const quarter = Math.floor((offsetY / ROW_H) * 4)
+                  const fractHour = hour + (quarter * 15) / 60
+                  selRef.current = { startHour: fractHour, endHour: fractHour }
+                  setSelection({ startHour: fractHour, endHour: fractHour })
                 }}
                 /* Extend selection while holding mouse button */
                 onMouseEnter={() => {
@@ -351,6 +371,21 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
                     background: 'rgba(255,255,255,0.04)'
                   }}
                 />
+                {/* Quarter-hour visual dividers at 15/30/45 min marks */}
+                {[25, 50, 75].map((pct) => (
+                  <div
+                    key={pct}
+                    style={{
+                      position: 'absolute',
+                      left: '4px',
+                      right: 0,
+                      top: `${pct}%`,
+                      height: '1px',
+                      background: pct === 50 ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.02)',
+                      pointerEvents: 'none'
+                    }}
+                  />
+                ))}
               </button>
             </Fragment>
           )
@@ -414,7 +449,7 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scaleX(1)'
               }}
-              aria-label={`${evt.title}, ${evt.startTime} to ${evt.endTime}`}
+              aria-label={`${evt.title}, ${formatEventTime(evt.startTime, use24HourFormat)} to ${formatEventTime(evt.endTime, use24HourFormat)}`}
             >
               <NoiseOverlay />
               <div
@@ -438,7 +473,13 @@ function DayView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date
                   zIndex: 1
                 }}
               >
-                {evt.startTime} — {evt.endTime}
+                {formatEventTime(evt.startTime, use24HourFormat)} — {formatEventTime(evt.endTime, use24HourFormat)}
+                {(evt.preparationTime > 0 || evt.travelTime > 0) && (
+                  <span style={{ marginLeft: '0.25rem', opacity: 0.75 }}>
+                    {evt.travelTime > 0 && `🚗${evt.travelTime}m`}
+                    {evt.preparationTime > 0 && `${evt.travelTime > 0 ? ' ' : ''}🎯${evt.preparationTime}m`}
+                  </span>
+                )}
               </div>
             </button>
           )
@@ -502,11 +543,11 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, dat
   const defaultDay = todayDayIdx >= 0 ? todayDayIdx : 0
 
   /* Roving tabindex — only one cell has tabIndex=0 at a time to reduce tab stops */
-  const [focusedCell, setFocusedCell] = useState({ day: defaultDay, hour: Math.min(nowHour >= 0 ? nowHour : 9, 23) })
+  const [focusedCell, setFocusedCell] = useState({ day: defaultDay, hour: Math.min(Math.floor(nowHour >= 0 ? nowHour : 9), 23) })
   const gridRef = useRef(null)
 
   const focusCell = useCallback((day, hour) => {
-    const clamped = { day: Math.max(0, Math.min(6, day)), hour: Math.max(0, Math.min(23, hour)) }
+    const clamped = { day: Math.max(0, Math.min(6, day)), hour: Math.max(0, Math.min(23, Math.floor(hour))) }
     setFocusedCell(clamped)
     // Defer to next paint so the new tabIndex=0 element is in the DOM
     requestAnimationFrame(() => {
@@ -658,6 +699,21 @@ function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, dat
                     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
                       <CellNoise />
                     </div>
+                    {/* Quarter-hour visual dividers at 15/30/45 min marks */}
+                    {[25, 50, 75].map((pct) => (
+                      <div
+                        key={pct}
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          top: `${pct}%`,
+                          height: '1px',
+                          background: pct === 50 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.015)',
+                          pointerEvents: 'none'
+                        }}
+                      />
+                    ))}
                     {cellEvents.map((evt) => {
                       const ec = EVENT_TYPE_COLORS[evt.type] || EVENT_TYPE_COLORS.event
                       const startH = parseHour(evt.startTime)
@@ -1020,7 +1076,7 @@ function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, 
   if (viewMode === 'day') {
     return (
       <DayView
-        events={events.filter((e) => e.day === format(date, 'yyyy-MM-dd'))}
+        events={events.filter((e) => e.day === format(date, 'yyyy-MM-dd') && e.startTime && e.endTime && !e.allDay)}
         nowHour={nowHour}
         onEventClick={onEventClick}
         onSlotClick={onSlotClick}

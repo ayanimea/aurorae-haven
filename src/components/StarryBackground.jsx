@@ -96,8 +96,11 @@ export default function StarryBackground() {
     }
 
     const draw = (timestamp = 0) => {
-      /* Pause animation when the tab/window is hidden to save CPU/battery */
+      /* Pause animation when the tab/window is hidden to save CPU/battery.
+         Reset lastTimestamp to 0 so the next visible frame doesn't accumulate
+         a large delta that would cause an abrupt jump in twinkle state. */
       if (document.visibilityState !== 'visible') {
+        lastTimestamp = 0
         animationFrameId = window.requestAnimationFrame(draw)
         return
       }

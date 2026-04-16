@@ -358,11 +358,15 @@ function Routines() {
   const currentStepIndex = runner.state?.currentStepIndex ?? 0
   const currentStepColor =
     STEP_COLORS[currentStepIndex % STEP_COLORS.length]
-  const stepDuration = runner.currentStep?.duration ?? 1
-  const stepProgress =
-    1 - (runner.state?.remainingSeconds ?? 0) / stepDuration
-  const timerDashOffset =
-    TIMER_CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, stepProgress)))
+  const rawStepDuration = runner.currentStep?.duration
+  const stepDuration =
+    Number.isFinite(rawStepDuration) && rawStepDuration > 0 ? rawStepDuration : 1
+  const rawStepProgress =
+    Number.isFinite(rawStepDuration) && rawStepDuration > 0
+      ? 1 - (runner.state?.remainingSeconds ?? 0) / stepDuration
+      : 1
+  const stepProgress = Math.max(0, Math.min(1, rawStepProgress))
+  const timerDashOffset = TIMER_CIRCUMFERENCE * (1 - stepProgress)
 
   return (
     <>
