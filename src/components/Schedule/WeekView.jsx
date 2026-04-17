@@ -216,18 +216,20 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
                     {cellEvents.map((evt) => {
                       const ec = EVENT_TYPE_COLORS[evt.type] || EVENT_TYPE_COLORS.event
                       const startH = parseHour(evt.startTime)
-                      // Normalize midnight-spanning events
+                      // Segments produced by expandMidnightSpanningEvents already have endTime '24:00'
                       let endH = parseHour(evt.endTime || evt.startTime)
                       if (endH < startH) endH = Math.min(endH + 24, 24)
                       const dur = Math.max(endH - startH, 0.25)
                       const offsetPx = (startH - hour) * ROW_H
                       const height = dur * ROW_H
                       const evtLayout = overlapByDay[dayStr]?.get(evt.id) ?? { column: 0, columns: 1 }
+                      // For continuation segments, use the original event for drag data
+                      const dragEvt = evt._originalEvent ?? evt
                       return (
                         <button
                           key={evt.id}
                           type='button'
-                          draggable
+                          draggable={!evt._continuation}
                           style={{
                             position: 'absolute',
                             left: `${(evtLayout.column / evtLayout.columns) * 100}%`,
@@ -239,7 +241,7 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
                             borderLeft: `2px solid ${ec.border}`,
                             borderRadius: '4px',
                             padding: '0.25rem 0.35rem',
-                            cursor: 'grab',
+                            cursor: evt._continuation ? 'pointer' : 'grab',
                             zIndex: 10,
                             overflow: 'hidden',
                             textAlign: 'left',
@@ -251,10 +253,10 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
                           }}
                           onDragStart={(e) => {
                             e.stopPropagation()
-                            e.dataTransfer.setData('text/plain', String(evt.id))
+                            e.dataTransfer.setData('text/plain', String(dragEvt.id))
                             e.dataTransfer.effectAllowed = 'move'
                             e.dataTransfer.setData('application/json', JSON.stringify({
-                              id: evt.id, startTime: evt.startTime, endTime: evt.endTime, day: evt.day
+                              id: dragEvt.id, startTime: dragEvt.startTime, endTime: dragEvt.endTime, day: dragEvt.day
                             }))
                             e.currentTarget.dataset.dragging = 'true'
                             e.currentTarget.style.opacity = '0.5'

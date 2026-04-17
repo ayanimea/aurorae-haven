@@ -14,13 +14,14 @@
  * Shared helpers live in:
  *   scheduleConstants.js / scheduleHooks.js / NoiseOverlays.jsx
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
 import PropTypes from 'prop-types'
 
 import DayView from './DayView.jsx'
 import WeekView from './WeekView.jsx'
 import MonthView from './MonthView.jsx'
+import { expandMidnightSpanningEvents } from './scheduleConstants.js'
 
 /* Re-export shared constants so existing importers (e.g. Schedule.jsx) don't break */
 export { PERIOD_COLORS, EVENT_TYPE_COLORS } from './scheduleConstants.js'
@@ -34,12 +35,20 @@ function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, 
   }, [])
   const nowHour = now.getHours() + now.getMinutes() / 60
 
+  /* Expand midnight-spanning events into per-day segments for correct rendering */
+  const expandedEvents = useMemo(() => expandMidnightSpanningEvents(events), [events])
+
+  /* Resolve continuation segment clicks to the original event */
+  const handleEventClick = useCallback((evt) => {
+    onEventClick(evt._originalEvent ?? evt)
+  }, [onEventClick])
+
   if (viewMode === 'day') {
     return (
       <DayView
-        events={events.filter((e) => e.day === format(date, 'yyyy-MM-dd') && e.startTime && e.endTime && !e.allDay)}
+        events={expandedEvents.filter((e) => e.day === format(date, 'yyyy-MM-dd') && e.startTime && e.endTime && !e.allDay)}
         nowHour={nowHour}
-        onEventClick={onEventClick}
+        onEventClick={handleEventClick}
         onSlotClick={onSlotClick}
         onEventDrop={onEventDrop}
         date={date}
@@ -51,9 +60,9 @@ function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, 
   if (viewMode === 'week') {
     return (
       <WeekView
-        events={events}
+        events={expandedEvents}
         nowHour={nowHour}
-        onEventClick={onEventClick}
+        onEventClick={handleEventClick}
         onSlotClick={onSlotClick}
         onEventDrop={onEventDrop}
         date={date}

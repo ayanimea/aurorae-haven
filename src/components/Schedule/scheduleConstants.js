@@ -139,3 +139,45 @@ export function buildOverlapLayout(events) {
   finalizeCluster()
   return layoutMap
 }
+
+/**
+ * Expand midnight-spanning events (endTime < startTime) into two per-day render segments:
+ *   - A truncated segment ending at '24:00' on the event's own day
+ *   - A continuation segment starting at '00:00' on the next calendar day
+ * Both segments carry `_originalEvent` referencing the original event object for
+ * edit/drag/persist operations. Continuation segments also carry `_continuation: true`.
+ * Non-spanning events are returned as-is.
+ *
+ * @param {Array} events
+ * @returns {Array} expanded events array
+ */
+export function expandMidnightSpanningEvents(events) {
+  const result = []
+  for (const evt of events) {
+    if (!evt || !evt.startTime || !evt.endTime || evt.allDay) {
+      result.push(evt)
+      continue
+    }
+    const startH = parseHour(evt.startTime)
+    const endH = parseHour(evt.endTime)
+    // Non-spanning (or explicit '00:00' end which means start-of-day, not overnight) — pass through
+    if (endH >= startH || evt.endTime === '00:00') {
+      result.push(evt)
+    } else {
+      // Split at midnight: start-day segment ends at 24:00, next-day segment starts at 00:00
+      const nextDayDate = new Date(`${evt.day}T00:00:00`)
+      nextDayDate.setDate(nextDayDate.getDate() + 1)
+      const nextDayStr = nextDayDate.toISOString().slice(0, 10)
+      result.push({ ...evt, endTime: '24:00', _originalEvent: evt })
+      result.push({
+        ...evt,
+        id: `${evt.id}_cont`,
+        day: nextDayStr,
+        startTime: '00:00',
+        _continuation: true,
+        _originalEvent: evt
+      })
+    }
+  }
+  return result
+}

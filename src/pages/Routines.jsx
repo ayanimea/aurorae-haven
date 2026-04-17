@@ -18,8 +18,7 @@ import EventModal from '../components/Schedule/EventModal'
 import EventService from '../services/EventService'
 import {
   getCurrentDateISO,
-  getCurrentTimeHHMM,
-  getCurrentTimePlusMinutes
+  getCurrentTimeHHMM
 } from '../utils/timeUtils'
 
 const logger = createLogger('Routines')
@@ -50,14 +49,18 @@ function Routines() {
     if (!routineToSchedule) return null
     const durationMins = Math.max(
       MIN_ROUTINE_DURATION_MINUTES,
-      Math.round((routineToSchedule.totalDuration || 0) / 60)
+      Math.ceil((routineToSchedule.totalDuration || 0) / 60)
     )
+    const startHHMM = getCurrentTimeHHMM()
+    const [sh, sm] = startHHMM.split(':').map(Number)
+    const endTotalMins = ((sh * 60 + sm) + durationMins) % 1440
+    const endTime = `${String(Math.floor(endTotalMins / 60)).padStart(2, '0')}:${String(endTotalMins % 60).padStart(2, '0')}`
     return {
       title: routineToSchedule.name || routineToSchedule.title || '',
       type: 'routine',
       day: getCurrentDateISO(),
-      startTime: getCurrentTimeHHMM(),
-      endTime: getCurrentTimePlusMinutes(durationMins),
+      startTime: startHHMM,
+      endTime,
       travelTime: 0,
       preparationTime: 0
     }

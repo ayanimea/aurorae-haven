@@ -215,7 +215,9 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
         {events.map((evt) => {
           const ec = EVENT_TYPE_COLORS[evt.type] || EVENT_TYPE_COLORS.event
           const startH = parseHour(evt.startTime)
-          // Normalize midnight-spanning events (endH < startH → cap at 24)
+          // Segments produced by expandMidnightSpanningEvents already have endTime '24:00',
+          // so no further normalization needed here. Legacy overnight events (passed without
+          // pre-expansion) are still capped safely.
           let endH = parseHour(evt.endTime || evt.startTime)
           if (endH < startH) endH = Math.min(endH + 24, 24)
           const dur = Math.max(endH - startH, 0.25)
@@ -225,11 +227,13 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
           const contentWidth = `calc(100% - ${TIME_COL_W + 16}px)`
           const colFrac = `calc(${contentWidth} / ${layout.columns})`
           const leftPx = TIME_COL_W + 8
+          // For continuation segments, use the original event for drag data
+          const dragEvt = evt._originalEvent ?? evt
           return (
             <button
               key={evt.id}
               type='button'
-              draggable
+              draggable={!evt._continuation}
               style={{
                 position: 'absolute',
                 top: `${top}px`,
@@ -242,17 +246,17 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
                 borderRadius: '6px',
                 padding: '0.4rem 0.6rem',
                 zIndex: 2,
-                cursor: 'grab',
+                cursor: evt._continuation ? 'pointer' : 'grab',
                 overflow: 'hidden',
                 textAlign: 'left',
                 transition: 'transform 0.2s ease, opacity 0.15s ease'
               }}
               onClick={() => onEventClick(evt)}
               onDragStart={(e) => {
-                e.dataTransfer.setData('text/plain', String(evt.id))
+                e.dataTransfer.setData('text/plain', String(dragEvt.id))
                 e.dataTransfer.effectAllowed = 'move'
                 e.dataTransfer.setData('application/json', JSON.stringify({
-                  id: evt.id, startTime: evt.startTime, endTime: evt.endTime, day: evt.day
+                  id: dragEvt.id, startTime: dragEvt.startTime, endTime: dragEvt.endTime, day: dragEvt.day
                 }))
                 e.currentTarget.dataset.dragging = 'true'
                 e.currentTarget.style.opacity = '0.5'
