@@ -251,7 +251,7 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
                 textAlign: 'left',
                 transition: 'transform 0.2s ease, opacity 0.15s ease'
               }}
-              onClick={() => onEventClick(evt)}
+              onClick={() => onEventClick(dragEvt)}
               onDragStart={(e) => {
                 e.dataTransfer.setData('text/plain', String(dragEvt.id))
                 e.dataTransfer.effectAllowed = 'move'

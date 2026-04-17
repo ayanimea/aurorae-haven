@@ -164,14 +164,14 @@ export function expandMidnightSpanningEvents(events) {
     if (endH >= startH || evt.endTime === '00:00') {
       result.push(evt)
     } else {
-      // Split at midnight: start-day segment ends at 24:00, next-day segment starts at 00:00
-      const nextDayDate = new Date(`${evt.day}T00:00:00`)
-      nextDayDate.setDate(nextDayDate.getDate() + 1)
-      const nextDayStr = nextDayDate.toISOString().slice(0, 10)
+      // Split at midnight using local date arithmetic (avoids UTC/timezone drift with ISO strings)
+      const [y, mo, d] = evt.day.split('-').map(Number)
+      const nd = new Date(y, mo - 1, d + 1)
+      const nextDayStr = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, '0')}-${String(nd.getDate()).padStart(2, '0')}`
       result.push({ ...evt, endTime: '24:00', _originalEvent: evt })
       result.push({
         ...evt,
-        id: `${evt.id}_cont`,
+        id: `${evt.id}_cont_${nextDayStr}`,
         day: nextDayStr,
         startTime: '00:00',
         _continuation: true,
