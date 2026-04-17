@@ -385,19 +385,21 @@ function Routines() {
     setShowScheduleModal(true)
   }
 
-  // Save the routine as a schedule event
+  // Save the routine as a schedule event.
+  // On success: toast + close modal.
+  // On failure: rethrow so EventModal can display the inline error and keep the
+  // dialog open (EventModal only shows its error state when onSave throws).
   const handleSaveScheduledRoutine = async (eventData) => {
     try {
       await EventService.createEvent(eventData)
       showToastNotification(
         `"${eventData.title}" added to schedule on ${eventData.day}`
       )
-    } catch (error) {
-      logger.error('Failed to schedule routine:', error)
-      showToastNotification('Failed to add routine to schedule')
-    } finally {
       setShowScheduleModal(false)
       setRoutineToSchedule(null)
+    } catch (error) {
+      logger.error('Failed to schedule routine:', error)
+      throw error
     }
   }
 
