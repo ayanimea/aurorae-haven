@@ -7,7 +7,7 @@ import { vi } from 'vitest'
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import Home from '../pages/Home.jsx'
-import Tasks from '../pages/Tasks.jsx'
+import Tasks from '../pages/Tasks'
 
 // Mock all page components
 vi.mock('../pages/Home.jsx', () => {

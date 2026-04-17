@@ -20,6 +20,8 @@ export function getScheduleHourHeight() {
 /**
  * Returns the current schedule row height (px per hour) and automatically
  * updates when the viewport is resized or orientation changes.
+ * Note: media-query-driven CSS variable changes require a resize/orientation
+ * event to propagate — standalone media-query listeners are not attached.
  */
 export function useScheduleHourHeight() {
   const [rowHeight, setRowHeight] = useState(() => getScheduleHourHeight())

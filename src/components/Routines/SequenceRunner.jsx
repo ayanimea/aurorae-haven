@@ -58,7 +58,7 @@ export default function SequenceRunner({ runner, prefersReducedMotion, onCancel 
           </p>
         </div>
         <div className='rseq-stats-badges'>
-          <div className='rseq-stat-badge' role='group' aria-label={`${completedCount} steps completed`}>
+          <div className='rseq-stat-badge' role='group' aria-label={`${completedCount} steps done (completed or skipped)`}>
             <svg className='rseq-stat-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' aria-hidden='true'>
               <path d='M20 6 9 17l-5-5' />
             </svg>

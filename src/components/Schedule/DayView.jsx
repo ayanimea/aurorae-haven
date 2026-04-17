@@ -40,7 +40,7 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
       const resolvedStart = typeof startBoundary === 'number' ? startBoundary : startHour
       const resolvedEnd = typeof endBoundary === 'number' ? endBoundary : endHour + 1
       const minH = Math.min(resolvedStart, resolvedEnd)
-      const maxH = Math.max(resolvedStart, resolvedEnd)
+      const maxH = Math.max(resolvedStart, resolvedEnd + (resolvedStart === resolvedEnd ? 0.25 : 0))
       const toHHMM = (h) => {
         const capped = Math.max(0, Math.min(h, 24))
         let hr = Math.floor(capped)
