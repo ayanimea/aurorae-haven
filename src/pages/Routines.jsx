@@ -14,6 +14,13 @@ import ConfirmModal from '../components/common/ConfirmModal'
 import Icon from '../components/common/Icon'
 import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
 import SequenceRunner from '../components/Routines/SequenceRunner'
+import EventModal from '../components/Schedule/EventModal'
+import EventService from '../services/EventService'
+import {
+  getCurrentDateISO,
+  getCurrentTimeHHMM,
+  getCurrentTimePlusMinutes
+} from '../utils/timeUtils'
 
 const logger = createLogger('Routines')
 
@@ -30,6 +37,10 @@ function Routines() {
 
   // Routine creation modal state
   const [showCreationModal, setShowCreationModal] = useState(false)
+
+  // Schedule routine modal state
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [routineToSchedule, setRoutineToSchedule] = useState(null)
 
   // TAB-RTN-45: Reduced motion detection
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
@@ -332,6 +343,28 @@ function Routines() {
     }
   }
 
+  // Open schedule modal pre-filled with the selected routine
+  const handleOpenScheduleModal = (routine) => {
+    setRoutineToSchedule(routine)
+    setShowScheduleModal(true)
+  }
+
+  // Save the routine as a schedule event
+  const handleSaveScheduledRoutine = async (eventData) => {
+    try {
+      await EventService.createEvent(eventData)
+      showToastNotification(
+        `"${eventData.title}" added to schedule on ${eventData.day}`
+      )
+    } catch (error) {
+      logger.error('Failed to schedule routine:', error)
+      showToastNotification('Failed to add routine to schedule')
+    } finally {
+      setShowScheduleModal(false)
+      setRoutineToSchedule(null)
+    }
+  }
+
   return (
     <>
       {/* TAB-RTN-05: Toolbar for routine data management */}
@@ -451,6 +484,19 @@ function Routines() {
                           ))}
                         </div>
                       )}
+                    </button>
+                    <button
+                      type='button'
+                      className='btn'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleOpenScheduleModal(routine)
+                      }}
+                      aria-label={`Schedule ${routine.name || routine.title}`}
+                      title='Add to schedule'
+                    >
+                      <Icon name='calendar' />
+                      Schedule
                     </button>
                     <button
                       type='button'
@@ -699,6 +745,35 @@ function Routines() {
         onSelectTemplate={handleSelectTemplate}
         onCreateRoutine={handleCreateRoutine}
       />
+
+      {/* Schedule Routine Modal */}
+      {showScheduleModal && routineToSchedule && (() => {
+        const durationMins = Math.max(
+          15,
+          Math.round((routineToSchedule.totalDuration || 0) / 60)
+        )
+        const initialData = {
+          title: routineToSchedule.name || routineToSchedule.title || '',
+          type: 'routine',
+          day: getCurrentDateISO(),
+          startTime: getCurrentTimeHHMM(),
+          endTime: getCurrentTimePlusMinutes(durationMins),
+          travelTime: 0,
+          preparationTime: 0
+        }
+        return (
+          <EventModal
+            isOpen={showScheduleModal}
+            onClose={() => {
+              setShowScheduleModal(false)
+              setRoutineToSchedule(null)
+            }}
+            onSave={handleSaveScheduledRoutine}
+            eventType='routine'
+            initialData={initialData}
+          />
+        )
+      })()}
     </>
   )
 }
