@@ -73,8 +73,8 @@ function FigmaScheduleGrid({ events, viewMode, date, onEventClick, onSlotClick, 
 
   return (
     <MonthView
-      events={events}
-      onEventClick={onEventClick}
+      events={expandedEvents}
+      onEventClick={handleEventClick}
       onSlotClick={onSlotClick}
       date={date}
     />
