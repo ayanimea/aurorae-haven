@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1161 KB compressed
+- ✅ Total size: 1157 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-04-16 20:32:38 UTC
+**Last Updated**: 2026-04-17 06:36:43 UTC
 **Source Branch**: revamp-ui-according-to-source-files
-**Source Commit**: 41d6f23
+**Source Commit**: bbc37a9
 
 ---
 
