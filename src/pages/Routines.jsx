@@ -18,7 +18,8 @@ import EventModal from '../components/Schedule/EventModal'
 import EventService from '../services/EventService'
 import {
   getCurrentDateISO,
-  getCurrentTimeHHMM
+  getCurrentTimeHHMM,
+  minutesToTime
 } from '../utils/timeUtils'
 
 const logger = createLogger('Routines')
@@ -54,19 +55,18 @@ function Routines() {
     const startHHMM = getCurrentTimeHHMM()
     const [sh, sm] = startHHMM.split(':').map(Number)
     let startMins = sh * 60 + sm
-    // If the routine would cross midnight, shift the start earlier so the full
-    // duration fits within the day. EventModal's <input type="time"> cannot
-    // represent '24:00' or overnight ranges, so the end is clamped to '23:59'.
+    // If the routine would cross midnight (and its duration fits in one day),
+    // shift the start earlier so the full duration fits within the day.
+    // EventModal's <input type="time"> cannot represent '24:00' or overnight
+    // ranges, so the end is always clamped to '23:59'.
+    // For routines ≥ 24 h (durationMins >= 1440) there is no same-day window
+    // large enough; start is left at current time and end is clamped to '23:59'.
     const endMins = startMins + durationMins
     if (endMins >= 1440 && durationMins < 1440) {
       startMins = 1440 - durationMins
     }
-    const endTime =
-      startMins + durationMins >= 1440
-        ? '23:59'
-        : `${String(Math.floor((startMins + durationMins) / 60)).padStart(2, '0')}:${String((startMins + durationMins) % 60).padStart(2, '0')}`
-    const startTime =
-      `${String(Math.floor(startMins / 60)).padStart(2, '0')}:${String(startMins % 60).padStart(2, '0')}`
+    const endTime = startMins + durationMins >= 1440 ? '23:59' : minutesToTime(startMins + durationMins)
+    const startTime = minutesToTime(startMins)
     return {
       title: routineToSchedule.name || routineToSchedule.title || '',
       type: 'routine',
