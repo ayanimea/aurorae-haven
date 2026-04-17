@@ -3,7 +3,7 @@
  * and per-day overlap-aware event column layout.
  * Extracted from FigmaScheduleGrid.jsx.
  */
-import { Fragment, useMemo, useState, useRef, useCallback } from 'react'
+import { Fragment, useMemo, useState, useRef, useCallback, useId } from 'react'
 import { format, startOfWeek, addDays } from 'date-fns'
 import PropTypes from 'prop-types'
 
@@ -18,12 +18,16 @@ import {
   buildOverlapLayout
 } from './scheduleConstants.js'
 import { useScheduleHourHeight } from '../../hooks/schedule/useScheduleHourHeight.js'
-import { NoiseOverlay, CellNoise } from './NoiseOverlays.jsx'
+import { NoiseOverlay } from './NoiseOverlays.jsx'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
 export default function WeekView({ events, nowHour, onEventClick, onSlotClick, onEventDrop, date, use24HourFormat }) {
   const ROW_H = useScheduleHourHeight()
+  /* Single shared SVG turbulence filter for all 168 cells — far cheaper than
+     one feTurbulence filter per cell. */
+  const cellNoiseUid = useId()
+  const cellNoiseFilterId = `weekCellNoise-${cellNoiseUid.replace(/:/g, '')}`
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Mon
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const todayStr = format(new Date(), 'yyyy-MM-dd')
@@ -52,7 +56,7 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
       onSlotClick({
         day: dayStr,
         startTime: `${String(hour).padStart(2, '0')}:00`,
-        endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
+        endTime: hour === 23 ? '23:59' : `${String(hour + 1).padStart(2, '0')}:00`
       })
     } else if (e.key === 'ArrowRight') { e.preventDefault(); focusCell(di + 1, hour) }
     else if (e.key === 'ArrowLeft')  { e.preventDefault(); focusCell(di - 1, hour) }
@@ -87,6 +91,14 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
 
   return (
     <div style={{ padding: '1.25rem' }}>
+      {/* Single shared turbulence filter — referenced by all cell noise overlays. */}
+      <svg width='0' height='0' style={{ position: 'absolute' }} aria-hidden='true'>
+        <defs>
+          <filter id={cellNoiseFilterId}>
+            <feTurbulence type='fractalNoise' baseFrequency='0.80' numOctaves='4' stitchTiles='stitch' />
+          </filter>
+        </defs>
+      </svg>
       <div
         ref={gridRef}
         role='grid'
@@ -181,7 +193,7 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
                       onSlotClick({
                         day: dayStr,
                         startTime: `${String(hour).padStart(2, '0')}:00`,
-                        endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
+                        endTime: hour === 23 ? '23:59' : `${String(hour + 1).padStart(2, '0')}:00`
                       })
                     }}
                     onKeyDown={(e) => handleCellKeyDown(e, di, hour)}
@@ -195,9 +207,13 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
                     }}
                     aria-label={`${dayStr} ${formatHourLabel(hour, use24HourFormat)} slot`}
                   >
-                    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-                      <CellNoise />
-                    </div>
+                    {/* Lightweight noise overlay — reuses the single shared filter definition. */}
+                    <svg
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.18, mixBlendMode: 'soft-light', pointerEvents: 'none' }}
+                      aria-hidden='true'
+                    >
+                      <rect width='100%' height='100%' filter={`url(#${cellNoiseFilterId})`} />
+                    </svg>
                     {/* Quarter-hour visual dividers at 15/30/45 min marks */}
                     {[25, 50, 75].map((pct) => (
                       <div

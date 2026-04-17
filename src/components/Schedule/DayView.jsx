@@ -41,15 +41,16 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
       const resolvedEnd = typeof endBoundary === 'number' ? endBoundary : endHour + 1
       const minH = Math.min(resolvedStart, resolvedEnd)
       const maxH = Math.max(resolvedStart, resolvedEnd + (resolvedStart === resolvedEnd ? 0.25 : 0))
-      const toHHMM = (h) => {
+      const toHHMM = (h, { dayEndFallback = false } = {}) => {
         const capped = Math.max(0, Math.min(h, 24))
         let hr = Math.floor(capped)
         let min = Math.round((capped - hr) * 60)
         if (min === 60) { hr += 1; min = 0 }
-        if (hr >= 24) return '24:00'
+        // '24:00' is not representable by <input type="time">; normalize end-of-day to '23:59'.
+        if (hr >= 24) return dayEndFallback ? '23:59' : '24:00'
         return `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`
       }
-      onSlotClick({ day: dateStr, startTime: toHHMM(minH), endTime: toHHMM(maxH) })
+      onSlotClick({ day: dateStr, startTime: toHHMM(minH), endTime: toHHMM(maxH, { dayEndFallback: true }) })
       selRef.current = null
       setSelection(null)
     }
@@ -157,7 +158,7 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
                     onSlotClick({
                       day: dateStr,
                       startTime: `${String(hour).padStart(2, '0')}:00`,
-                      endTime: hour === 23 ? '24:00' : `${String(hour + 1).padStart(2, '0')}:00`
+                      endTime: hour === 23 ? '23:59' : `${String(hour + 1).padStart(2, '0')}:00`
                     })
                   }
                 }}
@@ -178,7 +179,8 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
                     top: 0,
                     bottom: 0,
                     width: '2px',
-                    background: pc.border
+                    background: pc.border,
+                    pointerEvents: 'none'
                   }}
                 />
                 <div
@@ -188,7 +190,8 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
                     right: 0,
                     bottom: 0,
                     height: '1px',
-                    background: LINE_COLOR
+                    background: LINE_COLOR,
+                    pointerEvents: 'none'
                   }}
                 />
                 {/* Quarter-hour visual dividers at 15/30/45 min marks */}

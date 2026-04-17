@@ -53,6 +53,9 @@ export default function StarryBackground() {
       canvas.height = Math.floor(height * dpr)
       context.setTransform(dpr, 0, 0, dpr, 0, 0)
       stars = buildStars(width, height)
+      // In reduced-motion mode there is no animation loop, so redraw the static
+      // frame immediately after a resize to avoid leaving the canvas blank.
+      if (prefersReducedMotion) drawFrame(true)
     }
 
     const drawFrame = (staticAlpha = false) => {
