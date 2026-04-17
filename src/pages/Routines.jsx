@@ -749,13 +749,13 @@ function Routines() {
       {/* TAB-RTN-18: Cancel confirmation modal */}
       {showCancelConfirm && (
         <ConfirmModal
+          isOpen={showCancelConfirm}
           title='Cancel Routine?'
           message='Would you like to keep your partial progress (logs and XP)?'
           confirmText='Keep Progress'
           cancelText='Discard All'
           onConfirm={() => confirmCancel(true)}
           onCancel={() => confirmCancel(false)}
-          onClose={() => setShowCancelConfirm(false)}
         />
       )}
 
