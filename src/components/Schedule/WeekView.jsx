@@ -27,6 +27,8 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
   /* Single shared SVG turbulence filter for all 168 cells — far cheaper than
      one feTurbulence filter per cell. */
   const cellNoiseUid = useId()
+  // useId() output contains ':' characters which have special meaning in CSS
+  // selector syntax and SVG filter URL references, so they must be stripped.
   const cellNoiseFilterId = `weekCellNoise-${cellNoiseUid.replace(/:/g, '')}`
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Mon
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))

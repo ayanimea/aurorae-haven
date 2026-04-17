@@ -41,16 +41,16 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
       const resolvedEnd = typeof endBoundary === 'number' ? endBoundary : endHour + 1
       const minH = Math.min(resolvedStart, resolvedEnd)
       const maxH = Math.max(resolvedStart, resolvedEnd + (resolvedStart === resolvedEnd ? 0.25 : 0))
-      const toHHMM = (h, { dayEndFallback = false } = {}) => {
+      const toHHMM = (h, { normalizeMidnight = false } = {}) => {
         const capped = Math.max(0, Math.min(h, 24))
         let hr = Math.floor(capped)
         let min = Math.round((capped - hr) * 60)
         if (min === 60) { hr += 1; min = 0 }
         // '24:00' is not representable by <input type="time">; normalize end-of-day to '23:59'.
-        if (hr >= 24) return dayEndFallback ? '23:59' : '24:00'
+        if (hr >= 24) return normalizeMidnight ? '23:59' : '24:00'
         return `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`
       }
-      onSlotClick({ day: dateStr, startTime: toHHMM(minH), endTime: toHHMM(maxH, { dayEndFallback: true }) })
+      onSlotClick({ day: dateStr, startTime: toHHMM(minH), endTime: toHHMM(maxH, { normalizeMidnight: true }) })
       selRef.current = null
       setSelection(null)
     }
