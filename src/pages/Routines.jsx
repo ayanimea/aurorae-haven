@@ -53,18 +53,25 @@ function Routines() {
     )
     const startHHMM = getCurrentTimeHHMM()
     const [sh, sm] = startHHMM.split(':').map(Number)
-    const startMins = sh * 60 + sm
-    // Clamp to '23:59' whenever the event would cross (or reach) midnight — the
-    // EventModal <input type="time"> cannot represent '24:00' or overnight ranges.
+    let startMins = sh * 60 + sm
+    // If the routine would cross midnight, shift the start earlier so the full
+    // duration fits within the day. EventModal's <input type="time"> cannot
+    // represent '24:00' or overnight ranges, so the end is clamped to '23:59'.
+    const endMins = startMins + durationMins
+    if (endMins >= 1440 && durationMins < 1440) {
+      startMins = 1440 - durationMins
+    }
     const endTime =
       startMins + durationMins >= 1440
         ? '23:59'
         : `${String(Math.floor((startMins + durationMins) / 60)).padStart(2, '0')}:${String((startMins + durationMins) % 60).padStart(2, '0')}`
+    const startTime =
+      `${String(Math.floor(startMins / 60)).padStart(2, '0')}:${String(startMins % 60).padStart(2, '0')}`
     return {
       title: routineToSchedule.name || routineToSchedule.title || '',
       type: 'routine',
       day: getCurrentDateISO(),
-      startTime: startHHMM,
+      startTime,
       endTime,
       travelTime: 0,
       preparationTime: 0

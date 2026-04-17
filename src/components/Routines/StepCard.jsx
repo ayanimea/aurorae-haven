@@ -26,7 +26,7 @@ export default function StepCard({
   return (
     <div
       className={`rseq-step-card${isCurrent ? ' rseq-step-card--current' : ''}${isDone ? ' rseq-step-card--done' : ''}`}
-      role='region'
+      role='listitem'
       aria-label={`Step ${index + 1}: ${step.label}${isCompleted ? ', completed' : isSkipped ? ', skipped' : isCurrent ? ', current' : ', pending'}`}
       style={
         isCurrent

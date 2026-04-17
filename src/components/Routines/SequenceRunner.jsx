@@ -212,6 +212,7 @@ export default function SequenceRunner({ runner, prefersReducedMotion, onCancel 
 
       {/* All Steps Grid */}
       <div
+        role='list'
         className='rseq-steps-grid'
         style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(allSteps.length, 5))}, 1fr)` }}
       >

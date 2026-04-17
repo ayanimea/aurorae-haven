@@ -521,12 +521,11 @@ function Schedule() {
       const newStartMins = newHour * 60
       const newEndMins = newStartMins + duration
       const newStartTime = minutesToTime(newStartMins)
-      const normalizedEndMins = newEndMins % 1440
-      // '24:00' is not representable by <input type="time">; store as '23:59' so
-      // the event remains editable after a drag-drop that lands exactly at midnight.
-      const newEndTime = normalizedEndMins === 0 && newEndMins >= 1440
+      // Clamp any event that would cross midnight to '23:59': EventModal's
+      // <input type="time"> cannot represent '24:00' or overnight ranges.
+      const newEndTime = newEndMins >= 1440
         ? '23:59'
-        : minutesToTime(normalizedEndMins)
+        : minutesToTime(newEndMins)
       const updatedEvt = { ...evt, day: newDay, startTime: newStartTime, endTime: newEndTime }
       const structuralError = checkStructural(updatedEvt, events, evt.id)
       if (structuralError) {
