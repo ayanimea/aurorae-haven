@@ -256,15 +256,20 @@ export default function WeekView({ events, nowHour, onEventClick, onSlotClick, o
                             e.dataTransfer.setData('application/json', JSON.stringify({
                               id: evt.id, startTime: evt.startTime, endTime: evt.endTime, day: evt.day
                             }))
+                            e.currentTarget.dataset.dragging = 'true'
                             e.currentTarget.style.opacity = '0.5'
                           }}
                           onDragEnd={(e) => {
+                            delete e.currentTarget.dataset.dragging
                             e.currentTarget.style.opacity = '1'
+                            e.currentTarget.style.transform = 'scale(1)'
                           }}
                           onMouseEnter={(e) => {
+                            if (e.currentTarget.dataset.dragging === 'true') return
                             e.currentTarget.style.transform = 'scale(1.02)'
                           }}
                           onMouseLeave={(e) => {
+                            if (e.currentTarget.dataset.dragging === 'true') return
                             e.currentTarget.style.transform = 'scale(1)'
                           }}
                           aria-label={evt.title}

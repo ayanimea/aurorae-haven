@@ -143,7 +143,7 @@ export default function SequenceRunner({ runner, prefersReducedMotion, onCancel 
             {runner.currentStep?.label}
           </div>
 
-          {/* Circular SVG Timer */}
+          {/* Circular SVG Timer — decorative, hidden from AT */}
           <div className='rseq-timer-wrap' aria-hidden='true'>
             <svg className='rseq-timer-svg' viewBox='0 0 192 192' role='presentation'>
               <circle cx='96' cy='96' r={TIMER_RADIUS} stroke='rgba(255, 255, 255, 0.05)' strokeWidth='8' fill='none' />
@@ -168,11 +168,12 @@ export default function SequenceRunner({ runner, prefersReducedMotion, onCancel 
             <div className='rseq-timer-text'>
               <span className='rseq-timer-digits'>{runner.remainingTime}</span>
               <span className='rseq-timer-label'>remaining</span>
-              <span className='sr-only' aria-live='polite'>
-                {formatTime(runner.state?.remainingSeconds ?? 0, { verbose: true })}
-              </span>
             </div>
           </div>
+          {/* Live region for screen readers — outside aria-hidden so AT can announce it */}
+          <span className='sr-only' aria-live='polite' aria-atomic='true'>
+            {formatTime(runner.state?.remainingSeconds ?? 0, { verbose: true })}
+          </span>
 
           {/* Controls */}
           <div className='rseq-controls'>

@@ -106,7 +106,12 @@ export function formatEventTime(timeStr, use24h) {
  */
 export function buildOverlapLayout(events) {
   const sorted = [...events]
-    .map((evt) => ({ evt, startH: parseHour(evt.startTime), endH: parseHour(evt.endTime || evt.startTime) }))
+    .map((evt) => {
+      const startH = parseHour(evt.startTime)
+      let endH = parseHour(evt.endTime || evt.startTime)
+      if (endH <= startH) endH += 24
+      return { evt, startH, endH }
+    })
     .sort((a, b) => (a.startH !== b.startH ? a.startH - b.startH : a.endH - b.endH))
 
   const layoutMap = new Map()
