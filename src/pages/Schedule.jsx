@@ -68,6 +68,7 @@ import ItemActionModal from '../components/ItemActionModal'
 import ErrorBoundary from '../components/ErrorBoundary'
 import GlassPanel from '../components/common/GlassPanel'
 import FigmaScheduleGrid, { PERIOD_COLORS, EVENT_TYPE_COLORS } from '../components/Schedule/FigmaScheduleGrid'
+import { expandMidnightSpanningEvents } from '../components/Schedule/scheduleConstants'
 import Icon from '../components/common/Icon'
 import EventService from '../services/EventService'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
@@ -257,12 +258,16 @@ function Schedule() {
     loadEvents()
   }, [loadEvents])
 
+  // Expand midnight-spanning events into per-day segments (mirrors FigmaScheduleGrid's own expansion)
+  // so that the load badge correctly accounts for continuation segments on the viewed day.
+  const expandedEvents = useMemo(() => expandMidnightSpanningEvents(events), [events])
+
   // Compute load ratio for visible day(s) to show load awareness indicator
   const { loadThresholdHigh, loadThresholdOver } = SCHEDULING_CONFIG
   const visibleLoadState = useMemo(() => {
     if (view === 'day') {
       const dayStr = format(date, 'yyyy-MM-dd')
-      const dayEvents = events.filter(e => e.day === dayStr)
+      const dayEvents = expandedEvents.filter(e => e.day === dayStr)
       const load = getMemoizedDayLoad(dayEvents, dayStr)
       // Scale thresholds by actual day length to preserve 8h/9h semantics on DST transition days
       const dayMinutes = getDayDurationMinutes(date)
@@ -271,7 +276,7 @@ function Schedule() {
       return load >= overThreshold ? 'over' : load >= highThreshold ? 'high' : 'ok'
     }
     return 'ok'
-  }, [events, date, view])
+  }, [expandedEvents, date, view])
 
   // Cleanup success message timeout on unmount to prevent setState on unmounted component
   useEffect(() => {
