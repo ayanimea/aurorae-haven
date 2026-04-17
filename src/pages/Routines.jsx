@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
 import { formatTime } from '../utils/routineRunner'
 import {
@@ -24,6 +24,9 @@ import {
 
 const logger = createLogger('Routines')
 
+/** Minimum scheduled duration (minutes) when a routine has no recorded duration */
+const MIN_ROUTINE_DURATION_MINUTES = 15
+
 function Routines() {
   const [selectedRoutine, setSelectedRoutine] = useState(null)
   const [availableRoutines, setAvailableRoutines] = useState([])
@@ -41,6 +44,24 @@ function Routines() {
   // Schedule routine modal state
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [routineToSchedule, setRoutineToSchedule] = useState(null)
+
+  // Pre-compute initialData for the schedule modal whenever the selected routine changes
+  const scheduleInitialData = useMemo(() => {
+    if (!routineToSchedule) return null
+    const durationMins = Math.max(
+      MIN_ROUTINE_DURATION_MINUTES,
+      Math.round((routineToSchedule.totalDuration || 0) / 60)
+    )
+    return {
+      title: routineToSchedule.name || routineToSchedule.title || '',
+      type: 'routine',
+      day: getCurrentDateISO(),
+      startTime: getCurrentTimeHHMM(),
+      endTime: getCurrentTimePlusMinutes(durationMins),
+      travelTime: 0,
+      preparationTime: 0
+    }
+  }, [routineToSchedule])
 
   // TAB-RTN-45: Reduced motion detection
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
@@ -747,33 +768,18 @@ function Routines() {
       />
 
       {/* Schedule Routine Modal */}
-      {showScheduleModal && routineToSchedule && (() => {
-        const durationMins = Math.max(
-          15,
-          Math.round((routineToSchedule.totalDuration || 0) / 60)
-        )
-        const initialData = {
-          title: routineToSchedule.name || routineToSchedule.title || '',
-          type: 'routine',
-          day: getCurrentDateISO(),
-          startTime: getCurrentTimeHHMM(),
-          endTime: getCurrentTimePlusMinutes(durationMins),
-          travelTime: 0,
-          preparationTime: 0
-        }
-        return (
-          <EventModal
-            isOpen={showScheduleModal}
-            onClose={() => {
-              setShowScheduleModal(false)
-              setRoutineToSchedule(null)
-            }}
-            onSave={handleSaveScheduledRoutine}
-            eventType='routine'
-            initialData={initialData}
-          />
-        )
-      })()}
+      {showScheduleModal && scheduleInitialData && (
+        <EventModal
+          isOpen={showScheduleModal}
+          onClose={() => {
+            setShowScheduleModal(false)
+            setRoutineToSchedule(null)
+          }}
+          onSave={handleSaveScheduledRoutine}
+          eventType='routine'
+          initialData={scheduleInitialData}
+        />
+      )}
     </>
   )
 }
