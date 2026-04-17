@@ -242,10 +242,8 @@ describe('Routines — Schedule routine', () => {
     expect(screen.getByTestId('event-modal')).toBeInTheDocument()
   })
 
-  it('clamps end time to 23:59 for routines that would cross midnight', async () => {
-    // 90-minute routine scheduled at 10:00 → 11:30, same day, no clamp needed
-    // Test the midnight edge: start=23:15, duration=90 → would be 00:45 next day
-    // The implementation shifts start back to 22:29 (1440-90=1350=22:30; rounded)
+  it('computes correct end time for a routine that fits within the day', async () => {
+    // Mocked time is 10:00; 90-minute routine → end 11:30, no midnight crossing.
     const lateRoutine = {
       ...MORNING_ROUTINE,
       id: 'r2',
@@ -254,11 +252,6 @@ describe('Routines — Schedule routine', () => {
     }
     mockGetRoutines.mockResolvedValue([lateRoutine])
 
-    // Mock current time close to midnight
-    const { getCurrentTimeHHMM } = await import('../utils/timeUtils')
-    // Override just for this test — we can't re-import but we can verify the
-    // end-clamping by using a routine whose duration exceeds the day when placed
-    // at the current mocked time of 10:00. Here we just verify the modal opens.
     await act(async () => {
       render(<Routines />)
     })
@@ -275,7 +268,7 @@ describe('Routines — Schedule routine', () => {
       )
     })
 
-    // At 10:00 + 90 min = 11:30 — no midnight crossing, end should be 11:30
+    // 10:00 + 90 min = 11:30, well before midnight → end should be 11:30
     expect(screen.getByTestId('modal-end').textContent).toBe('11:30')
   })
 
