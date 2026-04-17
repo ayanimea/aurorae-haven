@@ -10,28 +10,28 @@ export const PERIOD_COLORS = {
     border: 'rgba(40, 35, 80, 0.6)',
     text: 'rgba(140,135,180,0.9)',
     label: 'Night',
-    dot: '#5550a0'
+    dot: '#1e1278'
   },
   morning: {
     bg: 'rgba(130, 70, 15, 0.80)',
     border: 'rgba(200, 140, 60, 0.6)',
     text: 'rgba(255,220,180,0.95)',
     label: 'Morning',
-    dot: '#e8b880'
+    dot: '#c06818'
   },
   afternoon: {
     bg: 'rgba(10, 90, 105, 0.80)',
     border: 'rgba(30, 170, 195, 0.55)',
     text: 'rgba(200,235,240,0.95)',
     label: 'Afternoon',
-    dot: '#a0d0d8'
+    dot: '#0e8598'
   },
   evening: {
     bg: 'rgba(65, 15, 85, 0.80)',
     border: 'rgba(140, 60, 170, 0.55)',
     text: 'rgba(210,185,225,0.95)',
     label: 'Evening',
-    dot: '#c0a0d0'
+    dot: '#7515a0'
   }
 }
 

@@ -4,7 +4,7 @@
  */
 import { useId } from 'react'
 
-/** Subtle noise texture overlay for event cards (12% opacity, overlay blend). */
+/** Paper-grain noise texture overlay for event cards (soft-light, 22% opacity). */
 export function NoiseOverlay() {
   const uid = useId()
   const filterId = `figmaEventNoise-${uid.replace(/:/g, '')}`
@@ -16,8 +16,8 @@ export function NoiseOverlay() {
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        opacity: 0.12,
-        mixBlendMode: 'overlay',
+        opacity: 0.22,
+        mixBlendMode: 'soft-light',
         borderRadius: 'inherit'
       }}
       aria-hidden='true'
@@ -35,7 +35,7 @@ export function NoiseOverlay() {
   )
 }
 
-/** Subtle noise texture overlay for grid cells (8% opacity, overlay blend). */
+/** Paper-grain noise texture overlay for grid cells (soft-light, 18% opacity). */
 export function CellNoise() {
   const uid = useId()
   const filterId = `figmaCellNoise-${uid.replace(/:/g, '')}`
@@ -47,16 +47,16 @@ export function CellNoise() {
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        opacity: 0.08,
-        mixBlendMode: 'overlay'
+        opacity: 0.18,
+        mixBlendMode: 'soft-light'
       }}
       aria-hidden='true'
     >
       <filter id={filterId}>
         <feTurbulence
           type='fractalNoise'
-          baseFrequency='0.65'
-          numOctaves='3'
+          baseFrequency='0.80'
+          numOctaves='4'
           stitchTiles='stitch'
         />
       </filter>
