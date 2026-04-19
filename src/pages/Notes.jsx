@@ -215,6 +215,11 @@ function Notes() {
     }
   }
 
+  const handlePrint = () => {
+    if (!currentNoteId || typeof window.print !== 'function') return
+    window.print()
+  }
+
   // Import note from markdown file
   const handleImport = (e) => {
     const file = e.target.files?.[0]
@@ -283,6 +288,7 @@ function Notes() {
             onNewNote={createNote}
             onImport={handleImport}
             onExport={handleExport}
+            onPrint={handlePrint}
             onDelete={handleDelete}
             onLockToggle={handleToggleLock}
             onShowDetails={() => setShowDetailsModal(true)}

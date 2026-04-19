@@ -29,6 +29,7 @@ function NoteEditor({
   onNewNote,
   onImport,
   onExport,
+  onPrint,
   onDelete,
   onLockToggle,
   onShowDetails
@@ -160,6 +161,15 @@ function NoteEditor({
             disabled={!currentNoteId}
           >
             <Icon name='download' />
+          </button>
+          <button type="button"
+            className='btn'
+            onClick={onPrint}
+            aria-label='Print'
+            title='Print'
+            disabled={!currentNoteId}
+          >
+            <Icon name='print' />
           </button>
           <button type="button"
             className='btn btn-delete'
@@ -298,6 +308,7 @@ NoteEditor.propTypes = {
   onNewNote: PropTypes.func.isRequired,
   onImport: PropTypes.func.isRequired,
   onExport: PropTypes.func.isRequired,
+  onPrint: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onLockToggle: PropTypes.func.isRequired,
   onShowDetails: PropTypes.func.isRequired

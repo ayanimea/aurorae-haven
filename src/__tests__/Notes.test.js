@@ -586,6 +586,39 @@ describe('Notes Component', () => {
     })
   })
 
+  describe('Print functionality', () => {
+    test('prints current formatted note from toolbar', async () => {
+      const originalPrint = window.print
+      window.print = vi.fn()
+
+      try {
+        const mockEntries = [
+          {
+            id: 'test-id',
+            title: 'Printable Note',
+            content: '# Printable content',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ]
+        localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+        render(<Notes />)
+
+        await waitFor(() => {
+          expect(
+            screen.getByPlaceholderText('Start writing your note in Markdown...')
+          ).toHaveValue('# Printable content')
+        })
+
+        fireEvent.click(screen.getByLabelText('Print'))
+        expect(window.print).toHaveBeenCalledTimes(1)
+      } finally {
+        window.print = originalPrint
+      }
+    })
+  })
+
   describe('Import functionality', () => {
     test('imports markdown file as new note', async () => {
       render(<Notes />)

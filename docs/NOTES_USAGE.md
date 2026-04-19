@@ -300,6 +300,14 @@ Save your markdown as a file:
 
 **Keyboard Shortcut:** `Ctrl/Cmd + S`
 
+### 🖨️ Print Formatted Preview
+
+Print the rendered Markdown (or save as PDF):
+
+1. Click the "🖨️ Print" button in the Brain Dump toolbar
+2. The browser print dialog opens
+3. Print output uses a clean, print-focused layout of the formatted preview
+
 ### Tags
 
 Quick tag palette for categorization:
