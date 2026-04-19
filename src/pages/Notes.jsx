@@ -11,7 +11,10 @@ import {
   createNoteFromImport,
   toggleNoteLock,
   deleteNote as deleteNoteUtil,
-  exportNoteToFile
+  exportNoteToFile,
+  exportNoteToOdtFile,
+  exportAllNotesToOdtFiles,
+  exportAllNotesToOdtZip
 } from '../utils/notes/noteOperations'
 import NoteDetailsModal from '../components/Notes/NoteDetailsModal'
 import HelpModal from '../components/Notes/HelpModal'
@@ -220,6 +223,39 @@ function Notes() {
     window.print()
   }
 
+  const handleExportOdt = async () => {
+    if (!currentNoteId) return
+    try {
+      await exportNoteToOdtFile(title, content)
+      showToastNotification('✓ Note exported as ODT')
+    } catch (error) {
+      logger.error('Failed to export note as ODT', error)
+      showToastNotification('⚠️ ODT export failed.')
+    }
+  }
+
+  const handleExportAllOdt = async () => {
+    if (notes.length === 0) return
+    try {
+      await exportAllNotesToOdtFiles(notes)
+      showToastNotification('✓ All notes exported as ODT files')
+    } catch (error) {
+      logger.error('Failed to export all notes as ODT files', error)
+      showToastNotification('⚠️ ODT export failed.')
+    }
+  }
+
+  const handleExportAllOdtZip = async () => {
+    if (notes.length === 0) return
+    try {
+      await exportAllNotesToOdtZip(notes)
+      showToastNotification('✓ All notes exported as ODT ZIP')
+    } catch (error) {
+      logger.error('Failed to export all notes as ODT ZIP', error)
+      showToastNotification('⚠️ ODT ZIP export failed.')
+    }
+  }
+
   // Import note from markdown file
   const handleImport = (e) => {
     const file = e.target.files?.[0]
@@ -288,6 +324,9 @@ function Notes() {
             onNewNote={createNote}
             onImport={handleImport}
             onExport={handleExport}
+            onExportOdt={handleExportOdt}
+            onExportAllOdt={handleExportAllOdt}
+            onExportAllOdtZip={handleExportAllOdtZip}
             onPrint={handlePrint}
             onDelete={handleDelete}
             onLockToggle={handleToggleLock}

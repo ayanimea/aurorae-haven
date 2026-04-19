@@ -123,6 +123,14 @@ Display images in your notes using markdown syntax:
 
 ## Advanced Features
 
+### 📤 ODT Export
+
+Brain Dump supports OpenDocument Text (`.odt`) export for compatibility with LibreOffice Writer and other ODT editors.
+
+- **Export ODT**: exports the currently selected note as a single `.odt` file.
+- **Export all ODT**: exports all notes as separate `.odt` files.
+- **Export all ODT as zip**: exports all notes into one `.zip` archive containing `.odt` files.
+
 ### 🔗 Backlinks (TAB-BDP-BLK-01)
 
 Create wiki-style links between notes using double brackets:

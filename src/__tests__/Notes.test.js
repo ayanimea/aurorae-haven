@@ -514,29 +514,39 @@ describe('Notes Component', () => {
   })
 
   describe('Export functionality', () => {
-    test('exports content as markdown file with new filename format', async () => {
-      // Mock URL.createObjectURL and revokeObjectURL
+    const setupDownloadMocks = () => {
       global.URL.createObjectURL = vi.fn(() => 'blob:mock')
       global.URL.revokeObjectURL = vi.fn()
 
-      // Mock createElement to spy on the download link
       const originalCreateElement = document.createElement
       const mockClick = vi.fn()
-      let downloadFilename = ''
+      const downloadFilenames = []
       document.createElement = vi.fn((tag) => {
         if (tag === 'a') {
           const element = originalCreateElement.call(document, tag)
           element.click = mockClick
           Object.defineProperty(element, 'download', {
             set: (value) => {
-              downloadFilename = value
+              downloadFilenames.push(value)
             },
-            get: () => downloadFilename
+            get: () => downloadFilenames[downloadFilenames.length - 1] || ''
           })
           return element
         }
         return originalCreateElement.call(document, tag)
       })
+
+      return {
+        mockClick,
+        downloadFilenames,
+        restore: () => {
+          document.createElement = originalCreateElement
+        }
+      }
+    }
+
+    test('exports content as markdown file with new filename format', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
 
       const mockEntries = [
         {
@@ -560,7 +570,7 @@ describe('Notes Component', () => {
       })
 
       // Find and click export button
-      const exportButton = screen.getByRole('button', { name: /export/i })
+      const exportButton = screen.getByRole('button', { name: 'Export' })
       fireEvent.click(exportButton)
 
       // Wait for export to complete
@@ -570,19 +580,106 @@ describe('Notes Component', () => {
       expect(global.URL.createObjectURL).toHaveBeenCalled()
 
       // Check filename format: braindump_title_YYYYMMDD_HHmm.md
-      expect(downloadFilename).toMatch(
+      expect(downloadFilenames[0]).toMatch(
         /^braindump_my_test_note_\d{8}_\d{4}\.md$/
       )
 
-      // Restore mocks
-      document.createElement = originalCreateElement
+      restore()
     })
 
     test('does not export when no note is selected', () => {
       render(<Notes />)
 
-      const exportButton = screen.getByRole('button', { name: /export/i })
+      const exportButton = screen.getByRole('button', { name: 'Export' })
       expect(exportButton).toBeDisabled()
+    })
+
+    test('exports current note as ODT file', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'ODT Note',
+          content: '# Heading\n- item',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+      fireEvent.click(screen.getByRole('button', { name: 'Export ODT' }))
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalledTimes(1)
+      })
+      expect(downloadFilenames[0]).toMatch(/^braindump_odt_note_\d{8}_\d{4}\.odt$/)
+
+      restore()
+    })
+
+    test('exports all notes as individual ODT files', async () => {
+      const { mockClick, restore } = setupDownloadMocks()
+
+      const mockEntries = [
+        {
+          id: 'test-id-1',
+          title: 'First ODT',
+          content: 'One',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'test-id-2',
+          title: 'Second ODT',
+          content: 'Two',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+      fireEvent.click(screen.getByRole('button', { name: 'Export all ODT' }))
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalledTimes(2)
+      })
+
+      restore()
+    })
+
+    test('exports all notes as ODT zip archive', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+
+      const mockEntries = [
+        {
+          id: 'test-id-1',
+          title: 'Zip First',
+          content: 'One',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'test-id-2',
+          title: 'Zip Second',
+          content: 'Two',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+      fireEvent.click(screen.getByRole('button', { name: 'Export all ODT as zip' }))
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalledTimes(1)
+      })
+      expect(downloadFilenames[0]).toMatch(/^braindump_odt_export_\d{4}-\d{2}-\d{2}\.zip$/)
+
+      restore()
     })
   })
 

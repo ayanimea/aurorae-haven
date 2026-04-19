@@ -29,6 +29,9 @@ function NoteEditor({
   onNewNote,
   onImport,
   onExport,
+  onExportOdt,
+  onExportAllOdt,
+  onExportAllOdtZip,
   onPrint,
   onDelete,
   onLockToggle,
@@ -161,6 +164,33 @@ function NoteEditor({
             disabled={!currentNoteId}
           >
             <Icon name='download' />
+          </button>
+          <button type="button"
+            className='btn'
+            onClick={onExportOdt}
+            aria-label='Export ODT'
+            title='Export ODT'
+            disabled={!currentNoteId}
+          >
+            <Icon name='file' />
+          </button>
+          <button type="button"
+            className='btn'
+            onClick={onExportAllOdt}
+            aria-label='Export all ODT'
+            title='Export all ODT'
+            disabled={notes.length === 0}
+          >
+            <Icon name='download' />
+          </button>
+          <button type="button"
+            className='btn'
+            onClick={onExportAllOdtZip}
+            aria-label='Export all ODT as zip'
+            title='Export all ODT as zip'
+            disabled={notes.length === 0}
+          >
+            <Icon name='inbox' />
           </button>
           <button type="button"
             className='btn'
@@ -308,6 +338,9 @@ NoteEditor.propTypes = {
   onNewNote: PropTypes.func.isRequired,
   onImport: PropTypes.func.isRequired,
   onExport: PropTypes.func.isRequired,
+  onExportOdt: PropTypes.func.isRequired,
+  onExportAllOdt: PropTypes.func.isRequired,
+  onExportAllOdtZip: PropTypes.func.isRequired,
   onPrint: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onLockToggle: PropTypes.func.isRequired,
