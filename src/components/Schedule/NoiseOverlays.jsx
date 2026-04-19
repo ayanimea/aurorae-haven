@@ -2,6 +2,11 @@
  * Noise SVG overlays used on event cards and grid cells.
  * Shared SVG filter definitions are mounted once into the DOM body and reused
  * by all overlay instances, avoiding one feTurbulence filter per event card.
+ *
+ * The shared defs element is intentionally never removed: the filters are a
+ * static, zero-cost resource and keeping them alive across SPA navigation
+ * avoids the cost of re-injecting them each time the schedule view mounts.
+ * This is the same pattern used for SVG icon sprites.
  */
 import { useEffect } from 'react'
 
@@ -14,7 +19,7 @@ export const CELL_NOISE_FILTER_ID = 'ah-cell-noise-filter'
  * Injects a hidden SVG element containing both noise filter defs into
  * `document.body` exactly once.  Safe to call multiple times.
  */
-function ensureSharedNoiseFilters() {
+export function ensureSharedNoiseFilters() {
   if (typeof document === 'undefined') return
   if (document.getElementById(NOISE_DEFS_ID)) return
 
