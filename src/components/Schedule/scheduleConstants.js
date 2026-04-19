@@ -164,6 +164,11 @@ export function expandMidnightSpanningEvents(events) {
     if (endH >= startH || evt.endTime === '00:00') {
       result.push(evt)
     } else {
+      // Guard against missing/invalid day strings (corrupted or imported data)
+      if (typeof evt.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(evt.day)) {
+        result.push(evt)
+        continue
+      }
       // Split at midnight using local date arithmetic (avoids UTC/timezone drift with ISO strings)
       const [y, mo, d] = evt.day.split('-').map(Number)
       const nd = new Date(y, mo - 1, d + 1)

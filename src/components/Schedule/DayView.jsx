@@ -2,7 +2,7 @@
  * DayView — single-day schedule grid with drag-to-select and event drag-and-drop.
  * Extracted from FigmaScheduleGrid.jsx.
  */
-import { Fragment, useMemo, useState, useRef, useEffect } from 'react'
+import { Fragment, useMemo, useState, useRef, useEffect, useId } from 'react'
 import { format } from 'date-fns'
 import PropTypes from 'prop-types'
 
@@ -18,7 +18,7 @@ import {
   buildOverlapLayout
 } from './scheduleConstants.js'
 import { useScheduleHourHeight } from '../../hooks/schedule/useScheduleHourHeight.js'
-import { NoiseOverlay, CellNoise } from './NoiseOverlays.jsx'
+import { NoiseOverlay } from './NoiseOverlays.jsx'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
@@ -61,8 +61,20 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
   /* Overlap-aware column layout — handles simultaneous events side-by-side */
   const eventLayout = useMemo(() => buildOverlapLayout(events), [events])
 
+  /* Single shared SVG turbulence filter for all 24 hour cells — same pattern as WeekView. */
+  const dayCellNoiseUid = useId()
+  const dayCellNoiseFilterId = `dayCellNoise-${dayCellNoiseUid.replace(/:/g, '')}`
+
   return (
     <div style={{ padding: '1.25rem' }}>
+      {/* Single shared turbulence filter — referenced by all cell noise overlays. */}
+      <svg width='0' height='0' style={{ position: 'absolute' }} aria-hidden='true'>
+        <defs>
+          <filter id={dayCellNoiseFilterId}>
+            <feTurbulence type='fractalNoise' baseFrequency='0.80' numOctaves='4' stitchTiles='stitch' />
+          </filter>
+        </defs>
+      </svg>
       <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
         <h3
           style={{
@@ -171,7 +183,21 @@ export default function DayView({ events, nowHour, onEventClick, onSlotClick, on
                 }}
                 aria-label={`${String(hour).padStart(2, '0')}:00 slot`}
               >
-                <CellNoise />
+                {/* Lightweight noise rect — references the single shared feTurbulence filter above */}
+                <svg
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                    opacity: 0.18,
+                    mixBlendMode: 'soft-light'
+                  }}
+                  aria-hidden='true'
+                >
+                  <rect width='100%' height='100%' filter={`url(#${dayCellNoiseFilterId})`} />
+                </svg>
                 <div
                   style={{
                     position: 'absolute',
