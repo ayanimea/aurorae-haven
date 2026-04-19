@@ -648,6 +648,15 @@ textarea:focus {
     --print-font-size: 11pt;
   }
 
+  body:has(.brain-dump-container) .appbar,
+  body:has(.brain-dump-container) .mobile-menu {
+    display: none !important;
+  }
+
+  body:has(.brain-dump-container) .shell {
+    padding-top: 0 !important;
+  }
+
   .brain-dump-container .note-list-sidebar,
   .brain-dump-container .card-h,
   .brain-dump-container .editor-pane,
