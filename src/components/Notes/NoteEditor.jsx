@@ -156,7 +156,7 @@ function NoteEditor({
               aria-label='Import markdown file'
             />
           </label>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onExport}
             aria-label='Export'
@@ -165,7 +165,7 @@ function NoteEditor({
           >
             <Icon name='download' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onExportOdt}
             aria-label='Export current note as ODT'
@@ -174,7 +174,7 @@ function NoteEditor({
           >
             <Icon name='file' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onExportAllOdt}
             aria-label='Export all notes as ODT (single download)'
@@ -183,7 +183,7 @@ function NoteEditor({
           >
             <Icon name='list' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onExportAllOdtZip}
             aria-label='Export all ODT as zip'
@@ -192,7 +192,7 @@ function NoteEditor({
           >
             <Icon name='inbox' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onPrint}
             aria-label='Print'
@@ -201,7 +201,7 @@ function NoteEditor({
           >
             <Icon name='print' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn btn-delete'
             onClick={() => onDelete()}
             aria-label='Delete'
@@ -210,7 +210,7 @@ function NoteEditor({
           >
             <Icon name='trashAlt' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onNewNote}
             aria-label='New note'
@@ -218,7 +218,7 @@ function NoteEditor({
           >
             <Icon name='plus' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onLockToggle}
             aria-label={currentNote?.locked ? 'Unlock note' : 'Lock note'}
@@ -227,7 +227,7 @@ function NoteEditor({
           >
             <Icon name={currentNote?.locked ? 'lock' : 'unlock'} />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onShowDetails}
             aria-label='Show note details'

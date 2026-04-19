@@ -191,7 +191,10 @@ function downloadBlob(blob, filename) {
   a.href = url
   a.download = filename
   a.click()
-  URL.revokeObjectURL(url)
+  const revokeObjectURL = URL.revokeObjectURL
+  setTimeout(() => {
+    revokeObjectURL(url)
+  }, 0)
 }
 
 function generateOdtFilename(title) {
@@ -371,10 +374,16 @@ export async function exportAllNotesToOdtZip(notes) {
     return fallbackEntryName
   }
 
-  for (const [index, note] of notes.entries()) {
-    const odtBlob = await createOdtBlob(note.title, note.content)
+  const odtEntries = await Promise.all(
+    notes.map(async (note, index) => ({
+      entryName: getUniqueEntryName(note, index),
+      odtBlob: await createOdtBlob(note.title, note.content)
+    }))
+  )
+
+  for (const { entryName, odtBlob } of odtEntries) {
     zip.file(
-      getUniqueEntryName(note, index),
+      entryName,
       odtBlob,
       { binary: true }
     )

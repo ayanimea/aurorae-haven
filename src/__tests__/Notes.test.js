@@ -524,6 +524,8 @@ describe('Notes Component', () => {
     })
 
     const setupDownloadMocks = () => {
+      const originalCreateObjectURL = global.URL.createObjectURL
+      const originalRevokeObjectURL = global.URL.revokeObjectURL
       global.URL.createObjectURL = vi.fn(() => 'blob:mock')
       global.URL.revokeObjectURL = vi.fn()
 
@@ -550,6 +552,8 @@ describe('Notes Component', () => {
         downloadFilenames,
         restore: () => {
           document.createElement = originalCreateElement
+          global.URL.createObjectURL = originalCreateObjectURL
+          global.URL.revokeObjectURL = originalRevokeObjectURL
         }
       }
     }

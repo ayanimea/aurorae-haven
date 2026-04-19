@@ -103,6 +103,13 @@ function Notes() {
     configureSanitization(DOMPurify)
   }, [])
 
+  useEffect(() => {
+    document.body.classList.add('layout-notes-print')
+    return () => {
+      document.body.classList.remove('layout-notes-print')
+    }
+  }, [])
+
   // Render preview whenever content changes
   // Security: Content is sanitized with DOMPurify before rendering
   useEffect(() => {

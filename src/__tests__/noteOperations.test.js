@@ -6,11 +6,15 @@ import {
 } from '../utils/notes/noteOperations'
 
 let originalCreateElement = null
+let originalCreateObjectURL = null
+let originalRevokeObjectURL = null
 
 function setupDownloadMocks() {
   const downloadedBlobs = []
   const mockClick = vi.fn()
 
+  originalCreateObjectURL = global.URL.createObjectURL
+  originalRevokeObjectURL = global.URL.revokeObjectURL
   global.URL.createObjectURL = vi.fn((blob) => {
     downloadedBlobs.push(blob)
     return `blob:mock-${downloadedBlobs.length}`
@@ -34,6 +38,14 @@ afterEach(() => {
   if (originalCreateElement) {
     document.createElement = originalCreateElement
     originalCreateElement = null
+  }
+  if (originalCreateObjectURL) {
+    global.URL.createObjectURL = originalCreateObjectURL
+    originalCreateObjectURL = null
+  }
+  if (originalRevokeObjectURL) {
+    global.URL.revokeObjectURL = originalRevokeObjectURL
+    originalRevokeObjectURL = null
   }
 })
 

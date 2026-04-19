@@ -648,12 +648,12 @@ textarea:focus {
     --print-font-size: 11pt;
   }
 
-  body:has(.brain-dump-container) .appbar,
-  body:has(.brain-dump-container) .mobile-menu {
+  body.layout-notes-print .appbar,
+  body.layout-notes-print .mobile-menu {
     display: none !important;
   }
 
-  body:has(.brain-dump-container) .shell {
+  body.layout-notes-print .shell {
     padding-top: 0 !important;
   }
 
