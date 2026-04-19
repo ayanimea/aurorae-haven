@@ -587,20 +587,20 @@ describe('Notes Component', () => {
   })
 
   describe('Print functionality', () => {
+    const createPrintableEntry = () => ({
+      id: 'test-id',
+      title: 'Printable Note',
+      content: '# Printable content',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    })
+
     test('prints current formatted note from toolbar', async () => {
       const originalPrint = window.print
       window.print = vi.fn()
 
       try {
-        const mockEntries = [
-          {
-            id: 'test-id',
-            title: 'Printable Note',
-            content: '# Printable content',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]
+        const mockEntries = [createPrintableEntry()]
         localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
 
         render(<Notes />)
@@ -639,15 +639,7 @@ describe('Notes Component', () => {
 
       try {
         window.print = undefined
-        const mockEntries = [
-          {
-            id: 'test-id',
-            title: 'Printable Note',
-            content: '# Printable content',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]
+        const mockEntries = [createPrintableEntry()]
         localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
 
         render(<Notes />)

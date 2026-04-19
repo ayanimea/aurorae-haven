@@ -639,9 +639,18 @@ textarea:focus {
 }
 
 @media print {
+  :root {
+    --print-paper: #fff;
+    --print-ink: #111;
+    --print-heading: #000;
+    --print-code-bg: #f5f5f5;
+    --print-code-border: #ddd;
+    --print-font-size: 11pt;
+  }
+
   body {
-    background: #fff !important;
-    color: #111 !important;
+    background: var(--print-paper) !important;
+    color: var(--print-ink) !important;
   }
 
   .app-background,
@@ -664,7 +673,7 @@ textarea:focus {
     min-height: 0 !important;
     max-height: none !important;
     overflow: visible !important;
-    background: #fff !important;
+    background: var(--print-paper) !important;
     border: none !important;
     box-shadow: none !important;
   }
@@ -674,22 +683,22 @@ textarea:focus {
   }
 
   .preview {
-    color: #111 !important;
+    color: var(--print-ink) !important;
     overflow: visible !important;
-    font-size: 11pt;
+    font-size: var(--print-font-size);
     line-height: 1.5;
   }
 
   .preview a {
-    color: #111 !important;
+    color: var(--print-ink) !important;
     text-decoration: underline;
   }
 
   .preview pre,
   .preview code {
-    color: #111 !important;
-    background: #f5f5f5 !important;
-    border: 1px solid #ddd;
+    color: var(--print-ink) !important;
+    background: var(--print-code-bg) !important;
+    border: 1px solid var(--print-code-border);
   }
 
   .preview pre {
@@ -711,7 +720,7 @@ textarea:focus {
   .preview h5,
   .preview h6 {
     break-after: avoid;
-    color: #000 !important;
+    color: var(--print-heading) !important;
   }
 }
 
