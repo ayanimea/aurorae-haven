@@ -611,7 +611,7 @@ body.density-cozy {
     /* Increase opacity for better readability on mobile */
     background: rgba(16, 20, 44, 0.85);
     /* Ensure navbar stays above all page content on mobile portrait (sticky headers, etc.) */
-    z-index: calc(var(--z-modal) - 10); /* 190 — above all content (max 100), below modals (200) */
+    z-index: 190; /* Above all content (max 100), below modals (200) */
   }
 
   /* Auto-hide appbar when scrolling down (Priority 1 adaptation for portrait) — disabled; keep always visible */

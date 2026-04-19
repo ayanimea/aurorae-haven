@@ -21,9 +21,14 @@ vi.mock('../components/common/GlassPanel', () => ({
 
 // Mock FigmaScheduleGrid
 vi.mock('../components/Schedule/FigmaScheduleGrid', () => ({
-  default: function FigmaScheduleGrid({ events, viewMode, onEventClick, onSlotClick }) {
+  default: function FigmaScheduleGrid({
+    events,
+    viewMode,
+    onEventClick,
+    onSlotClick
+  }) {
     return (
-      <div data-testid="figma-schedule-grid" data-view={viewMode}>
+      <div data-testid='figma-schedule-grid' data-view={viewMode}>
         {events.map((e) => (
           <button
             key={e.id}
@@ -34,8 +39,14 @@ vi.mock('../components/Schedule/FigmaScheduleGrid', () => ({
           </button>
         ))}
         <button
-          data-testid="empty-slot"
-          onClick={() => onSlotClick({ day: '2025-09-16', startTime: '09:00', endTime: '10:00' })}
+          data-testid='empty-slot'
+          onClick={() =>
+            onSlotClick({
+              day: '2025-09-16',
+              startTime: '09:00',
+              endTime: '10:00'
+            })
+          }
         >
           empty slot
         </button>
@@ -44,22 +55,50 @@ vi.mock('../components/Schedule/FigmaScheduleGrid', () => ({
   },
   PERIOD_COLORS: {
     night: { dot: '#5550a0', text: 'rgba(140,135,180,0.9)', label: 'Night' },
-    morning: { dot: '#e8b880', text: 'rgba(255,220,180,0.95)', label: 'Morning' },
-    afternoon: { dot: '#a0d0d8', text: 'rgba(200,235,240,0.95)', label: 'Afternoon' },
-    evening: { dot: '#c0a0d0', text: 'rgba(210,185,225,0.95)', label: 'Evening' }
+    morning: {
+      dot: '#e8b880',
+      text: 'rgba(255,220,180,0.95)',
+      label: 'Morning'
+    },
+    afternoon: {
+      dot: '#a0d0d8',
+      text: 'rgba(200,235,240,0.95)',
+      label: 'Afternoon'
+    },
+    evening: {
+      dot: '#c0a0d0',
+      text: 'rgba(210,185,225,0.95)',
+      label: 'Evening'
+    }
   },
   EVENT_TYPE_COLORS: {
-    task: { bg: 'rgba(230,65,65,0.22)', border: 'rgba(250,90,90,0.55)', text: 'rgba(255,165,155,0.95)' },
-    routine: { bg: 'rgba(30,200,230,0.22)', border: 'rgba(50,220,250,0.55)', text: 'rgba(120,240,255,0.95)' },
-    habit: { bg: 'rgba(160,55,235,0.22)', border: 'rgba(185,85,255,0.55)', text: 'rgba(215,160,255,0.95)' },
-    event: { bg: 'rgba(55,100,240,0.22)', border: 'rgba(75,130,255,0.55)', text: 'rgba(150,190,255,0.95)' }
+    task: {
+      bg: 'rgba(230,65,65,0.22)',
+      border: 'rgba(250,90,90,0.55)',
+      text: 'rgba(255,165,155,0.95)'
+    },
+    routine: {
+      bg: 'rgba(30,200,230,0.22)',
+      border: 'rgba(50,220,250,0.55)',
+      text: 'rgba(120,240,255,0.95)'
+    },
+    habit: {
+      bg: 'rgba(160,55,235,0.22)',
+      border: 'rgba(185,85,255,0.55)',
+      text: 'rgba(215,160,255,0.95)'
+    },
+    event: {
+      bg: 'rgba(55,100,240,0.22)',
+      border: 'rgba(75,130,255,0.55)',
+      text: 'rgba(150,190,255,0.95)'
+    }
   }
 }))
 
 // Mock EventModal
 vi.mock('../components/Schedule/EventModal', () => ({
   default: function EventModal({ isOpen }) {
-    return isOpen ? <div data-testid="event-modal">EventModal</div> : null
+    return isOpen ? <div data-testid='event-modal'>EventModal</div> : null
   }
 }))
 
@@ -67,7 +106,7 @@ vi.mock('../components/Schedule/EventModal', () => ({
 vi.mock('../components/ItemActionModal', () => ({
   default: function ItemActionModal({ item, onClose, onEdit, onDelete }) {
     return (
-      <div data-testid="item-action-modal">
+      <div data-testid='item-action-modal'>
         <button onClick={onEdit}>Edit</button>
         <button onClick={onDelete}>Delete</button>
         <button onClick={onClose}>Close</button>
@@ -123,7 +162,9 @@ describe('Schedule Component with Figma UI', () => {
   test('renders Schedule component with heading', async () => {
     render(<Schedule />)
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Schedule' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('heading', { name: 'Schedule' })
+      ).toBeInTheDocument()
     })
   })
 
@@ -138,7 +179,9 @@ describe('Schedule Component with Figma UI', () => {
   test('renders Schedule+ add button', async () => {
     render(<Schedule />)
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Add event/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /Add event/i })
+      ).toBeInTheDocument()
     })
   })
 
@@ -196,7 +239,9 @@ describe('Schedule Component with Figma UI', () => {
   test('renders navigation buttons', async () => {
     render(<Schedule />)
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: 'Previous' })
+      ).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument()
     })
@@ -231,7 +276,9 @@ describe('Schedule navigation', () => {
 
   test('Today button sets date to today', async () => {
     render(<Schedule />)
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument()
+    )
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Next' }))
@@ -247,7 +294,9 @@ describe('Schedule navigation', () => {
 
   test('Next button advances date by one day in day view', async () => {
     render(<Schedule />)
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
+    )
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Next' }))
@@ -260,7 +309,11 @@ describe('Schedule navigation', () => {
 
   test('Prev button moves date back by one day in day view', async () => {
     render(<Schedule />)
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument())
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Previous' })
+      ).toBeInTheDocument()
+    )
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Previous' }))
@@ -273,7 +326,11 @@ describe('Schedule navigation', () => {
 
   test('changing view to week calls EventService.getEventsForWeek', async () => {
     render(<Schedule />)
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'View mode' })).toBeInTheDocument())
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: 'View mode' })
+      ).toBeInTheDocument()
+    )
 
     await act(async () => {
       fireEvent.change(screen.getByRole('combobox', { name: 'View mode' }), {
@@ -301,7 +358,14 @@ describe('Schedule event interactions', () => {
 
   test('clicking event card opens ItemActionModal', async () => {
     const mockEvents = [
-      { id: '1', title: 'Test Event', day: '2025-09-16', startTime: '09:00', endTime: '10:00', type: 'task' }
+      {
+        id: '1',
+        title: 'Test Event',
+        day: '2025-09-16',
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'task'
+      }
     ]
     EventService.getEventsForDate.mockResolvedValue(mockEvents)
 
@@ -340,7 +404,9 @@ describe('Schedule event interactions', () => {
     render(<Schedule />)
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Add event/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /Add event/i })
+      ).toBeInTheDocument()
     })
 
     await act(async () => {
@@ -356,8 +422,22 @@ describe('Schedule event interactions', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('structural validation in handleSaveEvent', () => {
   const existingEvents = [
-    { id: '1', day: '2025-09-16', startTime: '09:00', endTime: '10:00', title: 'A', type: 'task' },
-    { id: '2', day: '2025-09-16', startTime: '09:00', endTime: '10:00', title: 'B', type: 'task' }
+    {
+      id: '1',
+      day: '2025-09-16',
+      startTime: '09:00',
+      endTime: '10:00',
+      title: 'A',
+      type: 'task'
+    },
+    {
+      id: '2',
+      day: '2025-09-16',
+      startTime: '09:00',
+      endTime: '10:00',
+      title: 'B',
+      type: 'task'
+    }
   ]
 
   beforeEach(() => {

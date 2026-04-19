@@ -63,8 +63,11 @@ function RoutineCreationModal({
             Create a new routine from scratch or choose a template:
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button type="button"
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+          >
+            <button
+              type='button'
               className='btn btn-primary'
               onClick={() => setView('editor')}
               style={{ width: '100%', justifyContent: 'center' }}
@@ -73,7 +76,8 @@ function RoutineCreationModal({
               Create from Scratch
             </button>
 
-            <button type="button"
+            <button
+              type='button'
               className='btn'
               onClick={() => setView('library')}
               style={{ width: '100%', justifyContent: 'center' }}
@@ -82,7 +86,10 @@ function RoutineCreationModal({
               Browse Library
             </button>
 
-            <button type="button" className='btn btn-secondary' onClick={handleClose}
+            <button
+              type='button'
+              className='btn btn-secondary'
+              onClick={handleClose}
               style={{ width: '100%', justifyContent: 'center' }}
             >
               Cancel
@@ -101,7 +108,8 @@ function RoutineCreationModal({
               marginBottom: '16px'
             }}
           >
-            <button type="button"
+            <button
+              type='button'
               className='btn'
               onClick={handleBackToOptions}
               aria-label='Back to options'
@@ -124,7 +132,8 @@ function RoutineCreationModal({
       {view === 'editor' && (
         <div className='routine-editor-wrapper'>
           <div style={{ marginBottom: '16px' }}>
-            <button type="button"
+            <button
+              type='button'
               className='btn'
               onClick={handleBackToOptions}
               aria-label='Back to options'
