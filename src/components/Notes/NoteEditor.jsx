@@ -177,8 +177,8 @@ function NoteEditor({
           <button type="button"
             className='btn'
             onClick={onExportAllOdt}
-            aria-label='Export all notes as individual ODT files'
-            title='Export all notes as individual OpenDocument Text (.odt) files'
+            aria-label='Export all notes as ODT (single download)'
+            title='Export all notes as ODT in a single browser download (ZIP for multiple notes)'
             disabled={notes.length === 0}
           >
             <Icon name='list' />

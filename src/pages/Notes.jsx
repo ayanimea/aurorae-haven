@@ -238,7 +238,7 @@ function Notes() {
     if (notes.length === 0) return
     try {
       await exportAllNotesToOdtFiles(notes)
-      showToastNotification('✓ All notes exported as ODT files')
+      showToastNotification('✓ All notes exported as ODT (single download)')
     } catch (error) {
       logger.error('Failed to export all notes as ODT files', error)
       showToastNotification('⚠️ ODT export failed.')

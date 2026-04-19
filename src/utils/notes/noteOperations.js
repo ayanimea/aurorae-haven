@@ -302,10 +302,15 @@ export async function exportNoteToOdtFile(title, content) {
  * @returns {Promise<void>}
  */
 export async function exportAllNotesToOdtFiles(notes) {
-  for (const note of notes) {
-    const blob = await createOdtBlob(note.title, note.content)
-    downloadBlob(blob, generateOdtFilename(note.title))
+  if (!Array.isArray(notes) || notes.length === 0) return
+
+  if (notes.length === 1) {
+    const [note] = notes
+    await exportNoteToOdtFile(note.title, note.content)
+    return
   }
+
+  await exportAllNotesToOdtZip(notes)
 }
 
 /**

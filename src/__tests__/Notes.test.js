@@ -514,6 +514,15 @@ describe('Notes Component', () => {
   })
 
   describe('Export functionality', () => {
+    let restoreDownloadMocks = null
+
+    afterEach(() => {
+      if (typeof restoreDownloadMocks === 'function') {
+        restoreDownloadMocks()
+      }
+      restoreDownloadMocks = null
+    })
+
     const setupDownloadMocks = () => {
       global.URL.createObjectURL = vi.fn(() => 'blob:mock')
       global.URL.revokeObjectURL = vi.fn()
@@ -547,6 +556,7 @@ describe('Notes Component', () => {
 
     test('exports content as markdown file with new filename format', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
 
       const mockEntries = [
         {
@@ -584,7 +594,6 @@ describe('Notes Component', () => {
         /^braindump_my_test_note_\d{8}_\d{4}\.md$/
       )
 
-      restore()
     })
 
     test('does not export when no note is selected', () => {
@@ -596,6 +605,7 @@ describe('Notes Component', () => {
 
     test('exports current note as ODT file', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
 
       const mockEntries = [
         {
@@ -618,11 +628,11 @@ describe('Notes Component', () => {
       })
       expect(downloadFilenames[0]).toMatch(/^braindump_odt_note_\d{8}_\d{4}\.odt$/)
 
-      restore()
     })
 
-    test('exports all notes as individual ODT files', async () => {
-      const { mockClick, restore } = setupDownloadMocks()
+    test('exports all notes as ODT with a single browser download', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
 
       const mockEntries = [
         {
@@ -645,19 +655,19 @@ describe('Notes Component', () => {
       render(<Notes />)
       fireEvent.click(
         screen.getByRole('button', {
-          name: 'Export all notes as individual ODT files'
+          name: 'Export all notes as ODT (single download)'
         })
       )
 
       await waitFor(() => {
-        expect(mockClick).toHaveBeenCalledTimes(2)
+        expect(mockClick).toHaveBeenCalledTimes(1)
       })
-
-      restore()
+      expect(downloadFilenames[0]).toMatch(/^braindump_odt_export_\d{4}-\d{2}-\d{2}\.zip$/)
     })
 
     test('exports all notes as ODT zip archive', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
 
       const mockEntries = [
         {
@@ -684,8 +694,6 @@ describe('Notes Component', () => {
         expect(mockClick).toHaveBeenCalledTimes(1)
       })
       expect(downloadFilenames[0]).toMatch(/^braindump_odt_export_\d{4}-\d{2}-\d{2}\.zip$/)
-
-      restore()
     })
   })
 
