@@ -57,51 +57,32 @@ Ask for clarification or preserve the existing structure.
 */
 
 /**
- * Schedule Page - Calendar view for events using FullCalendar
+ * Schedule Page - Calendar view for events using Figma-sourced custom grid
  * Manages routines, tasks, meetings, and habits with a clean, accessible interface
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import FullCalendar from '@fullcalendar/react'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import interactionPlugin from '@fullcalendar/interaction'
-// NOTE: FullCalendar v6 still ships CSS that is typically imported explicitly
-// (for example: '@fullcalendar/core/index.css', '@fullcalendar/timegrid/index.css').
-// In this project we intentionally do NOT import FullCalendar's default CSS here.
-// Instead, '../assets/styles/fullcalendar-custom.css' provides the required styles,
-// redefining or replacing the stock styles to match our spec. See:
-// https://fullcalendar.io/docs/upgrading-from-v5 for background on v6 CSS entrypoints.
-import { format, startOfWeek, addDays } from 'date-fns'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { format, startOfWeek, addDays, subDays, addMonths, subMonths } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
-import CustomToolbar from '../components/Schedule/CustomToolbar'
-import SolidEventCard from '../components/Schedule/SolidEventCard'
-import TimeBands from '../components/Schedule/TimeBands'
 import ErrorBoundary from '../components/ErrorBoundary'
+import GlassPanel from '../components/common/GlassPanel'
+import FigmaScheduleGrid, { PERIOD_COLORS, EVENT_TYPE_COLORS } from '../components/Schedule/FigmaScheduleGrid'
+import { expandMidnightSpanningEvents } from '../components/Schedule/scheduleConstants'
+import Icon from '../components/common/Icon'
 import EventService from '../services/EventService'
-import {
-  toFullCalendarEvents,
-  createEventFromSlot
-} from '../utils/eventAdapter'
-import { EVENT_TYPES, TIME_ZONE_HOURS, DEFAULT_EVENT_DURATION_MINUTES } from '../utils/scheduleConstants'
+import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
 import { addTaskToStorage } from '../utils/scheduleHelpers'
 import { createRoutine } from '../utils/routinesManager'
 import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
-import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
 import { validateStructural } from '../schedule/structuralConstraints'
 import { generateSuggestions } from '../schedule/suggestionEngine'
-import { SCHEDULING_CONFIG } from '../schedule/config'
 import { snapDown, snapUp } from '../schedule/timeUtils'
-import '../assets/styles/fullcalendar-custom.css'
+import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
+import { SCHEDULING_CONFIG } from '../schedule/config'
 import '../components/ErrorBoundary.css'
-
-// Constant for buffer conversions — avoids magic number repetition
-const MILLISECONDS_PER_MINUTE = 60000
-// Default column gap (px) used as fallback when CSS token is unavailable
-const EVENT_COLUMN_GAP_FALLBACK_PX = 3
 
 /**
  * Convert a snapped end-minute value back to a stored time string.
@@ -139,11 +120,6 @@ function checkStructural(candidate, allEvents, excludeId) {
   return check.valid ? null : (check.reason ?? 'Scheduling conflict: too many simultaneous events')
 }
 
-// Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
-// With Vite, these modules are still included in the production build as separate
-// code-split chunks; the guard only controls whether they are requested at runtime.
-// This reduces initial bundle size but does NOT remove dev-only code from production.
-
 // Console statements are intentionally used throughout this file for production debugging
 // and error handling. They replaced a custom logger utility that was causing issues in
 // production builds where Vite's minification was removing the logger module entirely,
@@ -152,17 +128,6 @@ function checkStructural(candidate, allEvents, excludeId) {
 // See commit 511b225 for the migration from custom logger to console methods.
 
 function Schedule() {
-  // FullCalendar ref for API access
-  const calendarRef = useRef(null)
-  const scheduleContainerRef = useRef(null)
-
-  // WeakMap for storing context menu handlers (better memory management than DOM properties)
-  const contextMenuHandlersRef = useRef(new WeakMap())
-
-  // Cached column gap in pixels — read once from the CSS custom property rather than
-  // calling getComputedStyle on every eventDidMount call (which fires per event).
-  const columnGapPxRef = useRef(null)
-
   // Success message timeout ref for cleanup on unmount
   const successMessageTimeoutRef = useRef(null)
   // Ref that always points to the latest loadEvents callback so storage event
@@ -170,16 +135,13 @@ function Schedule() {
   const loadEventsRef = useRef(null)
 
   // State management
-  const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
+  const [view, setView] = useState('day') // 'day' | 'week' | 'month'
   const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
-  // Incremented by FullCalendar's datesSet callback so the load-indicator useEffect
-  // re-runs after every view/date render (header cells mount fresh on each navigation).
-  const [fcRenderCount, setFcRenderCount] = useState(0)
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -191,30 +153,25 @@ function Schedule() {
   // Dev-only: Lazy-loaded FloatingDevButtons component
   const [FloatingDevButtons, setFloatingDevButtons] = useState(null)
 
-  // Get time format preference from settings (default to 24-hour)
-  // Reactive settings: useState + storage listener for cross-tab updates
-  // Settings changes in Settings page or other tabs now reflect immediately
-  const [use24HourFormat, setUse24HourFormat] = useState(
-    () => getSettings().schedule?.use24HourFormat ?? true
-  )
-
   const [schedulingGuidanceLevel, setSchedulingGuidanceLevel] = useState(() => {
     const stored = getSettings().schedule?.schedulingGuidanceLevel
     return VALID_GUIDANCE_LEVELS.includes(stored) ? stored : 'full'
   })
+
+  const [use24HourFormat, setUse24HourFormat] = useState(
+    () => getSettings().schedule?.use24HourFormat !== false
+  )
 
   useEffect(() => {
     // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
     const handleStorage = (event) => {
       try {
         const scheduleSettings = getSettings().schedule
-        if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
-          setUse24HourFormat(scheduleSettings.use24HourFormat)
-        }
         const level = scheduleSettings?.schedulingGuidanceLevel
         if (VALID_GUIDANCE_LEVELS.includes(level)) {
           setSchedulingGuidanceLevel(level)
         }
+        setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
       } catch (_err) {}
 
       // Reload schedule events when tasks are modified in another tab so the
@@ -231,13 +188,11 @@ function Schedule() {
     const handleSettingsUpdated = () => {
       try {
         const scheduleSettings = getSettings().schedule
-        if (typeof scheduleSettings?.use24HourFormat === 'boolean') {
-          setUse24HourFormat(scheduleSettings.use24HourFormat)
-        }
         const level = scheduleSettings?.schedulingGuidanceLevel
         if (VALID_GUIDANCE_LEVELS.includes(level)) {
           setSchedulingGuidanceLevel(level)
         }
+        setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
       } catch (_err) {}
     }
 
@@ -263,30 +218,6 @@ function Schedule() {
     }
   }, [])
 
-  // Convert events to FullCalendar format
-  const fullCalendarEvents = useMemo(
-    () => toFullCalendarEvents(events),
-    [events]
-  )
-
-  // Per-day load map for all-view header/cell indicators.
-  // Not computed during scroll/hover — only recomputed when events or guidance level changes.
-  const dayLoadMap = useMemo(() => {
-    if (schedulingGuidanceLevel === 'off') return {}
-    const map = {}
-    for (const event of events) {
-      const day = event.day
-      if (!day) continue
-      if (!map[day]) map[day] = []
-      map[day].push(event)
-    }
-    const result = {}
-    for (const [day, dayEvents] of Object.entries(map)) {
-      result[day] = getMemoizedDayLoad(dayEvents, day)
-    }
-    return result
-  }, [events, schedulingGuidanceLevel])
-
   // Load events based on current view and date
   const loadEvents = useCallback(async () => {
     setIsLoading(true)
@@ -301,7 +232,8 @@ function Schedule() {
         loadedEvents = await EventService.getEventsForWeek(dateStr)
       } else if (view === 'month') {
         const startOfMonth = startOfWeek(
-          new Date(date.getFullYear(), date.getMonth(), 1)
+          new Date(date.getFullYear(), date.getMonth(), 1),
+          { weekStartsOn: 1 } // Monday — matches MonthView grid
         )
         const endOfMonth = addDays(startOfMonth, 41) // 6 weeks
         loadedEvents = await EventService.getEventsForRange(
@@ -326,6 +258,26 @@ function Schedule() {
     loadEvents()
   }, [loadEvents])
 
+  // Expand midnight-spanning events into per-day segments (mirrors FigmaScheduleGrid's own expansion)
+  // so that the load badge correctly accounts for continuation segments on the viewed day.
+  const expandedEvents = useMemo(() => expandMidnightSpanningEvents(events), [events])
+
+  // Compute load ratio for visible day(s) to show load awareness indicator
+  const { loadThresholdHigh, loadThresholdOver } = SCHEDULING_CONFIG
+  const visibleLoadState = useMemo(() => {
+    if (view === 'day') {
+      const dayStr = format(date, 'yyyy-MM-dd')
+      const dayEvents = expandedEvents.filter(e => e.day === dayStr)
+      const load = getMemoizedDayLoad(dayEvents, dayStr)
+      // Scale thresholds by actual day length to preserve 8h/9h semantics on DST transition days
+      const dayMinutes = getDayDurationMinutes(date)
+      const highThreshold = (loadThresholdHigh * 24 * 60) / dayMinutes
+      const overThreshold = (loadThresholdOver * 24 * 60) / dayMinutes
+      return load >= overThreshold ? 'over' : load >= highThreshold ? 'high' : 'ok'
+    }
+    return 'ok'
+  }, [expandedEvents, date, view])
+
   // Cleanup success message timeout on unmount to prevent setState on unmounted component
   useEffect(() => {
     return () => {
@@ -336,23 +288,30 @@ function Schedule() {
     }
   }, [])
 
-  // Event handlers
-  const handleEventContextMenu = useCallback((event, x, y) => {
-    try {
-      const originalEvent = event.resource?.originalEvent || event
-      if (originalEvent) {
-        setEventToDelete({
-          ...originalEvent,
-          isContextMenu: true,
-          contextMenuX: x,
-          contextMenuY: y
-        })
-        setShowActionModal(true)
-      } else {
-      }
-    } catch (_err) {}
-  }, [])
+  // ── Navigation ──────────────────────────────────────────────────────────
+  const handleNavigate = useCallback(
+    (action) => {
+      setDate((prev) => {
+        switch (action) {
+          case 'PREV':
+            if (view === 'day') return subDays(prev, 1)
+            if (view === 'week') return subDays(prev, 7)
+            return subMonths(prev, 1)
+          case 'NEXT':
+            if (view === 'day') return addDays(prev, 1)
+            if (view === 'week') return addDays(prev, 7)
+            return addMonths(prev, 1)
+          case 'TODAY':
+            return new Date()
+          default:
+            return prev
+        }
+      })
+    },
+    [view]
+  )
 
+  // ── Event handlers ───────────────────────────────────────────────────────
   const handleSaveEvent = async (eventData) => {
     try {
       // Ensure we have a valid event object
@@ -543,6 +502,50 @@ function Schedule() {
     }
   }
 
+  // Click on an event card → open ItemActionModal (edit/delete choice)
+  const handleGridEventClick = useCallback((evt) => {
+    setEventToDelete(evt)
+    setShowActionModal(true)
+  }, [])
+
+  // Drag an event card to a new time slot → preserve duration, update day + startTime
+  const handleEventDrop = useCallback(async (evtId, newDay, newHour) => {
+    const evt = events.find((e) => String(e.id) === String(evtId))
+    if (!evt) return
+    try {
+      const oldStartMins = timeToMinutes(evt.startTime)
+      const oldEndMins = timeToMinutes(evt.endTime)
+      const duration = oldEndMins >= oldStartMins
+        ? oldEndMins - oldStartMins
+        : oldEndMins + 1440 - oldStartMins
+      const newStartMins = newHour * 60
+      const newEndMins = newStartMins + duration
+      const newStartTime = minutesToTime(newStartMins)
+      // Clamp any event that would cross midnight to '23:59': EventModal's
+      // <input type="time"> cannot represent '24:00' or overnight ranges.
+      const newEndTime = newEndMins >= 1440
+        ? '23:59'
+        : minutesToTime(newEndMins)
+      const updatedEvt = { ...evt, day: newDay, startTime: newStartTime, endTime: newEndTime }
+      const structuralError = checkStructural(updatedEvt, events, evt.id)
+      if (structuralError) {
+        setError(structuralError)
+        return
+      }
+      await EventService.updateEvent(updatedEvt)
+      await loadEvents()
+    } catch (_err) {
+      setError('Failed to move event. Please try again.')
+    }
+  }, [events, loadEvents])
+
+  // Click on an empty slot → open EventModal to create new event
+  const handleSlotClick = useCallback(({ day, startTime, endTime }) => {
+    setSelectedEvent({ day, startTime, endTime })
+    setSelectedEventType(EVENT_TYPES.TASK)
+    setIsModalOpen(true)
+  }, [])
+
   /**
    * Development-only: Populate calendar with fake events
    */
@@ -660,573 +663,194 @@ function Schedule() {
     }
   }
 
-  // Compute min/max times for the schedule view (07:00 to 24:00)
-  const slotMinTime = '07:00:00'
-  const slotMaxTime = '24:00:00'
-
-  // Map normalized view names to FullCalendar view names
-  const getFullCalendarView = useCallback((normalizedView) => {
-    const viewMap = {
-      day: 'timeGridDay',
-      week: 'timeGridWeek',
-      month: 'dayGridMonth'
+  // ── Date label for the Figma header ─────────────────────────────────────
+  const headerDateLabel = (() => {
+    if (view === 'day') return format(date, 'd/MM/yyyy')
+    if (view === 'week') {
+      const ws = startOfWeek(date, { weekStartsOn: 1 })
+      const we = addDays(ws, 6)
+      return `${format(ws, 'd MMM')} – ${format(we, 'd MMM yyyy')}`
     }
-    return viewMap[normalizedView] || 'timeGridDay'
-  }, [])
+    return format(date, 'MMMM yyyy')
+  })()
 
-  // Sync view state changes with FullCalendar
-  useEffect(() => {
-    const calendarApi = calendarRef.current?.getApi()
-    if (calendarApi) {
-      const fullCalendarView = getFullCalendarView(view)
-      if (calendarApi.view.type !== fullCalendarView) {
-        calendarApi.changeView(fullCalendarView)
-      }
-    }
-  }, [view, getFullCalendarView])
-
-  // Sync date state changes with FullCalendar
-  useEffect(() => {
-    const calendarApi = calendarRef.current?.getApi()
-    if (calendarApi) {
-      const currentDate = calendarApi.getDate()
-      // Only update if dates differ significantly (avoid infinite loops)
-      if (Math.abs(currentDate.getTime() - date.getTime()) > 1000) {
-        calendarApi.gotoDate(date)
-      }
-    }
-  }, [date])
-
-  // Handle view change from toolbar (receives FullCalendar view name, converts to normalized)
-  const handleViewChange = useCallback((newFullCalendarView) => {
-    const normalizedViewMap = {
-      timeGridDay: 'day',
-      timeGridWeek: 'week',
-      dayGridMonth: 'month'
-    }
-    const normalizedView = normalizedViewMap[newFullCalendarView] || 'day'
-    setView(normalizedView)
-  }, [])
-
-  // Handle event click (FullCalendar)
-  const handleEventClick = useCallback((clickInfo) => {
-    const event = clickInfo.event
-    const originalEvent = event.extendedProps?.originalEvent
-
-    if (originalEvent) {
-      setSelectedEvent(originalEvent)
-      setSelectedEventType(originalEvent.type || EVENT_TYPES.TASK)
-      setIsModalOpen(true)
-    }
-  }, [])
-
-  // Handle date select (FullCalendar equivalent of onSelectSlot)
-  const handleDateSelect = useCallback((selectInfo) => {
-    const slotInfo = {
-      start: selectInfo.start,
-      end: selectInfo.end
-    }
-    const newEvent = createEventFromSlot(slotInfo)
-    if (newEvent) {
-      setSelectedEvent(newEvent)
-      setSelectedEventType(newEvent.type || EVENT_TYPES.TASK)
-      setIsModalOpen(true)
-    }
-    // Clear the selection
-    selectInfo.view.calendar.unselect()
-  }, [])
-
-  // Handle event unmount for cleanup
-  const handleEventWillUnmount = useCallback((unmountInfo) => {
-    const el = unmountInfo.el
-    if (!el) return
-
-    // Remove event listener when event is unmounted
-    const handler = contextMenuHandlersRef.current.get(el)
-    if (typeof handler === 'function') {
-      el.removeEventListener('contextmenu', handler)
-      contextMenuHandlersRef.current.delete(el)
-    }
-  }, [])
-
-  // Handle event context menu (right-click) using WeakMap for better memory management
-  const handleEventMouseEnter = useCallback(
-    (mouseEnterInfo) => {
-      const el = mouseEnterInfo.el
-
-      if (!el) {
-        return
-      }
-
-      // Remove any existing contextmenu handler
-      const previousHandler = contextMenuHandlersRef.current.get(el)
-      if (typeof previousHandler === 'function') {
-        el.removeEventListener('contextmenu', previousHandler)
-      }
-
-      const contextMenuHandler = (e) => {
-        e.preventDefault()
-        const originalEvent = mouseEnterInfo.event.extendedProps?.originalEvent
-        if (originalEvent) {
-          handleEventContextMenu(originalEvent, e.clientX, e.clientY)
-        }
-      }
-
-      // Store the handler in WeakMap for proper garbage collection
-      contextMenuHandlersRef.current.set(el, contextMenuHandler)
-      el.addEventListener('contextmenu', contextMenuHandler)
-    },
-    [handleEventContextMenu]
-  )
-
-  // Handle event drag-and-drop (FullCalendar).
-  // Note: drag-and-drop is mouse-driven. Keyboard users can edit event times
-  // via the EventModal (click → open → edit start/end time fields).
-  const handleEventDrop = useCallback(
-    async (dropInfo) => {
-      const originalEvent = dropInfo.event.extendedProps?.originalEvent
-      if (!originalEvent) {
-        dropInfo.revert()
-        return
-      }
-      try {
-        // event.start is renderStart (= mainStart − buffers); recover mainStart by
-        // adding back the buffer so the canonical times are preserved.
-        const prepDuration = dropInfo.event.extendedProps?.prepDuration ?? 0
-        const travelDuration = dropInfo.event.extendedProps?.travelDuration ?? 0
-        const totalBufferMs = (prepDuration + travelDuration) * MILLISECONDS_PER_MINUTE
-
-        const renderStart = dropInfo.event.start
-        const mainStart = new Date(renderStart.getTime() + totalBufferMs)
-        const mainEnd =
-          dropInfo.event.end ??
-          new Date(mainStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * MILLISECONDS_PER_MINUTE)
-
-        const updated = {
-          ...originalEvent,
-          day: format(mainStart, 'yyyy-MM-dd'),
-          startTime: format(mainStart, 'HH:mm'),
-          // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
-          endTime: format(mainEnd, 'HH:mm')
-        }
-
-        // Structural validation: reject the drop if it would exceed the
-        // simultaneous-event limit (exclude the event being moved by ID).
-        const structuralError = checkStructural(updated, events, updated.id)
-        if (structuralError) {
-          dropInfo.revert()
-          setSuggestions([])
-          setError(structuralError)
-          return
-        }
-
-        await EventService.updateEvent(updated)
-        await loadEvents()
-      } catch (_err) {
-        dropInfo.revert()
-        setSuggestions([])
-        setError('Failed to move event. Please try again.')
-      }
-    },
-    [loadEvents, events]
-  )
-
-  // Handle event resize (FullCalendar) — main duration only.
-  // Prep and travel durations never change during resize.
-  const handleEventResize = useCallback(
-    async (resizeInfo) => {
-      const originalEvent = resizeInfo.event.extendedProps?.originalEvent
-      if (!originalEvent) {
-        resizeInfo.revert()
-        return
-      }
-      try {
-        const prepDuration = resizeInfo.event.extendedProps?.prepDuration ?? 0
-        const travelDuration = resizeInfo.event.extendedProps?.travelDuration ?? 0
-        const totalBufferMs = (prepDuration + travelDuration) * MILLISECONDS_PER_MINUTE
-
-        // Canonically stored mainStart/mainEnd from the last save
-        let mainStart =
-          resizeInfo.event.extendedProps?.mainStart ??
-          new Date(resizeInfo.event.start.getTime() + totalBufferMs)
-        let mainEnd =
-          resizeInfo.event.extendedProps?.mainEnd ?? resizeInfo.event.end
-
-        // Detect which handle was dragged using Duration#valueOf() which returns
-        // the total milliseconds of the delta (handles years/months/days correctly).
-        const startDeltaMs = resizeInfo.startDelta?.valueOf() ?? 0
-        const endDeltaMs = resizeInfo.endDelta?.valueOf() ?? 0
-        const resizedFromTop = startDeltaMs !== 0 && endDeltaMs === 0
-        const resizedFromBottom = endDeltaMs !== 0 && startDeltaMs === 0
-
-        if (resizedFromTop) {
-          // event.start is the new renderStart; mainStart = renderStart + buffers
-          mainStart = new Date(resizeInfo.event.start.getTime() + totalBufferMs)
-        }
-
-        if (resizedFromBottom) {
-          mainEnd = resizeInfo.event.end
-        }
-
-        const defaultEnd = new Date(
-          mainStart.getTime() + DEFAULT_EVENT_DURATION_MINUTES * MILLISECONDS_PER_MINUTE
-        )
-
-        const updated = {
-          ...originalEvent,
-          day: format(mainStart, 'yyyy-MM-dd'),
-          startTime: format(mainStart, 'HH:mm'),
-          // endTime uses HH:mm; if event crosses midnight the adapter handles display correctly
-          endTime: format(mainEnd ?? defaultEnd, 'HH:mm')
-        }
-
-        // Structural validation: reject the resize if it would create too many
-        // simultaneous events (exclude the event being resized by ID).
-        const structuralError = checkStructural(updated, events, updated.id)
-        if (structuralError) {
-          resizeInfo.revert()
-          setSuggestions([])
-          setError(structuralError)
-          return
-        }
-
-        await EventService.updateEvent(updated)
-        await loadEvents()
-      } catch (_err) {
-        resizeInfo.revert()
-        setSuggestions([])
-        setError('Failed to resize event. Please try again.')
-      }
-    },
-    [loadEvents, events]
-  )
-
-  // Called by FullCalendar after every view/date render so the load-indicator
-  // useEffect re-runs against freshly mounted DOM elements.
-  const handleDatesSet = useCallback(() => {
-    setFcRenderCount((c) => c + 1)
-  }, [])
-
-  useEffect(() => {
-    // Used as a re-measure trigger when FullCalendar re-renders timegrid DOM.
-    void fcRenderCount
-    if (view !== 'day' && view !== 'week') return
-    const containerEl = scheduleContainerRef.current
-    const calendarEl = calendarRef.current?.getApi()?.el
-    if (!containerEl || !calendarEl) return
-    const observedTimegridBody = calendarEl.querySelector('.fc-timegrid-body')
-    if (!observedTimegridBody) return
-
-    const syncTimeBandBounds = () => {
-      const containerRect = containerEl.getBoundingClientRect()
-      const bodyRect = observedTimegridBody.getBoundingClientRect()
-      const topOffset = Math.max(0, bodyRect.top - containerRect.top)
-      const bodyHeight = Math.max(0, bodyRect.height)
-      containerEl.style.setProperty('--time-bands-top-offset', `${topOffset}px`)
-      containerEl.style.setProperty('--time-bands-height', `${bodyHeight}px`)
-    }
-
-    syncTimeBandBounds()
-    window.addEventListener('resize', syncTimeBandBounds)
-
-    let resizeObserver = null
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(syncTimeBandBounds)
-      resizeObserver.observe(containerEl)
-      resizeObserver.observe(observedTimegridBody)
-    }
-
-    return () => {
-      window.removeEventListener('resize', syncTimeBandBounds)
-      resizeObserver?.disconnect()
-    }
-  }, [view, fcRenderCount])
-
-  // Apply load-indicator classes and sr-only labels directly to the FullCalendar
-  // DOM after events load or after the calendar renders new cells (datesSet).
-  // This replaces the earlier dayHeaderClassNames / dayHeaderDidMount approach,
-  // which only ran at cell mount time and therefore missed updates when the
-  // dayLoadMap changed after cells were already on screen.
-  // Works for all calendar views:
-  //  - Week / Day view: targets .fc-col-header-cell[data-date] (column headers)
-  //  - Month view:      targets .fc-daygrid-day[data-date]     (day cells)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: fcRenderCount is a trigger-only dep — it increments each time FullCalendar renders new DOM cells so the effect re-runs on view/date navigation even when dayLoadMap is unchanged.
-  useEffect(() => {
-    const calendarApi = calendarRef.current?.getApi()
-    if (!calendarApi?.el) return
-    const calendarEl = calendarApi.el
-
-    // When guidance is off, strip any previously applied indicators and labels
-    if (schedulingGuidanceLevel === 'off') {
-      calendarEl.querySelectorAll('.day-load--high, .day-load--over').forEach((el) => {
-        el.classList.remove('day-load--high', 'day-load--over')
-        el.querySelectorAll('.sr-only-load-label').forEach((s) => {
-          s.parentNode?.removeChild(s)
-        })
-      })
-      return
-    }
-
-    const applyIndicator = (el, dateStr) => {
-      const load = dayLoadMap[dateStr] ?? 0
-      const parts = dateStr.split('-').map(Number)
-      const dayDate =
-        parts.length === 3 && parts.every((n) => !Number.isNaN(n))
-          ? new Date(parts[0], parts[1] - 1, parts[2])
-          : new Date(dateStr)
-      const dayMins = getDayDurationMinutes(dayDate)
-      // Derive per-day thresholds from config so "8 h / 9 h" semantics stay
-      // consistent on DST transition days (23 h / 25 h).
-      const thresholdOver = (SCHEDULING_CONFIG.loadThresholdOver * 1440) / dayMins
-      const thresholdHigh = (SCHEDULING_CONFIG.loadThresholdHigh * 1440) / dayMins
-
-      const isOver = load >= thresholdOver
-      const isHigh = isOver || load >= thresholdHigh
-
-      el.classList.toggle('day-load--over', isOver)
-      el.classList.toggle('day-load--high', isHigh && !isOver)
-
-      // Accessible sr-only label — upsert on each call so text stays current
-      const srClass = 'sr-only-load-label'
-      const anchor =
-        el.querySelector('.fc-col-header-cell-cushion') ??
-        el.querySelector('.fc-daygrid-day-number') ??
-        el
-      const existing = anchor.querySelector(`.${srClass}`)
-
-      if (!isHigh) {
-        if (existing?.parentNode) existing.parentNode.removeChild(existing)
-        return
-      }
-
-      const label = isOver ? ' — over capacity' : ' — high load'
-      if (existing) {
-        if (existing.textContent !== label) existing.textContent = label
-      } else {
-        const span = document.createElement('span')
-        span.className = `sr-only ${srClass}`
-        span.textContent = label
-        anchor.appendChild(span)
-      }
-    }
-
-    // Week / Day view column headers
-    calendarEl.querySelectorAll('.fc-col-header-cell[data-date]').forEach((cell) => {
-      applyIndicator(cell, cell.dataset.date)
-    })
-
-    // Month view day cells
-    calendarEl.querySelectorAll('.fc-daygrid-day[data-date]').forEach((cell) => {
-      applyIndicator(cell, cell.dataset.date)
-    })
-  }, [dayLoadMap, schedulingGuidanceLevel, fcRenderCount])
+  const todayFmtStr = format(new Date(), 'd/MM/yyyy')
+  const isToday = view === 'day' && headerDateLabel === todayFmtStr
 
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
-        <div className='schedule-container'>
-          <div className='schedule-wrapper'>
-            {/* Custom Toolbar */}
-            <div>
-              <CustomToolbar
-                date={date}
-                view={getFullCalendarView(view)}
-                views={['timeGridDay', 'timeGridWeek', 'dayGridMonth']}
-                onNavigate={(action) => {
-                  const calendarApi = calendarRef.current?.getApi()
-                  if (!calendarApi) return
 
-                  switch (action) {
-                    case 'PREV':
-                      calendarApi.prev()
-                      setDate(calendarApi.getDate())
-                      break
-                    case 'NEXT':
-                      calendarApi.next()
-                      setDate(calendarApi.getDate())
-                      break
-                    case 'TODAY':
-                      calendarApi.today()
-                      setDate(calendarApi.getDate())
-                      break
-                    default:
-                      break
-                  }
-                }}
-                onView={handleViewChange}
-                onScheduleEvent={handleScheduleEvent}
-                isLoading={isLoading}
-                EVENT_TYPES={EVENT_TYPES}
-              />
-            </div>
-
-            {/* Calendar area: TimeBands + FullCalendar wrapped in a positioned container
-                 so bands (z-index: 0, position: absolute) sit behind .fc which renders
-                 on top via DOM order within the same stack level. */}
-            <div className='schedule-calendar-container' ref={scheduleContainerRef}>
-              {/* Only render time-of-day bands for time grid views (not month view) */}
-              {(view === 'day' || view === 'week') && <TimeBands />}
-
-              {/* FullCalendar - Wrapped for aria-label support */}
-              <div role='region' aria-label='Event calendar'>
-                <FullCalendar
-                  ref={calendarRef}
-                  plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-                  initialView={getFullCalendarView(view)}
-                  initialDate={date}
-                  events={fullCalendarEvents}
-                  nowIndicator={true}
-                  slotMinTime={slotMinTime}
-                  slotMaxTime={slotMaxTime}
-                  slotDuration='00:15:00'
-                  slotLabelInterval='01:00:00'
-                  allDaySlot={false}
-                  headerToolbar={false}
-                  height='auto'
-                  expandRows={true}
-                  slotLabelFormat={{
-                    hour: use24HourFormat ? '2-digit' : 'numeric',
-                    minute: '2-digit',
-                    hour12: !use24HourFormat,
-                    meridiem: use24HourFormat ? false : 'short'
-                  }}
-                  eventTimeFormat={{
-                    hour: use24HourFormat ? '2-digit' : 'numeric',
-                    minute: '2-digit',
-                    hour12: !use24HourFormat
-                  }}
-                  firstDay={1}
-                  selectable={true}
-                  selectMirror={true}
-                  editable={true}
-                  eventOverlap={true}
-                  eventClick={handleEventClick}
-                  eventDrop={handleEventDrop}
-                  eventResize={handleEventResize}
-                  select={handleDateSelect}
-                  eventMouseEnter={handleEventMouseEnter}
-                  eventWillUnmount={handleEventWillUnmount}
-                  datesSet={handleDatesSet}
-                  eventDidMount={(info) => {
-                    // Use mainStart (actual event time) for timezone band classification,
-                    // not event.start which equals renderStart (includes buffer offset).
-                    const mainStart =
-                      info.event.extendedProps?.mainStart ?? info.event.start
-                    if (!mainStart) return
-                    const hour = mainStart.getHours()
-                    if (
-                      hour < TIME_ZONE_HOURS.MORNING ||
-                      hour >= TIME_ZONE_HOURS.NIGHT
-                    ) {
-                      info.el.dataset.timezone = 'night'
-                    } else if (hour < TIME_ZONE_HOURS.AFTERNOON) {
-                      info.el.dataset.timezone = 'morning'
-                    } else if (hour < TIME_ZONE_HOURS.EVENING) {
-                      info.el.dataset.timezone = 'afternoon'
-                    } else {
-                      info.el.dataset.timezone = 'evening'
-                    }
-
-                    // Side-by-side overlap layout using precomputed column metadata.
-                    // Override FullCalendar's positioning with equal-width columns
-                    // separated by --event-column-gap.
-                    // The gap value is read once and cached in columnGapPxRef to avoid
-                    // calling getComputedStyle on every event mount (constant per theme).
-                    const column = info.event.extendedProps?.column ?? 0
-                    const totalColumns = info.event.extendedProps?.totalColumns ?? 1
-                    if (totalColumns > 1) {
-                      if (columnGapPxRef.current === null) {
-                        columnGapPxRef.current =
-                          parseFloat(
-                            getComputedStyle(document.documentElement).getPropertyValue(
-                              '--event-column-gap'
-                            )
-                          ) || EVENT_COLUMN_GAP_FALLBACK_PX
-                      }
-                      const gap = columnGapPxRef.current
-                      const width = `calc((100% - ${(totalColumns - 1) * gap}px) / ${totalColumns})`
-                      info.el.style.width = width
-                      // Column is 0-indexed: column 0 → left=0, column 1 → left=width+gap, etc.
-                      // Produces nested calc() (e.g. calc(1 * (calc(...) + 3px))) which is
-                      // valid CSS and ensures alignment matches the width expression exactly.
-                      info.el.style.left = `calc(${column} * (${width} + ${gap}px))`
-                    }
-                  }}
-                  eventContent={(eventInfo) => (
-                    <SolidEventCard
-                      event={{
-                        ...eventInfo.event,
-                        title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
-                        resource: {
-                          type: eventInfo.event.extendedProps?.type,
-                          originalEvent:
-                            eventInfo.event.extendedProps?.originalEvent,
-                          preparationTime:
-                            eventInfo.event.extendedProps?.preparationTime,
-                          travelTime: eventInfo.event.extendedProps?.travelTime,
-                          prepDuration:
-                            eventInfo.event.extendedProps?.prepDuration,
-                          travelDuration:
-                            eventInfo.event.extendedProps?.travelDuration,
-                          mainStart: eventInfo.event.extendedProps?.mainStart,
-                          mainEnd: eventInfo.event.extendedProps?.mainEnd
-                        }
-                      }}
-                    />
-                  )}
-                />
+        {/* ── Figma header ─────────────────────────────────────────────────── */}
+        <div className='figma-schedule-header'>
+          <div>
+            <h2 className='figma-schedule-title'>Schedule</h2>
+            <p className='figma-schedule-subtitle'>
+              {isToday ? `Today — ${headerDateLabel}` : headerDateLabel}
+            </p>
+            {view === 'day' && schedulingGuidanceLevel !== 'off' && visibleLoadState !== 'ok' && (
+              <div
+                className={`figma-load-indicator figma-load-indicator--${visibleLoadState}`}
+                role='status'
+                aria-live='polite'
+                aria-label={visibleLoadState === 'over' ? 'Day over capacity' : 'Day highly scheduled'}
+              >
+                {visibleLoadState === 'over' ? '⚠ Over capacity' : '↑ High load'}
               </div>
-            </div>
+            )}
           </div>
+          <div className='figma-schedule-controls'>
+            <button
+              type='button'
+              className='figma-schedule-nav-btn'
+              onClick={() => handleNavigate('PREV')}
+              aria-label='Previous'
+            >
+              <Icon name='chevronLeft' />
+            </button>
+            <button
+              type='button'
+              className='figma-schedule-today-btn'
+              onClick={() => handleNavigate('TODAY')}
+            >
+              Today
+            </button>
+            <button
+              type='button'
+              className='figma-schedule-nav-btn'
+              onClick={() => handleNavigate('NEXT')}
+              aria-label='Next'
+            >
+              <Icon name='chevronRight' />
+            </button>
 
-          {isLoading && (
-            <div className='loading-overlay'>
-              <p>Loading events...</p>
-            </div>
-          )}
+            <span className='figma-schedule-sep' aria-hidden='true' />
 
-          {error && (
-            <div className='fc-error-toast' role='alert'>
-              {error}
-              {suggestions.length > 0 && (
-                <div className='fc-error-suggestions' role='group' aria-label='Available time slots'>
-                  <span className='fc-error-suggestions-label'>Try instead:</span>
-                  <ul className='fc-error-suggestions-list'>
-                    {suggestions.map((s) => (
-                      <li key={s.startMinutes} className='fc-error-suggestion-slot'>
-                        {minutesToTime(s.startMinutes)} – {s.endMinutes === 1440 ? '24:00' : minutesToTime(s.endMinutes)}
-                      </li>
-                    ))}
-                  </ul>
+            {/* Period legend */}
+            <div className='figma-period-legend' role='group' aria-label='Time-of-day periods'>
+              {Object.entries(PERIOD_COLORS).map(([key, val]) => (
+                <div key={key} className='figma-period-legend-item'>
+                  <span
+                    className='figma-period-dot'
+                    style={{ background: val.dot, boxShadow: `0 0 6px ${val.dot}50` }}
+                    aria-hidden='true'
+                  />
+                  <span className='figma-period-label' style={{ color: val.text }}>
+                    {val.label}
+                  </span>
                 </div>
-              )}
-              <button
-                type='button'
-                onClick={handleDismissError}
-                className='error-dismiss'
-                aria-label='Dismiss error'
-              >
-                ×
-              </button>
+              ))}
             </div>
-          )}
 
-          {successMessage && (
-            <div className='success-message' role='status'>
-              {successMessage}
-              <button
-                type='button'
-                onClick={() => setSuccessMessage('')}
-                className='success-dismiss'
-                aria-label='Dismiss message'
-              >
-                ×
-              </button>
-            </div>
-          )}
+            <span className='figma-schedule-sep' aria-hidden='true' />
+
+            {/* View selector */}
+            <select
+              className='figma-schedule-view-select'
+              value={view}
+              onChange={(e) => setView(e.target.value)}
+              aria-label='View mode'
+            >
+              <option value='day'>Day</option>
+              <option value='week'>Week</option>
+              <option value='month'>Month</option>
+            </select>
+
+            {/* Schedule+ button */}
+            <button
+              type='button'
+              className='figma-schedule-add-btn'
+              onClick={() => handleScheduleEvent(EVENT_TYPES.TASK)}
+              aria-label='Add event'
+            >
+              <Icon name='plus' />
+              Schedule
+            </button>
+          </div>
         </div>
 
-        {/* Event Modal */}
+        {/* ── Main grid panel ───────────────────────────────────────────────── */}
+        <GlassPanel className='figma-schedule-grid-panel'>
+          {isLoading && (
+            <div className='figma-schedule-loading' role='status' aria-live='polite'>
+              Loading…
+            </div>
+          )}
+          <div role='region' aria-label='Event calendar'>
+            <FigmaScheduleGrid
+              events={events}
+              viewMode={view}
+              date={date}
+              onEventClick={handleGridEventClick}
+              onSlotClick={handleSlotClick}
+              onEventDrop={handleEventDrop}
+              use24HourFormat={use24HourFormat}
+            />
+          </div>
+        </GlassPanel>
+
+        {/* ── Event type legend ─────────────────────────────────────────────── */}
+        <GlassPanel className='figma-event-legend-panel'>
+          <div className='figma-event-legend'>
+            <span className='figma-event-legend-label'>Event types:</span>
+            {Object.entries(EVENT_TYPE_COLORS).map(([type, colors]) => (
+              <div key={type} className='figma-event-legend-item'>
+                <span
+                  className='figma-event-legend-swatch'
+                  style={{ background: colors.border }}
+                  aria-hidden='true'
+                />
+                <span className='figma-event-legend-text' style={{ color: colors.text }}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+
+        {/* ── Error toast ───────────────────────────────────────────────────── */}
+        {error && (
+          <div className='fc-error-toast' role='alert'>
+            {error}
+            {suggestions.length > 0 && (
+              <div className='fc-error-suggestions' role='group' aria-label='Available time slots'>
+                <span className='fc-error-suggestions-label'>Try instead:</span>
+                <ul className='fc-error-suggestions-list'>
+                  {suggestions.map((s) => (
+                    <li key={s.startMinutes} className='fc-error-suggestion-slot'>
+                      {minutesToTime(s.startMinutes)} – {s.endMinutes === 1440 ? '24:00' : minutesToTime(s.endMinutes)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <button
+              type='button'
+              onClick={handleDismissError}
+              className='error-dismiss'
+              aria-label='Dismiss error'
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ── Success toast ─────────────────────────────────────────────────── */}
+        {successMessage && (
+          <div className='success-message' role='status'>
+            {successMessage}
+            <button
+              type='button'
+              onClick={() => setSuccessMessage('')}
+              className='success-dismiss'
+              aria-label='Dismiss message'
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ── Event Modal (create / edit) ───────────────────────────────────── */}
         <EventModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
@@ -1236,7 +860,7 @@ function Schedule() {
           initialData={selectedEvent}
         />
 
-        {/* Action Modal for Edit/Delete */}
+        {/* ── Action Modal (edit / delete choice) ──────────────────────────── */}
         {showActionModal && eventToDelete && (
           <ItemActionModal
             item={eventToDelete}
@@ -1249,7 +873,7 @@ function Schedule() {
           />
         )}
 
-        {/* Floating Dev Buttons - Only visible in development mode */}
+        {/* ── Floating Dev Buttons (dev only) ──────────────────────────────── */}
         {isDevelopment() && FloatingDevButtons && (
           <FloatingDevButtons
             onPopulateData={handlePopulateFakeData}

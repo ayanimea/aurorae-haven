@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
 import { formatTime } from '../utils/routineRunner'
 import {
@@ -13,8 +13,19 @@ import { createLogger } from '../utils/logger'
 import ConfirmModal from '../components/common/ConfirmModal'
 import Icon from '../components/common/Icon'
 import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
+import SequenceRunner from '../components/Routines/SequenceRunner'
+import EventModal from '../components/Schedule/EventModal'
+import EventService from '../services/EventService'
+import {
+  getCurrentDateISO,
+  getCurrentTimeHHMM,
+  minutesToTime
+} from '../utils/timeUtils'
 
 const logger = createLogger('Routines')
+
+/** Minimum scheduled duration (minutes) when a routine has no recorded duration */
+const MIN_ROUTINE_DURATION_MINUTES = 15
 
 function Routines() {
   const [selectedRoutine, setSelectedRoutine] = useState(null)
@@ -29,6 +40,46 @@ function Routines() {
 
   // Routine creation modal state
   const [showCreationModal, setShowCreationModal] = useState(false)
+
+  // Schedule routine modal state
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [routineToSchedule, setRoutineToSchedule] = useState(null)
+
+  // Pre-compute initialData for the schedule modal whenever the selected routine changes
+  const scheduleInitialData = useMemo(() => {
+    if (!routineToSchedule) return null
+    const durationMins = Math.max(
+      MIN_ROUTINE_DURATION_MINUTES,
+      Math.ceil((routineToSchedule.totalDuration || 0) / 60)
+    )
+    const startHHMM = getCurrentTimeHHMM()
+    const [sh, sm] = startHHMM.split(':').map(Number)
+    let startMins = sh * 60 + sm
+    // If the routine would cross midnight (and its duration fits in one day),
+    // shift the start earlier so the full duration fits within the day.
+    // EventModal's <input type="time"> cannot represent '24:00' or overnight
+    // ranges, so the end is always clamped to '23:59'.
+    // For routines ≥ 24 h (durationMins >= 1440) there is no same-day window
+    // large enough; start is left at current time and end is clamped to '23:59'.
+    const endMins = startMins + durationMins
+    if (endMins >= 1440 && durationMins < 1440) {
+      // Shift start so the full duration ends exactly at 23:59 (1439 mins).
+      // Using 1439 (not 1440) ensures startMins + durationMins = 1439 = '23:59',
+      // preserving the full duration (e.g. 90 min → 22:29–23:59).
+      startMins = 1439 - durationMins
+    }
+    const endTime = startMins + durationMins >= 1440 ? '23:59' : minutesToTime(startMins + durationMins)
+    const startTime = minutesToTime(startMins)
+    return {
+      title: routineToSchedule.name || routineToSchedule.title || '',
+      type: 'routine',
+      day: getCurrentDateISO(),
+      startTime,
+      endTime,
+      travelTime: 0,
+      preparationTime: 0
+    }
+  }, [routineToSchedule])
 
   // TAB-RTN-45: Reduced motion detection
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
@@ -331,203 +382,78 @@ function Routines() {
     }
   }
 
+  // Open schedule modal pre-filled with the selected routine
+  const handleOpenScheduleModal = (routine) => {
+    setRoutineToSchedule(routine)
+    setShowScheduleModal(true)
+  }
+
+  // Save the routine as a schedule event.
+  // On success: toast + close modal.
+  // On failure: rethrow so EventModal can display the inline error and keep the
+  // dialog open (EventModal only shows its error state when onSave throws).
+  const handleSaveScheduledRoutine = async (eventData) => {
+    try {
+      await EventService.createEvent(eventData)
+      showToastNotification(
+        `"${eventData.title}" added to schedule on ${eventData.day}`
+      )
+      setShowScheduleModal(false)
+      setRoutineToSchedule(null)
+    } catch (error) {
+      logger.error('Failed to schedule routine:', error)
+      throw error
+    }
+  }
+
   return (
     <>
       {/* TAB-RTN-05: Toolbar for routine data management */}
-      <div className='card' style={{ marginBottom: '14px' }}>
-        <div className='card-b'>
-          <div
-            style={{
-              display: 'flex',
-              gap: '8px',
-              flexWrap: 'wrap',
-              alignItems: 'center'
-            }}
-          >
-            <button type="button"
-              className='btn'
-              onClick={handleExportRoutines}
-              aria-label='Export all routine data'
-            >
-              <Icon name='download' />
-              Export Routines
-            </button>
-            <button type="button"
-              className='btn'
-              onClick={() => fileInputRef.current?.click()}
-              aria-label='Import routine data'
-            >
-              <Icon name='upload' />
-              Import Routines
-            </button>
-            <input
-              ref={fileInputRef}
-              type='file'
-              accept='.json'
-              onChange={handleImportRoutines}
-              style={{ display: 'none' }}
-              aria-label='Choose routine data file to import'
-            />
-            <div style={{ marginLeft: 'auto', fontSize: '0.875rem' }}>
-              <span className='small'>
-                Import/Export your routine data (instances with execution
-                history)
-              </span>
-            </div>
-          </div>
-        </div>
+      <div className='rseq-toolbar'>
+        <button
+          type='button'
+          className='btn'
+          onClick={handleExportRoutines}
+          aria-label='Export all routine data'
+        >
+          <Icon name='download' />
+          Export
+        </button>
+        <button
+          type='button'
+          className='btn'
+          onClick={() => fileInputRef.current?.click()}
+          aria-label='Import routine data'
+        >
+          <Icon name='upload' />
+          Import
+        </button>
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='.json'
+          onChange={handleImportRoutines}
+          style={{ display: 'none' }}
+          aria-label='Choose routine data file to import'
+        />
       </div>
 
-      {/* TAB-RTN-03: Current Routine runner with progress bar */}
+      {/* ── Figma Gamified Sequence Runner ── */}
       {runner.state && runner.state.isRunning && (
-        <div className='card'>
-          <div className='card-h'>
-            <strong>Current Routine</strong>
-            <span className='small'>
-              {runner.state.routine.title || runner.state.routine.name}
-            </span>
-          </div>
-          {/* TAB-RTN-03 & TAB-RTN-42: Progress bar with ARIA */}
-          <div
-            className='routine-progress'
-            role='progressbar'
-            aria-valuenow={runner.progress}
-            aria-valuemin='0'
-            aria-valuemax='100'
-            aria-label='Routine progress'
-            aria-valuetext={`${runner.progress}% complete`}
-          >
-            <div
-              className='routine-progress-bar'
-              style={{ width: `${runner.progress}%` }}
-            ></div>
-          </div>
-          <div className='card-b runner-top'>
-            <div className='routine-time'>
-              <div className='small'>Step timer</div>
-              {/* TAB-RTN-43: Timer with aria-live for screen readers */}
-              <div style={{ fontWeight: '700' }}>
-                {runner.remainingTime}
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: '-9999px',
-                    width: '1px',
-                    height: '1px',
-                    overflow: 'hidden'
-                  }}
-                  aria-live='polite'
-                >
-                  {formatTime(runner.remainingTime, { verbose: true })}
-                </span>
-              </div>
-            </div>
-            {/* TAB-RTN-09: Step triptych - Previous (dim), Current (glow), Next (preview) */}
-            <div className='triptych'>
-              {/* Previous step */}
-              {runner.previousStep ? (
-                <div className='panel dim'>
-                  <div className='step-title'>{runner.previousStep.label}</div>
-                  <div className='step-meta'>
-                    <span className='small'>Previous</span>
-                    <span className='small'>
-                      {formatTime(runner.previousStep.duration)}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className='panel dim' style={{ opacity: 0.3 }}>
-                  <div className='step-title'>—</div>
-                  <div className='step-meta'>
-                    <span className='small'>Start</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Current step - TAB-RTN-10 */}
-              <div className='panel panel-current'>
-                <div className='step-title'>{runner.currentStep?.label}</div>
-                <div className='step-meta'>
-                  <span className='small'>
-                    Current · {runner.state.isPaused ? 'Paused' : 'Running'}
-                  </span>
-                  <span className='small'>{runner.remainingTime}</span>
-                </div>
-                {/* TAB-RTN-11: Controls with accessible labels */}
-                <div className='controls'>
-                  <button type="button"
-                    className='btn'
-                    onClick={runner.complete}
-                    aria-label='Complete current step'
-                    disabled={!runner.state.isRunning}
-                  >
-                    <Icon name='check' />
-                    Complete
-                  </button>
-                  <button type="button"
-                    className='btn'
-                    onClick={runner.togglePause}
-                    aria-label={
-                      runner.state.isPaused ? 'Resume routine' : 'Pause routine'
-                    }
-                  >
-                    <Icon name={runner.state.isPaused ? 'play' : 'pause'} />
-                    {runner.state.isPaused ? 'Resume' : 'Pause'}
-                  </button>
-                  <button type="button"
-                    className='btn'
-                    onClick={() => runner.skip()}
-                    aria-label='Skip current step'
-                    disabled={!runner.state.isRunning}
-                  >
-                    <Icon name='skip' />
-                    Skip
-                  </button>
-                  <button type="button"
-                    className='btn'
-                    onClick={handleCancelRoutine}
-                    aria-label='Cancel routine'
-                    style={{
-                      borderColor: 'var(--alert)',
-                      color: 'var(--alert)'
-                    }}
-                  >
-                    <Icon name='x' />
-                    Cancel
-                  </button>
-                </div>
-              </div>
-
-              {/* Next step */}
-              {runner.nextStep ? (
-                <div className='panel dim'>
-                  <div className='step-title'>{runner.nextStep.label}</div>
-                  <div className='step-meta'>
-                    <span className='small'>Next</span>
-                    <span className='small'>
-                      {formatTime(runner.nextStep.duration)}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className='panel dim' style={{ opacity: 0.3 }}>
-                  <div className='step-title'>—</div>
-                  <div className='step-meta'>
-                    <span className='small'>Finish</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <SequenceRunner
+          runner={runner}
+          prefersReducedMotion={prefersReducedMotion}
+          onCancel={handleCancelRoutine}
+        />
       )}
 
       {/* No routine running - show available routines list */}
-      {!runner.state || !runner.state.isRunning ? (
+      {(!runner.state || !runner.state.isRunning) && (
         <div className='card'>
           <div className='card-h'>
             <strong>Available Routines</strong>
-            <button type="button"
+            <button
+              type='button'
               className='btn btn-primary'
               onClick={() => setShowCreationModal(true)}
             >
@@ -559,7 +485,8 @@ function Routines() {
                 >
                   Create your first routine to get started
                 </p>
-                <button type="button"
+                <button
+                  type='button'
                   className='btn btn-primary'
                   onClick={() => setShowCreationModal(true)}
                 >
@@ -568,83 +495,69 @@ function Routines() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gap: '12px' }}>
+              <div className='rseq-routines-list'>
                 {availableRoutines.map((routine) => (
-                  <div
-                    key={routine.id}
-                    className='panel'
-                    style={{
-                      width: '100%'
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
+                  <div key={routine.id} className='rseq-routine-row'>
+                    <button
+                      type='button'
+                      className='rseq-routine-row-info'
+                      onClick={() => setSelectedRoutine(routine)}
+                      aria-label={`Start routine: ${routine.name || routine.title}`}
                     >
-                      <div
-                        style={{
-                          flex: 1,
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => setSelectedRoutine(routine)}
-                        role='button'
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            setSelectedRoutine(routine)
-                          }
-                        }}
-                        aria-label={`View routine: ${routine.name || routine.title}`}
-                      >
-                        <div className='step-title'>
-                          {routine.name || routine.title}
-                        </div>
-                        {routine.steps && routine.steps.length > 0 && (
-                          <div className='small dim'>
-                            {routine.steps.length} steps
-                            {routine.estimatedDuration &&
-                              ` · ${formatTime(routine.estimatedDuration)}`}
-                          </div>
-                        )}
-                        {routine.tags && routine.tags.length > 0 && (
-                          <div
-                            style={{
-                              display: 'flex',
-                              gap: '4px',
-                              marginTop: '4px'
-                            }}
-                          >
-                            {routine.tags.map((tag, i) => (
-                              <span key={i} className='tag'>
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                      <div className='rseq-routine-row-title'>
+                        {routine.name || routine.title}
                       </div>
-                      <button type="button"
-                        className='btn btn-primary'
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedRoutine(routine)
-                        }}
-                        aria-label={`Start ${routine.name || routine.title}`}
-                      >
-                        <Icon name='play' />
-                        Start
-                      </button>
-                    </div>
+                      {routine.steps && routine.steps.length > 0 && (
+                        <div className='small dim'>
+                          {routine.steps.length} step
+                          {routine.steps.length !== 1 ? 's' : ''}
+                          {routine.estimatedDuration
+                            ? ` · ${formatTime(routine.estimatedDuration)}`
+                            : ''}
+                        </div>
+                      )}
+                      {routine.tags && routine.tags.length > 0 && (
+                        <div className='rseq-routine-tags'>
+                          {routine.tags.map((tag, i) => (
+                            <span key={i} className='tag'>
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </button>
+                    <button
+                      type='button'
+                      className='btn'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleOpenScheduleModal(routine)
+                      }}
+                      aria-label={`Schedule ${routine.name || routine.title}`}
+                      title='Add to schedule'
+                    >
+                      <Icon name='calendar' />
+                      Schedule
+                    </button>
+                    <button
+                      type='button'
+                      className='btn btn-primary'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedRoutine(routine)
+                      }}
+                      aria-label={`Start ${routine.name || routine.title}`}
+                    >
+                      <Icon name='play' />
+                      Start
+                    </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
         </div>
-      ) : null}
+      )}
 
       {/* TAB-RTN-31: Completion Summary Modal */}
       {runner.isComplete && runner.summary && (
@@ -856,13 +769,13 @@ function Routines() {
       {/* TAB-RTN-18: Cancel confirmation modal */}
       {showCancelConfirm && (
         <ConfirmModal
+          isOpen={showCancelConfirm}
           title='Cancel Routine?'
           message='Would you like to keep your partial progress (logs and XP)?'
           confirmText='Keep Progress'
           cancelText='Discard All'
           onConfirm={() => confirmCancel(true)}
           onCancel={() => confirmCancel(false)}
-          onClose={() => setShowCancelConfirm(false)}
         />
       )}
 
@@ -873,6 +786,20 @@ function Routines() {
         onSelectTemplate={handleSelectTemplate}
         onCreateRoutine={handleCreateRoutine}
       />
+
+      {/* Schedule Routine Modal */}
+      {showScheduleModal && scheduleInitialData && (
+        <EventModal
+          isOpen={showScheduleModal}
+          onClose={() => {
+            setShowScheduleModal(false)
+            setRoutineToSchedule(null)
+          }}
+          onSave={handleSaveScheduledRoutine}
+          eventType='routine'
+          initialData={scheduleInitialData}
+        />
+      )}
     </>
   )
 }

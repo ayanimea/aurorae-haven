@@ -63,27 +63,38 @@ function RoutineCreationModal({
             Create a new routine from scratch or choose a template:
           </p>
 
-          <button type="button"
-            className='btn btn-primary btn-block'
-            onClick={() => setView('editor')}
-            style={{ marginBottom: '12px' }}
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
           >
-            <Icon name='plus' />
-            Create from Scratch
-          </button>
+            <button
+              type='button'
+              className='btn btn-primary'
+              onClick={() => setView('editor')}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              <Icon name='plus' />
+              Create from Scratch
+            </button>
 
-          <button type="button"
-            className='btn btn-block'
-            onClick={() => setView('library')}
-            style={{ marginBottom: '12px' }}
-          >
-            <Icon name='library' />
-            Browse Library
-          </button>
+            <button
+              type='button'
+              className='btn'
+              onClick={() => setView('library')}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              <Icon name='library' />
+              Browse Library
+            </button>
 
-          <button type="button" className='btn btn-block' onClick={handleClose}>
-            Cancel
-          </button>
+            <button
+              type='button'
+              className='btn btn-secondary'
+              onClick={handleClose}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
@@ -97,7 +108,8 @@ function RoutineCreationModal({
               marginBottom: '16px'
             }}
           >
-            <button type="button"
+            <button
+              type='button'
               className='btn'
               onClick={handleBackToOptions}
               aria-label='Back to options'
@@ -120,7 +132,8 @@ function RoutineCreationModal({
       {view === 'editor' && (
         <div className='routine-editor-wrapper'>
           <div style={{ marginBottom: '16px' }}>
-            <button type="button"
+            <button
+              type='button'
               className='btn'
               onClick={handleBackToOptions}
               aria-label='Back to options'

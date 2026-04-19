@@ -30,6 +30,16 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   })
 
   describe('TAB-NAV-01: Three-zone structure', () => {
+    test('renders figma-inspired animated background layer', () => {
+      renderWithRouter(
+        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      expect(screen.getByTestId('starry-background-canvas')).toBeInTheDocument()
+    })
+
     test('renders left zone with logo and title', () => {
       renderWithRouter(
         <Layout onExport={mockOnExport} onImport={mockOnImport}>
@@ -137,7 +147,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       expect(tabs).toHaveLength(7) // Library removed from main navigation
     })
 
-    test('tabs have proper structure with icons and text', () => {
+    test('tabs have proper structure with text labels', () => {
       renderWithRouter(
         <Layout onExport={mockOnExport} onImport={mockOnImport}>
           <div>Content</div>
@@ -146,8 +156,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
       const tasksTab = screen.getByRole('tab', { name: /^tasks$/i })
 
-      // Check for icon (SVG) and text
-      expect(tasksTab.querySelector('svg')).toBeInTheDocument()
+      // Figma navbar uses text-only tabs (no icons on desktop nav)
       expect(tasksTab.querySelector('span')).toHaveTextContent('Tasks')
     })
   })
@@ -427,8 +436,10 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       fireEvent.click(hamburgerButton)
 
       await waitFor(() => {
-        // Mobile menu items are links, not menuitems (accessibility fix)
-        const tasksMenuItem = screen.getByRole('link', { name: /tasks/i })
+        // Mobile menu items are links — scope to the mobile menu nav to avoid
+        // matching the identical desktop/bottom-bar link with the same aria-label
+        const mobileMenu = screen.getByRole('navigation', { name: /mobile navigation menu/i })
+        const tasksMenuItem = within(mobileMenu).getByRole('link', { name: /tasks/i })
         fireEvent.click(tasksMenuItem)
       })
 

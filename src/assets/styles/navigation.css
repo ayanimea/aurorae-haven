@@ -47,7 +47,7 @@ body.density-cozy {
 .appbar .inner {
   max-width: 100%;
   margin: 0 auto;
-  padding: 8px 12px;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -55,12 +55,11 @@ body.density-cozy {
   flex-wrap: nowrap;
 }
 
-/* TAB-NAV-04: Left Zone - Logo/Title */
+/* TAB-NAV-04: Left Zone - Logo/Title + Desktop Nav */
 .navbar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 12px 0 0;
+  gap: 2rem;
 }
 
 .logo-button {
@@ -103,24 +102,30 @@ body.density-cozy {
     0 0 14px rgba(134, 245, 224, 0.18) inset;
 }
 
-.brand {
-  display: flex;
-  flex-direction: column;
-}
-
-.brand b {
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  color: var(--ink);
-  font-size: 1rem;
+/* Figma brand text — replaces the logo image in the logo-button */
+.figma-brand-text {
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: rgba(230, 235, 255, 0.95);
   white-space: nowrap;
 }
 
-/* TAB-NAV-06: Center Zone - Primary Tabs */
-.navbar-center {
-  flex: 1;
-  display: flex;
+.logo-button:hover .figma-brand-text {
+  color: rgba(245, 248, 255, 1);
+}
+
+/* Logo icon — hidden on desktop; shown on mobile portrait in place of brand text */
+.logo-icon {
+  display: none;
+  align-items: center;
   justify-content: center;
+  color: rgba(230, 235, 255, 0.95);
+}
+
+/* TAB-NAV-06: Center Zone - Desktop Nav tabs (Figma layout: alongside brand in left zone) */
+.navbar-center {
+  display: flex;
 }
 
 .appnav {
@@ -136,57 +141,41 @@ body.density-cozy {
   display: none;
 }
 
-/* TAB-NAV-07: Pill-shaped tab buttons with hover/active states */
-/* TAB-LIB-23: Touch targets ≥48×48px for better accessibility */
+/* TAB-NAV-07: Figma pill-shaped nav tabs — text only, compact, glassmorphism active state */
+/* TAB-LIB-23: Touch targets ≥44px (WCAG 2.2 AA) */
 .nav-tab {
   display: inline-flex;
   gap: 6px;
   align-items: center;
-  padding: 6px 10px;
-  min-height: var(--touch-comfortable);
-  min-width: var(--touch-comfortable);
-  border-radius: 20px;
-  color: var(--dim);
-  font-weight: 500;
-  background:
-    linear-gradient(
-      180deg,
-      var(--glass-light-top) 0%,
-      var(--glass-light-mid) 35%,
-      var(--glass-light-shade) 100%
-    ),
-    var(--glass-base-bg);
-  border: 1px solid var(--glass-border-soft);
+  padding: 6px 14px;
+  min-height: var(--touch-min);
+  border-radius: 6px;
+  color: rgba(185, 190, 210, 0.9);
+  font-weight: 400;
+  font-size: 0.875rem;
+  background: transparent;
+  border: 1px solid transparent;
   text-decoration: none;
-  font-size: 0.9rem;
   cursor: pointer;
   white-space: nowrap;
   transition:
     background var(--dur) var(--ease),
     color var(--dur) var(--ease),
-    border-color var(--dur) var(--ease),
-    box-shadow var(--dur) var(--ease);
+    border-color var(--dur) var(--ease);
 }
 
-/* TAB-NAV-07 & TAB-NAV-17: Active state with luminous accent glass gradient */
+/* TAB-NAV-07 & TAB-NAV-17: Active state — Figma blue-tint pill */
 .nav-tab.active {
-  background:
-    linear-gradient(
-      180deg,
-      var(--glass-accent-top) 0%,
-      var(--glass-accent-bg) 100%
-    );
-  color: var(--mint);
-  font-weight: 600;
-  border-color: var(--nav-active-border);
-  box-shadow: var(--nav-active-glow);
+  background: rgba(130, 160, 255, 0.1);
+  color: rgba(200, 215, 255, 1);
+  font-weight: 500;
+  border-color: rgba(130, 160, 255, 0.15);
 }
 
-/* TAB-NAV-07: Hover state with glass lift */
+/* TAB-NAV-07: Hover state */
 .nav-tab:hover:not(.active) {
-  background: var(--bg-hover);
-  border-color: var(--glass-border-hover);
-  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(220, 225, 245, 0.95);
 }
 
 /* TAB-NAV-18: Focus outline with ≥3px visible outline */
@@ -209,8 +198,81 @@ body.density-cozy {
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 0 0 0 12px;
+}
+
+/* Figma icon buttons (Search, Moon) */
+.figma-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(185, 190, 210, 0.7);
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.figma-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(220, 225, 245, 1);
+}
+
+.figma-icon-btn:focus {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.figma-icon-btn .icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Figma action buttons (Export, Import) */
+.figma-action-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: rgba(185, 190, 210, 0.8);
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.figma-action-btn:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(220, 225, 245, 1);
+}
+
+.figma-action-btn:focus {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+
+/* Separator line between icon buttons and action buttons */
+.nav-separator {
+  display: inline-block;
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 /* TAB-NAV-19: Icon buttons with hover states */
@@ -548,18 +610,27 @@ body.density-cozy {
     transition: transform 0.3s ease;
     /* Increase opacity for better readability on mobile */
     background: rgba(16, 20, 44, 0.85);
-    /* Ensure navbar stays above all page content on mobile portrait */
-    z-index: var(--z-mobile-menu);
+    /* Ensure navbar stays above all page content on mobile portrait (sticky headers, etc.) */
+    z-index: 190; /* Above all content (max 100), below modals (200) */
   }
 
-  /* Auto-hide appbar when scrolling down (Priority 1 adaptation for portrait) */
-  body.scrolling-down .appbar {
+  /* Auto-hide appbar when scrolling down (Priority 1 adaptation for portrait) — disabled; keep always visible */
+  /* body.scrolling-down .appbar {
     transform: translateY(100%);
-  }
+  } */
 
   body.scrolling-up .appbar,
   body.at-top .appbar {
     transform: translateY(0);
+  }
+
+  /* On mobile portrait: swap brand text for compact icon */
+  .logo-icon {
+    display: flex;
+  }
+
+  .figma-brand-text {
+    display: none;
   }
 
   /* Keep appbar visible when More menu is open (portrait) */
@@ -926,29 +997,34 @@ body.mobile-menu-open .shell {
 }
 
 .card {
-  background: linear-gradient(180deg, var(--glass-lo), rgba(18, 22, 52, 0.22));
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  backdrop-filter: var(--blur);
+  background: var(--figma-panel-bg);
+  border: 1px solid var(--figma-panel-border);
+  border-radius: var(--figma-panel-radius);
+  box-shadow: var(--figma-panel-shadow);
+  backdrop-filter: var(--figma-panel-filter);
   overflow: hidden;
   transition:
     width 0.3s ease,
     max-width 0.3s ease;
 }
 .card .card-h {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--figma-panel-divider);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+.card .card-h strong {
+  color: var(--figma-text);
+  font-size: 1rem;
+  font-weight: 400;
+}
 .card .card-b {
-  padding: 14px;
+  padding: 16px;
 }
 .small {
-  font-size: 0.92rem;
-  color: var(--dim);
+  font-size: 0.8125rem;
+  color: var(--figma-text-muted);
 }
 
 /* Airy buttons */
@@ -958,28 +1034,28 @@ body.mobile-menu-open .shell {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: var(--text-bright);
-  font-weight: 500;
-  padding: 9px 12px;
+  color: var(--figma-input-text);
+  font-weight: 400;
+  font-size: 0.8125rem;
+  padding: 0.45rem 0.9rem;
   min-height: var(--touch-comfortable);
-  border-radius: 12px;
-  border: 1px solid var(--glass-border-soft);
-  background:
-    linear-gradient(
-      180deg,
-      var(--glass-light-top) 0%,
-      var(--glass-light-mid) 35%,
-      var(--glass-light-shade) 100%
-    ),
-    var(--glass-base-bg);
-  box-shadow: var(--glass-shadow-base);
+  border-radius: 10px;
+  border: 1px solid var(--figma-panel-border);
+  background: var(--figma-button-bg);
+  box-shadow: none;
   transition:
     transform var(--dur) var(--ease),
-    box-shadow var(--dur) var(--ease);
+    box-shadow var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
 }
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: var(--glass-shadow-hover);
+  border-color: var(--figma-button-hover-border);
+  color: var(--figma-text);
+  background: var(--figma-button-hover-bg);
+  box-shadow: var(--figma-button-hover-shadow);
 }
 
 /* Icons */
