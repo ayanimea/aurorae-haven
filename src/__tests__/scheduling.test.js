@@ -158,6 +158,27 @@ describe('computeDayLoad', () => {
     const load = computeDayLoad(events, new Date(2025, 0, 1))
     expect(load).toBeGreaterThan(1.0)
   })
+
+  it('supports 24:00 sentinel end times', () => {
+    const events = [{ startTime: '23:30', endTime: '24:00' }]
+    const load = computeDayLoad(events, new Date(2025, 0, 1))
+    expect(load).toBeCloseTo(30 / 1440, 5)
+  })
+
+  it('uses DST-adjusted day duration when local timezone has transitions', () => {
+    const year = 2025
+    const durations = Array.from({ length: 366 }, (_, i) =>
+      getDayDurationMinutes(new Date(year, 0, 1 + i))
+    )
+    const hasDstTransition = durations.some((m) => m !== 1440)
+
+    if (!hasDstTransition) {
+      expect(durations.every((m) => m === 1440)).toBe(true)
+      return
+    }
+
+    expect(durations.some((m) => m === 1380 || m === 1500)).toBe(true)
+  })
 })
 
 describe('getMemoizedDayLoad', () => {
@@ -483,6 +504,45 @@ describe('generateSuggestions', () => {
       expect(s.freeBlock).toBeLessThanOrEqual(maxPossibleBlock)
     }
   })
+
+  it('keeps suggestions within range end when rangeEndMinutes is 24:00', () => {
+    const suggestions = generateSuggestions({
+      existingEvents: [],
+      durationMinutes: 45,
+      date,
+      fromMinutes: 23 * 60,
+      nowMinutes: 0,
+      rangeStartMinutes: 23 * 60,
+      rangeEndMinutes: 24 * 60
+    })
+    expect(suggestions.every((s) => s.endMinutes <= 1440)).toBe(true)
+    expect(suggestions.some((s) => s.endMinutes === 1440)).toBe(true)
+  })
+
+  it('applies tie-breakers deterministically: freeBlock desc, then start asc', () => {
+    const suggestions = generateSuggestions({
+      existingEvents: [
+        { startTime: '08:30', endTime: '09:00' },
+        { startTime: '10:00', endTime: '10:30' }
+      ],
+      durationMinutes: 30,
+      date,
+      nowMinutes: 0,
+      rangeStartMinutes: 7 * 60,
+      rangeEndMinutes: 12 * 60
+    })
+
+    for (let i = 1; i < suggestions.length; i++) {
+      const prev = suggestions[i - 1]
+      const curr = suggestions[i]
+      if (prev.load === curr.load) {
+        expect(curr.freeBlock).toBeLessThanOrEqual(prev.freeBlock)
+        if (curr.freeBlock === prev.freeBlock) {
+          expect(curr.startMinutes).toBeGreaterThanOrEqual(prev.startMinutes)
+        }
+      }
+    }
+  })
 })
 
 // ── PR-review regression tests ────────────────────────────────────────────────
@@ -519,6 +579,17 @@ describe('getEffectiveWindow — all-day and midnight-spanning', () => {
     // rawStart=1380, rawEnd=60 → normalEnd=60+1440=1500
     expect(w.start).toBe(1380)
     expect(w.end).toBe(1500)
+    expect(w.isAllDay).toBe(false)
+  })
+
+  it('clamps effective start to 0 when preparation exceeds start', () => {
+    const w = getEffectiveWindow({
+      startTime: '00:05',
+      endTime: '00:30',
+      preparationTime: 90
+    })
+    expect(w.start).toBe(0)
+    expect(w.end).toBe(30)
     expect(w.isAllDay).toBe(false)
   })
 })

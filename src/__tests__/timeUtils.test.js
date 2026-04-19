@@ -119,6 +119,12 @@ describe('timeUtils', () => {
     test('should return 1440 for end-of-day sentinel "24:00"', () => {
       expect(timeToMinutes('24:00')).toBe(1440)
     })
+
+    test('should trim whitespace around end-of-day sentinel "24:00"', () => {
+      expect(timeToMinutes(' 24:00')).toBe(1440)
+      expect(timeToMinutes('24:00 ')).toBe(1440)
+      expect(timeToMinutes('\t24:00\n')).toBe(1440)
+    })
   })
 
   describe('minutesToTime', () => {

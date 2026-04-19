@@ -59,7 +59,9 @@ export function getEffectiveWindow(event) {
   const snappedEnd = snapUp(normalEnd)
 
   return {
-    start: snappedStart - prep,
+    // Clamp effective start to day start so downstream sweep-line/time-point
+    // consumers operate within the canonical [0, +∞) minute domain.
+    start: Math.max(0, snappedStart - prep),
     end: snappedEnd + travel,
     isAllDay: false
   }

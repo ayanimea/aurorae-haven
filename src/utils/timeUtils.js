@@ -114,11 +114,12 @@ export function formatClockTime(hours, minutes) {
  * @returns {number} Total minutes since midnight, or 0 if invalid
  */
 export function timeToMinutes(timeString) {
+  const trimmed = typeof timeString === 'string' ? timeString.trim() : ''
   // '24:00' is a valid end-of-day sentinel (used by the suggestion engine for
   // slots that end at midnight).  parseTime() rejects it (hours must be < 24)
   // so we handle it before the general parsing path.
-  if (timeString === '24:00') return 1440
-  const parsed = parseTime(timeString)
+  if (trimmed === '24:00') return 1440
+  const parsed = parseTime(trimmed)
   if (parsed === null) {
     return 0
   }
