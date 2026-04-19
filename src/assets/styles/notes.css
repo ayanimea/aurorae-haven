@@ -705,7 +705,7 @@ textarea:focus {
     padding: 10px;
     overflow: visible !important;
     white-space: pre-wrap;
-    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .preview img {
