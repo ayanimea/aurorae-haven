@@ -194,7 +194,7 @@ function downloadBlob(blob, filename) {
   const revokeObjectURL = URL.revokeObjectURL
   setTimeout(() => {
     revokeObjectURL(url)
-  }, 0)
+  }, 250)
 }
 
 function generateOdtFilename(title) {

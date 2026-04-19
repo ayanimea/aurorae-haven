@@ -104,9 +104,20 @@ function Notes() {
   }, [])
 
   useEffect(() => {
-    document.body.classList.add('layout-notes-print')
-    return () => {
+    const enablePrintLayout = () => {
+      document.body.classList.add('layout-notes-print')
+    }
+    const disablePrintLayout = () => {
       document.body.classList.remove('layout-notes-print')
+    }
+
+    window.addEventListener('beforeprint', enablePrintLayout)
+    window.addEventListener('afterprint', disablePrintLayout)
+
+    return () => {
+      window.removeEventListener('beforeprint', enablePrintLayout)
+      window.removeEventListener('afterprint', disablePrintLayout)
+      disablePrintLayout()
     }
   }, [])
 
@@ -227,6 +238,7 @@ function Notes() {
 
   const handlePrint = () => {
     if (!currentNoteId || typeof window.print !== 'function') return
+    document.body.classList.add('layout-notes-print')
     window.print()
   }
 
