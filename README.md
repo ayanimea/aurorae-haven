@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1165 KB compressed
+- ✅ Total size: 1191 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-04-19 13:23:52 UTC
+**Last Updated**: 2026-04-19 13:37:51 UTC
 **Source Branch**: enable-printing-braindump
-**Source Commit**: 1d3242f
+**Source Commit**: dc95489
 
 ---
 
