@@ -25,18 +25,31 @@ function markdownToOdtElements(markdown) {
   const lines = markdown.split('\n')
   const elements = []
   let inCodeBlock = false
-  let inList = false
+  const listStack = []
 
-  const closeListIfOpen = () => {
-    if (inList) {
+  const openList = (ordered) => {
+    elements.push(
+      `<text:list text:style-name="${ordered ? 'Numbering_20_1' : 'List_20_1'}">`
+    )
+    listStack.push({ ordered })
+  }
+
+  const closeList = () => {
+    if (listStack.length > 0) {
       elements.push('</text:list>')
-      inList = false
+      listStack.pop()
+    }
+  }
+
+  const closeAllLists = () => {
+    while (listStack.length > 0) {
+      closeList()
     }
   }
 
   for (const line of lines) {
     if (/^```/.test(line.trim())) {
-      closeListIfOpen()
+      closeAllLists()
       inCodeBlock = !inCodeBlock
       continue
     }
@@ -49,14 +62,14 @@ function markdownToOdtElements(markdown) {
     }
 
     if (!line.trim()) {
-      closeListIfOpen()
+      closeAllLists()
       elements.push('<text:p></text:p>')
       continue
     }
 
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/)
     if (headingMatch) {
-      closeListIfOpen()
+      closeAllLists()
       const level = headingMatch[1].length
       const headingText = escapeXml(headingMatch[2])
       elements.push(
@@ -67,21 +80,39 @@ function markdownToOdtElements(markdown) {
 
     const listMatch = line.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/)
     if (listMatch) {
-      if (!inList) {
-        elements.push('<text:list>')
-        inList = true
+      const indentLevel = Math.floor(listMatch[1].length / 2) + 1
+      const ordered = /\d+\./.test(listMatch[2])
+
+      while (listStack.length > indentLevel) {
+        closeList()
       }
+
+      if (listStack.length === indentLevel) {
+        const current = listStack[listStack.length - 1]
+        if (current?.ordered !== ordered) {
+          closeList()
+        }
+      }
+
+      while (listStack.length < indentLevel) {
+        openList(ordered)
+      }
+
+      if (listStack.length === 0) {
+        openList(ordered)
+      }
+
       elements.push(
         `<text:list-item><text:p>${escapeXml(listMatch[3])}</text:p></text:list-item>`
       )
       continue
     }
 
-    closeListIfOpen()
+    closeAllLists()
     elements.push(`<text:p>${escapeXml(line)}</text:p>`)
   }
 
-  closeListIfOpen()
+  closeAllLists()
   return elements.join('')
 }
 
@@ -110,6 +141,12 @@ async function createOdtBlob(title, content) {
     <style:style style:name="Preformatted_Text" style:family="paragraph">
       <style:text-properties style:font-name="Courier New"/>
     </style:style>
+    <text:list-style style:name="List_20_1">
+      <text:list-level-style-bullet text:level="1" text:bullet-char="•"/>
+    </text:list-style>
+    <text:list-style style:name="Numbering_20_1">
+      <text:list-level-style-number text:level="1" style:num-format="1"/>
+    </text:list-style>
   </office:styles>
 </office:document-styles>`
   )

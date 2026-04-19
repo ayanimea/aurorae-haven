@@ -570,7 +570,7 @@ describe('Notes Component', () => {
       })
 
       // Find and click export button
-      const exportButton = screen.getByRole('button', { name: 'Export' })
+      const exportButton = screen.getByLabelText('Export')
       fireEvent.click(exportButton)
 
       // Wait for export to complete
@@ -590,7 +590,7 @@ describe('Notes Component', () => {
     test('does not export when no note is selected', () => {
       render(<Notes />)
 
-      const exportButton = screen.getByRole('button', { name: 'Export' })
+      const exportButton = screen.getByLabelText('Export')
       expect(exportButton).toBeDisabled()
     })
 
@@ -609,7 +609,9 @@ describe('Notes Component', () => {
       localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
 
       render(<Notes />)
-      fireEvent.click(screen.getByRole('button', { name: 'Export ODT' }))
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Export current note as ODT' })
+      )
 
       await waitFor(() => {
         expect(mockClick).toHaveBeenCalledTimes(1)
@@ -641,7 +643,11 @@ describe('Notes Component', () => {
       localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
 
       render(<Notes />)
-      fireEvent.click(screen.getByRole('button', { name: 'Export all ODT' }))
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Export all notes as individual ODT files'
+        })
+      )
 
       await waitFor(() => {
         expect(mockClick).toHaveBeenCalledTimes(2)

@@ -168,8 +168,8 @@ function NoteEditor({
           <button type="button"
             className='btn'
             onClick={onExportOdt}
-            aria-label='Export ODT'
-            title='Export ODT'
+            aria-label='Export current note as ODT'
+            title='Export current note as OpenDocument Text (.odt) file'
             disabled={!currentNoteId}
           >
             <Icon name='file' />
@@ -177,17 +177,17 @@ function NoteEditor({
           <button type="button"
             className='btn'
             onClick={onExportAllOdt}
-            aria-label='Export all ODT'
-            title='Export all ODT'
+            aria-label='Export all notes as individual ODT files'
+            title='Export all notes as individual OpenDocument Text (.odt) files'
             disabled={notes.length === 0}
           >
-            <Icon name='download' />
+            <Icon name='list' />
           </button>
           <button type="button"
             className='btn'
             onClick={onExportAllOdtZip}
             aria-label='Export all ODT as zip'
-            title='Export all ODT as zip'
+            title='Export all notes as a ZIP archive containing ODT files'
             disabled={notes.length === 0}
           >
             <Icon name='inbox' />
