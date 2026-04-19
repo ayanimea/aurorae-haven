@@ -113,8 +113,8 @@ vi.mock('../utils/timeUtils', async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,
-    getCurrentDateISO: () => '2025-09-16',
-    getCurrentTimeHHMM: () => '10:00'
+    getCurrentDateISO: vi.fn(() => '2025-09-16'),
+    getCurrentTimeHHMM: vi.fn(() => '10:00')
   }
 })
 
@@ -138,6 +138,7 @@ vi.mock('../hooks/useRoutineRunner', () => ({
 // ─── Test helpers ─────────────────────────────────────────────────────────────
 
 import EventService from '../services/EventService'
+import { getCurrentTimeHHMM } from '../utils/timeUtils'
 import Routines from '../pages/Routines'
 
 const MORNING_ROUTINE = {
@@ -270,6 +271,30 @@ describe('Routines — Schedule routine', () => {
 
     // 10:00 + 90 min = 11:30, well before midnight → end should be 11:30
     expect(screen.getByTestId('modal-end').textContent).toBe('11:30')
+  })
+
+  it('shifts start backward so a midnight-crossing routine retains full duration', async () => {
+    // Override the mocked time to 23:15; a 90-min routine would cross midnight
+    // → start should be shifted to 22:29 (1439 - 90 = 1349 mins) and end to 23:59.
+    vi.mocked(getCurrentTimeHHMM).mockReturnValueOnce('23:15')
+
+    const midnightRoutine = {
+      ...MORNING_ROUTINE,
+      id: 'r-midnight',
+      name: 'Night Routine',
+      totalDuration: 5400 // 90 minutes
+    }
+    await renderWithRoutines([midnightRoutine])
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /Schedule Night Routine/i })
+      )
+    })
+
+    // 1439 - 90 = 1349 → 22:29; end clamped to 23:59; duration = 90 min ✓
+    expect(screen.getByTestId('modal-start').textContent).toBe('22:29')
+    expect(screen.getByTestId('modal-end').textContent).toBe('23:59')
   })
 
   it('clamps end to 23:59 for routines >= 24 hours', async () => {

@@ -63,7 +63,10 @@ function Routines() {
     // large enough; start is left at current time and end is clamped to '23:59'.
     const endMins = startMins + durationMins
     if (endMins >= 1440 && durationMins < 1440) {
-      startMins = 1440 - durationMins
+      // Shift start so the full duration ends exactly at 23:59 (1439 mins).
+      // Using 1439 (not 1440) ensures startMins + durationMins = 1439 = '23:59',
+      // preserving the full duration (e.g. 90 min → 22:29–23:59).
+      startMins = 1439 - durationMins
     }
     const endTime = startMins + durationMins >= 1440 ? '23:59' : minutesToTime(startMins + durationMins)
     const startTime = minutesToTime(startMins)
