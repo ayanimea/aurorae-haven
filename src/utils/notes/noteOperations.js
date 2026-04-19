@@ -31,14 +31,21 @@ function markdownToOdtElements(markdown) {
     elements.push(
       `<text:list text:style-name="${ordered ? 'Numbering_20_1' : 'List_20_1'}">`
     )
-    listStack.push({ ordered })
+    listStack.push({ ordered, itemOpen: false })
+  }
+
+  const closeOpenItem = () => {
+    const current = listStack[listStack.length - 1]
+    if (!current?.itemOpen) return
+    elements.push('</text:list-item>')
+    current.itemOpen = false
   }
 
   const closeList = () => {
-    if (listStack.length > 0) {
-      elements.push('</text:list>')
-      listStack.pop()
-    }
+    if (listStack.length === 0) return
+    closeOpenItem()
+    elements.push('</text:list>')
+    listStack.pop()
   }
 
   const closeAllLists = () => {
@@ -91,10 +98,16 @@ function markdownToOdtElements(markdown) {
         const current = listStack[listStack.length - 1]
         if (current?.ordered !== ordered) {
           closeList()
+        } else {
+          closeOpenItem()
         }
       }
 
       while (listStack.length < indentLevel) {
+        if (listStack.length > 0 && !listStack[listStack.length - 1].itemOpen) {
+          elements.push('<text:list-item>')
+          listStack[listStack.length - 1].itemOpen = true
+        }
         openList(ordered)
       }
 
@@ -103,8 +116,9 @@ function markdownToOdtElements(markdown) {
       }
 
       elements.push(
-        `<text:list-item><text:p>${escapeXml(listMatch[3])}</text:p></text:list-item>`
+        `<text:list-item><text:p>${escapeXml(listMatch[3])}</text:p>`
       )
+      listStack[listStack.length - 1].itemOpen = true
       continue
     }
 
@@ -125,6 +139,8 @@ async function createOdtBlob(title, content) {
     `<?xml version="1.0" encoding="UTF-8"?>
 <manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
   <manifest:file-entry manifest:media-type="${ODT_MIME_TYPE}" manifest:full-path="/"/>
+  <manifest:file-entry manifest:media-type="" manifest:full-path="META-INF/"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="META-INF/manifest.xml"/>
   <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="content.xml"/>
   <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="styles.xml"/>
 </manifest:manifest>`
@@ -319,12 +335,46 @@ export async function exportAllNotesToOdtFiles(notes) {
  * @returns {Promise<void>}
  */
 export async function exportAllNotesToOdtZip(notes) {
-  const zip = new JSZip()
+  if (!Array.isArray(notes) || notes.length === 0) return
 
-  for (const note of notes) {
+  const zip = new JSZip()
+  const usedEntryNames = new Set()
+
+  const getUniqueEntryName = (note, index) => {
+    const baseName = sanitizeFilename(note?.title || 'untitled')
+    const defaultEntryName = `${baseName}.odt`
+    if (!usedEntryNames.has(defaultEntryName)) {
+      usedEntryNames.add(defaultEntryName)
+      return defaultEntryName
+    }
+
+    const suffixCandidates = [note?.id, note?.createdAt, index + 1]
+      .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
+      .map((value) => sanitizeFilename(String(value)))
+      .filter(Boolean)
+
+    for (const suffix of suffixCandidates) {
+      const entryName = `${baseName}-${suffix}.odt`
+      if (!usedEntryNames.has(entryName)) {
+        usedEntryNames.add(entryName)
+        return entryName
+      }
+    }
+
+    let duplicateIndex = 2
+    let fallbackEntryName = `${baseName}-${duplicateIndex}.odt`
+    while (usedEntryNames.has(fallbackEntryName)) {
+      duplicateIndex += 1
+      fallbackEntryName = `${baseName}-${duplicateIndex}.odt`
+    }
+    usedEntryNames.add(fallbackEntryName)
+    return fallbackEntryName
+  }
+
+  for (const [index, note] of notes.entries()) {
     const odtBlob = await createOdtBlob(note.title, note.content)
     zip.file(
-      `${sanitizeFilename(note.title || 'untitled')}.odt`,
+      getUniqueEntryName(note, index),
       odtBlob,
       { binary: true }
     )

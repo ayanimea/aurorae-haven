@@ -1,0 +1,107 @@
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import JSZip from 'jszip'
+import {
+  exportAllNotesToOdtZip,
+  exportNoteToOdtFile
+} from '../utils/notes/noteOperations'
+
+let originalCreateElement = null
+
+function setupDownloadMocks() {
+  const downloadedBlobs = []
+  const mockClick = vi.fn()
+
+  global.URL.createObjectURL = vi.fn((blob) => {
+    downloadedBlobs.push(blob)
+    return `blob:mock-${downloadedBlobs.length}`
+  })
+  global.URL.revokeObjectURL = vi.fn()
+
+  originalCreateElement = document.createElement
+  document.createElement = vi.fn((tag) => {
+    if (tag === 'a') {
+      const element = originalCreateElement.call(document, tag)
+      element.click = mockClick
+      return element
+    }
+    return originalCreateElement.call(document, tag)
+  })
+
+  return { downloadedBlobs, mockClick }
+}
+
+afterEach(() => {
+  if (originalCreateElement) {
+    document.createElement = originalCreateElement
+    originalCreateElement = null
+  }
+})
+
+describe('noteOperations ODT export', () => {
+  test('includes nested-list structure and complete manifest entries in exported ODT', async () => {
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'Nested List Note',
+      '- Parent item\n  - Child item\n1. Ordered root\n  1. Ordered child'
+    )
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    const manifestXml = await odtZip.file('META-INF/manifest.xml').async('string')
+
+    expect(contentXml).toContain(
+      '<text:list-item><text:p>Parent item</text:p><text:list'
+    )
+    expect(contentXml).toContain(
+      '<text:list-item><text:p>Ordered root</text:p><text:list'
+    )
+    expect(manifestXml).toContain('manifest:full-path="META-INF/"')
+    expect(manifestXml).toContain('manifest:full-path="META-INF/manifest.xml"')
+  })
+
+  test('returns early for invalid ZIP bulk export input', async () => {
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportAllNotesToOdtZip()
+    await exportAllNotesToOdtZip([])
+
+    expect(mockClick).not.toHaveBeenCalled()
+    expect(downloadedBlobs).toHaveLength(0)
+  })
+
+  test('preserves all notes by generating unique ODT names in bulk ZIP', async () => {
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportAllNotesToOdtZip([
+      {
+        id: 'duplicate-a',
+        title: 'Shared Title',
+        content: 'First',
+        createdAt: '2026-04-19T00:00:00.000Z'
+      },
+      {
+        id: 'duplicate-b',
+        title: 'Shared Title',
+        content: 'Second',
+        createdAt: '2026-04-20T00:00:00.000Z'
+      }
+    ])
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+
+    const bulkZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const odtEntries = Object.keys(bulkZip.files).filter((name) =>
+      name.endsWith('.odt')
+    )
+
+    expect(odtEntries).toHaveLength(2)
+    expect(new Set(odtEntries).size).toBe(2)
+    expect(odtEntries).toContain('shared_title.odt')
+    expect(odtEntries.some((name) => name !== 'shared_title.odt')).toBe(true)
+  })
+})
