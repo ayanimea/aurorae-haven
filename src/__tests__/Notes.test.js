@@ -617,6 +617,51 @@ describe('Notes Component', () => {
         window.print = originalPrint
       }
     })
+
+    test('does not print when no note is selected', () => {
+      const originalPrint = window.print
+      window.print = vi.fn()
+
+      try {
+        render(<Notes />)
+        const printButton = screen.getByLabelText('Print')
+        expect(printButton).toBeDisabled()
+
+        fireEvent.click(printButton)
+        expect(window.print).not.toHaveBeenCalled()
+      } finally {
+        window.print = originalPrint
+      }
+    })
+
+    test('does not throw when browser print API is unavailable', async () => {
+      const originalPrint = window.print
+
+      try {
+        window.print = undefined
+        const mockEntries = [
+          {
+            id: 'test-id',
+            title: 'Printable Note',
+            content: '# Printable content',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ]
+        localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+        render(<Notes />)
+        await waitFor(() => {
+          expect(screen.getByLabelText('Print')).toBeEnabled()
+        })
+
+        expect(() => {
+          fireEvent.click(screen.getByLabelText('Print'))
+        }).not.toThrow()
+      } finally {
+        window.print = originalPrint
+      }
+    })
   })
 
   describe('Import functionality', () => {
