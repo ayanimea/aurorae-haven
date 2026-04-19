@@ -639,11 +639,6 @@ textarea:focus {
 }
 
 @media print {
-  body:has(.brain-dump-container) {
-    background: var(--print-paper) !important;
-    color: var(--print-ink) !important;
-  }
-
   :root {
     --print-paper: #fff;
     --print-ink: #111;
@@ -653,24 +648,20 @@ textarea:focus {
     --print-font-size: 11pt;
   }
 
-  body:has(.brain-dump-container) .app-background,
-  body:has(.brain-dump-container) .brain-dump-container .note-list-sidebar,
-  body:has(.brain-dump-container) .brain-dump-container .card-h,
-  body:has(.brain-dump-container) .brain-dump-container .editor-pane,
-  body:has(.brain-dump-container) .brain-dump-container .resize-handle,
-  body:has(.brain-dump-container) .brain-dump-container .toast {
+  .brain-dump-container .note-list-sidebar,
+  .brain-dump-container .card-h,
+  .brain-dump-container .editor-pane,
+  .brain-dump-container .resize-handle,
+  .brain-dump-container .toast {
     display: none !important;
   }
 
-  body:has(.brain-dump-container) .brain-dump-container,
-  body:has(.brain-dump-container) .brain-dump-container .brain-dump-main,
-  body:has(.brain-dump-container) .brain-dump-container .brain-dump-main .card,
-  body:has(.brain-dump-container)
-    .brain-dump-container
-    .brain-dump-main
-    .card-b,
-  body:has(.brain-dump-container) .brain-dump-container .note-editor-split,
-  body:has(.brain-dump-container) .brain-dump-container .preview-pane {
+  .brain-dump-container,
+  .brain-dump-container .brain-dump-main,
+  .brain-dump-container .brain-dump-main .card,
+  .brain-dump-container .brain-dump-main .card-b,
+  .brain-dump-container .note-editor-split,
+  .brain-dump-container .preview-pane {
     display: block !important;
     height: auto !important;
     min-height: 0 !important;
@@ -681,47 +672,47 @@ textarea:focus {
     box-shadow: none !important;
   }
 
-  body:has(.brain-dump-container) .brain-dump-container .preview-pane {
+  .brain-dump-container .preview-pane {
     padding: 0 !important;
   }
 
-  body:has(.brain-dump-container) .brain-dump-container .preview {
+  .brain-dump-container .preview {
     color: var(--print-ink) !important;
     overflow: visible !important;
     font-size: var(--print-font-size);
     line-height: 1.5;
   }
 
-  body:has(.brain-dump-container) .brain-dump-container .preview a {
+  .brain-dump-container .preview a {
     color: var(--print-ink) !important;
     text-decoration: underline;
   }
 
-  body:has(.brain-dump-container) .brain-dump-container .preview pre,
-  body:has(.brain-dump-container) .brain-dump-container .preview code {
+  .brain-dump-container .preview pre,
+  .brain-dump-container .preview code {
     color: var(--print-ink) !important;
     background: var(--print-code-bg) !important;
     border: 1px solid var(--print-code-border);
   }
 
-  body:has(.brain-dump-container) .brain-dump-container .preview pre {
+  .brain-dump-container .preview pre {
     padding: 10px;
     overflow: visible !important;
     white-space: pre-wrap;
     break-inside: avoid;
   }
 
-  body:has(.brain-dump-container) .brain-dump-container .preview img {
+  .brain-dump-container .preview img {
     break-inside: avoid;
     max-width: 100% !important;
   }
 
-  body:has(.brain-dump-container) .brain-dump-container .preview h1,
-  body:has(.brain-dump-container) .brain-dump-container .preview h2,
-  body:has(.brain-dump-container) .brain-dump-container .preview h3,
-  body:has(.brain-dump-container) .brain-dump-container .preview h4,
-  body:has(.brain-dump-container) .brain-dump-container .preview h5,
-  body:has(.brain-dump-container) .brain-dump-container .preview h6 {
+  .brain-dump-container .preview h1,
+  .brain-dump-container .preview h2,
+  .brain-dump-container .preview h3,
+  .brain-dump-container .preview h4,
+  .brain-dump-container .preview h5,
+  .brain-dump-container .preview h6 {
     break-after: avoid;
     color: var(--print-heading) !important;
   }

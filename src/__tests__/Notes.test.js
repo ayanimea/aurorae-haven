@@ -665,6 +665,34 @@ describe('Notes Component', () => {
       expect(downloadFilenames[0]).toMatch(/^braindump_odt_export_\d{4}-\d{2}-\d{2}\.zip$/)
     })
 
+    test('exports single note as ODT when using "export all ODT"', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id-1',
+          title: 'Single Bulk',
+          content: 'Only one note',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Export all notes as ODT (single download)'
+        })
+      )
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalledTimes(1)
+      })
+      expect(downloadFilenames[0]).toMatch(/^braindump_single_bulk_\d{8}_\d{4}\.odt$/)
+    })
+
     test('exports all notes as ODT zip archive', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
       restoreDownloadMocks = restore
