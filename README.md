@@ -215,6 +215,7 @@ The deployment workflow:
 - **Export/Import**: Use the Settings page to export your data as JSON for backup or migration
 - **Automatic Backups**: Daily backups stored locally in IndexedDB
 - **Storage**: All data stored locally on your device using IndexedDB and OPFS
+- **Future server schema**: [PostgreSQL account-scoped design draft](./docs/POSTGRESQL_ACCOUNT_SCHEMA.md)
 
 ### Feature Specifications
 
