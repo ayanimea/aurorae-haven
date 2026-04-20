@@ -453,3 +453,40 @@ Current app stores in IndexedDB/local settings map to PostgreSQL entities as fol
 - `templates` → `templates`
 - `calendar_subscriptions` → `calendar_subscriptions`
 - `aurorae_settings` (`settingsManager`) → `account_settings`
+
+## 8) Comparison with backend `database.md` (issue attachment)
+
+Compared against: backend attachment `database.md` shared in the issue/PR discussion thread for this schema work item.
+
+### What already aligns
+
+- Account-scoped ownership on all business tables (`account_id`/`user_id` FK + cascade delete).
+- Core auth/session/token/audit tables are present in both designs.
+- Main product domains map one-to-one in both designs: tasks, schedule events, routines/steps/runs, habits/completions/vacation dates, notes/versions/brain dump, stats, templates, file refs, calendar subscriptions, account settings.
+- Security baseline aligns: hashed passwords, token-hash storage, auditability, and per-account data isolation.
+
+### Key naming/shape differences to reconcile (backend as baseline)
+
+- **Principal naming**: backend uses `users` + `user_id`; this draft uses `accounts` + `account_id`.
+- **Settings split**: backend has both `user_settings` (typed columns) and `account_settings` (JSONB); this draft currently documents only `account_settings`.
+- **History model**: backend includes append-only `change_history`;
+  this draft currently models only `audit_log` (security/auth events).
+  In practice, `change_history` serves data mutation lineage, while
+  `audit_log` focuses on security-relevant activity.
+- **RLS coverage**: this draft specifies PostgreSQL RLS policies; backend `database.md` describes ownership/FKs but not explicit RLS policy definitions.
+- **Optional entities in this draft**: `backups` and stronger MFA key-versioning fields (`mfa_secret_encrypted`, `mfa_key_version`) are draft additions not listed in backend `database.md`.
+
+### Integration recommendation (backend-first)
+
+Use the backend naming as canonical (`users` / `user_id`) and adapt this draft to that convention across:
+
+1. DDL,
+2. ORM model names,
+3. API transaction context key (`app.current_account_id` in this draft; rename to `app.current_user_id` only in the same migration that renames schema columns/policies),
+4. RLS policies and test fixtures.
+
+Then add the missing hardening elements to backend schema where relevant:
+
+- **RLS enforcement**: explicitly enable RLS and owner policies on all user-owned tables; in this draft predicates use `current_setting('app.current_account_id')::uuid`, and should be renamed to `app.current_user_id` only when the schema naming migration is applied.
+- **MFA at-rest protection**: store encrypted MFA secret + key version metadata (instead of plain secret storage).
+- **Backup integrity metadata**: add account-scoped backup checksum/integrity-tracking fields (or table) if backup records are persisted in PostgreSQL.
