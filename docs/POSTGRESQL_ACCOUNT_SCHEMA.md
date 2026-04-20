@@ -7,6 +7,11 @@ This document defines a PostgreSQL schema blueprint for making Aurorae Haven dat
 
 It is a **design reference** for a future server-side migration.
 
+Reference implementation files in this repository:
+
+- `database/postgresql/init/001_extensions.sql`
+- `database/postgresql/migrations/001_account_schema.sql`
+
 ## 1) Prerequisites
 
 ```sql
@@ -22,7 +27,7 @@ CREATE TABLE accounts (
   email CITEXT NOT NULL UNIQUE,
   display_name TEXT,
   avatar_url TEXT,
-  provider TEXT,                  -- local | google | github | ...
+  provider TEXT,                  -- local | google | facebook | github | ...
   provider_id TEXT,
   password_hash TEXT,             -- null for oauth-only accounts
   email_verified_at TIMESTAMPTZ,
