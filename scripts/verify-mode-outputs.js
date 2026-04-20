@@ -2,6 +2,8 @@
 
 import { existsSync, readFileSync, statSync } from 'fs'
 
+const manifestPath = 'android/twa-manifest.json'
+
 const checks = [
   {
     path: 'dist/index.html',
@@ -16,7 +18,7 @@ const checks = [
     description: 'android web bundle output'
   },
   {
-    path: 'android/twa-manifest.json',
+    path: manifestPath,
     description: 'android APK packaging manifest'
   }
 ]
@@ -47,9 +49,11 @@ for (const check of checks) {
 if (manifestAvailable) {
   let twaManifest = null
   try {
-    twaManifest = JSON.parse(readFileSync('android/twa-manifest.json', 'utf-8'))
-  } catch {
-    console.error('❌ android/twa-manifest.json contains invalid JSON')
+    twaManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
+  } catch (error) {
+    console.error(
+      `❌ Failed to parse ${manifestPath}: ${error.message}. Please ensure the file contains valid JSON.`
+    )
     hasFailure = true
   }
   const requiredManifestFields = [

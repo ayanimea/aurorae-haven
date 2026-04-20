@@ -19,7 +19,6 @@ import {
   reloadPageAfterDelay,
   IMPORT_SUCCESS_MESSAGE
 } from '../utils/importData'
-import { getCompilationMode } from '../../scripts/compilationModes.js'
 import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
 
@@ -30,6 +29,11 @@ const AUTH_PROVIDER_LABELS = {
   google: 'Google',
   facebook: 'Facebook',
   github: 'GitHub'
+}
+const AUTH_PROVIDERS_BY_MODE = {
+  android: ['email', 'google', 'facebook', 'github'],
+  'web-online': ['email', 'google', 'facebook', 'github'],
+  'desktop-offline': []
 }
 
 function Settings() {
@@ -43,25 +47,25 @@ function Settings() {
     typeof process !== 'undefined' && process?.env ? process.env : {}
   const viteEnv =
     typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
-  const readEnv = (key) => viteEnv[key] ?? processEnv[key]
+  const getEnvVariable = (key) => viteEnv[key] ?? processEnv[key]
   const compileMode =
-    readEnv('VITE_COMPILE_MODE') ||
-    readEnv('AURORAE_COMPILE_MODE') ||
+    getEnvVariable('VITE_COMPILE_MODE') ||
+    getEnvVariable('AURORAE_COMPILE_MODE') ||
     'desktop-offline'
   const authRequired =
-    readEnv('VITE_AUTH_REQUIRED') === 'true'
-  const modeConfig = getCompilationMode(compileMode)
-  const emailAuthEnabled = readEnv('VITE_AUTH_EMAIL_ENABLED') === 'true'
-  const googleClientId = readEnv('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
-  const facebookAppId = readEnv('VITE_OAUTH_FACEBOOK_APP_ID') || ''
-  const githubClientId = readEnv('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
+    getEnvVariable('VITE_AUTH_REQUIRED') === 'true'
+  const modeProviders = AUTH_PROVIDERS_BY_MODE[compileMode] ?? []
+  const emailAuthEnabled = getEnvVariable('VITE_AUTH_EMAIL_ENABLED') === 'true'
+  const googleClientId = getEnvVariable('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
+  const facebookAppId = getEnvVariable('VITE_OAUTH_FACEBOOK_APP_ID') || ''
+  const githubClientId = getEnvVariable('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
   const authProviders = useMemo(
     () => {
-      if (!authRequired || !modeConfig) {
+      if (!authRequired) {
         return []
       }
 
-      return modeConfig.authProviders
+      return modeProviders
         .filter((provider) => {
           if (provider === 'email') return emailAuthEnabled
           if (provider === 'google') return Boolean(googleClientId)
@@ -73,7 +77,7 @@ function Settings() {
     },
     [
       authRequired,
-      modeConfig,
+      modeProviders,
       emailAuthEnabled,
       googleClientId,
       facebookAppId,
