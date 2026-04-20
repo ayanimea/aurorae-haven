@@ -335,7 +335,7 @@ describe('SolidEventCard Component', () => {
   })
 
   describe('Segment Order', () => {
-    it('should render travel before prep before main', () => {
+    it('should render prep before main before travel', () => {
       const event = {
         title: 'Ordered Event',
         resource: {
@@ -349,9 +349,9 @@ describe('SolidEventCard Component', () => {
       const wrapper = container.querySelector('.fc-event-wrapper')
       const segments = Array.from(wrapper.querySelectorAll('.event-segment'))
 
-      expect(segments[0].classList.contains('event-travel')).toBe(true)
-      expect(segments[1].classList.contains('event-prep')).toBe(true)
-      expect(segments[2].classList.contains('event-main')).toBe(true)
+      expect(segments[0].classList.contains('event-prep')).toBe(true)
+      expect(segments[1].classList.contains('event-main')).toBe(true)
+      expect(segments[2].classList.contains('event-travel')).toBe(true)
     })
 
     it('should render main as the only segment when no buffers', () => {
@@ -570,4 +570,3 @@ describe('SolidEventCard Component', () => {
     })
   })
 })
-

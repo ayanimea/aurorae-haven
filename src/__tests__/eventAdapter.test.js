@@ -513,7 +513,7 @@ describe('eventAdapter', () => {
       expect(fcEvent.extendedProps.travelDuration).toBe(20)
     })
 
-    it('should set start to renderStart (mainStart minus buffers) when buffers > 0', () => {
+    it('should apply prep before main and travel after main when buffers > 0', () => {
       const event = {
         id: 'render-start-1',
         title: 'Buffered Meeting',
@@ -527,10 +527,10 @@ describe('eventAdapter', () => {
 
       const fcEvent = toFullCalendarEvent(event)
 
-      // renderStart = mainStart − (15 + 15) min = 09:30
-      expect(fcEvent.start).toEqual(parseISO('2026-02-03T09:30:00'))
-      // end is always mainEnd
-      expect(fcEvent.end).toEqual(parseISO('2026-02-03T11:00:00'))
+      // renderStart = mainStart − prep = 09:45
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T09:45:00'))
+      // renderEnd = mainEnd + travel = 11:15
+      expect(fcEvent.end).toEqual(parseISO('2026-02-03T11:15:00'))
       // mainStart is preserved in extendedProps
       expect(fcEvent.extendedProps.mainStart).toEqual(parseISO('2026-02-03T10:00:00'))
     })
@@ -554,7 +554,7 @@ describe('eventAdapter', () => {
       expect(fcEvent.start).toEqual(parseISO('2026-02-03T14:00:00'))
     })
 
-    it('should set end to mainEnd regardless of buffers', () => {
+    it('should keep mainEnd canonical in extendedProps while end includes travel', () => {
       const event = {
         id: 'end-canonical-1',
         title: 'End Canonical',

@@ -178,28 +178,30 @@ export const toFullCalendarEvent = (event) => {
       : 'task'
 
     // Canonical data model — mainStart/mainEnd are source of truth.
-    // renderStart expands backwards to accommodate prep + travel buffers so
-    // the FC event's visual span covers the full block.
-    // Guard: if the buffer would push renderStart into the previous calendar day,
+    // renderStart expands backwards by prep only, and renderEnd expands forward
+    // by travel only, so visualization/clustering match structural constraints.
+    // Guard: if prep would push renderStart into the previous calendar day,
     // clamp to dayDate (midnight) so that day-based clustering stays correct.
     const mainStart = startTime
     const mainEnd = endTime
     const prepDuration = event.preparationTime || 0
     const travelDuration = event.travelTime || 0
-    const totalBuffer = prepDuration + travelDuration
-
     let renderStart = mainStart
-    if (totalBuffer > 0) {
-      const bufferedStart = new Date(mainStart.getTime() - totalBuffer * MILLISECONDS_PER_MINUTE)
+    if (prepDuration > 0) {
+      const bufferedStart = new Date(mainStart.getTime() - prepDuration * MILLISECONDS_PER_MINUTE)
       renderStart = bufferedStart < dayDate ? dayDate : bufferedStart
     }
+    const renderEnd =
+      travelDuration > 0
+        ? new Date(mainEnd.getTime() + travelDuration * MILLISECONDS_PER_MINUTE)
+        : mainEnd
 
     // FullCalendar event format
     return {
       id: event.id,
       title: event.title,
       start: renderStart,
-      end: mainEnd,
+      end: renderEnd,
       classNames: [`event-${eventType}`],
       extendedProps: {
         type: eventType,

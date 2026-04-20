@@ -2,7 +2,7 @@
  * SolidEventCard Component - Canonical Event Card Implementation
  *
  * Renders a single FullCalendar event as a segmented block:
- *   travel segment (top) → prep segment → main segment (bottom)
+ *   prep segment (top) → main segment → travel segment (bottom)
  * Heights are strictly proportional to durations with a 1-minute safety floor
  * for the main segment to avoid zero/negative-height rendering edge cases.
  * Glow/shadow/border are applied once at the wrapper level only.
@@ -10,8 +10,8 @@
  * Data model (canonical):
  *   resource.mainStart / resource.mainEnd  — actual event times
  *   resource.prepDuration / resource.travelDuration — buffer minutes
- *   event.start = renderStart = mainStart − (prep + travel)
- *   event.end   = mainEnd
+ *   event.start = renderStart = mainStart − prep
+ *   event.end   = renderEnd   = mainEnd + travel
  */
 
 import PropTypes from 'prop-types'
@@ -76,13 +76,6 @@ function SolidEventCard({ event, onContextMenu }) {
       aria-label={`${eventType}: ${safeTitle}`}
       onContextMenu={handleContextMenu}
     >
-      {travelDuration > 0 && (
-        <div
-          className='event-segment event-travel'
-          style={{ height: `${travelRatio}%` }}
-          aria-hidden='true'
-        />
-      )}
       {prepDuration > 0 && (
         <div
           className='event-segment event-prep'
@@ -98,6 +91,13 @@ function SolidEventCard({ event, onContextMenu }) {
           {safeTitle}
         </strong>
       </div>
+      {travelDuration > 0 && (
+        <div
+          className='event-segment event-travel'
+          style={{ height: `${travelRatio}%` }}
+          aria-hidden='true'
+        />
+      )}
     </div>
   )
 }
