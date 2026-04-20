@@ -125,7 +125,7 @@ test.describe('App loading and main view', () => {
     // The on-screen brand name in the header must also be visible
     const brandElement = page.locator('.figma-brand-text')
     await expect(brandElement).toBeVisible()
-    await expect(brandElement).toHaveText(/aurorae haven/i)
+    await expect(brandElement).toHaveText('AURORAE HAVEN')
 
     // Navigation must still be fully functional
     await expect(page.locator('nav[aria-label="Main"]')).toBeVisible()
