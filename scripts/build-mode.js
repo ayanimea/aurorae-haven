@@ -8,7 +8,7 @@ const modeArg = process.argv[2]
 const mode = getCompilationMode(modeArg)
 
 if (!mode) {
-  console.error('❌ Unknown compilation mode.')
+  console.error(`❌ Unknown compilation mode: '${modeArg ?? ''}'`)
   console.error(`Supported modes: ${Object.keys(COMPILATION_MODES).join(', ')}`)
   process.exit(1)
 }
@@ -36,7 +36,12 @@ if (mode.key === 'desktop-offline') {
 }
 
 if (mode.key === 'android') {
-  runNpm(['run', 'build'], mode.buildEnv)
+  // Android mode defaults to relative paths, but allows VITE_BASE_URL override
+  // for advanced packaging scenarios (custom app host/path).
+  runNpm(['run', 'build'], {
+    ...mode.buildEnv,
+    VITE_BASE_URL: process.env.VITE_BASE_URL || mode.buildEnv.VITE_BASE_URL
+  })
   if (existsSync('dist-android-web')) {
     rmSync('dist-android-web', { recursive: true, force: true })
   }

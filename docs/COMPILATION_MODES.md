@@ -25,7 +25,7 @@ npm run build:mode:android
 ### Package APK/AAB (Trusted Web Activity)
 
 ```bash
-npm i -g @bubblewrap/cli
+npx @bubblewrap/cli --version
 npm run package:android
 ```
 

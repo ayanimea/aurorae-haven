@@ -78,6 +78,7 @@ git branch -D pre-commit-hook-test
 - `embedded-server.js` / `embedded-server.py` - Local server implementations
 - `package-android-twa.js` - Android packaging command wrapper (Bubblewrap)
 - `prepare-dist.sh` - Prepares distribution files
+- `run-postgres-migrations.js` - Runs PostgreSQL SQL migrations in sorted order
 - `test-offline-package.js` - Tests offline package
 - `test-security-check.sh` - Security validation
 - `test-spa-routing.js` - SPA routing tests

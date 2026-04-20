@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS accounts (
 CREATE TABLE IF NOT EXISTS account_oauth_identities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  -- Keep providers aligned with scripts/compilationModes.js authProviders.
   provider TEXT NOT NULL CHECK (provider IN ('google', 'facebook', 'github')),
   provider_account_id TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -105,6 +106,24 @@ CREATE INDEX IF NOT EXISTS idx_habits_account_id
 CREATE INDEX IF NOT EXISTS idx_notes_account_id
   ON notes (account_id);
 
+CREATE OR REPLACE FUNCTION app_current_account_id()
+RETURNS UUID
+LANGUAGE plpgsql
+STABLE
+AS $$
+DECLARE
+  account_id_setting TEXT;
+BEGIN
+  account_id_setting := current_setting('app.current_account_id', true);
+
+  IF account_id_setting IS NULL OR account_id_setting = '' THEN
+    RAISE EXCEPTION 'Session context error: app.current_account_id is not set. Call SET LOCAL app.current_account_id = <account-uuid> before querying account data.';
+  END IF;
+
+  RETURN account_id_setting::uuid;
+END;
+$$;
+
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE routines ENABLE ROW LEVEL SECURITY;
@@ -116,37 +135,37 @@ DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'tasks' AND policyname = 'tasks_owner') THEN
     CREATE POLICY tasks_owner ON tasks
-      USING (account_id = current_setting('app.current_account_id')::uuid)
-      WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
+      USING (account_id = app_current_account_id())
+      WITH CHECK (account_id = app_current_account_id());
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'schedule_events' AND policyname = 'schedule_events_owner') THEN
     CREATE POLICY schedule_events_owner ON schedule_events
-      USING (account_id = current_setting('app.current_account_id')::uuid)
-      WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
+      USING (account_id = app_current_account_id())
+      WITH CHECK (account_id = app_current_account_id());
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'routines' AND policyname = 'routines_owner') THEN
     CREATE POLICY routines_owner ON routines
-      USING (account_id = current_setting('app.current_account_id')::uuid)
-      WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
+      USING (account_id = app_current_account_id())
+      WITH CHECK (account_id = app_current_account_id());
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'habits' AND policyname = 'habits_owner') THEN
     CREATE POLICY habits_owner ON habits
-      USING (account_id = current_setting('app.current_account_id')::uuid)
-      WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
+      USING (account_id = app_current_account_id())
+      WITH CHECK (account_id = app_current_account_id());
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'notes' AND policyname = 'notes_owner') THEN
     CREATE POLICY notes_owner ON notes
-      USING (account_id = current_setting('app.current_account_id')::uuid)
-      WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
+      USING (account_id = app_current_account_id())
+      WITH CHECK (account_id = app_current_account_id());
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'account_settings' AND policyname = 'account_settings_owner') THEN
     CREATE POLICY account_settings_owner ON account_settings
-      USING (account_id = current_setting('app.current_account_id')::uuid)
-      WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
+      USING (account_id = app_current_account_id())
+      WITH CHECK (account_id = app_current_account_id());
   END IF;
 END $$;
