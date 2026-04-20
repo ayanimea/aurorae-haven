@@ -81,6 +81,27 @@ describe('noteOperations ODT export', () => {
     expect(manifestXml).toContain('manifest:full-path="META-INF/manifest.xml"')
   })
 
+  test('supports nested list detection for 4-space and tab indentation', async () => {
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'Mixed Indent Note',
+      '- Parent\n    - Four-space child\n\t- Tab child'
+    )
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain(
+      '<text:list-item><text:p>Parent</text:p><text:list'
+    )
+    expect(contentXml).toContain('<text:p>Four-space child</text:p>')
+    expect(contentXml).toContain('<text:p>Tab child</text:p>')
+  })
+
   test('returns early for invalid ZIP bulk export input', async () => {
     const { downloadedBlobs, mockClick } = setupDownloadMocks()
 

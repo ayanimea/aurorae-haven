@@ -47,6 +47,10 @@ function markdownToOdtElements(markdown) {
   const elements = []
   let inCodeBlock = false
   const listStack = []
+  let listIndentUnit = null
+
+  const getIndentWidth = (indent) =>
+    Array.from(indent).reduce((total, char) => total + (char === '\t' ? 4 : 1), 0)
 
   const openList = (ordered) => {
     elements.push(
@@ -108,7 +112,11 @@ function markdownToOdtElements(markdown) {
 
     const listMatch = line.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/)
     if (listMatch) {
-      const indentLevel = Math.floor(listMatch[1].length / 2) + 1
+      const indentWidth = getIndentWidth(listMatch[1])
+      if (indentWidth > 0 && listIndentUnit === null) {
+        listIndentUnit = indentWidth
+      }
+      const indentLevel = Math.floor(indentWidth / (listIndentUnit || 2)) + 1
       const ordered = /\d+\./.test(listMatch[2])
 
       while (listStack.length > indentLevel) {
@@ -399,12 +407,29 @@ export async function exportAllNotesToOdtZip(notes) {
     return fallbackEntryName
   }
 
-  for (const [index, note] of notes.entries()) {
-    const entryName = getUniqueEntryName(note, index)
-    const odtBlob = await createOdtBlob(note.title, note.content)
+  const zipEntries = notes.map((note, index) => ({
+    note,
+    entryName: getUniqueEntryName(note, index)
+  }))
+  const odtBlobs = new Array(zipEntries.length)
+  const concurrencyLimit = Math.min(4, zipEntries.length)
+  let nextIndex = 0
+
+  const workers = Array.from({ length: concurrencyLimit }, async () => {
+    while (nextIndex < zipEntries.length) {
+      const currentIndex = nextIndex
+      nextIndex += 1
+      const { note } = zipEntries[currentIndex]
+      odtBlobs[currentIndex] = await createOdtBlob(note.title, note.content)
+    }
+  })
+
+  await Promise.all(workers)
+
+  for (const [index, zipEntry] of zipEntries.entries()) {
     zip.file(
-      entryName,
-      odtBlob,
+      zipEntry.entryName,
+      odtBlobs[index],
       { binary: true }
     )
   }
