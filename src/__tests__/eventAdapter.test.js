@@ -95,6 +95,23 @@ describe('eventAdapter', () => {
       expect(rbcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
     })
 
+    it('should accept surrounding whitespace in event times', () => {
+      const event = {
+        id: '3c',
+        title: 'Whitespace Time',
+        day: '2026-02-03',
+        startTime: ' 09:00',
+        endTime: '24:00 ',
+        type: 'routine'
+      }
+
+      const rbcEvent = toRBCEvent(event)
+
+      expect(rbcEvent).toBeTruthy()
+      expect(rbcEvent.start).toEqual(parseISO('2026-02-03T09:00:00'))
+      expect(rbcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
+    })
+
     it('should include preparation and travel time in resource', () => {
       const event = {
         id: '4',
@@ -351,6 +368,24 @@ describe('eventAdapter', () => {
 
       expect(fcEvent).toBeTruthy()
       expect(fcEvent.start).toEqual(parseISO('2026-02-03T22:00:00'))
+      expect(fcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
+      expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-04T00:00:00'))
+    })
+
+    it('should accept surrounding whitespace in FullCalendar time fields', () => {
+      const event = {
+        id: '3c',
+        title: 'Whitespace FullCalendar Time',
+        day: '2026-02-03',
+        startTime: ' 09:00',
+        endTime: '24:00 ',
+        type: 'routine'
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent).toBeTruthy()
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T09:00:00'))
       expect(fcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
       expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-04T00:00:00'))
     })

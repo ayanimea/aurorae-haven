@@ -40,15 +40,17 @@ const toDateAtStartOfDay = (date) => {
  * @returns {Date|null}
  */
 const parseEventTime = (dayDate, timeString, { allowEndOfDay = false } = {}) => {
-  if (timeString === '24:00') {
+  const normalizedTime = typeof timeString === 'string' ? timeString.trim() : ''
+
+  if (normalizedTime === '24:00') {
     return allowEndOfDay ? addDays(dayDate, 1) : null
   }
 
-  if (!EVENT_TIME_PATTERN.test(timeString)) {
+  if (!EVENT_TIME_PATTERN.test(normalizedTime)) {
     return null
   }
 
-  return new Date(dayDate.getTime() + timeToMinutes(timeString) * MILLISECONDS_PER_MINUTE)
+  return new Date(dayDate.getTime() + timeToMinutes(normalizedTime) * MILLISECONDS_PER_MINUTE)
 }
 
 /**
