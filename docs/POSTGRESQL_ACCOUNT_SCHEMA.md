@@ -456,7 +456,7 @@ Current app stores in IndexedDB/local settings map to PostgreSQL entities as fol
 
 ## 8) Comparison with backend `database.md` (issue attachment)
 
-Compared against: backend attachment `database.md` referenced in issue #458.
+Compared against: backend attachment `database.md` shared in the issue/PR discussion thread for this schema work item.
 
 ### What already aligns
 
@@ -482,11 +482,11 @@ Use the backend naming as canonical (`users` / `user_id`) and adapt this draft t
 
 1. DDL,
 2. ORM model names,
-3. API transaction context key (`app.current_*_id`),
+3. API transaction context key (`app.current_account_id` in this draft; rename to `app.current_user_id` only in the same migration that renames schema columns/policies),
 4. RLS policies and test fixtures.
 
 Then add the missing hardening elements to backend schema where relevant:
 
-- **RLS enforcement**: explicitly enable RLS and owner policies on all user-owned tables using `current_setting('app.current_user_id')::uuid`.
+- **RLS enforcement**: explicitly enable RLS and owner policies on all user-owned tables; in this draft predicates use `current_setting('app.current_account_id')::uuid`, and should be renamed to `app.current_user_id` only when the schema naming migration is applied.
 - **MFA at-rest protection**: store encrypted MFA secret + key version metadata (instead of plain secret storage).
 - **Backup integrity metadata**: add account-scoped backup checksum/integrity-tracking fields (or table) if backup records are persisted in PostgreSQL.
