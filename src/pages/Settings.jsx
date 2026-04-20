@@ -599,13 +599,12 @@ function Settings() {
           <p className='settings-placeholder-text'>
             Supported providers: Google, Facebook, and GitHub.
           </p>
-          <div className='settings-auth-provider-grid' role='group' aria-label='Sign-in providers'>
+          <div className='settings-auth-provider-grid'>
             {AUTH_PROVIDERS.map((providerName) => (
               <button type="button"
                 key={providerName}
                 className='settings-button settings-button-auth'
                 onClick={() => handleProviderClick(providerName)}
-                aria-label={`Sign in with ${providerName}`}
               >
                 Sign in with {providerName}
               </button>

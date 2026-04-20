@@ -206,6 +206,9 @@ jobs:
           CI: true
           VITE_BASE_URL: '/aurorae-haven/'
 
+      - name: Verify online web app mode output
+        run: test -f dist/index.html
+
       - name: Verify online web app output
         run: |
           echo "Checking Vite build output..."
@@ -235,12 +238,18 @@ jobs:
         env:
           CI: true
 
+      - name: Verify offline desktop app mode output
+        run: test -f dist-offline-build/index.html
+
       - name: Build Android app mode
         run: |
           echo "📱 Building Android app mode..."
           npm run build:mode:android
         env:
           CI: true
+
+      - name: Verify Android app mode output
+        run: test -f dist-android-web/index.html
 
       - name: Verify all compilation mode outputs
         run: npm run verify:mode-outputs
