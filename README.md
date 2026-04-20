@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-04-20 16:23:16 UTC
-**Source Branch**: feature-account
-**Source Commit**: a07a74b
+**Last Updated**: 2026-04-20 16:34:25 UTC
+**Source Branch**: implement-multiple-compilation-modes
+**Source Commit**: c12f195
 
 ---
 
