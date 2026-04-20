@@ -356,16 +356,16 @@ CREATE POLICY account_settings_owner ON account_settings
 ## 6) Security controls checklist
 
 - Passwords hashed with **Argon2id** and never stored in plain text.
-- If Argon2id is not available in the runtime, fallback is bcrypt with cost >= 12.
+- If Argon2id is not available in the runtime, fallback is bcrypt with cost >= 14.
 - Refresh/session tokens are random opaque values; only token hash is persisted.
 - Cookies for refresh tokens are `HttpOnly`, `Secure`, `SameSite=Lax`.
 - All SQL writes are parameterized (or ORM-generated) to prevent injection.
 - MFA secret uses AES-256-GCM envelope encryption with DEKs wrapped by KMS/HSM-managed KEKs.
-- Encryption keys are rotated on a defined schedule (for example every 90 days) and on incident response.
+- Encryption keys are rotated on a defined schedule (for example every 30-60 days) and on incident response.
 - Auth endpoints are rate-limited and account lockout is enforced.
 - Object storage access uses signed short-lived URLs (no public raw keys).
 - `ON DELETE CASCADE` plus audit events supports account deletion/GDPR flows.
-- Backups are encrypted at rest with AES-256 (or cloud-provider equivalent) and restore-tested at least monthly.
+- Backups are encrypted at rest with AES-256 (or cloud-provider equivalent), with monthly integrity checks and at least quarterly full restore drills.
 
 ## 7) Mapping to current local stores
 
