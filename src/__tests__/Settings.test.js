@@ -3,7 +3,7 @@ import { vi } from 'vitest'
 // Mock react-router-dom (uses src/__mocks__/react-router-dom.js)
 vi.mock('react-router-dom')
 
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Settings from '../pages/Settings'
 import * as autoSaveFS from '../utils/autoSaveFS'
@@ -95,5 +95,22 @@ describe('Settings Component', () => {
   test('component renders without crashing', () => {
     const { container } = render(<Settings />)
     expect(container).toBeTruthy()
+  })
+
+  test('renders sign-in providers and shows integration message on click', () => {
+    render(<Settings />)
+    const googleButton = screen.getByRole('button', { name: /sign in with google/i })
+    expect(googleButton).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /sign in with facebook/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /sign in with github/i })
+    ).toBeInTheDocument()
+
+    fireEvent.click(googleButton)
+    expect(
+      screen.getByText(/configured via backend OAuth endpoints/i)
+    ).toBeInTheDocument()
   })
 })

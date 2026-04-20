@@ -198,17 +198,15 @@ jobs:
           npm_config_prefer_offline: false
           npm_config_audit: false
 
-      - name: Build React PWA with Vite
+      - name: Build online web app mode
         run: |
-          # Always perform a production build in CI to avoid shipping dev-only features.
-          # If dev-mode builds are needed for experimentation, run them locally or in a
-          # separate, non-deploying workflow to ensure they never reach production URLs.
-          npm run build
+          echo "🌐 Building online web app mode..."
+          npm run build:mode:web
         env:
           CI: true
           VITE_BASE_URL: '/aurorae-haven/'
 
-      - name: Verify build output
+      - name: Verify online web app output
         run: |
           echo "Checking Vite build output..."
           if [ ! -d "dist" ]; then
@@ -230,13 +228,22 @@ jobs:
           test -f dist/sw.js && echo "  ✓ sw.js (service worker)"
           test -d dist/assets && echo "  ✓ assets/ directory"
 
-      - name: Create offline package
+      - name: Build offline desktop app mode
         run: |
-          echo "📦 Creating offline package for download..."
-          echo "This will build the app with relative paths for offline use"
-          npm run build:offline
+          echo "💻 Building offline desktop app mode..."
+          npm run build:mode:desktop
         env:
           CI: true
+
+      - name: Build Android app mode
+        run: |
+          echo "📱 Building Android app mode..."
+          npm run build:mode:android
+        env:
+          CI: true
+
+      - name: Verify all compilation mode outputs
+        run: npm run verify:mode-outputs
 
       - name: Upload offline package as artifact
         uses: actions/upload-artifact@v4

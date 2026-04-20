@@ -7,49 +7,7 @@ services:
         VITE_BASE_URL: /aurorae-haven/
     ports:
       - '8080:80'
-    depends_on:
-      - postgres
-      - pgbouncer
-
-  postgres:
-    image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-aurorae_haven}
-      POSTGRES_USER: ${POSTGRES_USER:-aurorae}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/postgresql/init:/docker-entrypoint-initdb.d
-    ports:
-      - '5432:5432'
-
-  pgbouncer:
-    image: edoburu/pgbouncer:1.24.1-p1
-    environment:
-      DB_USER: ${POSTGRES_USER:-aurorae}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
-      DB_HOST: postgres
-      DB_NAME: ${POSTGRES_DB:-aurorae_haven}
-      POOL_MODE: transaction
-      MAX_CLIENT_CONN: 200
-      DEFAULT_POOL_SIZE: 20
-    depends_on:
-      - postgres
-    ports:
-      - '6432:5432'
-
-  db-migrate:
-    image: postgres:16-alpine
-    depends_on:
-      - postgres
-    volumes:
-      - ./database/postgresql/migrations:/migrations:ro
-    entrypoint:
-      - sh
-      - -c
-      - >-
-        until pg_isready -h postgres -p 5432 -U ${POSTGRES_USER:-aurorae}; do echo 'waiting for postgres'; sleep 2; done &&
-        psql "postgresql://${POSTGRES_USER:-aurorae}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-aurorae_haven}" -f /migrations/001_account_schema.sql
-
-volumes:
-  postgres_data:
+      # Frontend build/runtime requirement only.
+      # Backend API and database lifecycle are managed outside this repository.
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}

@@ -7,10 +7,11 @@ This document defines a PostgreSQL schema blueprint for making Aurorae Haven dat
 
 It is a **design reference** for a future server-side migration.
 
-Reference implementation files in this repository:
+Backend ownership note:
 
-- `database/postgresql/init/001_extensions.sql`
-- `database/postgresql/migrations/001_account_schema.sql`
+- This file is a schema/design contract for the backend team.
+- The frontend repository does not manage backend migration execution.
+- Related frontend integration requirements are documented in `docs/BACKEND_REQUIREMENTS.md`.
 
 ## 1) Prerequisites
 

@@ -4,7 +4,7 @@ Aurorae Haven now ships with three explicit build/deployment targets:
 
 1. **Android app mode** (signed-in, packaged from `dist-android-web`)
 2. **Offline desktop mode** (current local-first package)
-3. **Online web mode** (signed-in + PostgreSQL via Docker)
+3. **Online web mode** (signed-in app shell + backend contract)
 
 ## 1) Android app mode (signed-in, local-first)
 
@@ -62,7 +62,8 @@ See: `docs/OFFLINE-DOWNLOAD.md`.
 
 - Builds a production web bundle for hosted deployment.
 - Enables configuration for sign-in with **Google, Facebook, and GitHub**.
-- Provides Docker orchestration for web hosting and PostgreSQL with PgBouncer pooling.
+- Provides Docker orchestration for static web hosting.
+- Documents backend/API requirements instead of managing backend/database infrastructure in this repository.
 
 ### Build and run steps
 
@@ -73,18 +74,14 @@ npm run build:mode:web
 docker compose -f docker-compose.web.yml up --build
 ```
 
-### Database setup
+### Backend and database requirements (provided to backend team)
 
-- Extensions: `database/postgresql/init/001_extensions.sql`
-- Main migration: `database/postgresql/migrations/001_account_schema.sql`
-- Design reference: `docs/POSTGRESQL_ACCOUNT_SCHEMA.md`
+- OAuth sign-in endpoints for Google, Facebook, and GitHub.
+- Session endpoint and secure cookie/token lifecycle.
+- PostgreSQL-backed account storage and migration ownership.
+- API base URL exposed to frontend via `VITE_API_BASE_URL`.
 
-The compose stack includes:
-
-- `postgres` (database)
-- `pgbouncer` (connection pooling)
-- `db-migrate` (migration bootstrap)
-- `web` (Nginx static hosting build)
+Design reference: `docs/POSTGRESQL_ACCOUNT_SCHEMA.md`.
 
 ## Session management and credentials
 
@@ -99,8 +96,8 @@ Required variables are documented in `.env.web.example` and `.env.android.exampl
 ## Cross-mode data compatibility summary
 
 - **Offline desktop**: browser local storage stack (IndexedDB/OPFS/localStorage)
-- **Online web**: PostgreSQL account-scoped schema + session tables
-- **Android**: can run local-first or connect to the same PostgreSQL-backed web API
+- **Online web**: authenticated API contract with backend-managed PostgreSQL storage
+- **Android**: can run local-first or connect to the same backend API contract
 
 Use import/export JSON backups when moving between local and account-backed modes.
 
@@ -109,5 +106,5 @@ Use import/export JSON backups when moving between local and account-backed mode
 - [ ] Android bundle builds: `npm run build:mode:android`
 - [ ] Offline package builds: `npm run build:mode:desktop`
 - [ ] Web bundle builds: `npm run build:mode:web`
-- [ ] PostgreSQL migration applies in Docker compose stack
+- [ ] Backend requirements for OAuth/session/PostgreSQL shared with backend team
 - [ ] OAuth env variables present for Google/Facebook/GitHub

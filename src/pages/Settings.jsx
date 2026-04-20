@@ -24,6 +24,7 @@ import '../assets/styles/settings.css'
 
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
+const AUTH_PROVIDERS = ['Google', 'Facebook', 'GitHub']
 
 function Settings() {
   const [settings, setSettingsState] = useState(getSettings())
@@ -32,6 +33,16 @@ function Settings() {
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [message, setMessage] = useState({ text: '', isError: false })
   const [isConfiguring, setIsConfiguring] = useState(false)
+  const processEnv =
+    typeof process !== 'undefined' && process?.env ? process.env : {}
+  const compileMode =
+    (typeof import.meta !== 'undefined' &&
+      import.meta.env?.AURORAE_COMPILE_MODE) ||
+    processEnv.AURORAE_COMPILE_MODE ||
+    'desktop-offline'
+  const authRequired =
+    ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_AUTH_REQUIRED) ||
+      processEnv.VITE_AUTH_REQUIRED) === 'true'
 
   // Use refs to avoid stale closures
   const settingsRef = useRef(settings)
@@ -274,6 +285,17 @@ function Settings() {
     const days = Math.floor(hours / 24)
     return `${days} day${days !== 1 ? 's' : ''} ago`
   }
+
+  const handleProviderClick = useCallback(
+    (providerName) => {
+      showMessage(
+        `${providerName} sign-in is configured via backend OAuth endpoints (see docs/BACKEND_REQUIREMENTS.md).`,
+        false,
+        4500
+      )
+    },
+    [showMessage]
+  )
 
   return (
     <div className='card'>
@@ -564,6 +586,30 @@ function Settings() {
               <Icon name='library' />
               Open Template Library
             </Link>
+          </div>
+        </div>
+
+        <div className='settings-divider'>
+          <h3 className='settings-section-title'>Sign-In &amp; Account</h3>
+          <p className='settings-placeholder-text'>
+            Current mode: <strong>{compileMode}</strong>. Authentication is{' '}
+            <strong>{authRequired ? 'required' : 'optional'}</strong> in this
+            mode.
+          </p>
+          <p className='settings-placeholder-text'>
+            Supported providers: Google, Facebook, and GitHub.
+          </p>
+          <div className='settings-auth-provider-grid' role='group' aria-label='Sign-in providers'>
+            {AUTH_PROVIDERS.map((providerName) => (
+              <button type="button"
+                key={providerName}
+                className='settings-button settings-button-auth'
+                onClick={() => handleProviderClick(providerName)}
+                aria-label={`Sign in with ${providerName}`}
+              >
+                Sign in with {providerName}
+              </button>
+            ))}
           </div>
         </div>
 
