@@ -64,6 +64,9 @@ try {
 }
 
 function Notes() {
+  const isPrintSupported =
+    typeof window !== 'undefined' && typeof window.print === 'function'
+
   // Use custom hooks for state management
   const {
     notes,
@@ -237,11 +240,7 @@ function Notes() {
   }
 
   const handlePrint = () => {
-    if (
-      !currentNoteId ||
-      typeof window === 'undefined' ||
-      typeof window.print !== 'function'
-    ) {
+    if (!currentNoteId || !isPrintSupported) {
       return
     }
     document.body.classList.add('layout-notes-print')
@@ -353,9 +352,7 @@ function Notes() {
             onExportAllOdt={handleExportAllOdt}
             onExportAllOdtZip={handleExportAllOdtZip}
             onPrint={handlePrint}
-            isPrintSupported={
-              typeof window !== 'undefined' && typeof window.print === 'function'
-            }
+            isPrintSupported={isPrintSupported}
             onDelete={handleDelete}
             onLockToggle={handleToggleLock}
             onShowDetails={() => setShowDetailsModal(true)}

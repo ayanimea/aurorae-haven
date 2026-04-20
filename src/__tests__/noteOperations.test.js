@@ -96,7 +96,7 @@ describe('noteOperations ODT export', () => {
 
     await exportNoteToOdtFile(
       'Invalid\u0001Title',
-      'Safe line\u0000\nAnother\u0002 line'
+      'Safe line\u0000\u0007\u000b\u000e\uD800\n\tAnother\u0002 line'
     )
 
     expect(mockClick).toHaveBeenCalledTimes(1)
@@ -108,9 +108,13 @@ describe('noteOperations ODT export', () => {
     expect(contentXml).not.toContain('\u0000')
     expect(contentXml).not.toContain('\u0001')
     expect(contentXml).not.toContain('\u0002')
+    expect(contentXml).not.toContain('\u0007')
+    expect(contentXml).not.toContain('\u000b')
+    expect(contentXml).not.toContain('\u000e')
+    expect(contentXml).not.toContain('\uD800')
     expect(contentXml).toContain('InvalidTitle')
     expect(contentXml).toContain('Safe line')
-    expect(contentXml).toContain('Another line')
+    expect(contentXml).toContain('\tAnother line')
   })
 
   test('preserves all notes by generating unique ODT names in bulk ZIP', async () => {

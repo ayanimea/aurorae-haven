@@ -11,7 +11,7 @@ const logger = createLogger('NoteOperations')
 const ODT_MIME_TYPE = 'application/vnd.oasis.opendocument.text'
 
 function filterInvalidXmlChars(text) {
-  let filtered = ''
+  const validChars = []
 
   for (const char of String(text)) {
     const codePoint = char.codePointAt(0)
@@ -24,11 +24,11 @@ function filterInvalidXmlChars(text) {
       (codePoint >= 0x10000 && codePoint <= 0x10ffff)
 
     if (isValidXmlChar) {
-      filtered += char
+      validChars.push(char)
     }
   }
 
-  return filtered
+  return validChars.join('')
 }
 
 function escapeXml(text) {
