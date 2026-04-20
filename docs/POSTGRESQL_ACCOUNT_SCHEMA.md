@@ -435,7 +435,7 @@ END $$;
 - Auth endpoints are rate-limited and account lockout is enforced.
 - Object storage access uses signed short-lived URLs (no public raw keys).
 - `ON DELETE CASCADE` plus audit events supports account deletion/GDPR flows.
-- Backups are encrypted at rest with AES-256 (or cloud-provider equivalent), with monthly integrity checks and at least quarterly full restore drills.
+- Backups should be encrypted at rest with AES-256 (or cloud-provider equivalent), with monthly integrity checks and at least quarterly full restore drills.
 - Integrity checks recompute SHA-256 checksums against `checksum_sha256` and update `integrity_*` metadata via scheduled jobs.
 
 ## 7) Mapping to current local stores
