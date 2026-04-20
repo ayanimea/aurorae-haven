@@ -35,15 +35,15 @@ function setupDownloadMocks() {
 }
 
 afterEach(() => {
-  if (originalCreateElement) {
+  if (originalCreateElement !== null) {
     document.createElement = originalCreateElement
     originalCreateElement = null
   }
-  if (originalCreateObjectURL) {
+  if (originalCreateObjectURL !== null) {
     global.URL.createObjectURL = originalCreateObjectURL
     originalCreateObjectURL = null
   }
-  if (originalRevokeObjectURL) {
+  if (originalRevokeObjectURL !== null) {
     global.URL.revokeObjectURL = originalRevokeObjectURL
     originalRevokeObjectURL = null
   }

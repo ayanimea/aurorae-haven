@@ -111,10 +111,6 @@ function markdownToOdtElements(markdown) {
         openList(ordered)
       }
 
-      if (listStack.length === 0) {
-        openList(ordered)
-      }
-
       elements.push(
         `<text:list-item><text:p>${escapeXml(listMatch[3])}</text:p>`
       )
@@ -190,10 +186,16 @@ function downloadBlob(blob, filename) {
   const a = document.createElement('a')
   a.href = url
   a.download = filename
+  document.body.appendChild(a)
   a.click()
   const revokeObjectURL = URL.revokeObjectURL
   setTimeout(() => {
-    revokeObjectURL(url)
+    if (typeof revokeObjectURL === 'function') {
+      revokeObjectURL(url)
+    }
+    if (a.parentNode) {
+      a.parentNode.removeChild(a)
+    }
   }, 250)
 }
 
@@ -374,14 +376,9 @@ export async function exportAllNotesToOdtZip(notes) {
     return fallbackEntryName
   }
 
-  const odtEntries = await Promise.all(
-    notes.map(async (note, index) => ({
-      entryName: getUniqueEntryName(note, index),
-      odtBlob: await createOdtBlob(note.title, note.content)
-    }))
-  )
-
-  for (const { entryName, odtBlob } of odtEntries) {
+  for (const [index, note] of notes.entries()) {
+    const entryName = getUniqueEntryName(note, index)
+    const odtBlob = await createOdtBlob(note.title, note.content)
     zip.file(
       entryName,
       odtBlob,
