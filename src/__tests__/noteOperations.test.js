@@ -53,9 +53,6 @@ afterEach(() => {
     global.URL.revokeObjectURL = originalRevokeObjectURL
     shouldRestoreRevokeObjectURL = false
   }
-  originalCreateElement = null
-  originalCreateObjectURL = null
-  originalRevokeObjectURL = null
 })
 
 describe('noteOperations ODT export', () => {
