@@ -218,7 +218,7 @@ CREATE TABLE note_versions (
 CREATE TABLE brain_dump (
   account_id UUID PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
   content TEXT NOT NULL DEFAULT '',
-  tags TEXT,
+  tags TEXT[] NOT NULL DEFAULT '{}',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -287,6 +287,22 @@ CREATE TABLE account_settings (
   settings JSONB NOT NULL DEFAULT '{}',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE tasks
+  ADD CONSTRAINT tasks_linked_habit_fk
+    FOREIGN KEY (linked_habit_id) REFERENCES habits(id) ON DELETE SET NULL,
+  ADD CONSTRAINT tasks_linked_routine_fk
+    FOREIGN KEY (linked_routine_id) REFERENCES routines(id) ON DELETE SET NULL;
+
+ALTER TABLE schedule_events
+  ADD CONSTRAINT schedule_events_task_fk
+    FOREIGN KEY (linked_task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+  ADD CONSTRAINT schedule_events_routine_fk
+    FOREIGN KEY (linked_routine_id) REFERENCES routines(id) ON DELETE SET NULL,
+  ADD CONSTRAINT schedule_events_habit_fk
+    FOREIGN KEY (linked_habit_id) REFERENCES habits(id) ON DELETE SET NULL,
+  ADD CONSTRAINT schedule_events_calendar_fk
+    FOREIGN KEY (external_calendar_id) REFERENCES calendar_subscriptions(id) ON DELETE SET NULL;
 ```
 
 ## 4) Essential indexes
@@ -355,23 +371,42 @@ CREATE POLICY account_settings_owner ON account_settings
   USING (account_id = current_setting('app.current_account_id')::uuid)
   WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
 
--- Apply this same owner-policy shape to each remaining account-scoped table.
+DO $$
+DECLARE
+  table_name TEXT;
+  scoped_tables TEXT[] := ARRAY[
+    'schedule_events', 'routines', 'routine_steps', 'routine_runs',
+    'habits', 'habit_completions', 'habit_vacation_dates',
+    'note_versions', 'brain_dump', 'stats', 'backups',
+    'templates', 'calendar_subscriptions', 'file_refs'
+  ];
+BEGIN
+  FOREACH table_name IN ARRAY scoped_tables LOOP
+    EXECUTE format(
+      'CREATE POLICY %I ON %I USING (account_id = current_setting(''app.current_account_id'')::uuid) WITH CHECK (account_id = current_setting(''app.current_account_id'')::uuid);',
+      table_name || '_owner',
+      table_name
+    );
+  END LOOP;
+END $$;
 ```
 
 ## 6) Security controls checklist
 
 - Passwords hashed with **Argon2id** and never stored in plain text.
-- If Argon2id is not available in the runtime, fallback is bcrypt with cost >= 15.
 - Refresh/session tokens are random opaque values; only token hash is persisted.
 - Cookies for refresh tokens are `HttpOnly`, `Secure`, `SameSite=Lax`.
 - All SQL writes are parameterized (or ORM-generated) to prevent injection.
 - MFA secret uses AES-256-GCM envelope encryption with DEKs wrapped by KMS/HSM-managed KEKs.
 - Encryption keys are rotated on a defined schedule (for example every 30-60 days) and on incident response.
 - Encrypted records store a key-version value to support rolling rotation and safe decrypt/re-encrypt migrations.
+- Encryption/decryption lives in the auth service layer (never in SQL functions) and uses audited key-access middleware.
+- Re-encryption strategy can be lazy-on-read plus scheduled batch migration while old key versions remain decrypt-only.
 - Auth endpoints are rate-limited and account lockout is enforced.
 - Object storage access uses signed short-lived URLs (no public raw keys).
 - `ON DELETE CASCADE` plus audit events supports account deletion/GDPR flows.
 - Backups are encrypted at rest with AES-256 (or cloud-provider equivalent), with monthly integrity checks and at least quarterly full restore drills.
+- Integrity checks recompute SHA-256 checksums against `checksum_sha256` and update `integrity_*` metadata via scheduled jobs.
 
 ## 7) Mapping to current local stores
 
