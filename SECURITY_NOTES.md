@@ -27,7 +27,8 @@ The previous vulnerability notes referenced transitive issues from `eslint@9.x` 
 - **Linter**: ESLint → [Biome](https://biomejs.dev/) (`@biomejs/biome`)
 - **Test runner**: Jest/Babel → [Vitest](https://vitest.dev/)
 - **Markdown lint**: `markdownlint-cli` → `markdownlint-cli2`
-- **Archive util**: [JSZip](https://stuk.github.io/jszip/) (`jszip`)
+- **Browser ODT/ZIP export**: [JSZip](https://stuk.github.io/jszip/) (`jszip`)
+  (`adm-zip` remains in use for offline build packaging in `scripts/create-offline-package.js`)
 
 These migrations resolved all previously documented vulnerabilities.
 
