@@ -186,13 +186,13 @@ function downloadBlob(blob, filename) {
   const a = document.createElement('a')
   a.href = url
   a.download = filename
+  a.setAttribute('aria-hidden', 'true')
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
-  const revokeObjectURL = URL.revokeObjectURL
   setTimeout(() => {
-    if (typeof revokeObjectURL === 'function') {
-      revokeObjectURL(url)
+    if (typeof URL.revokeObjectURL === 'function') {
+      URL.revokeObjectURL(url)
     }
   }, 250)
 }
