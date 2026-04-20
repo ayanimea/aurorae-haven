@@ -33,13 +33,19 @@ CREATE TABLE accounts (
   locked_until TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (provider, provider_id)
+  UNIQUE (provider, provider_id),
+  CHECK (
+    mfa_enabled = false OR (
+      mfa_secret_encrypted IS NOT NULL AND
+      mfa_key_version IS NOT NULL
+    )
+  )
 );
 
 CREATE TABLE sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  token_hash TEXT NOT NULL UNIQUE, -- SHA-256(refresh token)
+  token_hash TEXT NOT NULL UNIQUE, -- HMAC-SHA256(refresh token)
   user_agent TEXT,
   ip_address INET,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -81,7 +87,14 @@ CREATE TABLE tasks (
   title TEXT NOT NULL,
   description TEXT,
   status TEXT NOT NULL DEFAULT 'pending',
-  quadrant TEXT,
+  quadrant TEXT CHECK (
+    quadrant IN (
+      'urgent_important',
+      'urgent_not_important',
+      'not_urgent_important',
+      'not_urgent_not_important'
+    )
+  ),
   is_important BOOLEAN NOT NULL DEFAULT false,
   priority SMALLINT,
   tags TEXT[],
@@ -97,7 +110,9 @@ CREATE TABLE schedule_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
-  type TEXT NOT NULL DEFAULT 'task',
+  type TEXT NOT NULL DEFAULT 'task' CHECK (
+    type IN ('task', 'routine', 'habit', 'break', 'meeting', 'custom')
+  ),
   day DATE NOT NULL,
   start_time TIME,
   end_time TIME,
@@ -225,7 +240,15 @@ CREATE TABLE brain_dump (
 CREATE TABLE stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (
+    type IN (
+      'habit_completion',
+      'routine_run',
+      'task_done',
+      'schedule_event',
+      'note_update'
+    )
+  ),
   date DATE,
   value NUMERIC,
   metadata JSONB,
@@ -247,7 +270,7 @@ CREATE TABLE backups (
 CREATE TABLE templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('task', 'routine', 'habit', 'note')),
   title TEXT NOT NULL,
   data JSONB NOT NULL,
   version TEXT NOT NULL DEFAULT '1.0',
@@ -264,7 +287,9 @@ CREATE TABLE calendar_subscriptions (
   color TEXT,
   enabled BOOLEAN NOT NULL DEFAULT true,
   last_synced_at TIMESTAMPTZ,
-  sync_status TEXT NOT NULL DEFAULT 'pending',
+  sync_status TEXT NOT NULL DEFAULT 'pending' CHECK (
+    sync_status IN ('pending', 'syncing', 'success', 'failed')
+  ),
   metadata JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -273,7 +298,9 @@ CREATE TABLE calendar_subscriptions (
 CREATE TABLE file_refs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  entity_type TEXT NOT NULL,
+  entity_type TEXT NOT NULL CHECK (
+    entity_type IN ('note', 'task', 'habit', 'routine', 'schedule_event', 'other')
+  ),
   entity_id UUID NOT NULL,
   filename TEXT NOT NULL,
   mime_type TEXT,
@@ -338,6 +365,9 @@ The API sets the account context per transaction:
 SET LOCAL app.current_account_id = '<account-uuid>';
 ```
 
+The API must only set this value after validating that the authenticated session
+belongs to the same `account_id` (preventing privilege escalation via forged context).
+
 Enable RLS and apply per-table owner policies:
 
 ```sql
@@ -398,7 +428,7 @@ END $$;
 - Cookies for refresh tokens are `HttpOnly`, `Secure`, `SameSite=Lax`.
 - All SQL writes are parameterized (or ORM-generated) to prevent injection.
 - MFA secret uses AES-256-GCM envelope encryption with DEKs wrapped by KMS/HSM-managed KEKs.
-- Encryption keys are rotated on a defined schedule (for example every 30-60 days) and on incident response.
+- Encryption keys are rotated every 45 days (or immediately on incident response).
 - Encrypted records store a key-version value to support rolling rotation and safe decrypt/re-encrypt migrations.
 - Encryption/decryption lives in the auth service layer (never in SQL functions) and uses audited key-access middleware.
 - Re-encryption strategy can be lazy-on-read plus scheduled batch migration while old key versions remain decrypt-only.
