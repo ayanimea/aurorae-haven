@@ -10,8 +10,29 @@ import { createLogger } from '../logger'
 const logger = createLogger('NoteOperations')
 const ODT_MIME_TYPE = 'application/vnd.oasis.opendocument.text'
 
+function filterInvalidXmlChars(text) {
+  let filtered = ''
+
+  for (const char of String(text)) {
+    const codePoint = char.codePointAt(0)
+    const isValidXmlChar =
+      codePoint === 0x9 ||
+      codePoint === 0xa ||
+      codePoint === 0xd ||
+      (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+      (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+      (codePoint >= 0x10000 && codePoint <= 0x10ffff)
+
+    if (isValidXmlChar) {
+      filtered += char
+    }
+  }
+
+  return filtered
+}
+
 function escapeXml(text) {
-  return String(text)
+  return filterInvalidXmlChars(text)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -319,11 +340,12 @@ export async function exportNoteToOdtFile(title, content) {
 }
 
 /**
- * Export all notes as individual ODT files
+ * Export all notes as ODT content using a single browser download.
+ * For multiple notes, bulk export is delivered as a ZIP archive.
  * @param {Array} notes - Notes to export
  * @returns {Promise<void>}
  */
-export async function exportAllNotesToOdtFiles(notes) {
+export async function exportAllNotesToSingleOdtDownload(notes) {
   if (!Array.isArray(notes) || notes.length === 0) return
 
   if (notes.length === 1) {

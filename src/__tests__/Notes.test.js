@@ -787,7 +787,7 @@ describe('Notes Component', () => {
 
         render(<Notes />)
         await waitFor(() => {
-          expect(screen.getByLabelText('Print')).toBeEnabled()
+          expect(screen.getByLabelText('Print')).toBeDisabled()
         })
 
         expect(() => {

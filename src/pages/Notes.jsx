@@ -13,7 +13,7 @@ import {
   deleteNote as deleteNoteUtil,
   exportNoteToFile,
   exportNoteToOdtFile,
-  exportAllNotesToOdtFiles,
+  exportAllNotesToSingleOdtDownload,
   exportAllNotesToOdtZip
 } from '../utils/notes/noteOperations'
 import NoteDetailsModal from '../components/Notes/NoteDetailsModal'
@@ -237,7 +237,13 @@ function Notes() {
   }
 
   const handlePrint = () => {
-    if (!currentNoteId || typeof window.print !== 'function') return
+    if (
+      !currentNoteId ||
+      typeof window === 'undefined' ||
+      typeof window.print !== 'function'
+    ) {
+      return
+    }
     document.body.classList.add('layout-notes-print')
     window.print()
   }
@@ -256,7 +262,7 @@ function Notes() {
   const handleExportAllOdt = async () => {
     if (notes.length === 0) return
     try {
-      await exportAllNotesToOdtFiles(notes)
+      await exportAllNotesToSingleOdtDownload(notes)
       showToastNotification('✓ All notes exported as ODT (single download)')
     } catch (error) {
       logger.error('Failed to export all notes as ODT files', error)
@@ -347,6 +353,9 @@ function Notes() {
             onExportAllOdt={handleExportAllOdt}
             onExportAllOdtZip={handleExportAllOdtZip}
             onPrint={handlePrint}
+            isPrintSupported={
+              typeof window !== 'undefined' && typeof window.print === 'function'
+            }
             onDelete={handleDelete}
             onLockToggle={handleToggleLock}
             onShowDetails={() => setShowDetailsModal(true)}

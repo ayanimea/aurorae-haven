@@ -91,6 +91,28 @@ describe('noteOperations ODT export', () => {
     expect(downloadedBlobs).toHaveLength(0)
   })
 
+  test('removes XML 1.0-invalid control characters from exported ODT content', async () => {
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'Invalid\u0001Title',
+      'Safe line\u0000\nAnother\u0002 line'
+    )
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).not.toContain('\u0000')
+    expect(contentXml).not.toContain('\u0001')
+    expect(contentXml).not.toContain('\u0002')
+    expect(contentXml).toContain('InvalidTitle')
+    expect(contentXml).toContain('Safe line')
+    expect(contentXml).toContain('Another line')
+  })
+
   test('preserves all notes by generating unique ODT names in bulk ZIP', async () => {
     const { downloadedBlobs, mockClick } = setupDownloadMocks()
 

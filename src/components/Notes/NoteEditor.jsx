@@ -33,6 +33,7 @@ function NoteEditor({
   onExportAllOdt,
   onExportAllOdtZip,
   onPrint,
+  isPrintSupported,
   onDelete,
   onLockToggle,
   onShowDetails
@@ -197,7 +198,7 @@ function NoteEditor({
             onClick={onPrint}
             aria-label='Print'
             title='Print'
-            disabled={!currentNoteId}
+            disabled={!currentNoteId || !isPrintSupported}
           >
             <Icon name='print' />
           </button>
@@ -342,6 +343,7 @@ NoteEditor.propTypes = {
   onExportAllOdt: PropTypes.func.isRequired,
   onExportAllOdtZip: PropTypes.func.isRequired,
   onPrint: PropTypes.func.isRequired,
+  isPrintSupported: PropTypes.bool.isRequired,
   onDelete: PropTypes.func.isRequired,
   onLockToggle: PropTypes.func.isRequired,
   onShowDetails: PropTypes.func.isRequired
