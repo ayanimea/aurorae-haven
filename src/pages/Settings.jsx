@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
@@ -44,7 +44,10 @@ function Settings() {
   const authRequired =
     ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_AUTH_REQUIRED) ||
       processEnv.VITE_AUTH_REQUIRED) === 'true'
-  const authProviders = authRequired ? AUTH_PROVIDERS : []
+  const authProviders = useMemo(
+    () => (authRequired ? AUTH_PROVIDERS : []),
+    [authRequired]
+  )
 
   // Use refs to avoid stale closures
   const settingsRef = useRef(settings)
@@ -298,6 +301,14 @@ function Settings() {
     },
     [showMessage]
   )
+
+  const handleAuthEntryClick = useCallback(() => {
+    showMessage(
+      'Sign-in and sign-up are configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md).',
+      false,
+      4500
+    )
+  }, [showMessage])
 
   return (
     <div className='card'>
@@ -607,7 +618,7 @@ function Settings() {
                 <button
                   type='button'
                   className='settings-button settings-button-primary'
-                  onClick={() => handleProviderClick('Sign in / Sign up')}
+                  onClick={handleAuthEntryClick}
                 >
                   Sign in / Sign up
                 </button>

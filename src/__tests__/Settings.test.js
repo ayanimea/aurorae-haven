@@ -60,7 +60,7 @@ vi.mock('../utils/importData', () => ({
 }))
 
 describe('Settings Component', () => {
-  const originalCompileMode = process.env.AURORAE_COMPILE_MODE
+  const originalAuroraeCompileMode = process.env.AURORAE_COMPILE_MODE
   const originalViteCompileMode = process.env.VITE_COMPILE_MODE
   const originalAuthRequired = process.env.VITE_AUTH_REQUIRED
 
@@ -71,9 +71,9 @@ describe('Settings Component', () => {
     process.env.VITE_AUTH_REQUIRED = 'false'
   })
 
-  afterAll(() => {
+  afterEach(() => {
     process.env.VITE_COMPILE_MODE = originalViteCompileMode
-    process.env.AURORAE_COMPILE_MODE = originalCompileMode
+    process.env.AURORAE_COMPILE_MODE = originalAuroraeCompileMode
     process.env.VITE_AUTH_REQUIRED = originalAuthRequired
   })
 
@@ -133,6 +133,30 @@ describe('Settings Component', () => {
     fireEvent.click(googleButton)
     expect(
       screen.getByText(/configured via backend auth endpoints/i)
+    ).toBeInTheDocument()
+  })
+
+  test('shows sign-in unavailable message in offline mode', () => {
+    render(<Settings />)
+
+    expect(
+      screen.getByText(/sign-in and sign-up are unavailable in offline mode/i)
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /sign in \/ sign up/i })
+    ).not.toBeInTheDocument()
+  })
+
+  test('shows integration message when sign-in/sign-up button is clicked', () => {
+    process.env.VITE_COMPILE_MODE = 'web-online'
+    process.env.AURORAE_COMPILE_MODE = 'web-online'
+    process.env.VITE_AUTH_REQUIRED = 'true'
+
+    render(<Settings />)
+    fireEvent.click(screen.getByRole('button', { name: /sign in \/ sign up/i }))
+
+    expect(
+      screen.getByText(/sign-in and sign-up are configured via backend auth endpoints/i)
     ).toBeInTheDocument()
   })
 })
