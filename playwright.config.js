@@ -83,7 +83,9 @@ export default defineConfig({
     // separate manual build step.
     command: 'npm run build && npm run preview',
     url: BASE_URL,
-    reuseExistingServer: true,
+    // Reuse locally for convenience, but force a fresh build in CI so tests
+    // cannot run against stale dist/ output from a previously running server.
+    reuseExistingServer: !process.env.CI,
     timeout: 120000
   }
 })
