@@ -399,7 +399,7 @@ function LibrarySelector({ onSelectTemplate }) {
             borderRadius: '12px',
             padding: '12px 16px',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-            zIndex: 1000
+            zIndex: 300 /* --z-toast */
           }}
         >
           {toastMessage}

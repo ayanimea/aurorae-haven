@@ -34,7 +34,10 @@
   font-size: 0.95rem;
   padding: 0.75rem 1rem;
   min-height: 48px;
-  transition: all var(--dur) var(--ease);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-bottom-color var(--dur) var(--ease);
   white-space: nowrap;
 }
 
@@ -153,7 +156,11 @@
   border-radius: 6px;
   text-decoration: none;
   font-weight: 500;
-  transition: all var(--dur) var(--ease);
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
   cursor: pointer;
   border: none;
   font-size: 0.95rem;
@@ -161,7 +168,7 @@
 
 .help-btn-primary {
   background: linear-gradient(135deg, var(--mint), #5ac7ff);
-  color: #0a0f24;
+  color: var(--paper);
 }
 
 .help-btn-primary:hover {
@@ -229,5 +236,11 @@
   .help-btn-secondary {
     padding: 0.6rem 1rem;
     font-size: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-help {
+    transition: none;
   }
 }

@@ -5,8 +5,8 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Routine High-Priority Features', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the app
-    await page.goto('/')
+    // Navigate to the app (relative path resolves against Playwright baseURL)
+    await page.goto('.')
     await page.waitForLoadState('networkidle')
   })
 
@@ -182,7 +182,7 @@ test.describe('Routine High-Priority Features', () => {
     // Test that the app detects reduced motion preference
     // Set reduced motion preference via CDP
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/')
+    await page.goto('.')
     await page.waitForLoadState('networkidle')
 
     // Navigate to a page with animations

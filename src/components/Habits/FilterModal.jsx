@@ -6,7 +6,12 @@ import { CATEGORY_OPTIONS } from '../../utils/habitCategories'
  * FilterModal - Filter habits by category, status, and other criteria
  * TAB-HAB-04: Filter by Type, Category, Tags, Status
  */
-function FilterModal({ isOpen, currentFilters, onApply, onClose }) {
+function FilterModal({
+  isOpen,
+  currentFilters = { categories: [], status: 'all' },
+  onApply,
+  onClose
+}) {
   const [localFilters, setLocalFilters] = useState(() => ({
     categories: currentFilters?.categories || [],
     status: currentFilters?.status || 'all'
@@ -71,7 +76,7 @@ function FilterModal({ isOpen, currentFilters, onApply, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
+        zIndex: 200 /* --z-modal */
       }}
       role='presentation'
     >
@@ -189,21 +194,24 @@ function FilterModal({ isOpen, currentFilters, onApply, onClose }) {
             marginTop: '1.5rem'
           }}
         >
-          <button type="button"
+          <button
+            type='button'
             className='btn-outline'
             onClick={handleReset}
             style={{ padding: '0.5rem 1rem' }}
           >
             Reset
           </button>
-          <button type="button"
+          <button
+            type='button'
             className='btn-outline'
             onClick={onClose}
             style={{ padding: '0.5rem 1rem' }}
           >
             Cancel
           </button>
-          <button type="button"
+          <button
+            type='button'
             className='btn-primary'
             onClick={handleApply}
             style={{ padding: '0.5rem 1rem' }}
@@ -221,13 +229,6 @@ FilterModal.propTypes = {
   currentFilters: PropTypes.object,
   onApply: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired
-}
-
-FilterModal.defaultProps = {
-  currentFilters: {
-    categories: [],
-    status: 'all'
-  }
 }
 
 export default FilterModal

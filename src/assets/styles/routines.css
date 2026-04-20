@@ -20,7 +20,7 @@
   left: 0;
   top: 0;
   height: 100%;
-  background: linear-gradient(90deg, #8ec8ff, #86f5e0);
+  background: linear-gradient(90deg, var(--sky), var(--mint));
   transition: width 0.3s ease;
 }
 
@@ -44,7 +44,7 @@
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px;
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -83,7 +83,7 @@
   gap: 14px;
 }
 .routine-card {
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 14px;
@@ -128,20 +128,18 @@
   margin-top: 4px;
 }
 .btn-primary {
-  background: linear-gradient(
-    135deg,
-    rgba(142, 200, 255, 0.25),
-    rgba(134, 245, 224, 0.2)
-  );
-  border: 1px solid rgba(142, 200, 255, 0.35);
+  background:
+    linear-gradient(
+      180deg,
+      var(--glass-accent-top) 0%,
+      var(--glass-accent-bg) 100%
+    );
+  border: 1px solid var(--nav-active-border);
+  color: var(--mint);
 }
 .btn-primary:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(142, 200, 255, 0.3),
-    rgba(134, 245, 224, 0.25)
-  );
-  transform: translateY(-1px);
+  transform: translateY(-0.5px);
+  box-shadow: var(--nav-active-glow);
 }
 .btn-menu {
   display: inline-flex;
@@ -151,15 +149,15 @@
   height: 36px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: rgba(16, 20, 44, 0.28);
+  background: var(--glass-bg);
   cursor: pointer;
   transition:
     transform 0.2s ease,
-    filter 0.2s ease;
+    box-shadow 0.2s ease;
 }
 .btn-menu:hover {
-  filter: brightness(1.1);
   transform: translateY(-1px);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 /* Empty state for routine library */
@@ -188,17 +186,423 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-.details-list {
-  display: grid;
+
+/* ===== Figma Gamified Routine Sequence ===== */
+
+/* Compact toolbar */
+.rseq-toolbar {
+  display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 14px;
 }
-.detail-row {
+
+/* Wrapper for the full running sequence view */
+.rseq-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Stats Bar ── */
+.rseq-stats-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  gap: 16px;
+}
+
+.rseq-routine-title {
+  font-size: 1.6rem;
+  font-weight: 300;
+  margin: 0 0 2px;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.rseq-routine-subtitle {
+  font-size: 0.9rem;
+  color: var(--dim);
+  margin: 0;
+}
+
+.rseq-stats-badges {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.rseq-stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.rseq-stat-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--sky);
+  flex-shrink: 0;
+}
+
+.rseq-stat-icon--xp {
+  color: #f59e0b;
+}
+
+.rseq-stat-value {
+  font-size: 1.35rem;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.rseq-stat-label {
+  font-size: 0.8rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* ── Overall Progress ── */
+.rseq-overall-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rseq-progress-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rseq-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #a855f7, #ec4899);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
+}
+
+.rseq-step-count {
+  font-size: 0.875rem;
+  color: var(--dim);
+  margin: 0;
+}
+
+/* ── Triptych ── */
+.rseq-triptych {
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.rseq-card {
+  border-radius: 20px;
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.025);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rseq-card--dim {
+  opacity: 0.6;
+}
+
+.rseq-card--current {
+  border-width: 2px;
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.03);
+  align-items: center;
+  text-align: center;
+}
+
+.rseq-card-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+
+.rseq-card-title {
+  font-size: 1.1rem;
+  font-weight: 300;
+  color: var(--ink);
+}
+
+.rseq-current-status {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.rseq-current-title {
+  font-size: 1.4rem;
+}
+
+.rseq-completed-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: rgba(74, 222, 128, 0.7);
+  margin-top: 4px;
+}
+
+.rseq-completed-badge.rseq-completed-badge--skipped {
+  color: rgba(251, 146, 60, 0.8);
+}
+
+.rseq-completed-badge svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.rseq-next-duration {
+  font-size: 0.95rem;
+  color: var(--dim);
+}
+
+/* ── Circular Timer ── */
+.rseq-timer-wrap {
+  position: relative;
+  width: 192px;
+  height: 192px;
+  flex-shrink: 0;
+  margin: 10px 0;
+}
+
+.rseq-timer-svg {
+  width: 192px;
+  height: 192px;
+}
+
+.rseq-timer-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.rseq-timer-digits {
+  font-size: 2.6rem;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.rseq-timer-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+
+/* ── Controls ── */
+.rseq-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.rseq-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.1s;
+}
+
+.rseq-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rseq-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.rseq-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rseq-btn--danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: rgba(239, 68, 68, 0.8);
+}
+
+.rseq-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ── All Steps Grid ── */
+.rseq-steps-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.rseq-step-card {
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: box-shadow 0.2s;
+}
+
+.rseq-step-card--current {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rseq-step-card--done {
+  opacity: 0.7;
+}
+
+.rseq-step-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.rseq-step-card-title {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.rseq-step-card-duration {
+  font-size: 0.875rem;
+  color: var(--dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rseq-step-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+}
+
+.rseq-step-status svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.rseq-step-status--done {
+  color: rgba(74, 222, 128, 0.65);
+}
+
+.rseq-step-status--skipped {
+  color: rgba(251, 146, 60, 0.75);
+  opacity: 0.9;
+}
+
+.rseq-step-status--pending {
+  color: var(--dim);
+  opacity: 0.7;
+}
+
+.rseq-step-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rseq-step-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ── Routines List (idle state) ── */
+.rseq-routines-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rseq-routine-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  background: var(--glass-bg);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.rseq-routine-row:hover {
+  background: var(--glass-hi);
+  border-color: rgba(142, 200, 255, 0.2);
+}
+
+.rseq-routine-row-info {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.rseq-routine-row-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.rseq-routine-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
 }
 
 /* ===== Mobile/Tablet Responsiveness ===== */
@@ -214,7 +618,7 @@
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--line);
     padding: 12px;
-    z-index: 100;
+    z-index: var(--z-sidebar);
     display: flex;
     gap: 8px;
     justify-content: space-around;
@@ -260,6 +664,31 @@
 
   .routine-toolbar button {
     width: 100%;
+  }
+
+  /* Figma sequence mobile — stats bar stacks */
+  .rseq-stats-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .rseq-card--current {
+    padding: 18px 14px;
+  }
+
+  .rseq-timer-wrap {
+    width: 160px;
+    height: 160px;
+  }
+
+  .rseq-timer-svg {
+    width: 160px;
+    height: 160px;
+  }
+
+  .rseq-timer-digits {
+    font-size: 2rem;
   }
 }
 
@@ -382,5 +811,62 @@
 
   .panel.dim .step-meta {
     display: none;
+  }
+
+  /* Figma sequence small phone */
+  .rseq-steps-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Figma ZIP: hide Previous/Next step cards below lg (1024px) ─────────── */
+@media (max-width: 1023px) {
+  .rseq-card--dim {
+    display: none;
+  }
+
+  .rseq-triptych {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Figma ZIP: 2-column steps grid on small tablets (640px–1023px) ──────── */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .rseq-steps-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ── Figma ZIP: icon-only controls + stretched badges below sm (640px) ───── */
+@media (max-width: 639px) {
+  .rseq-btn-label {
+    display: none;
+  }
+
+  /* Keep touch target large while showing only icon */
+  .rseq-btn {
+    min-width: 44px;
+    justify-content: center;
+    padding: 10px 12px;
+  }
+
+  /* Stretch stat badges across full width */
+  .rseq-stats-badges {
+    width: 100%;
+  }
+
+  .rseq-stat-badge {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routine-progress-bar,
+  .panel,
+  .btn-menu,
+  .rseq-progress-fill,
+  .rseq-step-progress-fill {
+    transition: none;
   }
 }

@@ -26,8 +26,8 @@ The offline package is automatically generated and uploaded to multiple location
 
 **Access**:
 
-- Branch: <https://github.com/aurorae-haven/aurorae-haven/tree/offline-releases>
-- Direct download (tar.gz): [https://github.com/aurorae-haven/aurorae-haven/raw/offline-releases/aurorae-haven-offline-v${VERSION}.tar.gz](https://github.com/aurorae-haven/aurorae-haven/raw/offline-releases/aurorae-haven-offline-v${VERSION}.tar.gz)
+- Branch: <https://github.com/ayanimea/aurorae-haven/tree/offline-releases>
+- Direct download (tar.gz): [https://github.com/ayanimea/aurorae-haven/raw/offline-releases/aurorae-haven-offline-v${VERSION}.tar.gz](https://github.com/ayanimea/aurorae-haven/raw/offline-releases/aurorae-haven-offline-v${VERSION}.tar.gz)
 
 **Benefits**:
 
@@ -59,7 +59,7 @@ The offline package is automatically generated and uploaded to multiple location
 
 **Access**:
 
-- Releases page: <https://github.com/aurorae-haven/aurorae-haven/releases>
+- Releases page: <https://github.com/ayanimea/aurorae-haven/releases>
 
 **Benefits**:
 
@@ -154,7 +154,7 @@ Click on the \`.tar.gz\` file above to download the latest offline package.
 3. **Serve** with a local web server (required for ES modules)
 4. **Open** \`http://localhost:8000\` in your browser
 
-✨ **Full documentation**: [Offline Download Guide](https://github.com/aurorae-haven/aurorae-haven/blob/main/docs/OFFLINE-DOWNLOAD.md)
+✨ **Full documentation**: [Offline Download Guide](https://github.com/ayanimea/aurorae-haven/blob/main/docs/OFFLINE-DOWNLOAD.md)
 
 ---
 
@@ -173,7 +173,7 @@ cat > index.html <<EOF
   <p>
     <a href="package.tar.gz" download>Click here to download the latest offline package (tar.gz)</a>
   </p>
-  <p><a href="https://github.com/aurorae-haven/aurorae-haven/blob/main/docs/OFFLINE-DOWNLOAD.md">Installation Instructions</a></p>
+  <p><a href="https://github.com/ayanimea/aurorae-haven/blob/main/docs/OFFLINE-DOWNLOAD.md">Installation Instructions</a></p>
 </body>
 </html>
 EOF
@@ -218,7 +218,7 @@ The release workflow uses `softprops/action-gh-release@v2`:
 VERSION="1.0.0"  # Replace with actual version
 
 # From offline-releases branch
-wget https://github.com/aurorae-haven/aurorae-haven/raw/offline-releases/aurorae-haven-offline-v${VERSION}.tar.gz
+wget https://github.com/ayanimea/aurorae-haven/raw/offline-releases/aurorae-haven-offline-v${VERSION}.tar.gz
 
 # Extract
 tar -xzf aurorae-haven-offline-v${VERSION}.tar.gz
@@ -233,7 +233,7 @@ python3 -m http.server 8000
 
 **Download stable release:**
 
-1. Visit <https://github.com/aurorae-haven/aurorae-haven/releases>
+1. Visit <https://github.com/ayanimea/aurorae-haven/releases>
 2. Click on the latest release
 3. Download the `.tar.gz` file under "Assets"
 
@@ -358,17 +358,17 @@ When modifying the workflows:
 
 **Check upload success**:
 
-- Visit <https://github.com/aurorae-haven/aurorae-haven/tree/offline-releases>
+- Visit <https://github.com/ayanimea/aurorae-haven/tree/offline-releases>
 - Verify package exists and timestamp is recent
 
 **Check releases**:
 
-- Visit <https://github.com/aurorae-haven/aurorae-haven/releases>
+- Visit <https://github.com/ayanimea/aurorae-haven/releases>
 - Verify releases have attached assets
 
 **Check artifacts**:
 
-- Visit <https://github.com/aurorae-haven/aurorae-haven/actions>
+- Visit <https://github.com/ayanimea/aurorae-haven/actions>
 - Click on recent workflow run
 - Verify "AuroraeHaven" artifact exists (automatically zipped by GitHub Actions)
 

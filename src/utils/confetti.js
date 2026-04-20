@@ -14,20 +14,27 @@ import confetti from 'canvas-confetti'
 export function triggerConfetti({ reducedMotion = false } = {}) {
   if (reducedMotion) {
     // TAB-HAB-41: Static celebratory outline for reduced motion users
+    // Read palette from CSS custom properties so the celebration matches the theme
+    const style = getComputedStyle(document.documentElement)
+    const mint = style.getPropertyValue('--mint').trim() || '#86f5e0'
+    const paper = style.getPropertyValue('--paper').trim() || '#0e1117'
+    const zCelebration = style.getPropertyValue('--z-celebration').trim() || '9000'
+
     const celebrationDiv = document.createElement('div')
+    const accentBlue = style.getPropertyValue('--accent-blue').trim() || '#4a7dff'
     celebrationDiv.style.cssText = `
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       padding: 2rem 3rem;
-      background: linear-gradient(135deg, #86f5e0 0%, #4a7dff 100%);
+      background: linear-gradient(135deg, ${mint} 0%, ${accentBlue} 100%);
       border-radius: 16px;
-      box-shadow: 0 0 0 4px #86f5e0, 0 0 40px rgba(134, 245, 224, 0.5);
-      color: #0e1117;
+      box-shadow: 0 0 0 4px var(--mint), 0 0 40px color-mix(in srgb, var(--mint) 50%, transparent);
+      color: ${paper};
       font-size: 2rem;
       font-weight: bold;
-      z-index: 10000;
+      z-index: ${zCelebration};
       pointer-events: none;
     `
     celebrationDiv.textContent = '🎉 Milestone!'
@@ -40,7 +47,14 @@ export function triggerConfetti({ reducedMotion = false } = {}) {
   }
 
   // Full animation using canvas-confetti library
-  const colors = ['#86f5e0', '#4a7dff', '#ff6b6b', '#ffd93d', '#a78bfa']
+  // Read theme tokens so confetti uses the live palette
+  const style = getComputedStyle(document.documentElement)
+  const mint = style.getPropertyValue('--mint').trim() || '#86f5e0'
+  const error = style.getPropertyValue('--error').trim() || '#ff6b6b'
+  const accentBlue = style.getPropertyValue('--accent-blue').trim() || '#4a7dff'
+  const gold = style.getPropertyValue('--gold').trim() || '#ffd700'
+  const lavender = style.getPropertyValue('--lavender').trim() || '#a78bfa'
+  const colors = [mint, accentBlue, error, gold, lavender]
 
   confetti({
     particleCount: 50,

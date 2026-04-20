@@ -11,7 +11,10 @@ import {
   createNoteFromImport,
   toggleNoteLock,
   deleteNote as deleteNoteUtil,
-  exportNoteToFile
+  exportNoteToFile,
+  exportNoteToOdtFile,
+  exportAllNotesToSingleOdtDownload,
+  exportAllNotesToOdtZip
 } from '../utils/notes/noteOperations'
 import NoteDetailsModal from '../components/Notes/NoteDetailsModal'
 import HelpModal from '../components/Notes/HelpModal'
@@ -61,6 +64,9 @@ try {
 }
 
 function Notes() {
+  const isPrintSupported =
+    typeof window !== 'undefined' && typeof window.print === 'function'
+
   // Use custom hooks for state management
   const {
     notes,
@@ -98,6 +104,24 @@ function Notes() {
   // Configure sanitization on mount
   useEffect(() => {
     configureSanitization(DOMPurify)
+  }, [])
+
+  useEffect(() => {
+    const enablePrintLayout = () => {
+      document.body.classList.add('layout-notes-print')
+    }
+    const disablePrintLayout = () => {
+      document.body.classList.remove('layout-notes-print')
+    }
+
+    window.addEventListener('beforeprint', enablePrintLayout)
+    window.addEventListener('afterprint', disablePrintLayout)
+
+    return () => {
+      window.removeEventListener('beforeprint', enablePrintLayout)
+      window.removeEventListener('afterprint', disablePrintLayout)
+      disablePrintLayout()
+    }
   }, [])
 
   // Render preview whenever content changes
@@ -215,6 +239,47 @@ function Notes() {
     }
   }
 
+  const handlePrint = () => {
+    if (!currentNoteId || !isPrintSupported) {
+      return
+    }
+    document.body.classList.add('layout-notes-print')
+    window.print()
+  }
+
+  const handleExportOdt = async () => {
+    if (!currentNoteId) return
+    try {
+      await exportNoteToOdtFile(title, content)
+      showToastNotification('✓ Note exported as ODT')
+    } catch (error) {
+      logger.error('Failed to export note as ODT', error)
+      showToastNotification('⚠️ ODT export failed.')
+    }
+  }
+
+  const handleExportAllOdt = async () => {
+    if (notes.length === 0) return
+    try {
+      await exportAllNotesToSingleOdtDownload(notes)
+      showToastNotification('✓ All notes exported as ODT (single download)')
+    } catch (error) {
+      logger.error('Failed to export all notes as ODT files', error)
+      showToastNotification('⚠️ ODT export failed.')
+    }
+  }
+
+  const handleExportAllOdtZip = async () => {
+    if (notes.length === 0) return
+    try {
+      await exportAllNotesToOdtZip(notes)
+      showToastNotification('✓ All notes exported as ODT ZIP')
+    } catch (error) {
+      logger.error('Failed to export all notes as ODT ZIP', error)
+      showToastNotification('⚠️ ODT ZIP export failed.')
+    }
+  }
+
   // Import note from markdown file
   const handleImport = (e) => {
     const file = e.target.files?.[0]
@@ -283,6 +348,11 @@ function Notes() {
             onNewNote={createNote}
             onImport={handleImport}
             onExport={handleExport}
+            onExportOdt={handleExportOdt}
+            onExportAllOdt={handleExportAllOdt}
+            onExportAllOdtZip={handleExportAllOdtZip}
+            onPrint={handlePrint}
+            isPrintSupported={isPrintSupported}
             onDelete={handleDelete}
             onLockToggle={handleToggleLock}
             onShowDetails={() => setShowDetailsModal(true)}

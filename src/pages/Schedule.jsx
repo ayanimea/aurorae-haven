@@ -57,43 +57,68 @@ Ask for clarification or preserve the existing structure.
 */
 
 /**
- * Schedule Page - Calendar view for events using FullCalendar
+ * Schedule Page - Calendar view for events using Figma-sourced custom grid
  * Manages routines, tasks, meetings, and habits with a clean, accessible interface
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import FullCalendar from '@fullcalendar/react'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import interactionPlugin from '@fullcalendar/interaction'
-// NOTE: FullCalendar v6 still ships CSS that is typically imported explicitly
-// (for example: '@fullcalendar/core/index.css', '@fullcalendar/timegrid/index.css').
-// In this project we intentionally do NOT import FullCalendar's default CSS here.
-// Instead, '../assets/styles/fullcalendar-custom.css' provides the required styles,
-// redefining or replacing the stock styles to match our spec. See:
-// https://fullcalendar.io/docs/upgrading-from-v5 for background on v6 CSS entrypoints.
-import { format, startOfWeek, addDays } from 'date-fns'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { format, startOfWeek, addDays, subDays, addMonths, subMonths } from 'date-fns'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
-import CustomToolbar from '../components/Schedule/CustomToolbar'
-import SolidEventCard from '../components/Schedule/SolidEventCard'
-import TimeBands from '../components/Schedule/TimeBands'
 import ErrorBoundary from '../components/ErrorBoundary'
+import GlassPanel from '../components/common/GlassPanel'
+import FigmaScheduleGrid, { PERIOD_COLORS, EVENT_TYPE_COLORS } from '../components/Schedule/FigmaScheduleGrid'
+import { expandMidnightSpanningEvents } from '../components/Schedule/scheduleConstants'
+import Icon from '../components/common/Icon'
 import EventService from '../services/EventService'
-import {
-  toFullCalendarEvents,
-  createEventFromSlot
-} from '../utils/eventAdapter'
 import { EVENT_TYPES } from '../utils/scheduleConstants'
-import { getSettings } from '../utils/settingsManager'
+import { getSettings, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
-import '../assets/styles/fullcalendar-custom.css'
+import { addTaskToStorage } from '../utils/scheduleHelpers'
+import { createRoutine } from '../utils/routinesManager'
+import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
+import { validateStructural } from '../schedule/structuralConstraints'
+import { generateSuggestions } from '../schedule/suggestionEngine'
+import { snapDown, snapUp } from '../schedule/timeUtils'
+import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
+import { SCHEDULING_CONFIG } from '../schedule/config'
 import '../components/ErrorBoundary.css'
 
-// Dev-only helpers are loaded via dynamic import behind an isDevelopment() guard.
-// With Vite, these modules are still included in the production build as separate
-// code-split chunks; the guard only controls whether they are requested at runtime.
-// This reduces initial bundle size but does NOT remove dev-only code from production.
+/**
+ * Convert a snapped end-minute value back to a stored time string.
+ *
+ * - Midnight-spanning: end was normalised to > 1440, wrap it back via modulo.
+ * - Non-spanning: if snapped end hits exactly 1440, use the '24:00' sentinel
+ *   (end-of-day); otherwise convert normally.
+ *
+ * @param {number}  snappedEnd          - Snapped end in minutes (may be > 1440 for midnight-spanning)
+ * @param {boolean} wasMidnightSpanning - Whether the original event spanned midnight
+ * @returns {string} Time in 'HH:MM' or '24:00' format
+ */
+function formatSnappedEndTime(snappedEnd, wasMidnightSpanning) {
+  if (wasMidnightSpanning) return minutesToTime(snappedEnd % 1440)
+  if (snappedEnd >= 1440) return '24:00'
+  return minutesToTime(snappedEnd)
+}
+
+/**
+ * Check structural constraints for a candidate event against the current
+ * events state, excluding `excludeId` (used during edit/move to avoid
+ * self-conflict). Returns null when valid, or an error message string.
+ *
+ * @param {object}   candidate  - The event being created/moved/resized
+ * @param {object[]} allEvents  - Current events state
+ * @param {string}   [excludeId] - ID of the event to exclude (edit/drag/resize)
+ * @returns {string|null}
+ */
+function checkStructural(candidate, allEvents, excludeId) {
+  if (!candidate.day) return null
+  const dayEvents = allEvents.filter(
+    (e) => e.day === candidate.day && e.id !== excludeId
+  )
+  const check = validateStructural(candidate, dayEvents)
+  return check.valid ? null : (check.reason ?? 'Scheduling conflict: too many simultaneous events')
+}
 
 // Console statements are intentionally used throughout this file for production debugging
 // and error handling. They replaced a custom logger utility that was causing issues in
@@ -103,24 +128,19 @@ import '../components/ErrorBoundary.css'
 // See commit 511b225 for the migration from custom logger to console methods.
 
 function Schedule() {
-  // FullCalendar ref for API access
-  const calendarRef = useRef(null)
-
-  // Toolbar ref for dynamic height measurement (aligns time-of-day bands)
-  const toolbarRef = useRef(null)
-
-  // WeakMap for storing context menu handlers (better memory management than DOM properties)
-  const contextMenuHandlersRef = useRef(new WeakMap())
-
   // Success message timeout ref for cleanup on unmount
   const successMessageTimeoutRef = useRef(null)
+  // Ref that always points to the latest loadEvents callback so storage event
+  // handlers (defined before loadEvents) can call it without stale closures.
+  const loadEventsRef = useRef(null)
 
   // State management
-  const [view, setView] = useState('day') // Normalized view name for loadEvents (day/week/month)
+  const [view, setView] = useState('day') // 'day' | 'week' | 'month'
   const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [suggestions, setSuggestions] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
 
   // Modal states
@@ -133,22 +153,33 @@ function Schedule() {
   // Dev-only: Lazy-loaded FloatingDevButtons component
   const [FloatingDevButtons, setFloatingDevButtons] = useState(null)
 
-  // Get time format preference from settings (default to 24-hour)
-  // Reactive settings: useState + storage listener for cross-tab updates
-  // Settings changes in Settings page or other tabs now reflect immediately
+  const [schedulingGuidanceLevel, setSchedulingGuidanceLevel] = useState(() => {
+    const stored = getSettings().schedule?.schedulingGuidanceLevel
+    return VALID_GUIDANCE_LEVELS.includes(stored) ? stored : 'full'
+  })
+
   const [use24HourFormat, setUse24HourFormat] = useState(
-    () => getSettings().schedule?.use24HourFormat ?? true
+    () => getSettings().schedule?.use24HourFormat !== false
   )
 
   useEffect(() => {
     // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
-    const handleStorage = () => {
+    const handleStorage = (event) => {
       try {
-        const updatedValue = getSettings().schedule?.use24HourFormat
-        if (typeof updatedValue === 'boolean') {
-          setUse24HourFormat(updatedValue)
+        const scheduleSettings = getSettings().schedule
+        const level = scheduleSettings?.schedulingGuidanceLevel
+        if (VALID_GUIDANCE_LEVELS.includes(level)) {
+          setSchedulingGuidanceLevel(level)
         }
-      } catch (_err) {
+        setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
+      } catch (_err) {}
+
+      // Reload schedule events when tasks are modified in another tab so the
+      // Schedule view stays in sync without requiring a page refresh.
+      // Routines are stored in IndexedDB (not localStorage), so no 'aurorae_routines'
+      // key will ever fire here — cross-tab routine sync would require BroadcastChannel.
+      if (event?.key === 'aurorae_tasks') {
+        loadEventsRef.current?.()
       }
     }
 
@@ -156,12 +187,13 @@ function Schedule() {
     // Settings page should dispatch: window.dispatchEvent(new CustomEvent('settingsUpdated'))
     const handleSettingsUpdated = () => {
       try {
-        const updatedValue = getSettings().schedule?.use24HourFormat
-        if (typeof updatedValue === 'boolean') {
-          setUse24HourFormat(updatedValue)
+        const scheduleSettings = getSettings().schedule
+        const level = scheduleSettings?.schedulingGuidanceLevel
+        if (VALID_GUIDANCE_LEVELS.includes(level)) {
+          setSchedulingGuidanceLevel(level)
         }
-      } catch (_err) {
-      }
+        setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
+      } catch (_err) {}
     }
 
     window.addEventListener('storage', handleStorage)
@@ -186,12 +218,6 @@ function Schedule() {
     }
   }, [])
 
-  // Convert events to FullCalendar format
-  const fullCalendarEvents = useMemo(
-    () => toFullCalendarEvents(events),
-    [events]
-  )
-
   // Load events based on current view and date
   const loadEvents = useCallback(async () => {
     setIsLoading(true)
@@ -206,7 +232,8 @@ function Schedule() {
         loadedEvents = await EventService.getEventsForWeek(dateStr)
       } else if (view === 'month') {
         const startOfMonth = startOfWeek(
-          new Date(date.getFullYear(), date.getMonth(), 1)
+          new Date(date.getFullYear(), date.getMonth(), 1),
+          { weekStartsOn: 1 } // Monday — matches MonthView grid
         )
         const endOfMonth = addDays(startOfMonth, 41) // 6 weeks
         loadedEvents = await EventService.getEventsForRange(
@@ -223,35 +250,33 @@ function Schedule() {
     }
   }, [view, date])
 
+  // Keep the ref in sync so storage event handlers always call the latest version
+  loadEventsRef.current = loadEvents
+
   // Load events when view or date changes
   useEffect(() => {
     loadEvents()
   }, [loadEvents])
 
-  // Dynamically measure and sync toolbar height with TimeBands CSS variable
-  // This ensures time-of-day bands align with the time grid after layout changes
-  // Currently measures on mount, view changes, and window resize
-  // TODO: Consider ResizeObserver for more robust detection of toolbar height changes
-  // (e.g., when date label length changes, isLoading state changes, or fonts load)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: view is intentionally included to re-measure toolbar when calendar view changes (day/week/month toolbars differ in height)
-  useEffect(() => {
-    const updateToolbarHeight = () => {
-      if (toolbarRef.current) {
-        const height = toolbarRef.current.offsetHeight
-        document.documentElement.style.setProperty(
-          '--toolbar-height',
-          `${height}px`
-        )
-      }
+  // Expand midnight-spanning events into per-day segments (mirrors FigmaScheduleGrid's own expansion)
+  // so that the load badge correctly accounts for continuation segments on the viewed day.
+  const expandedEvents = useMemo(() => expandMidnightSpanningEvents(events), [events])
+
+  // Compute load ratio for visible day(s) to show load awareness indicator
+  const { loadThresholdHigh, loadThresholdOver } = SCHEDULING_CONFIG
+  const visibleLoadState = useMemo(() => {
+    if (view === 'day') {
+      const dayStr = format(date, 'yyyy-MM-dd')
+      const dayEvents = expandedEvents.filter(e => e.day === dayStr)
+      const load = getMemoizedDayLoad(dayEvents, dayStr)
+      // Scale thresholds by actual day length to preserve 8h/9h semantics on DST transition days
+      const dayMinutes = getDayDurationMinutes(date)
+      const highThreshold = (loadThresholdHigh * 24 * 60) / dayMinutes
+      const overThreshold = (loadThresholdOver * 24 * 60) / dayMinutes
+      return load >= overThreshold ? 'over' : load >= highThreshold ? 'high' : 'ok'
     }
-
-    // Measure on mount and view changes (toolbar may resize)
-    updateToolbarHeight()
-
-    // Re-measure on window resize (responsive toolbar height)
-    window.addEventListener('resize', updateToolbarHeight)
-    return () => window.removeEventListener('resize', updateToolbarHeight)
-  }, [view]) // Re-run when view changes as toolbar buttons may affect height
+    return 'ok'
+  }, [expandedEvents, date, view])
 
   // Cleanup success message timeout on unmount to prevent setState on unmounted component
   useEffect(() => {
@@ -263,24 +288,30 @@ function Schedule() {
     }
   }, [])
 
-  // Event handlers
-  const handleEventContextMenu = useCallback((event, x, y) => {
-    try {
-      const originalEvent = event.resource?.originalEvent || event
-      if (originalEvent) {
-        setEventToDelete({
-          ...originalEvent,
-          isContextMenu: true,
-          contextMenuX: x,
-          contextMenuY: y
-        })
-        setShowActionModal(true)
-      } else {
-      }
-    } catch (_err) {
-    }
-  }, [])
+  // ── Navigation ──────────────────────────────────────────────────────────
+  const handleNavigate = useCallback(
+    (action) => {
+      setDate((prev) => {
+        switch (action) {
+          case 'PREV':
+            if (view === 'day') return subDays(prev, 1)
+            if (view === 'week') return subDays(prev, 7)
+            return subMonths(prev, 1)
+          case 'NEXT':
+            if (view === 'day') return addDays(prev, 1)
+            if (view === 'week') return addDays(prev, 7)
+            return addMonths(prev, 1)
+          case 'TODAY':
+            return new Date()
+          default:
+            return prev
+        }
+      })
+    },
+    [view]
+  )
 
+  // ── Event handlers ───────────────────────────────────────────────────────
   const handleSaveEvent = async (eventData) => {
     try {
       // Ensure we have a valid event object
@@ -288,16 +319,113 @@ function Schedule() {
         throw new Error('No event data provided')
       }
 
+      // Strip the internal flag before persisting to avoid polluting IndexedDB
+      const { _isNewCreation, ...rawCleanData } = eventData
+
+      // Snap timed event start/end to the configured interval (start down, end up).
+      // This keeps stored values consistent with structural validation and load
+      // computation, which both apply the same snapping internally.
+      let cleanEventData = rawCleanData
+      if (rawCleanData.startTime && rawCleanData.endTime && !rawCleanData.allDay) {
+        const rawStart = timeToMinutes(rawCleanData.startTime)
+        const rawEnd = timeToMinutes(rawCleanData.endTime)
+        const wasMidnightSpanning = rawEnd < rawStart
+        const normalEnd = wasMidnightSpanning ? rawEnd + 1440 : rawEnd
+        const snappedStart = snapDown(rawStart)
+        const snappedEnd = snapUp(normalEnd)
+        cleanEventData = {
+          ...rawCleanData,
+          startTime: minutesToTime(snappedStart),
+          endTime: formatSnappedEndTime(snappedEnd, wasMidnightSpanning)
+        }
+      }
+
       // Check if this is an update or create
       // For updates, we need both an ID and it must be a string/number
       const isUpdate =
-        eventData.id &&
-        (typeof eventData.id === 'string' || typeof eventData.id === 'number')
+        cleanEventData.id &&
+        (typeof cleanEventData.id === 'string' ||
+          typeof cleanEventData.id === 'number')
+
+      // Structural validation: enforce simultaneous-event limits before saving.
+      // Exclude the event being updated (by ID) so edits don't self-conflict.
+      const structuralError = checkStructural(cleanEventData, events, cleanEventData.id)
+      if (structuralError) {
+        setError(structuralError)
+        // Clear any stale suggestions from a previous failure before generating new ones.
+        setSuggestions([])
+        // In 'full' guidance mode, surface available time slots for this day.
+        // Only generate suggestions for timed events (all-day events have no duration).
+        if (
+          schedulingGuidanceLevel === 'full' &&
+          cleanEventData.day &&
+          cleanEventData.startTime &&
+          cleanEventData.endTime
+        ) {
+          const dayStr = cleanEventData.day
+          const parts = dayStr.split('-').map(Number)
+          const eventDate =
+            parts.length === 3 && parts.every((n) => !Number.isNaN(n))
+              ? new Date(parts[0], parts[1] - 1, parts[2])
+              : new Date(dayStr)
+          const dayEvents = events.filter(
+            (e) => e.day === dayStr && e.id !== cleanEventData.id
+          )
+          const endMins = timeToMinutes(cleanEventData.endTime)
+          const startMins = timeToMinutes(cleanEventData.startTime)
+          const duration =
+            endMins < startMins ? endMins + 1440 - startMins : endMins - startMins
+          if (duration > 0) {
+            setSuggestions(
+              generateSuggestions({
+                existingEvents: dayEvents,
+                durationMinutes: duration,
+                date: eventDate,
+                ...(typeof cleanEventData.preparationTime === 'number' && {
+                  preparationTime: cleanEventData.preparationTime
+                }),
+                ...(typeof cleanEventData.travelTime === 'number' && {
+                  travelTime: cleanEventData.travelTime
+                })
+              })
+            )
+          }
+        }
+        return
+      }
+      setSuggestions([])
 
       if (isUpdate) {
-        await EventService.updateEvent(eventData)
+        await EventService.updateEvent(cleanEventData)
       } else {
-        await EventService.createEvent(eventData)
+        await EventService.createEvent(cleanEventData)
+
+        // When user created a brand-new task/routine from the schedule, also
+        // persist it in its native store so it appears in the respective tab.
+        // This is best-effort: failure here does NOT block the schedule event
+        // save or the modal close — it only logs a non-blocking warning.
+        if (_isNewCreation) {
+          try {
+            if (cleanEventData.type === EVENT_TYPES.TASK) {
+              addTaskToStorage(cleanEventData.title)
+            } else if (cleanEventData.type === EVENT_TYPES.ROUTINE) {
+              const durationMinutes =
+                timeToMinutes(cleanEventData.endTime) -
+                timeToMinutes(cleanEventData.startTime)
+              // `steps` defaults to [] in routinesManager.createRoutine when not provided.
+              // Only name and estimatedDuration are required for a minimal routine entry.
+              await createRoutine({
+                name: cleanEventData.title,
+                estimatedDuration: Math.max(0, durationMinutes) * 60
+              })
+            }
+          } catch (mirrorErr) {
+            // Mirror failure is non-fatal: the schedule event was already saved.
+            // Log a warning so developers are aware but don't surface this to the user.
+            // biome-ignore lint/suspicious/noConsole: non-fatal mirror failure, intentional warning
+            console.warn('Secondary store mirror failed (non-blocking):', mirrorErr)
+          }
+        }
       }
 
       await loadEvents()
@@ -349,6 +477,11 @@ function Schedule() {
     }
   }
 
+  const handleDismissError = () => {
+    setError('')
+    setSuggestions([])
+  }
+
   const handleCloseModal = () => {
     try {
       setIsModalOpen(false)
@@ -356,8 +489,7 @@ function Schedule() {
       setSelectedEventType(null)
       // Clear any errors when closing modal
       setError('')
-    } catch (_err) {
-    }
+    } catch (_err) {}
   }
 
   const handleScheduleEvent = (eventType) => {
@@ -369,6 +501,50 @@ function Schedule() {
       setError('Failed to open event creation. Please try again.')
     }
   }
+
+  // Click on an event card → open ItemActionModal (edit/delete choice)
+  const handleGridEventClick = useCallback((evt) => {
+    setEventToDelete(evt)
+    setShowActionModal(true)
+  }, [])
+
+  // Drag an event card to a new time slot → preserve duration, update day + startTime
+  const handleEventDrop = useCallback(async (evtId, newDay, newHour) => {
+    const evt = events.find((e) => String(e.id) === String(evtId))
+    if (!evt) return
+    try {
+      const oldStartMins = timeToMinutes(evt.startTime)
+      const oldEndMins = timeToMinutes(evt.endTime)
+      const duration = oldEndMins >= oldStartMins
+        ? oldEndMins - oldStartMins
+        : oldEndMins + 1440 - oldStartMins
+      const newStartMins = newHour * 60
+      const newEndMins = newStartMins + duration
+      const newStartTime = minutesToTime(newStartMins)
+      // Clamp any event that would cross midnight to '23:59': EventModal's
+      // <input type="time"> cannot represent '24:00' or overnight ranges.
+      const newEndTime = newEndMins >= 1440
+        ? '23:59'
+        : minutesToTime(newEndMins)
+      const updatedEvt = { ...evt, day: newDay, startTime: newStartTime, endTime: newEndTime }
+      const structuralError = checkStructural(updatedEvt, events, evt.id)
+      if (structuralError) {
+        setError(structuralError)
+        return
+      }
+      await EventService.updateEvent(updatedEvt)
+      await loadEvents()
+    } catch (_err) {
+      setError('Failed to move event. Please try again.')
+    }
+  }, [events, loadEvents])
+
+  // Click on an empty slot → open EventModal to create new event
+  const handleSlotClick = useCallback(({ day, startTime, endTime }) => {
+    setSelectedEvent({ day, startTime, endTime })
+    setSelectedEventType(EVENT_TYPES.TASK)
+    setIsModalOpen(true)
+  }, [])
 
   /**
    * Development-only: Populate calendar with fake events
@@ -487,263 +663,194 @@ function Schedule() {
     }
   }
 
-  // Compute min/max times for the schedule view (07:00 to 24:00)
-  const slotMinTime = '07:00:00'
-  const slotMaxTime = '24:00:00'
-
-  // Map normalized view names to FullCalendar view names
-  const getFullCalendarView = useCallback((normalizedView) => {
-    const viewMap = {
-      day: 'timeGridDay',
-      week: 'timeGridWeek',
-      month: 'dayGridMonth'
+  // ── Date label for the Figma header ─────────────────────────────────────
+  const headerDateLabel = (() => {
+    if (view === 'day') return format(date, 'd/MM/yyyy')
+    if (view === 'week') {
+      const ws = startOfWeek(date, { weekStartsOn: 1 })
+      const we = addDays(ws, 6)
+      return `${format(ws, 'd MMM')} – ${format(we, 'd MMM yyyy')}`
     }
-    return viewMap[normalizedView] || 'timeGridDay'
-  }, [])
+    return format(date, 'MMMM yyyy')
+  })()
 
-  // Sync view state changes with FullCalendar
-  useEffect(() => {
-    const calendarApi = calendarRef.current?.getApi()
-    if (calendarApi) {
-      const fullCalendarView = getFullCalendarView(view)
-      if (calendarApi.view.type !== fullCalendarView) {
-        calendarApi.changeView(fullCalendarView)
-      }
-    }
-  }, [view, getFullCalendarView])
-
-  // Sync date state changes with FullCalendar
-  useEffect(() => {
-    const calendarApi = calendarRef.current?.getApi()
-    if (calendarApi) {
-      const currentDate = calendarApi.getDate()
-      // Only update if dates differ significantly (avoid infinite loops)
-      if (Math.abs(currentDate.getTime() - date.getTime()) > 1000) {
-        calendarApi.gotoDate(date)
-      }
-    }
-  }, [date])
-
-  // Handle view change from toolbar (receives FullCalendar view name, converts to normalized)
-  const handleViewChange = useCallback((newFullCalendarView) => {
-    const normalizedViewMap = {
-      timeGridDay: 'day',
-      timeGridWeek: 'week',
-      dayGridMonth: 'month'
-    }
-    const normalizedView = normalizedViewMap[newFullCalendarView] || 'day'
-    setView(normalizedView)
-  }, [])
-
-  // Handle event click (FullCalendar)
-  const handleEventClick = useCallback((clickInfo) => {
-    const event = clickInfo.event
-    const originalEvent = event.extendedProps?.originalEvent
-
-    if (originalEvent) {
-      setSelectedEvent(originalEvent)
-      setSelectedEventType(originalEvent.type || EVENT_TYPES.TASK)
-      setIsModalOpen(true)
-    }
-  }, [])
-
-  // Handle date select (FullCalendar equivalent of onSelectSlot)
-  const handleDateSelect = useCallback((selectInfo) => {
-    const slotInfo = {
-      start: selectInfo.start,
-      end: selectInfo.end
-    }
-    const newEvent = createEventFromSlot(slotInfo)
-    if (newEvent) {
-      setSelectedEvent(newEvent)
-      setSelectedEventType(newEvent.type || EVENT_TYPES.TASK)
-      setIsModalOpen(true)
-    }
-    // Clear the selection
-    selectInfo.view.calendar.unselect()
-  }, [])
-
-  // Handle event unmount for cleanup
-  const handleEventWillUnmount = useCallback((unmountInfo) => {
-    const el = unmountInfo.el
-    if (!el) return
-
-    // Remove event listener when event is unmounted
-    const handler = contextMenuHandlersRef.current.get(el)
-    if (typeof handler === 'function') {
-      el.removeEventListener('contextmenu', handler)
-      contextMenuHandlersRef.current.delete(el)
-    }
-  }, [])
-
-  // Handle event context menu (right-click) using WeakMap for better memory management
-  const handleEventMouseEnter = useCallback(
-    (mouseEnterInfo) => {
-      const el = mouseEnterInfo.el
-
-      if (!el) {
-        return
-      }
-
-      // Remove any existing contextmenu handler
-      const previousHandler = contextMenuHandlersRef.current.get(el)
-      if (typeof previousHandler === 'function') {
-        el.removeEventListener('contextmenu', previousHandler)
-      }
-
-      const contextMenuHandler = (e) => {
-        e.preventDefault()
-        const originalEvent = mouseEnterInfo.event.extendedProps?.originalEvent
-        if (originalEvent) {
-          handleEventContextMenu(originalEvent, e.clientX, e.clientY)
-        }
-      }
-
-      // Store the handler in WeakMap for proper garbage collection
-      contextMenuHandlersRef.current.set(el, contextMenuHandler)
-      el.addEventListener('contextmenu', contextMenuHandler)
-    },
-    [handleEventContextMenu]
-  )
-
-  // Cleanup all context menu handlers on component unmount
-  // Prevents memory leaks if component unmounts before eventWillUnmount fires
-  useEffect(() => {
-    return () => {
-    }
-  }, [])
+  const todayFmtStr = format(new Date(), 'd/MM/yyyy')
+  const isToday = view === 'day' && headerDateLabel === todayFmtStr
 
   return (
     <ErrorBoundary>
       <div className='page page-schedule'>
-        <div className='schedule-container'>
-          <div className='schedule-wrapper'>
-            {/* Only render time-of-day bands for time grid views (not month view) */}
-            {(view === 'day' || view === 'week') && <TimeBands />}
 
-            {/* Custom Toolbar - Wrapped for dynamic height measurement */}
-            <div ref={toolbarRef}>
-              <CustomToolbar
-                date={date}
-                view={getFullCalendarView(view)}
-                views={['timeGridDay', 'timeGridWeek', 'dayGridMonth']}
-                onNavigate={(action) => {
-                  const calendarApi = calendarRef.current?.getApi()
-                  if (!calendarApi) return
-
-                  switch (action) {
-                    case 'PREV':
-                      calendarApi.prev()
-                      setDate(calendarApi.getDate())
-                      break
-                    case 'NEXT':
-                      calendarApi.next()
-                      setDate(calendarApi.getDate())
-                      break
-                    case 'TODAY':
-                      calendarApi.today()
-                      setDate(calendarApi.getDate())
-                      break
-                    default:
-                      break
-                  }
-                }}
-                onView={handleViewChange}
-                onScheduleEvent={handleScheduleEvent}
-                isLoading={isLoading}
-                EVENT_TYPES={EVENT_TYPES}
-              />
-            </div>
-
-            {/* FullCalendar - Wrapped for aria-label support */}
-            <div role='region' aria-label='Event calendar'>
-              <FullCalendar
-                ref={calendarRef}
-                plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-                initialView={getFullCalendarView(view)}
-                initialDate={date}
-                events={fullCalendarEvents}
-                slotMinTime={slotMinTime}
-                slotMaxTime={slotMaxTime}
-                slotDuration='00:15:00'
-                slotLabelInterval='01:00:00'
-                allDaySlot={false}
-                headerToolbar={false}
-                height='auto'
-                expandRows={true}
-                slotLabelFormat={{
-                  hour: use24HourFormat ? '2-digit' : 'numeric',
-                  minute: '2-digit',
-                  hour12: !use24HourFormat,
-                  meridiem: use24HourFormat ? false : 'short'
-                }}
-                eventTimeFormat={{
-                  hour: use24HourFormat ? '2-digit' : 'numeric',
-                  minute: '2-digit',
-                  hour12: !use24HourFormat
-                }}
-                firstDay={1}
-                selectable={true}
-                selectMirror={true}
-                editable={false}
-                eventClick={handleEventClick}
-                select={handleDateSelect}
-                eventMouseEnter={handleEventMouseEnter}
-                eventWillUnmount={handleEventWillUnmount}
-                eventContent={(eventInfo) => (
-                  <SolidEventCard
-                    event={{
-                      ...eventInfo.event,
-                      title: eventInfo.event.title, // Explicitly pass title from FullCalendar event
-                      resource: {
-                        type: eventInfo.event.extendedProps?.type,
-                        originalEvent:
-                          eventInfo.event.extendedProps?.originalEvent,
-                        preparationTime:
-                          eventInfo.event.extendedProps?.preparationTime,
-                        travelTime: eventInfo.event.extendedProps?.travelTime
-                      }
-                    }}
-                  />
-                )}
-              />
-            </div>
+        {/* ── Figma header ─────────────────────────────────────────────────── */}
+        <div className='figma-schedule-header'>
+          <div>
+            <h2 className='figma-schedule-title'>Schedule</h2>
+            <p className='figma-schedule-subtitle'>
+              {isToday ? `Today — ${headerDateLabel}` : headerDateLabel}
+            </p>
+            {view === 'day' && schedulingGuidanceLevel !== 'off' && visibleLoadState !== 'ok' && (
+              <div
+                className={`figma-load-indicator figma-load-indicator--${visibleLoadState}`}
+                role='status'
+                aria-live='polite'
+                aria-label={visibleLoadState === 'over' ? 'Day over capacity' : 'Day highly scheduled'}
+              >
+                {visibleLoadState === 'over' ? '⚠ Over capacity' : '↑ High load'}
+              </div>
+            )}
           </div>
+          <div className='figma-schedule-controls'>
+            <button
+              type='button'
+              className='figma-schedule-nav-btn'
+              onClick={() => handleNavigate('PREV')}
+              aria-label='Previous'
+            >
+              <Icon name='chevronLeft' />
+            </button>
+            <button
+              type='button'
+              className='figma-schedule-today-btn'
+              onClick={() => handleNavigate('TODAY')}
+            >
+              Today
+            </button>
+            <button
+              type='button'
+              className='figma-schedule-nav-btn'
+              onClick={() => handleNavigate('NEXT')}
+              aria-label='Next'
+            >
+              <Icon name='chevronRight' />
+            </button>
 
-          {isLoading && (
-            <div className='loading-overlay'>
-              <p>Loading events...</p>
-            </div>
-          )}
+            <span className='figma-schedule-sep' aria-hidden='true' />
 
-          {error && (
-            <div className='error-message' role='alert'>
-              {error}
-              <button type="button"
-                onClick={() => setError('')}
-                className='error-dismiss'
-                aria-label='Dismiss error'
-              >
-                ×
-              </button>
+            {/* Period legend */}
+            <div className='figma-period-legend' role='group' aria-label='Time-of-day periods'>
+              {Object.entries(PERIOD_COLORS).map(([key, val]) => (
+                <div key={key} className='figma-period-legend-item'>
+                  <span
+                    className='figma-period-dot'
+                    style={{ background: val.dot, boxShadow: `0 0 6px ${val.dot}50` }}
+                    aria-hidden='true'
+                  />
+                  <span className='figma-period-label' style={{ color: val.text }}>
+                    {val.label}
+                  </span>
+                </div>
+              ))}
             </div>
-          )}
 
-          {successMessage && (
-            <div className='success-message' role='status'>
-              {successMessage}
-              <button type="button"
-                onClick={() => setSuccessMessage('')}
-                className='success-dismiss'
-                aria-label='Dismiss message'
-              >
-                ×
-              </button>
-            </div>
-          )}
+            <span className='figma-schedule-sep' aria-hidden='true' />
+
+            {/* View selector */}
+            <select
+              className='figma-schedule-view-select'
+              value={view}
+              onChange={(e) => setView(e.target.value)}
+              aria-label='View mode'
+            >
+              <option value='day'>Day</option>
+              <option value='week'>Week</option>
+              <option value='month'>Month</option>
+            </select>
+
+            {/* Schedule+ button */}
+            <button
+              type='button'
+              className='figma-schedule-add-btn'
+              onClick={() => handleScheduleEvent(EVENT_TYPES.TASK)}
+              aria-label='Add event'
+            >
+              <Icon name='plus' />
+              Schedule
+            </button>
+          </div>
         </div>
 
-        {/* Event Modal */}
+        {/* ── Main grid panel ───────────────────────────────────────────────── */}
+        <GlassPanel className='figma-schedule-grid-panel'>
+          {isLoading && (
+            <div className='figma-schedule-loading' role='status' aria-live='polite'>
+              Loading…
+            </div>
+          )}
+          <div role='region' aria-label='Event calendar'>
+            <FigmaScheduleGrid
+              events={events}
+              viewMode={view}
+              date={date}
+              onEventClick={handleGridEventClick}
+              onSlotClick={handleSlotClick}
+              onEventDrop={handleEventDrop}
+              use24HourFormat={use24HourFormat}
+            />
+          </div>
+        </GlassPanel>
+
+        {/* ── Event type legend ─────────────────────────────────────────────── */}
+        <GlassPanel className='figma-event-legend-panel'>
+          <div className='figma-event-legend'>
+            <span className='figma-event-legend-label'>Event types:</span>
+            {Object.entries(EVENT_TYPE_COLORS).map(([type, colors]) => (
+              <div key={type} className='figma-event-legend-item'>
+                <span
+                  className='figma-event-legend-swatch'
+                  style={{ background: colors.border }}
+                  aria-hidden='true'
+                />
+                <span className='figma-event-legend-text' style={{ color: colors.text }}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+
+        {/* ── Error toast ───────────────────────────────────────────────────── */}
+        {error && (
+          <div className='fc-error-toast' role='alert'>
+            {error}
+            {suggestions.length > 0 && (
+              <div className='fc-error-suggestions' role='group' aria-label='Available time slots'>
+                <span className='fc-error-suggestions-label'>Try instead:</span>
+                <ul className='fc-error-suggestions-list'>
+                  {suggestions.map((s) => (
+                    <li key={s.startMinutes} className='fc-error-suggestion-slot'>
+                      {minutesToTime(s.startMinutes)} – {s.endMinutes === 1440 ? '24:00' : minutesToTime(s.endMinutes)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <button
+              type='button'
+              onClick={handleDismissError}
+              className='error-dismiss'
+              aria-label='Dismiss error'
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ── Success toast ─────────────────────────────────────────────────── */}
+        {successMessage && (
+          <div className='success-message' role='status'>
+            {successMessage}
+            <button
+              type='button'
+              onClick={() => setSuccessMessage('')}
+              className='success-dismiss'
+              aria-label='Dismiss message'
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ── Event Modal (create / edit) ───────────────────────────────────── */}
         <EventModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
@@ -753,7 +860,7 @@ function Schedule() {
           initialData={selectedEvent}
         />
 
-        {/* Action Modal for Edit/Delete */}
+        {/* ── Action Modal (edit / delete choice) ──────────────────────────── */}
         {showActionModal && eventToDelete && (
           <ItemActionModal
             item={eventToDelete}
@@ -766,7 +873,7 @@ function Schedule() {
           />
         )}
 
-        {/* Floating Dev Buttons - Only visible in development mode */}
+        {/* ── Floating Dev Buttons (dev only) ──────────────────────────────── */}
         {isDevelopment() && FloatingDevButtons && (
           <FloatingDevButtons
             onPopulateData={handlePopulateFakeData}

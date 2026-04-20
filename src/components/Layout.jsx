@@ -5,6 +5,7 @@ import Icon from './common/Icon'
 import MobileMenu from './Layout/MobileMenu'
 import MoreMenu from './Layout/MoreMenu'
 import FileInputButton from './common/FileInputButton'
+import StarryBackground from './StarryBackground'
 
 function Layout({ children, onExport, onImport }) {
   const location = useLocation()
@@ -224,60 +225,66 @@ function Layout({ children, onExport, onImport }) {
 
   return (
     <>
+      <StarryBackground />
+      <div className='figma-grain' aria-hidden='true' />
+      <div className='figma-nebula figma-nebula-a' aria-hidden='true' />
+      <div className='figma-nebula figma-nebula-b' aria-hidden='true' />
+      <div className='figma-nebula figma-nebula-c' aria-hidden='true' />
+      {/* Fixed atmospheric background — sky gradient + star field. Sits below everything else.
+          The planet (.planet-wrap) renders above this in DOM order at the same z-index. */}
+      <div className='app-background' aria-hidden='true' />
       <div className='planet-wrap'>
         <div className='planet' />
       </div>
       {/* TAB-NAV-20: <header> implicitly has role="banner"; explicit role attribute not needed */}
       <header className='appbar'>
         <div className='inner'>
-          {/* TAB-NAV-04 & TAB-NAV-05: Left Zone - Logo/Title */}
+          {/* TAB-NAV-04 & TAB-NAV-05 + Figma: Left Zone — Brand text + Desktop Nav together */}
           <div className='navbar-left'>
-            <button type="button"
+            <button
+              type='button'
               className='logo-button'
               onClick={handleLogoClick}
-              aria-label='Return to Tasks'
+              aria-label='Aurorae Haven — Return to Tasks'
               title='Stellar-Journey'
             >
-              <div className='logo' aria-hidden='true' />
+              {/* Icon shown on mobile where brand text is hidden */}
+              <span className='logo-icon' aria-hidden='true'>
+                <svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                  <path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z' />
+                </svg>
+              </span>
+              <span className='figma-brand-text'>AURORAE HAVEN</span>
             </button>
-            <div className='brand'>
-              <b>Aurorae Haven</b>
-            </div>
-          </div>
 
-          {/* TAB-NAV-06: Center Zone - Primary Tabs (Desktop) */}
-          {/* TAB-NAV-20 & TAB-NAV-21: <nav> implicitly has role="navigation"; role="tablist" remains on the inner div */}
-          <nav className='navbar-center' aria-label='Main'>
-            <div
-              className='appnav'
-              role='tablist'
-              aria-label='Primary navigation tabs'
-              data-testid='desktop-tabs'
-            >
-              {tabs.map((tab, index) => (
-                <Link
-                  key={tab.path}
-                  className={`nav-tab ${isActive(tab.path) ? 'active' : ''}`}
-                  to={tab.path}
-                  role='tab'
-                  aria-selected={isActive(tab.path)}
-                  aria-label={tab.label}
-                  tabIndex={isActive(tab.path) ? 0 : -1}
-                  onKeyDown={(e) => handleTabKeyDown(e, tabs, index)}
-                >
-                  <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
-                    <path d={tab.icon} />
-                  </svg>
-                  <span>{tab.label}</span>
-                </Link>
-              ))}
-            </div>
+            {/* TAB-NAV-06: Desktop Nav (inside left zone, matching Figma layout) */}
+            {/* TAB-NAV-20 & TAB-NAV-21: <nav> implicitly has role="navigation"; role="tablist" remains on the inner div */}
+            <nav className='navbar-center' aria-label='Main'>
+              <div
+                className='appnav'
+                role='tablist'
+                aria-label='Primary navigation tabs'
+                data-testid='desktop-tabs'
+              >
+                {tabs.map((tab, index) => (
+                  <Link
+                    key={tab.path}
+                    className={`nav-tab ${isActive(tab.path) ? 'active' : ''}`}
+                    to={tab.path}
+                    role='tab'
+                    aria-selected={isActive(tab.path)}
+                    aria-label={tab.label}
+                    tabIndex={isActive(tab.path) ? 0 : -1}
+                    onKeyDown={(e) => handleTabKeyDown(e, tabs, index)}
+                  >
+                    <span>{tab.label}</span>
+                  </Link>
+                ))}
+              </div>
 
             {/* Mobile portrait bottom bar: Primary tabs + More button */}
             <div
               className='mobile-bottom-tabs'
-              role='presentation'
-              aria-hidden='true'
               data-testid='mobile-tabs'
             >
               {primaryTabs.map((tab) => (
@@ -285,8 +292,8 @@ function Layout({ children, onExport, onImport }) {
                   key={`mobile-${tab.path}`}
                   className={`nav-tab ${isActive(tab.path) ? 'active' : ''}`}
                   to={tab.path}
-                  tabIndex={-1}
-                  aria-hidden='true'
+                  aria-label={tab.label}
+                  aria-current={isActive(tab.path) ? 'page' : undefined}
                   onClick={() => setMoreMenuOpen(false)}
                 >
                   <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
@@ -296,14 +303,13 @@ function Layout({ children, onExport, onImport }) {
                 </Link>
               ))}
               {/* More menu button */}
-              <button type="button"
+              <button
+                type='button'
                 className={`nav-tab more-button ${secondaryTabs.some((tab) => isActive(tab.path)) || moreMenuOpen ? 'active' : ''}`}
                 onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                 aria-haspopup='true'
                 aria-expanded={moreMenuOpen}
                 aria-label='More options'
-                tabIndex={-1}
-                aria-hidden='true'
               >
                 <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
                   <path d='M4 6h16M4 12h16M4 18h16' />
@@ -311,7 +317,8 @@ function Layout({ children, onExport, onImport }) {
                 <span>More</span>
               </button>
             </div>
-          </nav>
+            </nav>
+          </div>
 
           {/* More menu for mobile portrait */}
           <MoreMenu
@@ -333,7 +340,8 @@ function Layout({ children, onExport, onImport }) {
           </Link>
 
           {/* TAB-NAV-13: Mobile hamburger button */}
-          <button type="button"
+          <button
+            type='button'
             ref={hamburgerButtonRef}
             className='hamburger-button'
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -347,8 +355,9 @@ function Layout({ children, onExport, onImport }) {
           {/* TAB-NAV-10: Right Zone - Global Actions */}
           <div className='navbar-right'>
             {/* TAB-NAV-10: Search icon (placeholder for future) */}
-            <button type="button"
-              className='icon-button'
+            <button
+              type='button'
+              className='figma-icon-btn'
               aria-label='Search'
               title='Search (Coming soon)'
             >
@@ -356,16 +365,24 @@ function Layout({ children, onExport, onImport }) {
             </button>
 
             {/* TAB-NAV-10: Theme toggle (placeholder for future) */}
-            <button type="button"
-              className='icon-button'
+            <button
+              type='button'
+              className='figma-icon-btn'
               aria-label='Toggle theme'
               title='Theme (Coming soon)'
             >
               <Icon name='moon' />
             </button>
 
+            <span className='nav-separator' aria-hidden='true' />
+
             {/* Export/Import buttons */}
-            <button type="button" className='btn' onClick={onExport} aria-label='Export data'>
+            <button
+              type='button'
+              className='figma-action-btn'
+              onClick={onExport}
+              aria-label='Export data'
+            >
               Export
             </button>
             <FileInputButton
@@ -373,6 +390,7 @@ function Layout({ children, onExport, onImport }) {
               accept='application/json'
               ariaLabel='Import data file'
               title='Import data'
+              className='figma-action-btn'
             >
               Import
             </FileInputButton>

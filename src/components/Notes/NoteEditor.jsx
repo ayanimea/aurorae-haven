@@ -29,6 +29,11 @@ function NoteEditor({
   onNewNote,
   onImport,
   onExport,
+  onExportOdt,
+  onExportAllOdt,
+  onExportAllOdtZip,
+  onPrint,
+  isPrintSupported,
   onDelete,
   onLockToggle,
   onShowDetails
@@ -152,7 +157,7 @@ function NoteEditor({
               aria-label='Import markdown file'
             />
           </label>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onExport}
             aria-label='Export'
@@ -161,7 +166,43 @@ function NoteEditor({
           >
             <Icon name='download' />
           </button>
-          <button type="button"
+          <button type='button'
+            className='btn'
+            onClick={onExportOdt}
+            aria-label='Export current note as ODT'
+            title='Export current note as OpenDocument Text (.odt) file'
+            disabled={!currentNoteId}
+          >
+            <Icon name='file' />
+          </button>
+          <button type='button'
+            className='btn'
+            onClick={onExportAllOdt}
+            aria-label='Export all notes as ODT (single download)'
+            title='Export all notes as ODT in a single browser download (ZIP for multiple notes)'
+            disabled={notes.length === 0}
+          >
+            <Icon name='list' />
+          </button>
+          <button type='button'
+            className='btn'
+            onClick={onExportAllOdtZip}
+            aria-label='Export all ODT as zip'
+            title='Export all notes as a ZIP archive containing ODT files'
+            disabled={notes.length === 0}
+          >
+            <Icon name='inbox' />
+          </button>
+          <button type='button'
+            className='btn'
+            onClick={onPrint}
+            aria-label='Print'
+            title='Print'
+            disabled={!currentNoteId || !isPrintSupported}
+          >
+            <Icon name='print' />
+          </button>
+          <button type='button'
             className='btn btn-delete'
             onClick={() => onDelete()}
             aria-label='Delete'
@@ -170,7 +211,7 @@ function NoteEditor({
           >
             <Icon name='trashAlt' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onNewNote}
             aria-label='New note'
@@ -178,7 +219,7 @@ function NoteEditor({
           >
             <Icon name='plus' />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onLockToggle}
             aria-label={currentNote?.locked ? 'Unlock note' : 'Lock note'}
@@ -187,7 +228,7 @@ function NoteEditor({
           >
             <Icon name={currentNote?.locked ? 'lock' : 'unlock'} />
           </button>
-          <button type="button"
+          <button type='button'
             className='btn'
             onClick={onShowDetails}
             aria-label='Show note details'
@@ -298,6 +339,11 @@ NoteEditor.propTypes = {
   onNewNote: PropTypes.func.isRequired,
   onImport: PropTypes.func.isRequired,
   onExport: PropTypes.func.isRequired,
+  onExportOdt: PropTypes.func.isRequired,
+  onExportAllOdt: PropTypes.func.isRequired,
+  onExportAllOdtZip: PropTypes.func.isRequired,
+  onPrint: PropTypes.func.isRequired,
+  isPrintSupported: PropTypes.bool.isRequired,
   onDelete: PropTypes.func.isRequired,
   onLockToggle: PropTypes.func.isRequired,
   onShowDetails: PropTypes.func.isRequired

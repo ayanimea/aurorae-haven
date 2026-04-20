@@ -180,8 +180,8 @@ To backup or transfer your data:
 
 For issues or questions:
 
-- GitHub: <https://github.com/aurorae-haven/aurorae-haven/issues>
-- Documentation: <https://github.com/aurorae-haven/aurorae-haven/tree/main/docs>
+- GitHub: <https://github.com/ayanimea/aurorae-haven/issues>
+- Documentation: <https://github.com/ayanimea/aurorae-haven/tree/main/docs>
 
 ---
 

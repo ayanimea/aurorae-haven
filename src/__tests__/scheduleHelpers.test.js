@@ -3,7 +3,10 @@ import {
   getAllTasks,
   searchRoutinesAndTasks,
   getAllRoutinesAndTasks,
-  instantiateRoutineFromTemplate
+  instantiateRoutineFromTemplate,
+  clusterEvents,
+  assignColumns,
+  addTaskToStorage
 } from '../utils/scheduleHelpers'
 import { getRoutines, createRoutine } from '../utils/routinesManager'
 import { getAllTemplates } from '../utils/templatesManager'
@@ -27,7 +30,8 @@ vi.mock('../utils/logger', () => ({
   createLogger: () => ({
     error: vi.fn(),
     log: vi.fn(),
-    info: vi.fn()
+    info: vi.fn(),
+    warn: vi.fn()
   })
 }))
 
@@ -384,6 +388,222 @@ describe('scheduleHelpers', () => {
       await expect(instantiateRoutineFromTemplate(template)).rejects.toThrow(
         'Database error'
       )
+    })
+  })
+
+  describe('clusterEvents', () => {
+    it('returns empty array for no events', () => {
+      expect(clusterEvents([])).toEqual([])
+    })
+
+    it('puts a single event in its own cluster', () => {
+      const events = [{ start: 60, end: 120 }]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(1)
+      expect(clusters[0]).toHaveLength(1)
+    })
+
+    it('groups overlapping events into one cluster', () => {
+      const events = [
+        { start: 60, end: 120 },
+        { start: 90, end: 150 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(1)
+      expect(clusters[0]).toHaveLength(2)
+    })
+
+    it('creates separate clusters for non-overlapping events', () => {
+      const events = [
+        { start: 60, end: 120 },
+        { start: 180, end: 240 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(2)
+    })
+
+    it('does not treat touching boundaries as overlap', () => {
+      const events = [
+        { start: 60, end: 120 },
+        { start: 120, end: 180 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(2)
+    })
+
+    it('sorts events by start time before clustering', () => {
+      const events = [
+        { start: 180, end: 240 },
+        { start: 60, end: 120 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(2)
+      expect(clusters[0][0].start).toBe(60)
+    })
+
+    it('does not mutate the original array', () => {
+      const events = [
+        { start: 90, end: 150 },
+        { start: 60, end: 120 }
+      ]
+      const original = [...events]
+      clusterEvents(events)
+      expect(events[0].start).toBe(original[0].start)
+    })
+
+    it('handles transitive overlap spanning more than two events', () => {
+      // A overlaps B, B overlaps C → all in one cluster even if A and C don't directly overlap
+      const events = [
+        { start: 0, end: 60 },
+        { start: 30, end: 90 },
+        { start: 70, end: 120 }
+      ]
+      const clusters = clusterEvents(events)
+      expect(clusters).toHaveLength(1)
+      expect(clusters[0]).toHaveLength(3)
+    })
+  })
+
+  describe('assignColumns', () => {
+    it('assigns column 0 and totalColumns 1 to a single event', () => {
+      const cluster = [{ start: 60, end: 120 }]
+      assignColumns(cluster)
+      expect(cluster[0].column).toBe(0)
+      expect(cluster[0].totalColumns).toBe(1)
+    })
+
+    it('places two overlapping events in separate columns', () => {
+      const cluster = [
+        { start: 60, end: 120 },
+        { start: 90, end: 150 }
+      ]
+      assignColumns(cluster)
+      expect(cluster[0].column).toBe(0)
+      expect(cluster[1].column).toBe(1)
+      expect(cluster[0].totalColumns).toBe(2)
+      expect(cluster[1].totalColumns).toBe(2)
+    })
+
+    it('reuses a column when the previous occupant has ended', () => {
+      // event0 ends at 120; event1 starts at 90 (overlap); event2 starts at 120 (touching, no overlap)
+      const cluster = [
+        { start: 0, end: 60 },
+        { start: 30, end: 90 },
+        { start: 60, end: 120 }
+      ]
+      assignColumns(cluster)
+      // event2 starts at 60 which equals event0.end (60) → can reuse column 0
+      expect(cluster[2].column).toBe(0)
+      expect(cluster[0].totalColumns).toBe(2)
+    })
+
+    it('assigns totalColumns consistently to all events in cluster', () => {
+      const cluster = [
+        { start: 0, end: 120 },
+        { start: 30, end: 90 },
+        { start: 60, end: 150 }
+      ]
+      assignColumns(cluster)
+      const totals = cluster.map((e) => e.totalColumns)
+      expect(new Set(totals).size).toBe(1)
+    })
+
+    it('handles an empty cluster without error', () => {
+      expect(() => assignColumns([])).not.toThrow()
+    })
+  })
+
+  describe('addTaskToStorage', () => {
+    it('adds a task to not_urgent_not_important quadrant in localStorage', () => {
+      const task = addTaskToStorage('Write unit tests')
+      expect(task.text).toBe('Write unit tests')
+      expect(task.completed).toBe(false)
+      expect(task.id).toBeTruthy()
+
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important[0].text).toBe('Write unit tests')
+    })
+
+    it('trims whitespace from the title', () => {
+      addTaskToStorage('  Trimmed Task  ')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.not_urgent_not_important[0].text).toBe('Trimmed Task')
+    })
+
+    it('skips storage when title is empty after trimming', () => {
+      const created = addTaskToStorage('   ')
+      expect(created).toBeNull()
+      expect(localStorage.getItem('aurorae_tasks')).toBeNull()
+    })
+
+    it('preserves existing tasks when adding a new one', () => {
+      localStorage.setItem(
+        'aurorae_tasks',
+        JSON.stringify({
+          urgent_important: [{ id: 'existing', text: 'Existing', completed: false }],
+          not_urgent_important: [],
+          urgent_not_important: [],
+          not_urgent_not_important: []
+        })
+      )
+      addTaskToStorage('New Task')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.urgent_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important[0].text).toBe('New Task')
+    })
+
+    it('initialises empty storage structure when localStorage is empty', () => {
+      addTaskToStorage('First Task')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.urgent_important).toEqual([])
+      expect(saved.not_urgent_important).toEqual([])
+      expect(saved.urgent_not_important).toEqual([])
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+    })
+
+    it('recovers from corrupted JSON without throwing and persists the new task', () => {
+      localStorage.setItem('aurorae_tasks', 'this is not valid json {{{')
+      expect(() => addTaskToStorage('Recovery Task')).not.toThrow()
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important[0].text).toBe('Recovery Task')
+      // Other quadrants should be empty (fresh structure)
+      expect(saved.urgent_important).toEqual([])
+    })
+
+    it('resets to default structure when parsed localStorage shape is invalid', () => {
+      localStorage.setItem('aurorae_tasks', JSON.stringify('invalid-shape'))
+      const task = addTaskToStorage('Recovered Task')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+
+      expect(task?.text).toBe('Recovered Task')
+      expect(saved.urgent_important).toEqual([])
+      expect(saved.not_urgent_important).toEqual([])
+      expect(saved.urgent_not_important).toEqual([])
+      expect(saved.not_urgent_not_important).toHaveLength(1)
+      expect(saved.not_urgent_not_important[0].text).toBe('Recovered Task')
+    })
+
+    it('normalizes non-array quadrant fields before appending new task', () => {
+      localStorage.setItem(
+        'aurorae_tasks',
+        JSON.stringify({
+          urgent_important: 'bad',
+          not_urgent_important: null,
+          urgent_not_important: {},
+          not_urgent_not_important: 7
+        })
+      )
+      addTaskToStorage('Normalized Task')
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+
+      expect(Array.isArray(saved.urgent_important)).toBe(true)
+      expect(Array.isArray(saved.not_urgent_important)).toBe(true)
+      expect(Array.isArray(saved.urgent_not_important)).toBe(true)
+      expect(Array.isArray(saved.not_urgent_not_important)).toBe(true)
+      expect(saved.not_urgent_not_important[0].text).toBe('Normalized Task')
     })
   })
 })

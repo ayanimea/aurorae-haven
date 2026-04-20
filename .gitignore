@@ -39,6 +39,12 @@ coverage/
 audit-report.txt
 test-results/
 playwright-report/
+# Generated screenshots (directory is tracked via .gitkeep; images are local-only)
+# Exception: committed mock-data reference screenshots are explicitly tracked
+playwright-screenshots/*.png
+!playwright-screenshots/mock-01-tasks.png
+!playwright-screenshots/mock-02-routines.png
+!playwright-screenshots/mock-03-schedule.png
 
 # Jupyter Notebook
 .ipynb_checkpoints/

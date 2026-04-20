@@ -2,6 +2,19 @@
 // TODO: Implement full settings management with validation
 import { tryCatch } from './errorHandler'
 
+/** Allowed values for schedulingGuidanceLevel */
+export const VALID_GUIDANCE_LEVELS = ['full', 'header-only', 'off']
+
+/**
+ * Returns true if value is a plain (non-null, non-array) object.
+ * Used to guard against corrupted localStorage values.
+ * @param {*} value
+ * @returns {boolean}
+ */
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
 const SETTINGS_KEY = 'aurorae_settings'
 
 // Default settings
@@ -36,9 +49,17 @@ const DEFAULT_SETTINGS = {
     debugMode: false
   },
   schedule: {
-    use24HourFormat: true // Default to 24-hour format (neurodivergent-friendly, clearer)
+    use24HourFormat: true, // Default to 24-hour format (neurodivergent-friendly, clearer)
+    // Controls how much scheduling guidance is shown to the user.
+    // "full"        — all currently implemented scheduling guidance, including load indicators
+    //                 in supported views and structural-blocking toasts with suggestions
+    // "header-only" — load indicators only, without structural-blocking toast guidance
+    // "off"         — optional scheduling guidance UI disabled; baseline structural enforcement may still apply
+    schedulingGuidanceLevel: 'full'
   }
 }
+const DEFAULT_SCHEDULING_GUIDANCE_LEVEL =
+  DEFAULT_SETTINGS.schedule.schedulingGuidanceLevel
 
 /**
  * Get all settings
@@ -58,7 +79,18 @@ export function getSettings() {
       // - Handles nested objects recursively
       // - Replaces arrays (doesn't merge them)
       // - Blocks prototype pollution keys (__proto__, constructor, prototype)
-      return deepMerge(DEFAULT_SETTINGS, parsed)
+      const merged = deepMerge(DEFAULT_SETTINGS, parsed)
+      // Clamp schedule.schedulingGuidanceLevel to allowed enum at read time
+      // so corrupted/old stored values never propagate into the app.
+      // Guard against corrupted localStorage where merged.schedule is not a plain
+      // object (e.g. stored as a string/number) — reset to default in that case.
+      if (!isPlainObject(merged.schedule)) {
+        merged.schedule = { ...DEFAULT_SETTINGS.schedule }
+      }
+      if (!VALID_GUIDANCE_LEVELS.includes(merged.schedule.schedulingGuidanceLevel)) {
+        merged.schedule.schedulingGuidanceLevel = DEFAULT_SCHEDULING_GUIDANCE_LEVEL
+      }
+      return merged
     },
     'Loading settings from localStorage',
     {
@@ -139,6 +171,14 @@ export function updateSetting(key, value) {
   }
 
   target[lastKey] = value
+
+  // Clamp schedulingGuidanceLevel to allowed enum before persisting
+  if (
+    key === 'schedule.schedulingGuidanceLevel' &&
+    !VALID_GUIDANCE_LEVELS.includes(value)
+  ) {
+    target[lastKey] = DEFAULT_SCHEDULING_GUIDANCE_LEVEL
+  }
 
   return updateSettings(settings)
 }
@@ -300,6 +340,22 @@ export function validateSettings(settings) {
     return false
   }
 
+  // Validate schedule sub-settings
+  if (settings.schedule !== undefined) {
+    // Reject non-plain-object values (string, number, array, null) that would
+    // silently pass through and later break code expecting an object
+    if (!isPlainObject(settings.schedule)) {
+      return false
+    }
+    const { schedulingGuidanceLevel } = settings.schedule
+    if (
+      schedulingGuidanceLevel !== undefined &&
+      !VALID_GUIDANCE_LEVELS.includes(schedulingGuidanceLevel)
+    ) {
+      return false
+    }
+  }
+
   return true
 }
 
@@ -325,26 +381,18 @@ export function applySettings(settings) {
 
 /**
  * Apply theme setting
- * @param {string} theme - Theme name
+ * Sets data-theme attribute on <html> so CSS [data-theme="..."] overrides can respond.
+ * @param {string} theme - 'dark' | 'light' | 'auto'
  */
 function applyTheme(theme) {
-  // TODO: Implement theme switching
   const root = document.documentElement
 
-  if (theme === 'dark') {
-    root.classList.add('dark-theme')
-  } else if (theme === 'light') {
-    root.classList.remove('dark-theme')
+  if (theme === 'dark' || theme === 'light') {
+    root.dataset.theme = theme
   } else {
-    // Auto - use system preference
-    const prefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches
-    if (prefersDark) {
-      root.classList.add('dark-theme')
-    } else {
-      root.classList.remove('dark-theme')
-    }
+    // Auto — resolve system preference and set explicitly so CSS sees a defined attribute
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    root.dataset.theme = prefersDark ? 'dark' : 'light'
   }
 }
 

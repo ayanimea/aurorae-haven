@@ -78,6 +78,40 @@ describe('eventAdapter', () => {
       expect(rbcEvent.end.getDate()).toBe(rbcEvent.start.getDate() + 1)
     })
 
+    it('should parse endTime 24:00 as next-day midnight', () => {
+      const event = {
+        id: '3b',
+        title: 'End Of Day Sentinel',
+        day: '2026-02-03',
+        startTime: '22:00',
+        endTime: '24:00',
+        type: 'routine'
+      }
+
+      const rbcEvent = toRBCEvent(event)
+
+      expect(rbcEvent).toBeTruthy()
+      expect(rbcEvent.start).toEqual(parseISO('2026-02-03T22:00:00'))
+      expect(rbcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
+    })
+
+    it('should accept surrounding whitespace in event times', () => {
+      const event = {
+        id: '3c',
+        title: 'Whitespace Time',
+        day: '2026-02-03',
+        startTime: ' 09:00',
+        endTime: '24:00 ',
+        type: 'routine'
+      }
+
+      const rbcEvent = toRBCEvent(event)
+
+      expect(rbcEvent).toBeTruthy()
+      expect(rbcEvent.start).toEqual(parseISO('2026-02-03T09:00:00'))
+      expect(rbcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
+    })
+
     it('should include preparation and travel time in resource', () => {
       const event = {
         id: '4',
@@ -320,6 +354,42 @@ describe('eventAdapter', () => {
       expect(fcEvent.classNames).toEqual(['event-routine'])
     })
 
+    it('should parse endTime 24:00 as next-day midnight in FullCalendar format', () => {
+      const event = {
+        id: '3b',
+        title: 'Until End Of Day',
+        day: '2026-02-03',
+        startTime: '22:00',
+        endTime: '24:00',
+        type: 'routine'
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent).toBeTruthy()
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T22:00:00'))
+      expect(fcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
+      expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-04T00:00:00'))
+    })
+
+    it('should accept surrounding whitespace in FullCalendar time fields', () => {
+      const event = {
+        id: '3c',
+        title: 'Whitespace FullCalendar Time',
+        day: '2026-02-03',
+        startTime: ' 09:00',
+        endTime: '24:00 ',
+        type: 'routine'
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent).toBeTruthy()
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T09:00:00'))
+      expect(fcEvent.end).toEqual(parseISO('2026-02-04T00:00:00'))
+      expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-04T00:00:00'))
+    })
+
     it('should include preparation and travel time in extendedProps', () => {
       const event = {
         id: '4',
@@ -441,6 +511,101 @@ describe('eventAdapter', () => {
       expect(fcEvent.classNames).toEqual(['event-task'])
       expect(fcEvent.extendedProps.type).toBe('task')
     })
+
+    it('should store mainStart and mainEnd in extendedProps', () => {
+      const event = {
+        id: 'canonical-1',
+        title: 'Canonical Event',
+        day: '2026-02-03',
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'task',
+        preparationTime: 0,
+        travelTime: 0
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent.extendedProps.mainStart).toEqual(parseISO('2026-02-03T09:00:00'))
+      expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-03T10:00:00'))
+    })
+
+    it('should store prepDuration and travelDuration in extendedProps', () => {
+      const event = {
+        id: 'buffers-1',
+        title: 'Event With Buffers',
+        day: '2026-02-03',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'meeting',
+        preparationTime: 15,
+        travelTime: 20
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent.extendedProps.prepDuration).toBe(15)
+      expect(fcEvent.extendedProps.travelDuration).toBe(20)
+    })
+
+    it('should apply prep before main and travel after main when buffers > 0', () => {
+      const event = {
+        id: 'render-start-1',
+        title: 'Buffered Meeting',
+        day: '2026-02-03',
+        startTime: '10:00',
+        endTime: '11:00',
+        type: 'meeting',
+        preparationTime: 15,
+        travelTime: 15
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      // renderStart = mainStart − prep = 09:45
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T09:45:00'))
+      // renderEnd = mainEnd + travel = 11:15
+      expect(fcEvent.end).toEqual(parseISO('2026-02-03T11:15:00'))
+      // mainStart is preserved in extendedProps
+      expect(fcEvent.extendedProps.mainStart).toEqual(parseISO('2026-02-03T10:00:00'))
+    })
+
+    it('should not adjust start when both buffers are zero', () => {
+      const event = {
+        id: 'no-buffers-1',
+        title: 'No Buffer Event',
+        day: '2026-02-03',
+        startTime: '14:00',
+        endTime: '15:00',
+        type: 'task',
+        preparationTime: 0,
+        travelTime: 0
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      // start should equal mainStart when no buffers
+      expect(fcEvent.start).toEqual(fcEvent.extendedProps.mainStart)
+      expect(fcEvent.start).toEqual(parseISO('2026-02-03T14:00:00'))
+    })
+
+    it('should keep mainEnd canonical in extendedProps while end includes travel', () => {
+      const event = {
+        id: 'end-canonical-1',
+        title: 'End Canonical',
+        day: '2026-02-03',
+        startTime: '13:00',
+        endTime: '14:30',
+        type: 'routine',
+        preparationTime: 30,
+        travelTime: 0
+      }
+
+      const fcEvent = toFullCalendarEvent(event)
+
+      expect(fcEvent.end).toEqual(parseISO('2026-02-03T14:30:00'))
+      expect(fcEvent.extendedProps.mainEnd).toEqual(parseISO('2026-02-03T14:30:00'))
+    })
   })
 
   describe('toFullCalendarEvents', () => {
@@ -545,6 +710,35 @@ describe('eventAdapter', () => {
       expect(fcEvents).toHaveLength(3)
       expect(fcEvents[1].end.getDate()).toBe(fcEvents[1].start.getDate() + 1)
       expect(fcEvents[2].extendedProps.preparationTime).toBe(10)
+    })
+
+    it('should include end-of-day boundary events in overlap column clustering', () => {
+      const events = [
+        {
+          id: 'e1',
+          title: 'Late Event',
+          day: '2026-02-03',
+          startTime: '23:00',
+          endTime: '24:00',
+          type: 'task'
+        },
+        {
+          id: 'e2',
+          title: 'Overlap Near Midnight',
+          day: '2026-02-03',
+          startTime: '23:30',
+          endTime: '23:45',
+          type: 'meeting'
+        }
+      ]
+
+      const fcEvents = toFullCalendarEvents(events)
+      const eventA = fcEvents.find((event) => event.id === 'e1')
+      const eventB = fcEvents.find((event) => event.id === 'e2')
+
+      expect(eventA.extendedProps.totalColumns).toBe(2)
+      expect(eventB.extendedProps.totalColumns).toBe(2)
+      expect(eventA.extendedProps.column).not.toBe(eventB.extendedProps.column)
     })
   })
 })

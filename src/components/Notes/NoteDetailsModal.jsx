@@ -1,11 +1,16 @@
-
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
 /**
  * Modal showing detailed metadata for a note
  */
-function NoteDetailsModal({ note, title, category, content, onClose }) {
+function NoteDetailsModal({
+  note = null,
+  title = '',
+  category = '',
+  content,
+  onClose
+}) {
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
@@ -27,7 +32,12 @@ function NoteDetailsModal({ note, title, category, content, onClose }) {
       >
         <div className='modal-header'>
           <h2 id='details-modal-title'>Note Details</h2>
-          <button type="button" className='btn btn-icon' onClick={onClose} aria-label='Close'>
+          <button
+            type='button'
+            className='btn btn-icon'
+            onClick={onClose}
+            aria-label='Close'
+          >
             <Icon name='x' />
           </button>
         </div>
@@ -75,12 +85,6 @@ NoteDetailsModal.propTypes = {
   category: PropTypes.string,
   content: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired
-}
-
-NoteDetailsModal.defaultProps = {
-  note: null,
-  title: '',
-  category: ''
 }
 
 export default NoteDetailsModal

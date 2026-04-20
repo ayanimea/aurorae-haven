@@ -13,12 +13,12 @@ test('Verify routine templates are created as routines, not tasks', async ({
   })
 
   // Step 1: Navigate to the app
-  await page.goto('/')
+  await page.goto('.')
   await page.waitForLoadState('networkidle')
 
   // Step 2: Go to Library page directly (Library tab removed from main nav)
   console.log('\n=== Going to Library page ===')
-  await page.goto('/library')
+  await page.goto('library')
   await page.waitForLoadState('networkidle')
 
   // Take screenshot using Playwright's test info for proper path handling

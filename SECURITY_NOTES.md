@@ -27,9 +27,16 @@ The previous vulnerability notes referenced transitive issues from `eslint@9.x` 
 - **Linter**: ESLint → [Biome](https://biomejs.dev/) (`@biomejs/biome`)
 - **Test runner**: Jest/Babel → [Vitest](https://vitest.dev/)
 - **Markdown lint**: `markdownlint-cli` → `markdownlint-cli2`
-- **Archive util**: `archiver` → `adm-zip`
+- **Browser ODT/ZIP export**: [JSZip](https://stuk.github.io/jszip/) (`jszip`)
+  (`adm-zip` remains in use for offline build packaging in `scripts/create-offline-package.js`)
 
 These migrations resolved all previously documented vulnerabilities.
+
+### Dependency License Notes
+
+- **jszip**: published as `MIT OR GPL-3.0-or-later`.
+  Aurorae Haven uses JSZip in browser-only ODT/ZIP export flows under the MIT option.
+  No GPL-specific code path is selected or required for this usage.
 
 ### Mitigation Strategy
 
@@ -39,5 +46,5 @@ These migrations resolved all previously documented vulnerabilities.
 
 ---
 
-_Last Updated_: 2026-02-20  
+_Last Updated_: 2026-04-20  
 _Risk Acceptance_: Development Team

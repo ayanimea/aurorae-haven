@@ -14,14 +14,14 @@
 .settings-warning {
   padding: 1rem;
   margin-bottom: 1rem;
-  background-color: var(--warn-bg, #fff3cd);
-  border: 1px solid var(--warn-border, #ffc107);
+  background-color: var(--warn-bg);
+  border: 1px solid var(--warn-border);
   border-radius: 4px;
 }
 
 .settings-warning-directory-lost {
-  background-color: #fff3cd;
-  border-color: #ffc107;
+  background-color: var(--warn-bg);
+  border-color: var(--warn-border);
 }
 
 .settings-warning-title {
@@ -53,32 +53,32 @@
 .settings-input {
   flex: 1;
   padding: 0.5rem;
-  border: 1px solid var(--line, #ccc);
+  border: 1px solid var(--line);
   border-radius: 4px;
-  background-color: var(--glass-lo, #f5f5f5);
+  background-color: var(--glass-lo);
 }
 
 .settings-input:focus {
-  outline: 2px solid var(--mint, #007bff);
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
 
 .settings-input-number {
   width: 100px;
   padding: 0.5rem;
-  border: 1px solid var(--line, #ccc);
+  border: 1px solid var(--line);
   border-radius: 4px;
 }
 
 .settings-input-number:focus {
-  outline: 2px solid var(--mint, #007bff);
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
 
 .settings-hint {
   display: block;
   margin-top: 0.25rem;
-  color: var(--dim, #666);
+  color: var(--dim);
   font-size: 0.9rem;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .settings-checkbox:focus {
-  outline: 2px solid var(--mint, #007bff);
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
 
@@ -101,7 +101,7 @@
   display: block;
   margin-top: 0.25rem;
   margin-left: 1.5rem;
-  color: var(--dim, #666);
+  color: var(--dim);
   font-size: 0.9rem;
 }
 
@@ -123,7 +123,7 @@
 }
 
 .settings-button:focus {
-  outline: 2px solid var(--ink, #000);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -133,7 +133,7 @@
 }
 
 .settings-button-primary {
-  background-color: var(--mint, #007bff);
+  background-color: var(--mint);
 }
 
 .settings-button-primary:hover:not(:disabled) {
@@ -141,7 +141,7 @@
 }
 
 .settings-button-success {
-  background-color: var(--success, #28a745);
+  background-color: var(--success);
 }
 
 .settings-button-success:hover:not(:disabled) {
@@ -149,7 +149,7 @@
 }
 
 .settings-button-info {
-  background-color: var(--info, #007bff);
+  background-color: var(--info);
 }
 
 .settings-button-info:hover:not(:disabled) {
@@ -157,8 +157,8 @@
 }
 
 .settings-button-warning {
-  background-color: var(--warning, #ffc107);
-  color: var(--ink, #333);
+  background-color: var(--warning);
+  color: var(--ink);
 }
 
 .settings-button-warning:hover:not(:disabled) {
@@ -178,26 +178,32 @@
 .settings-message {
   padding: 0.75rem;
   margin-top: 1rem;
-  background-color: var(--success-bg, #d4edda);
-  border: 1px solid var(--success-border, #c3e6cb);
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-border);
   border-radius: 4px;
-  color: var(--success-text, #155724);
+  color: var(--success-text);
 }
 
 .settings-message-error {
-  background-color: var(--error-bg, #f8d7da);
-  border: 1px solid var(--error-border, #f5c6cb);
-  color: var(--error-text, #721c24);
+  background-color: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
 }
 
 /* Divider */
 .settings-divider {
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--line, #ddd);
+  border-top: 1px solid var(--line);
 }
 
 .settings-placeholder-text {
-  color: var(--dim, #666);
+  color: var(--dim);
   font-size: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-button {
+    transition: none;
+  }
 }

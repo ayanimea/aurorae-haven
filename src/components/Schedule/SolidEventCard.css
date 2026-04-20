@@ -1,149 +1,121 @@
 /**
  * SolidEventCard Styling - Canonical Visual Specification
- * 
- * Events are the primary visual anchor - they must be the most dominant elements
- * No glass-morphism, no semi-transparency - solid, clear, readable cards
+ *
+ * Architecture:
+ *   .fc-event-wrapper  — outer wrapper; glow/border/backdrop applied once here
+ *   .event-segment     — shared segment base; width: 100%
+ *   .event-travel      — top buffer; travel time
+ *   .event-prep        — middle buffer; preparation time
+ *   .event-main        — main event duration; contains title
+ *
+ * ALL values must reference tokens from tokens.css.
+ * No hardcoded px, rgba, border-radius, blur, shadow, or spacing.
  */
 
-:root {
-  /* Event card colors - EXACT canonical values */
-  --event-bg: #161b22;
-  --event-border: #2a3240;
-  --event-text: #e6edf3;
-  --event-text-dim: rgba(230, 237, 243, 0.7);
+/* ===== Wrapper — glow applied once ===== */
 
-  /* Event card measurements */
-  --event-radius: 0.875rem; /* 14px */
-  --event-padding-v: 0.75rem; /* 12px */
-  --event-padding-h: 1rem; /* 16px */
-}
-
-.solid-event-card {
+.fc-event-wrapper {
   position: relative;
   z-index: 3; /* Above bands (1) and grid (2) */
-
-  /* Fill parent container */
   height: 100%;
   width: 100%;
-  /* Minimum height derived from minute-based scaling (15 minutes = 15 * --minute-unit) */
-  /* This ensures 15-minute events remain proportional across viewports */
-  min-height: calc(var(--minute-unit, 1.2px) * 15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: inherit;
+  backdrop-filter: none;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--event-text);
+}
 
-  /* Solid background - no glass effect */
-  background: var(--event-bg);
-  border: 1px solid var(--event-border);
-  border-radius: var(--event-radius);
+/* Focus state for accessibility (FullCalendar focuses .fc-event) */
+.fc-event:focus-visible {
+  outline: var(--border-focus) solid var(--event-focus-ring);
+  outline-offset: var(--focus-outline-offset);
+}
 
+/* ===== Segments ===== */
+
+.event-segment {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.event-travel {
+  background: var(--event-travel-surface);
+  opacity: var(--event-travel-opacity);
+  border-bottom: var(--border-thin) solid var(--event-divider);
+}
+
+.event-prep {
+  background: var(--event-prep-surface);
+  opacity: var(--event-prep-opacity);
+  border-bottom: var(--border-thin) solid var(--event-divider);
+}
+
+.event-main {
+  position: relative;
   padding: var(--event-padding-v) var(--event-padding-h);
-
-  /* Use flexbox for content layout */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-
-  /* Dual-layer shadow for soft elevation */
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-
-  /* Typography */
-  color: var(--event-text);
-  font-size: 0.95rem;
-  line-height: 1.4;
-
-  /* Prevent text overflow */
   overflow: hidden;
-
-  /* Smooth transitions */
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease;
+  /* Height is governed by the inline percentage style — no flex grow/shrink */
+  flex: 0 0 auto;
 }
 
-.solid-event-card:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  border-color: rgba(134, 245, 224, 0.3); /* Subtle accent on hover */
-}
+/* ===== Title ===== */
 
-.solid-event-card:active {
-  transform: translateY(0);
-}
-
-/* Event title - prominent */
 .event-title {
   display: block;
-  font-weight: 600;
-  font-size: 0.95rem;
-  line-height: 1.4; /* Explicit line-height to ensure height > 0 */
-  margin-bottom: 0.25rem;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-event-title);
+  line-height: var(--line-height-base);
+  letter-spacing: var(--letter-spacing-wide);
   color: var(--event-text);
-  flex-shrink: 0; /* Prevent flex container from collapsing */
-  min-height: 1.4em; /* Ensure minimum visible height */
-  overflow: visible; /* Don't collapse with overflow */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Pre-activities (prep/travel) - subtle context */
-.event-pre-activities {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.375rem;
-  font-size: 0.8rem;
-  color: var(--event-text-dim);
-  align-items: center;
-}
+/* ===== Type-specific left border accent (on wrapper) ===== */
 
-.prep-indicator,
-.travel-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  opacity: 0.85;
-}
-
-/* Type-specific left border accent (subtle) */
 .event-type-routine {
-  border-left: 3px solid rgba(134, 245, 224, 0.5); /* Accent teal */
+  border-left: var(--border-accent) solid var(--color-routine);
 }
 
 .event-type-task {
-  border-left: 3px solid rgba(96, 165, 250, 0.5); /* Blue */
+  border-left: var(--border-accent) solid var(--color-task);
 }
 
 .event-type-meeting {
-  border-left: 3px solid rgba(249, 115, 22, 0.5); /* Orange */
+  border-left: var(--border-accent) solid var(--color-meeting);
 }
 
 .event-type-habit {
-  border-left: 3px solid rgba(167, 139, 250, 0.5); /* Purple */
+  border-left: var(--border-accent) solid var(--color-habit);
 }
 
 .event-type-break {
-  border-left: 3px solid rgba(34, 197, 94, 0.5); /* Green */
+  border-left: var(--border-accent) solid var(--color-break);
 }
 
-/* Focus state for accessibility */
-.solid-event-card:focus-visible {
-  outline: 2px solid rgba(134, 245, 224, 0.6);
-  outline-offset: 2px;
-}
+/* ===== Mobile adjustments ===== */
 
-/* Mobile adjustments */
 @media (max-width: 640px) {
-  .solid-event-card {
-    padding: 0.625rem 0.875rem;
-    font-size: 0.9rem;
+  .event-main {
+    padding: var(--space-xs, 0.5rem) var(--space-sm, 0.75rem);
   }
 
   .event-title {
-    font-size: 0.9rem;
-    min-height: 1.3em; /* Slightly smaller for mobile */
+    font-size: var(--font-event-title-sm);
   }
+}
 
-  .event-pre-activities {
-    font-size: 0.75rem;
+@media (prefers-reduced-motion: reduce) {
+  .fc-event-wrapper {
+    transition: none;
   }
 }

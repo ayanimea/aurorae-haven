@@ -14,8 +14,64 @@
 import { parse, format, addDays } from 'date-fns'
 import { createLogger } from './logger'
 import { VALID_EVENT_TYPES } from './scheduleConstants'
+import { clusterEvents, assignColumns } from './scheduleHelpers'
+import { timeToMinutes } from './timeUtils'
 
 const logger = createLogger('EventAdapter')
+
+const MILLISECONDS_PER_MINUTE = 60000
+// Accept canonical HH:mm plus the explicit end-of-day sentinel "24:00".
+const EVENT_TIME_PATTERN = /^(?:24:00|(?:[01]\d|2[0-3]):[0-5]\d)$/
+
+const toDateAtStartOfDay = (date) => {
+  const normalizedDate = new Date(date)
+  normalizedDate.setHours(0, 0, 0, 0)
+  return normalizedDate
+}
+
+/**
+ * Parse an event time against a specific day baseline.
+ * When `allowEndOfDay` is true, "24:00" is treated as next-day midnight.
+ * When false, "24:00" is rejected and null is returned.
+ *
+ * @param {Date} dayDate
+ * @param {string} timeString
+ * @param {{allowEndOfDay?: boolean}} [options]
+ * @returns {Date|null}
+ */
+const parseEventTime = (dayDate, timeString, { allowEndOfDay = false } = {}) => {
+  const normalizedTime = typeof timeString === 'string' ? timeString.trim() : ''
+
+  if (normalizedTime === '24:00') {
+    return allowEndOfDay ? addDays(dayDate, 1) : null
+  }
+
+  if (!EVENT_TIME_PATTERN.test(normalizedTime)) {
+    return null
+  }
+
+  return new Date(dayDate.getTime() + timeToMinutes(normalizedTime) * MILLISECONDS_PER_MINUTE)
+}
+
+/**
+ * Determine whether an event should be treated as same-day for overlap clustering.
+ * Events ending exactly at next-day 00:00 are considered same-day boundaries so
+ * they can still participate in day-view column clustering.
+ *
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @returns {boolean}
+ */
+const isSingleDayForClustering = (startDate, endDate) => {
+  const startDay = format(startDate, 'yyyy-MM-dd')
+  const endDay = format(endDate, 'yyyy-MM-dd')
+  if (startDay === endDay) {
+    return true
+  }
+
+  const nextDayStart = addDays(toDateAtStartOfDay(startDate), 1)
+  return endDate.getTime() === nextDayStart.getTime()
+}
 
 /**
  * Convert our event format to React Big Calendar format
@@ -31,7 +87,7 @@ export const toRBCEvent = (event) => {
 
     // Parse the day (YYYY-MM-DD format) as local date to avoid UTC timezone shifts
     // parseISO treats date-only strings as UTC, which can shift the day in non-UTC zones
-    const dayDate = parse(event.day, 'yyyy-MM-dd', new Date())
+    const dayDate = toDateAtStartOfDay(parse(event.day, 'yyyy-MM-dd', new Date()))
 
     // Validate the parsed date
     if (Number.isNaN(dayDate.getTime())) {
@@ -39,11 +95,16 @@ export const toRBCEvent = (event) => {
     }
 
     // Parse start and end times (HH:mm format)
-    const startTime = parse(event.startTime, 'HH:mm', dayDate)
-    let endTime = parse(event.endTime, 'HH:mm', dayDate)
+    const startTime = parseEventTime(dayDate, event.startTime)
+    let endTime = parseEventTime(dayDate, event.endTime, { allowEndOfDay: true })
 
     // Validate parsed times
-    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+    if (
+      !startTime ||
+      !endTime ||
+      Number.isNaN(startTime.getTime()) ||
+      Number.isNaN(endTime.getTime())
+    ) {
       return null
     }
 
@@ -86,7 +147,7 @@ export const toFullCalendarEvent = (event) => {
 
     // Parse the day (YYYY-MM-DD format) as local date to avoid UTC timezone shifts
     // parseISO treats date-only strings as UTC, which can shift the day in non-UTC zones
-    const dayDate = parse(event.day, 'yyyy-MM-dd', new Date())
+    const dayDate = toDateAtStartOfDay(parse(event.day, 'yyyy-MM-dd', new Date()))
 
     // Validate the parsed date
     if (Number.isNaN(dayDate.getTime())) {
@@ -94,11 +155,16 @@ export const toFullCalendarEvent = (event) => {
     }
 
     // Parse start and end times (HH:mm format)
-    const startTime = parse(event.startTime, 'HH:mm', dayDate)
-    let endTime = parse(event.endTime, 'HH:mm', dayDate)
+    const startTime = parseEventTime(dayDate, event.startTime)
+    let endTime = parseEventTime(dayDate, event.endTime, { allowEndOfDay: true })
 
     // Validate parsed times
-    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+    if (
+      !startTime ||
+      !endTime ||
+      Number.isNaN(startTime.getTime()) ||
+      Number.isNaN(endTime.getTime())
+    ) {
       return null
     }
 
@@ -113,17 +179,44 @@ export const toFullCalendarEvent = (event) => {
       ? event.type
       : 'task'
 
+    // Canonical data model — mainStart/mainEnd are source of truth.
+    // renderStart expands backwards by prep only, and renderEnd expands forward
+    // by travel only, so visualization/clustering match structural constraints.
+    // Guard: if prep would push renderStart into the previous calendar day,
+    // clamp to dayDate (midnight) so that day-based clustering stays correct.
+    const mainStart = startTime
+    const mainEnd = endTime
+    const prepDuration = event.preparationTime || 0
+    const travelDuration = event.travelTime || 0
+    let renderStart = mainStart
+    if (prepDuration > 0) {
+      const bufferedStart = new Date(mainStart.getTime() - prepDuration * MILLISECONDS_PER_MINUTE)
+      renderStart = bufferedStart < dayDate ? dayDate : bufferedStart
+    }
+    const renderEnd =
+      travelDuration > 0
+        ? new Date(mainEnd.getTime() + travelDuration * MILLISECONDS_PER_MINUTE)
+        : mainEnd
+
     // FullCalendar event format
     return {
       id: event.id,
       title: event.title,
-      start: startTime,
-      end: endTime,
+      start: renderStart,
+      end: renderEnd,
       classNames: [`event-${eventType}`],
       extendedProps: {
         type: eventType,
-        travelTime: event.travelTime || 0,
-        preparationTime: event.preparationTime || 0,
+        // Legacy fields — kept for backward compatibility with consumers that
+        // still read travelTime / preparationTime. Canonical names are
+        // travelDuration / prepDuration below. Remove legacy fields once all
+        // consumers have migrated to the canonical names.
+        travelTime: travelDuration,
+        preparationTime: prepDuration,
+        mainStart,
+        mainEnd,
+        prepDuration,
+        travelDuration,
         originalEvent: event
       }
     }
@@ -158,7 +251,44 @@ export const toFullCalendarEvents = (events) => {
     return []
   }
 
-  return events.map(toFullCalendarEvent).filter(Boolean)
+  const fcEvents = events.map(toFullCalendarEvent).filter(Boolean)
+
+  // Compute overlap columns using the deterministic engine.
+  // Column metadata (column, totalColumns) is stored in extendedProps as prep work
+  // for future side-by-side overlap rendering. To wire it into the UI:
+  //   1. Schedule.jsx eventContent: forward extendedProps.column / .totalColumns into the
+  //      `resource` object passed to SolidEventCard.
+  //   2. SolidEventCard: accept column / totalColumns props and apply CSS `left` / `width`
+  //      (e.g. left = (column/totalColumns)*100+'%', width = (1/totalColumns)*100+'%').
+  // Until that rendering path is implemented, the values are precomputed but unused by CSS.
+  // Multi-day/midnight-spanning events are excluded from clustering — FullCalendar
+  // handles their layout separately and minute offsets would be incorrect for them.
+  try {
+    const MINUTES_PER_DAY = 24 * 60
+    const singleDayEvents = fcEvents.filter((e) => isSingleDayForClustering(e.start, e.end))
+    const eventSlots = singleDayEvents.map((e) => {
+      const spansDayBoundary = format(e.start, 'yyyy-MM-dd') !== format(e.end, 'yyyy-MM-dd')
+      return {
+        id: e.id,
+        start: Math.min(e.start.getHours() * 60 + e.start.getMinutes(), MINUTES_PER_DAY - 1),
+        end: spansDayBoundary
+          ? MINUTES_PER_DAY
+          : Math.min(e.end.getHours() * 60 + e.end.getMinutes(), MINUTES_PER_DAY)
+      }
+    })
+    const clusters = clusterEvents(eventSlots)
+    for (const cluster of clusters) assignColumns(cluster)
+    const columnMap = Object.fromEntries(
+      eventSlots.map((s) => [s.id, { column: s.column ?? 0, totalColumns: s.totalColumns ?? 1 }])
+    )
+    return fcEvents.map((e) => ({
+      ...e,
+      extendedProps: { ...e.extendedProps, ...(columnMap[e.id] ?? {}) }
+    }))
+  } catch (_err) {
+    logger.error('Failed to compute overlap columns:', _err)
+    return fcEvents
+  }
 }
 
 /**

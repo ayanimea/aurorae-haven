@@ -7,13 +7,8 @@ test.describe('Routine Workflow', () => {
     // Step 1: Navigate and select a routine from Library
     // eslint-disable-next-line no-console
     console.log('Step 1: Selecting a routine from Library...')
-    await page.goto('http://localhost:4173/aurorae-haven/')
-
-    // Wait for app to load
-    await page.waitForTimeout(2000)
-
-    // Navigate to Library tab
-    await page.click('text=Library')
+    await page.goto('library')
+    await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
 
     // Take screenshot of Library view

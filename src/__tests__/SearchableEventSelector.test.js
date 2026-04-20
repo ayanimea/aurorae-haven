@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import SearchableEventSelector from '../components/Schedule/SearchableEventSelector'
 import * as scheduleHelpers from '../utils/scheduleHelpers'
@@ -56,27 +56,31 @@ describe('SearchableEventSelector Component', () => {
   })
 
   describe('Rendering', () => {
-    it('should render search input for routine event type', () => {
-      render(
-        <SearchableEventSelector
-          eventType='routine'
-          onSelect={mockOnSelect}
-          onCreateNew={mockOnCreateNew}
-        />
-      )
+    it('should render search input for routine event type', async () => {
+      await act(async () => {
+        render(
+          <SearchableEventSelector
+            eventType='routine'
+            onSelect={mockOnSelect}
+            onCreateNew={mockOnCreateNew}
+          />
+        )
+      })
       expect(
         screen.getByPlaceholderText('Search for an existing routine...')
       ).toBeInTheDocument()
     })
 
-    it('should render search input for task event type', () => {
-      render(
-        <SearchableEventSelector
-          eventType='task'
-          onSelect={mockOnSelect}
-          onCreateNew={mockOnCreateNew}
-        />
-      )
+    it('should render search input for task event type', async () => {
+      await act(async () => {
+        render(
+          <SearchableEventSelector
+            eventType='task'
+            onSelect={mockOnSelect}
+            onCreateNew={mockOnCreateNew}
+          />
+        )
+      })
       expect(
         screen.getByPlaceholderText('Search for an existing task...')
       ).toBeInTheDocument()
@@ -483,14 +487,16 @@ describe('SearchableEventSelector Component', () => {
   })
 
   describe('Accessibility', () => {
-    it('should have proper ARIA labels', () => {
-      render(
-        <SearchableEventSelector
-          eventType='routine'
-          onSelect={mockOnSelect}
-          onCreateNew={mockOnCreateNew}
-        />
-      )
+    it('should have proper ARIA labels', async () => {
+      await act(async () => {
+        render(
+          <SearchableEventSelector
+            eventType='routine'
+            onSelect={mockOnSelect}
+            onCreateNew={mockOnCreateNew}
+          />
+        )
+      })
 
       const input = screen.getByLabelText('Search for existing routine')
       expect(input).toBeInTheDocument()
@@ -540,14 +546,33 @@ describe('SearchableEventSelector Component', () => {
   })
 
   describe('Null EventType (Drag-to-Schedule)', () => {
-    it('should render search input for null event type with "routine or task" text', () => {
+    it('defaults to null eventType when omitted', async () => {
       render(
         <SearchableEventSelector
-          eventType={null}
           onSelect={mockOnSelect}
           onCreateNew={mockOnCreateNew}
         />
       )
+
+      await waitFor(() => {
+        expect(scheduleHelpers.getAllRoutinesAndTasks).toHaveBeenCalledWith(null)
+      })
+
+      expect(
+        screen.getByPlaceholderText('Search for an existing routine or task...')
+      ).toBeInTheDocument()
+    })
+
+    it('should render search input for null event type with "routine or task" text', async () => {
+      await act(async () => {
+        render(
+          <SearchableEventSelector
+            eventType={null}
+            onSelect={mockOnSelect}
+            onCreateNew={mockOnCreateNew}
+          />
+        )
+      })
       expect(
         screen.getByPlaceholderText('Search for an existing routine or task...')
       ).toBeInTheDocument()

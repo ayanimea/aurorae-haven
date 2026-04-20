@@ -26,7 +26,7 @@ const SEARCH_DEBOUNCE_MS = 300
  *
  * @component
  * @param {Object} props - Component props
- * @param {('routine'|'task'|'meeting'|'habit'|null)} props.eventType - Type of event to search/create, or null to show both routines and tasks (drag-to-schedule)
+ * @param {('routine'|'task'|'meeting'|'habit'|null)} [props.eventType=null] - Type of event to search/create, or null to show both routines and tasks (drag-to-schedule)
  * @param {Function} props.onSelect - Callback when an existing item is selected. Receives the selected item object.
  * @param {Function} props.onCreateNew - Callback when "create new" button is clicked
  * @returns {React.ReactElement|null} The search component or null if eventType doesn't support search
@@ -47,7 +47,7 @@ const SEARCH_DEBOUNCE_MS = 300
  *   onCreateNew={() => console.log('Create new')}
  * />
  */
-function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
+function SearchableEventSelector({ eventType = null, onSelect, onCreateNew }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -368,10 +368,8 @@ function SearchableEventSelector({ eventType, onSelect, onCreateNew }) {
 }
 
 SearchableEventSelector.propTypes = {
-  // eventType can be null for drag-to-schedule mode, but must be explicitly provided
-  // Using oneOf with null means the prop must be passed (not undefined), but null is valid
-  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null])
-    .isRequired,
+  // eventType defaults to null (drag-to-schedule mode) when omitted.
+  eventType: PropTypes.oneOf(['routine', 'task', 'meeting', 'habit', null]),
   onSelect: PropTypes.func.isRequired,
   onCreateNew: PropTypes.func.isRequired
 }

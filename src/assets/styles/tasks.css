@@ -3,7 +3,7 @@
   display: grid;
   gap: 16px;
   position: relative;
-  z-index: 1;
+  z-index: var(--z-base);
 }
 
 .add-task-form {
@@ -17,16 +17,14 @@
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(16, 20, 44, 0.32);
+  background: var(--bg-secondary);
   color: var(--ink);
   font-size: 14px;
-  transition:
-    border-color var(--dur) var(--ease),
-    filter var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease);
 }
 
 .quadrant-select:hover {
-  filter: brightness(1.1);
+  border-color: var(--glass-border-hover);
 }
 
 .quadrant-select:focus {
@@ -38,16 +36,14 @@
   padding: 10px 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(16, 20, 44, 0.32);
+  background: var(--bg-secondary);
   color: var(--ink);
   font-size: 14px;
-  transition:
-    border-color var(--dur) var(--ease),
-    filter var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease);
 }
 
 .task-input:hover {
-  filter: brightness(1.1);
+  border-color: var(--glass-border-hover);
 }
 
 .task-input:focus {
@@ -59,34 +55,6 @@
 .task-input::placeholder {
   color: var(--dim);
   opacity: 0.7;
-}
-
-.error-notification {
-  position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 99, 99, 0.95);
-  color: #fff;
-  padding: 14px 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 140, 140, 0.4);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-  max-width: 90%;
-  text-align: center;
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
 }
 
 .eisenhower-matrix {
@@ -163,7 +131,7 @@
   gap: 8px;
 }
 
-.empty-state {
+.task-list .empty-state {
   text-align: center;
   color: var(--dim);
   font-size: 14px;
@@ -177,7 +145,7 @@
   gap: 10px;
   align-items: center;
   padding: 10px 12px;
-  background: rgba(16, 20, 44, 0.32);
+  background: var(--bg-secondary);
   border: 1px solid var(--line);
   border-radius: 10px;
   cursor: grab;
@@ -189,8 +157,7 @@
 
 .task-item:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  filter: brightness(1.08);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .task-item:active {

@@ -415,7 +415,8 @@ function Habits() {
             <option value='lastDone'>Sort: Last Done</option>
           </select>
 
-          <button type="button"
+          <button
+            type='button'
             onClick={() => setShowFilterModal(true)}
             className='btn btn-secondary'
             aria-label='Filter habits'
@@ -440,7 +441,8 @@ function Habits() {
             )}
           </button>
 
-          <button type="button"
+          <button
+            type='button'
             onClick={() => setShowNewHabitModal(true)}
             className='btn btn-primary'
           >
@@ -558,7 +560,8 @@ function Habits() {
                     className='swipe-actions'
                     style={{ marginTop: '8px', display: 'flex', gap: '8px' }}
                   >
-                    <button type="button"
+                    <button
+                      type='button'
                       onClick={(e) => {
                         e.stopPropagation()
                         handlePauseHabit(habit.id)
@@ -568,7 +571,8 @@ function Habits() {
                     >
                       {habit.paused ? 'Resume' : 'Pause'}
                     </button>
-                    <button type="button"
+                    <button
+                      type='button'
                       onClick={(e) => {
                         e.stopPropagation()
                         handleDeleteHabit(habit.id)
@@ -670,15 +674,14 @@ function Habits() {
         <HabitDetailDrawer
           habit={selectedHabit}
           onClose={() => setSelectedHabit(null)}
-          onUpdate={handleUpdateHabit}
-          onPause={handlePauseHabit}
-          onDelete={handleDeleteHabit}
+          onUpdateHabit={handleUpdateHabit}
         />
       )}
 
       {/* Toast Notifications - TAB-HAB-23 */}
       {toast && (
         <Toast
+          visible={true}
           type={toast.type}
           message={toast.message}
           onClose={() => setToast(null)}

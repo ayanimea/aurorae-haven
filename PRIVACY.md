@@ -136,7 +136,7 @@ We may update this privacy policy from time to time. Changes will be:
 
 For privacy-related questions or concerns, please use:
 
-- **GitHub Issues**: <https://github.com/aurorae-haven/aurorae-haven/issues>
+- **GitHub Issues**: <https://github.com/ayanimea/aurorae-haven/issues>
 
 ## Commitment to Privacy
 

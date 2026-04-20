@@ -7,7 +7,8 @@
 
 :root {
   /* ===== SPACING SCALE ===== */
-  /* Used for margins, padding, gaps */
+  /* NOTE: Not yet adopted — codebase currently uses inline px/rem values.
+   * Use these tokens for all new spacing work to move toward a consistent scale. */
   --space-2xs: 0.25rem; /* 4px */
   --space-xs: 0.5rem; /* 8px */
   --space-sm: 0.75rem; /* 12px */
@@ -22,6 +23,7 @@
   --touch-comfortable: 48px; /* WCAG AA comfortable size */
 
   /* ===== ICON SIZES ===== */
+  /* NOTE: --icon-xs/lg/xl not yet adopted. Use --icon-sm (20px) and --icon-md (24px). */
   --icon-xs: 16px;
   --icon-sm: 20px;
   --icon-md: 24px;
@@ -29,6 +31,7 @@
   --icon-xl: 48px;
 
   /* ===== FONT SIZES ===== */
+  /* NOTE: --font-2xs/md/lg/xl not yet adopted. Use --font-xs and --font-sm for compact UI. */
   --font-2xs: 0.625rem; /* 10px */
   --font-xs: 0.65rem; /* 10.4px - compact UI */
   --font-sm: 0.7rem; /* 11.2px - compact labels */
@@ -38,14 +41,19 @@
 
   /* ===== Z-INDEX LAYERS ===== */
   /* Stacking order for overlays and modals */
-  --z-base: 1;
-  --z-mobile-menu: 40;
+  --z-base: 1; /* Local stacking contexts (resize handles, cards) */
+  --z-appbar: 20; /* Fixed top/bottom app bar */
+  --z-mobile-menu: 40; /* Sliding navigation drawer */
+  /* NOTE: --z-content (50) is intentionally above --z-mobile-menu (40) */
+  /* and is reserved for future content-layer use; do not assign to page content */
   --z-content: 50;
-  --z-sidebar: 100;
-  --z-editor: 101;
-  --z-dropdown: 102;
-  --z-modal: 200;
-  --z-toast: 300;
+  --z-sidebar: 100; /* Overlay sidebars (e.g. brain-dump note list) */
+  --z-editor: 101; /* Inline editor surfaces above sidebars */
+  --z-dropdown: 102; /* Context menus and dropdowns */
+  --z-notification: 150; /* In-page error/status banners (below modals, above dropdowns) */
+  --z-modal: 200; /* Modal overlays and backdrops */
+  --z-toast: 300; /* Toasts and transient notifications */
+  --z-celebration: 9000; /* One-shot celebration overlays (above everything) */
 
   /* ===== NAVIGATION DIMENSIONS ===== */
   /* Shell padding values for different viewport sizes */
@@ -53,7 +61,7 @@
   --shell-padding-compact: 85px; /* 969-1280px */
   --shell-padding-comfortable: 78px; /* >1280px */
 
-  /* Navigation item sizing */
+  /* Navigation item sizing — NOTE: not yet adopted in navigation.css (uses inline values) */
   --nav-gap-compact: 0.25rem; /* Small viewports */
   --nav-gap-comfortable: 0.5rem; /* Large viewports */
   --nav-padding-compact: 0.5rem; /* Small viewports */
@@ -69,18 +77,193 @@
   /* --breakpoint-wide: 1440px; */
 
   /* ===== LAYOUT ===== */
+  /* NOTE: Not yet adopted — navigation uses inline values instead.
+   * Use these tokens when refactoring layout dimensions. */
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 64px;
   --appbar-height: 64px;
   --mobile-bottom-bar-height: 60px;
 
   /* ===== BORDERS & RADIUS ===== */
+  /* NOTE: Not yet adopted — codebase currently uses inline border-radius values.
+   * Use these tokens for all new component work. */
   --radius-sm: 0.25rem; /* 4px */
   --radius-md: 0.5rem; /* 8px */
   --radius-lg: 0.75rem; /* 12px */
   --radius-xl: 1rem; /* 16px */
 
+  /* Border widths */
+  --border-thin: 1px;   /* Default structural borders */
+  --border-accent: 3px; /* Left-edge type accent stripe */
+  --border-focus: 2px;  /* Focus outline width */
+  --focus-outline-offset: 2px;
+
+  /* ===== TYPOGRAPHY ===== */
+  --font-weight-medium: 500;
+  --line-height-base: 1.4;
+  --letter-spacing-wide: 0.02em;
+
+  /* Event card title — slightly larger than --font-md (0.875rem) for visual prominence */
+  --font-event-title: 0.95rem;
+  --font-event-title-sm: 0.9rem; /* Mobile / compact context */
+
+  /* ===== SCHEDULE — ATMOSPHERIC TOKENS ===== */
+  /* Sky gradient stops for the fixed background layer */
+  --bg-sky-top: #0f172a;
+  --bg-sky-mid: #16213e;
+  --bg-sky-bottom: #1a1f3c;
+
+  /* Time-of-day zone overlays — aligned to Figma Schedule source */
+  --zone-morning: rgba(210, 160, 110, 0.34);
+  --zone-afternoon: rgba(140, 190, 200, 0.30);
+  --zone-evening: rgba(160, 120, 170, 0.30);
+  --zone-night: rgba(20, 18, 45, 0.60);
+
+  /* Schedule band blend controls (sourced from Figma ZIP palette) */
+  --band-morning-tint: rgba(255, 245, 220, 0.32);
+  --band-afternoon-tint: rgba(208, 232, 238, 0.22);
+  --band-evening-tint: rgba(220, 192, 236, 0.18);
+  --band-night-tint: rgba(56, 58, 96, 0.42);
+  --band-morning-mix-top: 92%;
+  --band-afternoon-mix-top: 95%;
+  --band-evening-mix-top: 95%;
+  --band-night-mix-top: 90%;
+  --band-morning-mix-mid: 70%;
+  --band-afternoon-mix-mid: 75%;
+  --band-evening-mix-mid: 76%;
+  --band-night-mix-mid: 72%;
+
+  /* Planet glow layers — combined effective opacity ≤ 0.08 */
+  --planet-core: rgba(180, 200, 255, 0.08);
+  --planet-mid: rgba(150, 180, 255, 0.05);
+  --planet-edge: rgba(120, 150, 255, 0.03);
+
+  /* Event glass surface — brighter cards per Figma schedule card treatment.
+   * Contrast verified against final composited card background in the darkest
+   * sampled night-band case: 9.15:1+ against --event-text. */
+  --event-glass-top: rgba(255, 255, 255, 0.88);
+  --event-glass-bottom: rgba(246, 247, 255, 0.72);
+  --event-border: rgba(255, 255, 255, 0.44);
+
+  /* Event wrapper tokens — used by fc-event-wrapper */
+  --event-glass-gradient: linear-gradient(180deg, var(--event-glass-top) 0%, var(--event-glass-bottom) 100%);
+  --event-base-surface: rgba(16, 20, 44, 0.55);
+  --event-blur: blur(8px);
+  --shadow-elevation-md: 0 4px 18px rgba(0, 0, 0, 0.28), 0 1px 4px rgba(0, 0, 0, 0.18);
+  --shadow-glow-soft: 0 0 12px rgba(134, 245, 224, 0.06);
+  --event-shadow: var(--shadow-elevation-md), var(--shadow-glow-soft);
+
+  /* Buffer segment tokens */
+  --event-travel-surface: rgba(96, 165, 250, 0.18);
+  --event-travel-opacity: 0.85;
+  --event-prep-surface: rgba(251, 191, 36, 0.18);
+  --event-prep-opacity: 0.85;
+  --event-divider: rgba(255, 255, 255, 0.08);
+
+  /* Column gap for side-by-side overlap layout (px unit; parseFloat-safe for JS consumption) */
+  --event-column-gap: 3px;
+
+  /* Event time-of-day accent tints — applied as top layer over the glass base.
+   * Body uses neutral glass (no colour fill). Left-edge strip uses saturated accent
+   * (alpha 0.58–0.62) for semantic scan speed. Must not overpower text. */
+  --event-morning-accent: rgba(230, 180, 130, 0.55);
+  --event-afternoon-accent: rgba(160, 210, 220, 0.52);
+  --event-evening-accent: rgba(180, 145, 195, 0.50);
+  --event-night-accent: rgba(60, 55, 100, 0.46);
+
+  /* Light event body overlay — stacked above glass, adds subtle brightening */
+  --event-body-overlay: rgba(255, 255, 255, 0.08);
+
+  /* Event card text colours */
+  --event-text: rgba(16, 20, 30, 0.98);
+  --event-text-dim: rgba(24, 36, 52, 0.88);
+  --event-text-secondary: rgba(30, 44, 64, 0.84);
+
+  /* Event card measurements */
+  --event-radius: 0.875rem;
+  --event-padding-v: 0.75rem;
+  --event-padding-h: 1rem;
+
+  /* Event top-edge luminous highlight (::before layer) — same as glass-top */
+  --event-highlight-top: rgba(255, 255, 255, 0.05);
+
+  /* Event type left-border accent colours */
+  --color-routine: rgba(134, 245, 224, 0.5);
+  --color-task: rgba(96, 165, 250, 0.5);
+  --color-meeting: rgba(249, 115, 22, 0.5);
+  --color-habit: rgba(167, 139, 250, 0.5);
+  --color-break: rgba(34, 197, 94, 0.5);
+
+  /* Focus ring — matches --color-routine teal */
+  --event-focus-ring: rgba(134, 245, 224, 0.6);
+
+  /* Category accent */
+  --category-blue: rgba(100, 160, 255, 0.22);
+
+  /* Preparation / travel block accent */
+  --color-preparation: rgba(251, 191, 36, 1);
+
+  /* Current-time indicator — mint (distinct from --mint for explicit token name) */
+  --now-line: #a3ffd6;
+
+  /* Hour / timegrid label — neutral white at readable opacity (SVG-safe inline value
+   * required in fullcalendar-custom.css since CSS vars cannot be used in SVG data URIs,
+   * but this token is used for the rendered text labels) */
+  --time-label: rgba(255, 255, 255, 0.55);
+
+  /* ===== UNIFIED GLASS SURFACE SYSTEM — "Full Luxury, Restrained" ===== */
+  /* Light source: from top. Micro elevation defines depth, not opacity jumps.
+   * Hierarchy: Background < Bands < Events < Button < Nav Tab < Modal < Dropdown */
+
+  /* Canonical surface tokens */
+  --glass-base-bg: rgba(16, 20, 44, 0.28);          /* Base: inactive buttons, nav tabs */
+  --glass-elevated-bg: rgba(12, 16, 38, 0.62);       /* Elevated: dropdowns (deeper than modal) */
+  --glass-accent-top: rgba(134, 245, 224, 0.16);     /* Accent gradient — top highlight */
+  --glass-accent-bg: rgba(134, 245, 224, 0.09);      /* Accent gradient — base (bottom) */
+  --glass-border-soft: rgba(255, 255, 255, 0.07);    /* Shared soft border — all glass surfaces */
+  --glass-border-hover: rgba(255, 255, 255, 0.13);   /* Border lift on hover — inputs, nav tabs */
+  --glass-chip-bg: rgba(255, 255, 255, 0.20);        /* Inline chip / pill surface — suggestion slots */
+  --glass-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.22);  /* Base button shadow */
+  --glass-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.28); /* Hover lift shadow — 1px translateY */
+  --glass-shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.46), 0 4px 12px rgba(0, 0, 0, 0.32); /* Dropdown — deepest */
+
+  /* Directional light gradient stops — light from top */
+  --glass-light-top: rgba(255, 255, 255, 0.08);      /* Top highlight */
+  --glass-light-mid: rgba(255, 255, 255, 0.03);      /* Upper-mid fade */
+  --glass-light-shade: rgba(0, 0, 0, 0.06);          /* Bottom density */
+
+  /* ===== NAVIGATION & BUTTON GLASS SURFACE ===== */
+  /* Shared glass surface for nav tabs, toolbar buttons, and button groups.
+   * Hierarchy: Events > Navigation > Background
+   * These alias the canonical glass tokens above for backward compatibility. */
+  --nav-glass-base: var(--glass-base-bg);
+  --nav-glass-border: var(--glass-border-soft);
+  --nav-active-bg: rgba(134, 245, 224, 0.12);
+  --nav-active-border: rgba(134, 245, 224, 0.22);   /* Reduced from 0.30 — luxury is desaturated */
+  --nav-active-glow: 0 0 40px rgba(134, 245, 224, 0.06); /* Diffused light, not glow (≤0.08) */
+  --nav-group-bg: rgba(16, 20, 44, 0.35);
+  --nav-group-border: rgba(255, 255, 255, 0.06);
+
+  /* ===== MODAL & INPUT GLASS SURFACE ===== */
+  /* Hierarchy: Modal > Event Cards > Bands > Background.
+   * Uses blur+shadow elevation rather than opacity for depth distinction. */
+  --modal-overlay-bg: rgba(10, 14, 38, 0.55);       /* Softer than black — preserves cosmic continuity */
+  --modal-surface-base: rgba(16, 20, 44, 0.34);      /* Lighter than --dark for true glass float */
+  --modal-border: rgba(255, 255, 255, 0.06);          /* Softer than event-border — hierarchy preserved */
+  --modal-glass-top: rgba(255, 255, 255, 0.06);       /* Directional light — top highlight */
+  --modal-glass-mid: rgba(255, 255, 255, 0.02);       /* Directional light — upper-mid fade */
+  --modal-glass-dim: rgba(255, 255, 255, 0.01);       /* Directional light — lower-mid dim */
+  --modal-glass-shade: rgba(0, 0, 0, 0.05);           /* Directional light — base density */
+  --modal-edge-shimmer: rgba(255, 255, 255, 0.04);    /* ::before edge hairline — removes flatness */
+  --modal-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), 0 40px 120px rgba(0, 0, 0, 0.25); /* Atmospheric lift */
+  --input-glass-bg: rgba(16, 20, 44, 0.26);           /* Input background — below modal surface */
+
   /* ===== TRANSITIONS ===== */
+  /* NOTE: These composite tokens are defined for future use but are not yet
+   * adopted. The canonical transition pattern in this codebase is:
+   *   transition: <property> var(--dur) var(--ease);
+   * where --dur = 240ms and --ease = cubic-bezier(0.25, 0.1, 0.25, 1).
+   * Use these shorthand tokens for new work when a single-value transition suffices. */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
