@@ -638,6 +638,95 @@ textarea:focus {
   overflow: visible;
 }
 
+@media print {
+  :root {
+    --print-paper: #fff;
+    --print-ink: #111;
+    --print-heading: #000;
+    --print-code-bg: #f5f5f5;
+    --print-code-border: #ddd;
+    --print-font-size: 11pt;
+  }
+
+  body.layout-notes-print .appbar,
+  body.layout-notes-print .mobile-menu {
+    display: none !important;
+  }
+
+  body.layout-notes-print .shell {
+    padding-top: 0 !important;
+  }
+
+  body.layout-notes-print .brain-dump-container .note-list-sidebar,
+  body.layout-notes-print .brain-dump-container .card-h,
+  body.layout-notes-print .brain-dump-container .editor-pane,
+  body.layout-notes-print .brain-dump-container .resize-handle,
+  body.layout-notes-print .brain-dump-container .toast {
+    display: none !important;
+  }
+
+  body.layout-notes-print .brain-dump-container,
+  body.layout-notes-print .brain-dump-container .brain-dump-main,
+  body.layout-notes-print .brain-dump-container .brain-dump-main .card,
+  body.layout-notes-print .brain-dump-container .brain-dump-main .card-b,
+  body.layout-notes-print .brain-dump-container .note-editor-split,
+  body.layout-notes-print .brain-dump-container .preview-pane {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: var(--print-paper) !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  body.layout-notes-print .brain-dump-container .preview-pane {
+    padding: 0 !important;
+  }
+
+  body.layout-notes-print .brain-dump-container .preview {
+    color: var(--print-ink) !important;
+    overflow: visible !important;
+    font-size: var(--print-font-size);
+    line-height: 1.5;
+  }
+
+  body.layout-notes-print .brain-dump-container .preview a {
+    color: var(--print-ink) !important;
+    text-decoration: underline;
+  }
+
+  body.layout-notes-print .brain-dump-container .preview pre,
+  body.layout-notes-print .brain-dump-container .preview code {
+    color: var(--print-ink) !important;
+    background: var(--print-code-bg) !important;
+    border: 1px solid var(--print-code-border);
+  }
+
+  body.layout-notes-print .brain-dump-container .preview pre {
+    padding: 10px;
+    overflow: visible !important;
+    white-space: pre-wrap;
+    break-inside: avoid;
+  }
+
+  body.layout-notes-print .brain-dump-container .preview img {
+    break-inside: avoid;
+    max-width: 100% !important;
+  }
+
+  body.layout-notes-print .brain-dump-container .preview h1,
+  body.layout-notes-print .brain-dump-container .preview h2,
+  body.layout-notes-print .brain-dump-container .preview h3,
+  body.layout-notes-print .brain-dump-container .preview h4,
+  body.layout-notes-print .brain-dump-container .preview h5,
+  body.layout-notes-print .brain-dump-container .preview h6 {
+    break-after: avoid;
+    color: var(--print-heading) !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .brain-dump-container,
   .note-list-sidebar,

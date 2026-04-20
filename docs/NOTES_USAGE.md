@@ -123,6 +123,14 @@ Display images in your notes using markdown syntax:
 
 ## Advanced Features
 
+### 📤 ODT Export
+
+Brain Dump supports OpenDocument Text (`.odt`) export for compatibility with LibreOffice Writer and other ODT editors.
+
+- **Export ODT**: exports the currently selected note as a single `.odt` file.
+- **Export all ODT**: exports all notes through a single browser download (`.zip` when multiple notes are present).
+- **Export all ODT as zip**: exports all notes into one `.zip` archive containing `.odt` files.
+
 ### 🔗 Backlinks (TAB-BDP-BLK-01)
 
 Create wiki-style links between notes using double brackets:
@@ -299,6 +307,14 @@ Save your markdown as a file:
 4. Backup your work
 
 **Keyboard Shortcut:** `Ctrl/Cmd + S`
+
+### 🖨️ Print Formatted Preview
+
+Print the rendered Markdown (or save as PDF):
+
+1. Click the "🖨️ Print" button in the Brain Dump toolbar
+2. The browser print dialog opens
+3. Print output uses a clean, print-focused layout of the formatted preview
 
 ### Tags
 
