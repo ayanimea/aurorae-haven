@@ -8,6 +8,9 @@ import {
 let originalCreateElement = null
 let originalCreateObjectURL = null
 let originalRevokeObjectURL = null
+let shouldRestoreCreateElement = false
+let shouldRestoreCreateObjectURL = false
+let shouldRestoreRevokeObjectURL = false
 
 function setupDownloadMocks() {
   const downloadedBlobs = []
@@ -15,6 +18,8 @@ function setupDownloadMocks() {
 
   originalCreateObjectURL = global.URL.createObjectURL
   originalRevokeObjectURL = global.URL.revokeObjectURL
+  shouldRestoreCreateObjectURL = true
+  shouldRestoreRevokeObjectURL = true
   global.URL.createObjectURL = vi.fn((blob) => {
     downloadedBlobs.push(blob)
     return `blob:mock-${downloadedBlobs.length}`
@@ -22,6 +27,7 @@ function setupDownloadMocks() {
   global.URL.revokeObjectURL = vi.fn()
 
   originalCreateElement = document.createElement
+  shouldRestoreCreateElement = true
   document.createElement = vi.fn((tag) => {
     if (tag === 'a') {
       const element = originalCreateElement.call(document, tag)
@@ -35,18 +41,21 @@ function setupDownloadMocks() {
 }
 
 afterEach(() => {
-  if (originalCreateElement !== null) {
+  if (shouldRestoreCreateElement) {
     document.createElement = originalCreateElement
-    originalCreateElement = null
+    shouldRestoreCreateElement = false
   }
-  if (originalCreateObjectURL !== null) {
+  if (shouldRestoreCreateObjectURL) {
     global.URL.createObjectURL = originalCreateObjectURL
-    originalCreateObjectURL = null
+    shouldRestoreCreateObjectURL = false
   }
-  if (originalRevokeObjectURL !== null) {
+  if (shouldRestoreRevokeObjectURL) {
     global.URL.revokeObjectURL = originalRevokeObjectURL
-    originalRevokeObjectURL = null
+    shouldRestoreRevokeObjectURL = false
   }
+  originalCreateElement = null
+  originalCreateObjectURL = null
+  originalRevokeObjectURL = null
 })
 
 describe('noteOperations ODT export', () => {

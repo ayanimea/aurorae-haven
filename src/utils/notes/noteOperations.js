@@ -188,13 +188,13 @@ function downloadBlob(blob, filename) {
   a.download = filename
   document.body.appendChild(a)
   a.click()
+  if (a.parentNode) {
+    a.parentNode.removeChild(a)
+  }
   const revokeObjectURL = URL.revokeObjectURL
   setTimeout(() => {
     if (typeof revokeObjectURL === 'function') {
       revokeObjectURL(url)
-    }
-    if (a.parentNode) {
-      a.parentNode.removeChild(a)
     }
   }, 250)
 }
