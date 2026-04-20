@@ -27,6 +27,7 @@ CREATE TABLE accounts (
   password_hash TEXT,             -- null for oauth-only accounts
   email_verified_at TIMESTAMPTZ,
   mfa_secret_encrypted TEXT,      -- AES-256-GCM envelope-encrypted at app layer
+  mfa_key_version SMALLINT,       -- DEK/KEK version used for encryption
   mfa_enabled BOOLEAN NOT NULL DEFAULT false,
   failed_login_attempts INT NOT NULL DEFAULT 0,
   locked_until TIMESTAMPTZ,
@@ -235,6 +236,10 @@ CREATE TABLE backups (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   payload JSONB NOT NULL,
+  encryption_key_version SMALLINT,
+  checksum_sha256 TEXT,
+  integrity_checked_at TIMESTAMPTZ,
+  integrity_status TEXT CHECK (integrity_status IN ('pending', 'ok', 'failed')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   expires_at TIMESTAMPTZ
 );
@@ -356,12 +361,13 @@ CREATE POLICY account_settings_owner ON account_settings
 ## 6) Security controls checklist
 
 - Passwords hashed with **Argon2id** and never stored in plain text.
-- If Argon2id is not available in the runtime, fallback is bcrypt with cost >= 14.
+- If Argon2id is not available in the runtime, fallback is bcrypt with cost >= 15.
 - Refresh/session tokens are random opaque values; only token hash is persisted.
 - Cookies for refresh tokens are `HttpOnly`, `Secure`, `SameSite=Lax`.
 - All SQL writes are parameterized (or ORM-generated) to prevent injection.
 - MFA secret uses AES-256-GCM envelope encryption with DEKs wrapped by KMS/HSM-managed KEKs.
 - Encryption keys are rotated on a defined schedule (for example every 30-60 days) and on incident response.
+- Encrypted records store a key-version value to support rolling rotation and safe decrypt/re-encrypt migrations.
 - Auth endpoints are rate-limited and account lockout is enforced.
 - Object storage access uses signed short-lived URLs (no public raw keys).
 - `ON DELETE CASCADE` plus audit events supports account deletion/GDPR flows.
