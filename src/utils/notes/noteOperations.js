@@ -187,6 +187,9 @@ function downloadBlob(blob, filename) {
   a.href = url
   a.download = filename
   a.setAttribute('aria-hidden', 'true')
+  a.tabIndex = -1
+  a.hidden = true
+  a.style.display = 'none'
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
