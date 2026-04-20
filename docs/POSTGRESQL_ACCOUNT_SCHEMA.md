@@ -453,3 +453,34 @@ Current app stores in IndexedDB/local settings map to PostgreSQL entities as fol
 - `templates` → `templates`
 - `calendar_subscriptions` → `calendar_subscriptions`
 - `aurorae_settings` (`settingsManager`) → `account_settings`
+
+## 8) Comparison with backend `database.md` (issue attachment)
+
+Compared against: backend attachment `database.md` referenced in issue #458.
+
+### What already aligns
+
+- Account-scoped ownership on all business tables (`account_id`/`user_id` FK + cascade delete).
+- Core auth/session/token/audit tables are present in both designs.
+- Main product domains map one-to-one in both designs: tasks, schedule events, routines/steps/runs, habits/completions/vacation dates, notes/versions/brain dump, stats, templates, file refs, calendar subscriptions, account settings.
+- Security baseline aligns: hashed passwords, token-hash storage, auditability, and per-account data isolation.
+
+### Key naming/shape differences to reconcile
+
+- **Principal naming**: backend uses `users` + `user_id`; this draft uses `accounts` + `account_id`.
+- **Settings split**: backend has both `user_settings` (typed columns) and `account_settings` (JSONB); this draft currently documents only `account_settings`.
+- **History model**: backend includes append-only `change_history`;
+  this draft currently models only `audit_log` (security/auth events).
+  In practice, `change_history` serves data mutation lineage, while
+  `audit_log` focuses on security-relevant activity.
+- **RLS coverage**: this draft specifies PostgreSQL RLS policies; backend `database.md` describes ownership/FKs but not explicit RLS policy definitions.
+- **Optional entities in this draft**: `backups` and stronger MFA key-versioning fields (`mfa_secret_encrypted`, `mfa_key_version`) are draft additions not listed in backend `database.md`.
+
+### Integration recommendation
+
+To avoid migration churn, pick one canonical convention first (either `users/user_id` or `accounts/account_id`) and apply it consistently across:
+
+1. DDL,
+2. ORM model names,
+3. API transaction context key (`app.current_*_id`),
+4. RLS policies and test fixtures.
