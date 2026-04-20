@@ -26,7 +26,7 @@ CREATE TABLE accounts (
   provider_id TEXT,
   password_hash TEXT,             -- null for oauth-only accounts
   email_verified_at TIMESTAMPTZ,
-  mfa_secret_encrypted TEXT,      -- encrypted at app layer
+  mfa_secret_encrypted TEXT,      -- AES-256-GCM envelope-encrypted at app layer
   mfa_enabled BOOLEAN NOT NULL DEFAULT false,
   failed_login_attempts INT NOT NULL DEFAULT 0,
   locked_until TIMESTAMPTZ,
@@ -342,20 +342,30 @@ CREATE POLICY tasks_owner ON tasks
   USING (account_id = current_setting('app.current_account_id')::uuid)
   WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
 
--- Repeat the same policy shape on all account-scoped tables above.
+CREATE POLICY notes_owner ON notes
+  USING (account_id = current_setting('app.current_account_id')::uuid)
+  WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
+
+CREATE POLICY account_settings_owner ON account_settings
+  USING (account_id = current_setting('app.current_account_id')::uuid)
+  WITH CHECK (account_id = current_setting('app.current_account_id')::uuid);
+
+-- Apply this same owner-policy shape to each remaining account-scoped table.
 ```
 
 ## 6) Security controls checklist
 
-- Passwords hashed with **Argon2id** (preferred) and never stored in plain text.
+- Passwords hashed with **Argon2id** and never stored in plain text.
+- If Argon2id is not available in the runtime, fallback is bcrypt with cost >= 12.
 - Refresh/session tokens are random opaque values; only token hash is persisted.
 - Cookies for refresh tokens are `HttpOnly`, `Secure`, `SameSite=Lax`.
 - All SQL writes are parameterized (or ORM-generated) to prevent injection.
-- MFA secret is encrypted at application layer before DB write.
+- MFA secret uses AES-256-GCM envelope encryption with DEKs wrapped by KMS/HSM-managed KEKs.
+- Encryption keys are rotated on a defined schedule (for example every 90 days) and on incident response.
 - Auth endpoints are rate-limited and account lockout is enforced.
 - Object storage access uses signed short-lived URLs (no public raw keys).
 - `ON DELETE CASCADE` plus audit events supports account deletion/GDPR flows.
-- Backups are encrypted at rest and tested for restoration.
+- Backups are encrypted at rest with AES-256 (or cloud-provider equivalent) and restore-tested at least monthly.
 
 ## 7) Mapping to current local stores
 
