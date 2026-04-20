@@ -29,7 +29,10 @@ Backend and database infrastructure are intentionally **not implemented here**.
   - `VITE_OAUTH_GITHUB_CLIENT_ID`
 - API base URL via:
   - `VITE_API_BASE_URL`
-- Session secret contract via:
+
+## Backend-owned secrets
+
+- Session secret (backend-owned, never in frontend bundle):
   - `SESSION_SECRET`
 
 ## Compile mode coverage

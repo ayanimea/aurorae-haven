@@ -19,12 +19,18 @@ import {
   reloadPageAfterDelay,
   IMPORT_SUCCESS_MESSAGE
 } from '../utils/importData'
+import { getCompilationMode } from '../../scripts/compilationModes.js'
 import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
 
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
-const AUTH_PROVIDERS = ['Email', 'Google', 'Facebook', 'GitHub']
+const AUTH_PROVIDER_LABELS = {
+  email: 'Email',
+  google: 'Google',
+  facebook: 'Facebook',
+  github: 'GitHub'
+}
 
 function Settings() {
   const [settings, setSettingsState] = useState(getSettings())
@@ -35,18 +41,44 @@ function Settings() {
   const [isConfiguring, setIsConfiguring] = useState(false)
   const processEnv =
     typeof process !== 'undefined' && process?.env ? process.env : {}
+  const viteEnv =
+    typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
+  const readEnv = (key) => viteEnv[key] ?? processEnv[key]
   const compileMode =
-    (typeof import.meta !== 'undefined' &&
-      (import.meta.env?.VITE_COMPILE_MODE || import.meta.env?.AURORAE_COMPILE_MODE)) ||
-    processEnv.VITE_COMPILE_MODE ||
-    processEnv.AURORAE_COMPILE_MODE ||
+    readEnv('VITE_COMPILE_MODE') ||
+    readEnv('AURORAE_COMPILE_MODE') ||
     'desktop-offline'
   const authRequired =
-    ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_AUTH_REQUIRED) ||
-      processEnv.VITE_AUTH_REQUIRED) === 'true'
+    readEnv('VITE_AUTH_REQUIRED') === 'true'
+  const modeConfig = getCompilationMode(compileMode)
+  const emailAuthEnabled = readEnv('VITE_AUTH_EMAIL_ENABLED') === 'true'
+  const googleClientId = readEnv('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
+  const facebookAppId = readEnv('VITE_OAUTH_FACEBOOK_APP_ID') || ''
+  const githubClientId = readEnv('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
   const authProviders = useMemo(
-    () => (authRequired ? AUTH_PROVIDERS : []),
-    [authRequired]
+    () => {
+      if (!authRequired || !modeConfig) {
+        return []
+      }
+
+      return modeConfig.authProviders
+        .filter((provider) => {
+          if (provider === 'email') return emailAuthEnabled
+          if (provider === 'google') return Boolean(googleClientId)
+          if (provider === 'facebook') return Boolean(facebookAppId)
+          if (provider === 'github') return Boolean(githubClientId)
+          return false
+        })
+        .map((provider) => AUTH_PROVIDER_LABELS[provider])
+    },
+    [
+      authRequired,
+      modeConfig,
+      emailAuthEnabled,
+      googleClientId,
+      facebookAppId,
+      githubClientId
+    ]
   )
 
   // Use refs to avoid stale closures
@@ -606,7 +638,7 @@ function Settings() {
           <h3 className='settings-section-title'>Sign-In &amp; Account</h3>
           <p className='settings-placeholder-text'>
             Current mode: <strong>{compileMode}</strong>. Authentication is{' '}
-            <strong>{authRequired ? 'required' : 'optional'}</strong> in this
+            <strong>{authRequired ? 'required' : 'not required'}</strong> in this
             mode.
           </p>
           {authProviders.length > 0 ? (
@@ -636,9 +668,13 @@ function Settings() {
                 ))}
               </div>
             </>
-          ) : (
+          ) : compileMode === 'desktop-offline' ? (
             <p className='settings-placeholder-text'>
               Sign-in and sign-up are unavailable in offline mode.
+            </p>
+          ) : (
+            <p className='settings-placeholder-text'>
+              No sign-in providers are currently configured for this mode.
             </p>
           )}
         </div>

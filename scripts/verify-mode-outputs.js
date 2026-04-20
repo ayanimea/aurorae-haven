@@ -45,7 +45,13 @@ for (const check of checks) {
 }
 
 if (manifestAvailable) {
-  const twaManifest = JSON.parse(readFileSync('android/twa-manifest.json', 'utf-8'))
+  let twaManifest = null
+  try {
+    twaManifest = JSON.parse(readFileSync('android/twa-manifest.json', 'utf-8'))
+  } catch {
+    console.error('❌ android/twa-manifest.json contains invalid JSON')
+    hasFailure = true
+  }
   const requiredManifestFields = [
     'packageId',
     'host',
@@ -56,17 +62,19 @@ if (manifestAvailable) {
     'appVersionCode'
   ]
 
-  for (const field of requiredManifestFields) {
-    if (!twaManifest[field]) {
-      console.error(
-        `❌ Android packaging manifest is missing required field: ${field}`
-      )
-      hasFailure = true
+  if (twaManifest) {
+    for (const field of requiredManifestFields) {
+      if (!twaManifest[field]) {
+        console.error(
+          `❌ Android packaging manifest is missing required field: ${field}`
+        )
+        hasFailure = true
+      }
     }
-  }
 
-  if (!hasFailure) {
-    console.log('✓ Android APK packaging manifest includes required fields.')
+    if (!hasFailure) {
+      console.log('✓ Android APK packaging manifest includes required fields.')
+    }
   }
 }
 

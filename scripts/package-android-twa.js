@@ -13,7 +13,7 @@ if (!existsSync('dist-android-web/')) {
 }
 
 if (!existsSync(manifestPath)) {
-  console.error(`❌ Missing ${manifestPath}.`) 
+  console.error(`❌ Missing ${manifestPath}.`)
   process.exit(1)
 }
 
