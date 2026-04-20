@@ -24,7 +24,7 @@ import '../assets/styles/settings.css'
 
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
-const AUTH_PROVIDERS = ['Google', 'Facebook', 'GitHub']
+const AUTH_PROVIDERS = ['Email', 'Google', 'Facebook', 'GitHub']
 
 function Settings() {
   const [settings, setSettingsState] = useState(getSettings())
@@ -37,12 +37,14 @@ function Settings() {
     typeof process !== 'undefined' && process?.env ? process.env : {}
   const compileMode =
     (typeof import.meta !== 'undefined' &&
-      import.meta.env?.AURORAE_COMPILE_MODE) ||
+      (import.meta.env?.VITE_COMPILE_MODE || import.meta.env?.AURORAE_COMPILE_MODE)) ||
+    processEnv.VITE_COMPILE_MODE ||
     processEnv.AURORAE_COMPILE_MODE ||
     'desktop-offline'
   const authRequired =
     ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_AUTH_REQUIRED) ||
       processEnv.VITE_AUTH_REQUIRED) === 'true'
+  const authProviders = authRequired ? AUTH_PROVIDERS : []
 
   // Use refs to avoid stale closures
   const settingsRef = useRef(settings)
@@ -289,7 +291,7 @@ function Settings() {
   const handleProviderClick = useCallback(
     (providerName) => {
       showMessage(
-        `${providerName} sign-in is configured via backend OAuth endpoints (see docs/BACKEND_REQUIREMENTS.md).`,
+        `${providerName} authentication is configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md).`,
         false,
         4500
       )
@@ -596,20 +598,38 @@ function Settings() {
             <strong>{authRequired ? 'required' : 'optional'}</strong> in this
             mode.
           </p>
-          <p className='settings-placeholder-text'>
-            Supported providers: Google, Facebook, and GitHub.
-          </p>
-          <div className='settings-auth-provider-grid'>
-            {AUTH_PROVIDERS.map((providerName) => (
-              <button type="button"
-                key={providerName}
-                className='settings-button settings-button-auth'
-                onClick={() => handleProviderClick(providerName)}
-              >
-                Sign in with {providerName}
-              </button>
-            ))}
-          </div>
+          {authProviders.length > 0 ? (
+            <>
+              <p className='settings-placeholder-text'>
+                Supported providers: Email, Google, Facebook, and GitHub.
+              </p>
+              <div className='settings-button-group'>
+                <button
+                  type='button'
+                  className='settings-button settings-button-primary'
+                  onClick={() => handleProviderClick('Sign in / Sign up')}
+                >
+                  Sign in / Sign up
+                </button>
+              </div>
+              <div className='settings-auth-provider-grid'>
+                {authProviders.map((providerName) => (
+                  <button
+                    type='button'
+                    key={providerName}
+                    className='settings-button settings-button-auth'
+                    onClick={() => handleProviderClick(providerName)}
+                  >
+                    Sign in with {providerName}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className='settings-placeholder-text'>
+              Sign-in and sign-up are unavailable in offline mode.
+            </p>
+          )}
         </div>
 
         {/* Other Settings Placeholder */}

@@ -6,7 +6,8 @@ Backend and database infrastructure are intentionally **not implemented here**.
 
 ## Required backend capabilities
 
-1. OAuth sign-in providers:
+1. Sign-in providers:
+   - Email account (sign-up + sign-in)
    - Google
    - Facebook
    - GitHub
@@ -21,7 +22,8 @@ Backend and database infrastructure are intentionally **not implemented here**.
 
 ## Frontend-provided inputs
 
-- OAuth client IDs via:
+- Sign-in configuration via:
+  - `VITE_AUTH_EMAIL_ENABLED`
   - `VITE_OAUTH_GOOGLE_CLIENT_ID`
   - `VITE_OAUTH_FACEBOOK_APP_ID`
   - `VITE_OAUTH_GITHUB_CLIENT_ID`

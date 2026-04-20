@@ -60,8 +60,21 @@ vi.mock('../utils/importData', () => ({
 }))
 
 describe('Settings Component', () => {
+  const originalCompileMode = process.env.AURORAE_COMPILE_MODE
+  const originalViteCompileMode = process.env.VITE_COMPILE_MODE
+  const originalAuthRequired = process.env.VITE_AUTH_REQUIRED
+
   beforeEach(() => {
     jest.clearAllMocks()
+    process.env.VITE_COMPILE_MODE = 'desktop-offline'
+    process.env.AURORAE_COMPILE_MODE = 'desktop-offline'
+    process.env.VITE_AUTH_REQUIRED = 'false'
+  })
+
+  afterAll(() => {
+    process.env.VITE_COMPILE_MODE = originalViteCompileMode
+    process.env.AURORAE_COMPILE_MODE = originalCompileMode
+    process.env.VITE_AUTH_REQUIRED = originalAuthRequired
   })
 
   test('renders settings page with title', () => {
@@ -97,8 +110,17 @@ describe('Settings Component', () => {
     expect(container).toBeTruthy()
   })
 
-  test('renders sign-in providers and shows integration message on click', () => {
+  test('renders sign-in/sign-up and providers for signed-in web mode', () => {
+    process.env.VITE_COMPILE_MODE = 'web-online'
+    process.env.AURORAE_COMPILE_MODE = 'web-online'
+    process.env.VITE_AUTH_REQUIRED = 'true'
+
     render(<Settings />)
+    const authButton = screen.getByRole('button', { name: /sign in \/ sign up/i })
+    expect(authButton).toBeInTheDocument()
+
+    const emailButton = screen.getByRole('button', { name: /sign in with email/i })
+    expect(emailButton).toBeInTheDocument()
     const googleButton = screen.getByRole('button', { name: /sign in with google/i })
     expect(googleButton).toBeInTheDocument()
     expect(
@@ -110,7 +132,7 @@ describe('Settings Component', () => {
 
     fireEvent.click(googleButton)
     expect(
-      screen.getByText(/configured via backend OAuth endpoints/i)
+      screen.getByText(/configured via backend auth endpoints/i)
     ).toBeInTheDocument()
   })
 })
