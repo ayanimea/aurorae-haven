@@ -23,8 +23,11 @@ const versionCheck = spawnSync(
   { stdio: 'pipe' }
 )
 if (versionCheck.status !== 0) {
+  const stderr = versionCheck.stderr?.toString().trim()
+  const stdout = versionCheck.stdout?.toString().trim()
+  const output = stderr || stdout
   console.error(
-    '❌ Unable to run Bubblewrap CLI with npx. Install @bubblewrap/cli and retry.'
+    `❌ Unable to run Bubblewrap CLI with npx (exit code: ${versionCheck.status ?? 'unknown'}). Install @bubblewrap/cli and retry.${output ? `\n${output}` : ''}`
   )
   process.exit(1)
 }

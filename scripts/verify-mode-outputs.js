@@ -41,7 +41,7 @@ for (const check of checks) {
   }
 
   console.log(`✓ Found ${check.description}: ${check.path}`)
-  if (check.path === 'android/twa-manifest.json') {
+  if (check.path === manifestPath) {
     manifestAvailable = true
   }
 }
