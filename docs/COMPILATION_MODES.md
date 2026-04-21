@@ -19,6 +19,7 @@ Aurorae Haven now ships with three explicit build/deployment targets:
 ```bash
 cp .env.android.example .env.android.local
 npm ci
+set -a && . ./.env.android.local && set +a
 npm run build:mode:android
 ```
 
@@ -45,6 +46,7 @@ npm run package:android
 ```bash
 cp .env.offline.example .env.offline.local
 npm ci
+set -a && . ./.env.offline.local && set +a
 npm run build:mode:desktop
 ```
 
@@ -70,6 +72,7 @@ See: `docs/OFFLINE-DOWNLOAD.md`.
 ```bash
 cp .env.web.example .env.web.local
 npm ci
+set -a && . ./.env.web.local && set +a
 npm run build:mode:web
 docker compose -f docker-compose.web.yml up --build
 ```

@@ -4,6 +4,7 @@ import { spawnSync } from 'child_process'
 import { existsSync } from 'fs'
 
 const manifestPath = 'android/twa-manifest.json'
+const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
 
 if (!existsSync('dist-android-web/')) {
   console.error(
@@ -18,7 +19,7 @@ if (!existsSync(manifestPath)) {
 }
 
 const versionCheck = spawnSync(
-  'npx',
+  npxCommand,
   ['--yes', '@bubblewrap/cli', '--version'],
   { stdio: 'pipe' }
 )
@@ -33,7 +34,7 @@ if (versionCheck.status !== 0) {
 }
 
 const build = spawnSync(
-  'npx',
+  npxCommand,
   ['--yes', '@bubblewrap/cli', 'build', '--config', manifestPath],
   {
     stdio: 'inherit',

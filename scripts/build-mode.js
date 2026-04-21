@@ -6,6 +6,7 @@ import { COMPILATION_MODES, getCompilationMode } from './compilationModes.js'
 
 const modeArg = process.argv[2]
 const mode = getCompilationMode(modeArg)
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
 if (!mode) {
   console.error(`❌ Unknown compilation mode: '${modeArg ?? ''}'`)
@@ -14,7 +15,7 @@ if (!mode) {
 }
 
 const runNpm = (args, envOverrides = {}) => {
-  const result = spawnSync('npm', args, {
+  const result = spawnSync(npmCommand, args, {
     stdio: 'inherit',
     env: {
       ...process.env,
