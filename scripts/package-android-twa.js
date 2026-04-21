@@ -5,6 +5,8 @@ import { existsSync } from 'fs'
 
 const manifestPath = 'android/twa-manifest.json'
 const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+const bubblewrapCliVersion = '1.24.1'
+const bubblewrapCliPackage = `@bubblewrap/cli@${bubblewrapCliVersion}`
 
 if (!existsSync('dist-android-web/')) {
   console.error(
@@ -20,7 +22,7 @@ if (!existsSync(manifestPath)) {
 
 const versionCheck = spawnSync(
   npxCommand,
-  ['--yes', '@bubblewrap/cli', '--version'],
+  ['--yes', bubblewrapCliPackage, '--version'],
   { stdio: 'pipe' }
 )
 if (versionCheck.status !== 0) {
@@ -28,14 +30,14 @@ if (versionCheck.status !== 0) {
   const stdout = versionCheck.stdout?.toString().trim()
   const output = stderr || stdout
   console.error(
-    `❌ Unable to run Bubblewrap CLI with npx (exit code: ${versionCheck.status ?? 'unknown'}). Install @bubblewrap/cli and retry.${output ? `\n${output}` : ''}`
+    `❌ Unable to run Bubblewrap CLI (${bubblewrapCliPackage}) with npx (exit code: ${versionCheck.status ?? 'unknown'}). Install ${bubblewrapCliPackage} and retry.${output ? `\n${output}` : ''}`
   )
   process.exit(1)
 }
 
 const build = spawnSync(
   npxCommand,
-  ['--yes', '@bubblewrap/cli', 'build', '--config', manifestPath],
+  ['--yes', bubblewrapCliPackage, 'build', '--config', manifestPath],
   {
     stdio: 'inherit',
     env: {

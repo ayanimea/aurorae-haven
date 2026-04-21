@@ -23,11 +23,12 @@ npm run build:mode:android
 ```
 
 `npm run build:mode:android` runs Vite in its default mode, so use `.env.local` (or `.env.production.local`) for values that must be loaded by Vite.
+Mode defaults are deterministic; to intentionally override the build base path, set `AURORAE_VITE_BASE_URL_OVERRIDE`.
 
 ### Package APK/AAB (Trusted Web Activity)
 
 ```bash
-npx @bubblewrap/cli --version
+npx @bubblewrap/cli@1.24.1 --version
 npm run package:android
 ```
 
