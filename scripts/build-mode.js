@@ -7,6 +7,7 @@ import { COMPILATION_MODES, getCompilationMode } from './compilationModes.js'
 const modeArg = process.argv[2]
 const mode = getCompilationMode(modeArg)
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+// Optional explicit override for advanced deployments that need a non-default base path.
 const baseUrlOverride = process.env.AURORAE_VITE_BASE_URL_OVERRIDE
 
 if (!mode) {
@@ -29,7 +30,7 @@ const runNpm = (args, envOverrides = {}) => {
   }
 }
 
-const getBaseUrl = (defaultBaseUrl) => baseUrlOverride || defaultBaseUrl
+const resolveBaseUrl = (defaultBaseUrl) => baseUrlOverride || defaultBaseUrl
 
 console.log(`🔧 Building mode: ${mode.key}`)
 console.log(`ℹ️  ${mode.description}`)
@@ -42,7 +43,7 @@ if (mode.key === 'desktop-offline') {
 if (mode.key === 'android') {
   runNpm(['run', 'build'], {
     ...mode.buildEnv,
-    VITE_BASE_URL: getBaseUrl(mode.buildEnv.VITE_BASE_URL)
+    VITE_BASE_URL: resolveBaseUrl(mode.buildEnv.VITE_BASE_URL)
   })
   if (existsSync('dist-android-web')) {
     rmSync('dist-android-web', { recursive: true, force: true })
@@ -54,5 +55,5 @@ if (mode.key === 'android') {
 
 runNpm(['run', 'build'], {
   ...mode.buildEnv,
-  VITE_BASE_URL: getBaseUrl(mode.buildEnv.VITE_BASE_URL)
+  VITE_BASE_URL: resolveBaseUrl(mode.buildEnv.VITE_BASE_URL)
 })
