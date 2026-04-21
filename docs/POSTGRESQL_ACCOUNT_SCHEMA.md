@@ -28,7 +28,7 @@ CREATE TABLE accounts (
   email CITEXT NOT NULL UNIQUE,
   display_name TEXT,
   avatar_url TEXT,
-  provider TEXT,                  -- local | google | facebook | github | ...
+  provider TEXT,                  -- email | google | facebook | github | ...
   provider_id TEXT,
   password_hash TEXT,             -- null for oauth-only accounts
   email_verified_at TIMESTAMPTZ,

@@ -67,7 +67,7 @@ function Settings() {
   const googleClientId = getEnvVariable('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
   const facebookAppId = getEnvVariable('VITE_OAUTH_FACEBOOK_APP_ID') || ''
   const githubClientId = getEnvVariable('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
-  const configuredProviderLabels = useMemo(
+  const configuredProviders = useMemo(
     () => {
       if (!authRequired) {
         return []
@@ -79,9 +79,12 @@ function Settings() {
           if (provider === 'google') return Boolean(googleClientId)
           if (provider === 'facebook') return Boolean(facebookAppId)
           if (provider === 'github') return Boolean(githubClientId)
-          return false
+          return true
         })
-        .map((provider) => AUTH_PROVIDER_LABELS[provider])
+        .map((provider) => ({
+          key: provider,
+          label: AUTH_PROVIDER_LABELS[provider] ?? provider
+        }))
     },
     [
       authRequired,
@@ -91,6 +94,10 @@ function Settings() {
       facebookAppId,
       githubClientId
     ]
+  )
+  const configuredProviderLabels = useMemo(
+    () => configuredProviders.map((provider) => provider.label),
+    [configuredProviders]
   )
 
   // Use refs to avoid stale closures
@@ -668,14 +675,14 @@ function Settings() {
                 </button>
               </div>
               <div className='settings-auth-provider-grid'>
-                {configuredProviderLabels.map((providerName) => (
+                {configuredProviders.map((provider) => (
                   <button
                     type='button'
-                    key={providerName}
+                    key={provider.key}
                     className='settings-button settings-button-auth'
-                    onClick={() => handleProviderClick(providerName)}
+                    onClick={() => handleProviderClick(provider.label)}
                   >
-                    Sign in with {providerName}
+                    Sign in with {provider.label}
                   </button>
                 ))}
               </div>
