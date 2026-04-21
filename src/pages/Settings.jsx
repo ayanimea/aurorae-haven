@@ -32,11 +32,13 @@ const AUTH_PROVIDER_LABELS = {
   github: 'GitHub'
 }
 
-const formatProviderList = (providers) => {
-  if (providers.length === 0) return ''
-  if (providers.length === 1) return providers[0]
-  if (providers.length === 2) return `${providers[0]} and ${providers[1]}`
-  return `${providers.slice(0, -1).join(', ')}, and ${providers.at(-1)}`
+const formatProviderList = (providerNames) => {
+  if (providerNames.length === 0) return ''
+  if (providerNames.length === 1) return providerNames[0]
+  if (providerNames.length === 2) {
+    return `${providerNames[0]} and ${providerNames[1]}`
+  }
+  return `${providerNames.slice(0, -1).join(', ')}, and ${providerNames.at(-1)}`
 }
 
 function Settings() {
