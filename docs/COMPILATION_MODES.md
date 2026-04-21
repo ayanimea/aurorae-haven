@@ -82,7 +82,7 @@ docker compose -f docker-compose.web.yml up --build
 `npm run build:mode:web` runs Vite in default mode as well, so place build-time variables in `.env.local` (or `.env.production.local`).
 
 Docker Compose serves the web bundle at the root path (`/`) on `http://localhost:8080`.
-The compose build overrides `VITE_BASE_URL=/` for local nginx hosting.
+The compose build overrides the mode default with `AURORAE_VITE_BASE_URL_OVERRIDE=/` for local nginx hosting.
 
 ### Backend and database requirements (provided to backend team)
 

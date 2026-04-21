@@ -183,7 +183,7 @@ jobs:
           npm run build:mode:web
         env:
           CI: true
-          VITE_BASE_URL: '/aurorae-haven/'
+          AURORAE_VITE_BASE_URL_OVERRIDE: '/aurorae-haven/'
 
       - name: Verify online web app mode output
         run: test -f dist/index.html
@@ -210,6 +210,12 @@ jobs:
           test -f dist/sw.js && echo "  ✓ sw.js (service worker)"
           test -d dist/assets && echo "  ✓ assets/ directory"
 
+      - name: Snapshot online web app output for later restore
+        run: |
+          rm -rf dist-web-online
+          cp -R dist dist-web-online
+          test -f dist-web-online/index.html
+
       - name: Build offline desktop app mode
         run: |
           echo "💻 Building offline desktop app mode..."
@@ -232,12 +238,10 @@ jobs:
 
       - name: Restore online web app output for Pages artifact
         run: |
-          echo "🌐 Restoring online web app mode for GitHub Pages artifact..."
-          npm run build:mode:web
+          echo "🌐 Restoring online web app mode output for GitHub Pages artifact..."
+          rm -rf dist
+          cp -R dist-web-online dist
           test -f dist/index.html
-        env:
-          CI: true
-          VITE_BASE_URL: '/aurorae-haven/'
 
       - name: Verify all compilation mode outputs
         run: npm run verify:mode-outputs
