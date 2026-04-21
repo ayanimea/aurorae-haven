@@ -38,7 +38,7 @@ const formatProviderList = (providerNames) => {
   if (providerNames.length === 2) {
     return `${providerNames[0]} and ${providerNames[1]}`
   }
-  return `${providerNames.slice(0, -1).join(', ')}, and ${providerNames.at(-1)}`
+  return `${providerNames.slice(0, -1).join(', ')}, and ${providerNames[providerNames.length - 1]}`
 }
 
 function Settings() {
@@ -52,7 +52,10 @@ function Settings() {
     typeof process !== 'undefined' && process?.env ? process.env : {}
   const viteEnv =
     typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
-  const getEnvVariable = (key) => viteEnv[key] ?? processEnv[key]
+  const isTestEnv =
+    viteEnv.MODE === 'test' || processEnv.NODE_ENV === 'test'
+  const getEnvVariable = (key) =>
+    isTestEnv ? processEnv[key] ?? viteEnv[key] : viteEnv[key] ?? processEnv[key]
   const compileMode =
     getEnvVariable('VITE_COMPILE_MODE') ||
     getEnvVariable('AURORAE_COMPILE_MODE') ||

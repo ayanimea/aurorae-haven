@@ -230,9 +230,6 @@ jobs:
       - name: Verify Android app mode output
         run: test -f dist-android-web/index.html
 
-      - name: Verify all compilation mode outputs
-        run: npm run verify:mode-outputs
-
       - name: Restore online web app output for Pages artifact
         run: |
           echo "🌐 Restoring online web app mode for GitHub Pages artifact..."
@@ -241,6 +238,9 @@ jobs:
         env:
           CI: true
           VITE_BASE_URL: '/aurorae-haven/'
+
+      - name: Verify all compilation mode outputs
+        run: npm run verify:mode-outputs
 
       - name: Upload offline package as artifact
         uses: actions/upload-artifact@v4

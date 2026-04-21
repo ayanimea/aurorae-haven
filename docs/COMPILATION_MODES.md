@@ -74,6 +74,9 @@ npm run build:mode:web
 docker compose -f docker-compose.web.yml up --build
 ```
 
+Docker Compose serves the web bundle at the root path (`/`) on `http://localhost:8080`.
+The compose build overrides `VITE_BASE_URL=/` for local nginx hosting.
+
 ### Backend and database requirements (provided to backend team)
 
 - Auth endpoints for Email account sign-in/sign-up and OAuth providers (Google, Facebook, GitHub).

@@ -67,6 +67,13 @@ describe('Settings Component', () => {
   const originalGoogleClientId = process.env.VITE_OAUTH_GOOGLE_CLIENT_ID
   const originalFacebookAppId = process.env.VITE_OAUTH_FACEBOOK_APP_ID
   const originalGithubClientId = process.env.VITE_OAUTH_GITHUB_CLIENT_ID
+  const restoreEnvVar = (key, originalValue) => {
+    if (originalValue === undefined) {
+      delete process.env[key]
+      return
+    }
+    process.env[key] = originalValue
+  }
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -80,13 +87,13 @@ describe('Settings Component', () => {
   })
 
   afterEach(() => {
-    process.env.VITE_COMPILE_MODE = originalViteCompileMode
-    process.env.AURORAE_COMPILE_MODE = originalAuroraeCompileMode
-    process.env.VITE_AUTH_REQUIRED = originalAuthRequired
-    process.env.VITE_AUTH_EMAIL_ENABLED = originalAuthEmailEnabled
-    process.env.VITE_OAUTH_GOOGLE_CLIENT_ID = originalGoogleClientId
-    process.env.VITE_OAUTH_FACEBOOK_APP_ID = originalFacebookAppId
-    process.env.VITE_OAUTH_GITHUB_CLIENT_ID = originalGithubClientId
+    restoreEnvVar('VITE_COMPILE_MODE', originalViteCompileMode)
+    restoreEnvVar('AURORAE_COMPILE_MODE', originalAuroraeCompileMode)
+    restoreEnvVar('VITE_AUTH_REQUIRED', originalAuthRequired)
+    restoreEnvVar('VITE_AUTH_EMAIL_ENABLED', originalAuthEmailEnabled)
+    restoreEnvVar('VITE_OAUTH_GOOGLE_CLIENT_ID', originalGoogleClientId)
+    restoreEnvVar('VITE_OAUTH_FACEBOOK_APP_ID', originalFacebookAppId)
+    restoreEnvVar('VITE_OAUTH_GITHUB_CLIENT_ID', originalGithubClientId)
   })
 
   test('renders settings page with title', () => {
