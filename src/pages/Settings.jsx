@@ -651,7 +651,7 @@ function Settings() {
           {authProviders.length > 0 ? (
             <>
               <p className='settings-placeholder-text'>
-                Configured providers: {formatProviderList(authProviders)}.
+                Available providers: {formatProviderList(authProviders)}.
               </p>
               <div className='settings-button-group'>
                 <button
