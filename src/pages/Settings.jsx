@@ -79,12 +79,13 @@ function Settings() {
           if (provider === 'google') return Boolean(googleClientId)
           if (provider === 'facebook') return Boolean(facebookAppId)
           if (provider === 'github') return Boolean(githubClientId)
-          return true
+          return false
         })
         .map((provider) => ({
           key: provider,
-          label: AUTH_PROVIDER_LABELS[provider] ?? provider
+          label: AUTH_PROVIDER_LABELS[provider]
         }))
+        .filter((provider) => Boolean(provider.label))
     },
     [
       authRequired,
