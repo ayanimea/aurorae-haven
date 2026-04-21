@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { COMPILATION_MODES } from '../../scripts/compilationModes'
 import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
@@ -30,10 +31,12 @@ const AUTH_PROVIDER_LABELS = {
   facebook: 'Facebook',
   github: 'GitHub'
 }
-const AUTH_PROVIDERS_BY_MODE = {
-  android: ['email', 'google', 'facebook', 'github'],
-  'web-online': ['email', 'google', 'facebook', 'github'],
-  'desktop-offline': []
+
+const formatProviderList = (providers) => {
+  if (providers.length === 0) return ''
+  if (providers.length === 1) return providers[0]
+  if (providers.length === 2) return `${providers[0]} and ${providers[1]}`
+  return `${providers.slice(0, -1).join(', ')}, and ${providers.at(-1)}`
 }
 
 function Settings() {
@@ -54,7 +57,7 @@ function Settings() {
     'desktop-offline'
   const authRequired =
     getEnvVariable('VITE_AUTH_REQUIRED') === 'true'
-  const modeProviders = AUTH_PROVIDERS_BY_MODE[compileMode] ?? []
+  const modeProviders = COMPILATION_MODES[compileMode]?.authProviders ?? []
   const emailAuthEnabled = getEnvVariable('VITE_AUTH_EMAIL_ENABLED') === 'true'
   const googleClientId = getEnvVariable('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
   const facebookAppId = getEnvVariable('VITE_OAUTH_FACEBOOK_APP_ID') || ''
@@ -648,7 +651,7 @@ function Settings() {
           {authProviders.length > 0 ? (
             <>
               <p className='settings-placeholder-text'>
-                Supported providers: Email, Google, Facebook, and GitHub.
+                Configured providers: {formatProviderList(authProviders)}.
               </p>
               <div className='settings-button-group'>
                 <button
@@ -675,6 +678,10 @@ function Settings() {
           ) : compileMode === 'desktop-offline' ? (
             <p className='settings-placeholder-text'>
               Sign-in and sign-up are unavailable in offline mode.
+            </p>
+          ) : !authRequired ? (
+            <p className='settings-placeholder-text'>
+              Authentication is not required in this mode.
             </p>
           ) : (
             <p className='settings-placeholder-text'>

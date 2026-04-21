@@ -180,14 +180,28 @@ describe('Settings Component', () => {
     ).toBeInTheDocument()
   })
 
-  test('shows unconfigured providers message for non-offline mode without provider setup', () => {
+  test('shows auth not required message when non-offline mode does not require auth', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
     process.env.AURORAE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'false'
 
     render(<Settings />)
 
-    expect(screen.getByText(/not required/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/authentication is not required in this mode\./i)
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/no sign-in providers are currently configured for this mode/i)
+    ).not.toBeInTheDocument()
+  })
+
+  test('shows unconfigured providers message when auth is required but providers are missing', () => {
+    process.env.VITE_COMPILE_MODE = 'web-online'
+    process.env.AURORAE_COMPILE_MODE = 'web-online'
+    process.env.VITE_AUTH_REQUIRED = 'true'
+
+    render(<Settings />)
+
     expect(
       screen.getByText(/no sign-in providers are currently configured for this mode/i)
     ).toBeInTheDocument()
