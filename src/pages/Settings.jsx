@@ -64,7 +64,7 @@ function Settings() {
   const googleClientId = getEnvVariable('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
   const facebookAppId = getEnvVariable('VITE_OAUTH_FACEBOOK_APP_ID') || ''
   const githubClientId = getEnvVariable('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
-  const authProviders = useMemo(
+  const configuredProviderLabels = useMemo(
     () => {
       if (!authRequired) {
         return []
@@ -650,10 +650,10 @@ function Settings() {
             <strong>{authRequired ? 'required' : 'not required'}</strong> in this
             mode.
           </p>
-          {authProviders.length > 0 ? (
+          {configuredProviderLabels.length > 0 ? (
             <>
               <p className='settings-placeholder-text'>
-                Available providers: {formatProviderList(authProviders)}.
+                Available providers: {formatProviderList(configuredProviderLabels)}.
               </p>
               <div className='settings-button-group'>
                 <button
@@ -665,7 +665,7 @@ function Settings() {
                 </button>
               </div>
               <div className='settings-auth-provider-grid'>
-                {authProviders.map((providerName) => (
+                {configuredProviderLabels.map((providerName) => (
                   <button
                     type='button'
                     key={providerName}
