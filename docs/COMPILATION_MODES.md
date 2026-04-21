@@ -17,11 +17,12 @@ Aurorae Haven now ships with three explicit build/deployment targets:
 ### Build steps
 
 ```bash
-cp .env.android.example .env.android.local
+cp .env.android.example .env.local
 npm ci
-set -a && . ./.env.android.local && set +a
 npm run build:mode:android
 ```
+
+`npm run build:mode:android` runs Vite in its default mode, so use `.env.local` (or `.env.production.local`) for values that must be loaded by Vite.
 
 ### Package APK/AAB (Trusted Web Activity)
 
@@ -44,11 +45,12 @@ npm run package:android
 ### Build steps
 
 ```bash
-cp .env.offline.example .env.offline.local
+cp .env.offline.example .env.local
 npm ci
-set -a && . ./.env.offline.local && set +a
 npm run build:mode:desktop
 ```
+
+`npm run build:mode:desktop` also runs Vite in default mode, so keep mode-specific values in `.env.local` (or `.env.production.local`).
 
 ### Run offline package
 
@@ -70,12 +72,13 @@ See: `docs/OFFLINE-DOWNLOAD.md`.
 ### Build and run steps
 
 ```bash
-cp .env.web.example .env.web.local
+cp .env.web.example .env.local
 npm ci
-set -a && . ./.env.web.local && set +a
 npm run build:mode:web
 docker compose -f docker-compose.web.yml up --build
 ```
+
+`npm run build:mode:web` runs Vite in default mode as well, so place build-time variables in `.env.local` (or `.env.production.local`).
 
 Docker Compose serves the web bundle at the root path (`/`) on `http://localhost:8080`.
 The compose build overrides `VITE_BASE_URL=/` for local nginx hosting.
