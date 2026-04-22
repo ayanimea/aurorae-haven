@@ -15,6 +15,7 @@ export const COMPILATION_MODES = {
     description: 'Offline desktop distribution with embedded local server',
     authProviders: [],
     buildEnv: {
+      VITE_BASE_URL: './',
       VITE_COMPILE_MODE: 'desktop-offline',
       AURORAE_COMPILE_MODE: 'desktop-offline',
       VITE_AUTH_REQUIRED: 'false'

@@ -15,6 +15,7 @@ describe('compilation modes', () => {
     expect(getCompilationMode('desktop-offline')?.buildEnv.VITE_COMPILE_MODE).toBe(
       'desktop-offline'
     )
+    expect(getCompilationMode('desktop-offline')?.buildEnv.VITE_BASE_URL).toBe('./')
     expect(getCompilationMode('web-online')?.buildEnv.VITE_COMPILE_MODE).toBe('web-online')
   })
 
