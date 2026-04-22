@@ -7,6 +7,12 @@ This document defines a PostgreSQL schema blueprint for making Aurorae Haven dat
 
 It is a **design reference** for a future server-side migration.
 
+Backend ownership note:
+
+- This file is a schema/design contract for the backend team.
+- The frontend repository does not manage backend migration execution.
+- Related frontend integration requirements are documented in `docs/BACKEND_REQUIREMENTS.md`.
+
 ## 1) Prerequisites
 
 ```sql
@@ -22,7 +28,7 @@ CREATE TABLE accounts (
   email CITEXT NOT NULL UNIQUE,
   display_name TEXT,
   avatar_url TEXT,
-  provider TEXT,                  -- local | google | github | ...
+  provider TEXT,                  -- email | google | facebook | github | ...
   provider_id TEXT,
   password_hash TEXT,             -- null for oauth-only accounts
   email_verified_at TIMESTAMPTZ,

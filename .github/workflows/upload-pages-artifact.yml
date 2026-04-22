@@ -149,34 +149,13 @@ jobs:
 
       - name: Check for security vulnerabilities
         run: |
-          echo "Checking for vulnerabilities..."
-          # Run npm audit and capture output
-          npm audit --audit-level=moderate > audit-report.txt 2>&1 || true
+          echo "Checking production dependencies..."
+          npm audit --audit-level=low --omit=dev
+          echo "✓ Production dependencies are vulnerability-free"
 
-          # Display the audit report
-          cat audit-report.txt
-
-          # Check if there are actual vulnerabilities (not "found 0 vulnerabilities")
-          # NONZERO_VULN_PATTERN matches lines like "found 3 vulnerabilities" (i.e., at least one vulnerability found)
-          NONZERO_VULN_PATTERN="found [1-9][0-9]* vulnerabilities"
-          if grep -qE "$NONZERO_VULN_PATTERN" audit-report.txt; then
-            echo "⚠️ Security vulnerabilities detected!"
-
-            # Check for known acceptable vulnerabilities (webpack-dev-server is dev-only)
-            if grep -q "webpack-dev-server" audit-report.txt; then
-              echo "✓ webpack-dev-server vulnerabilities are acceptable (dev dependency only, not in production build)"
-            fi
-
-            # Check for any HIGH or CRITICAL vulnerabilities
-            if grep -qE "(high|critical) severity" audit-report.txt; then
-              echo "❌ HIGH or CRITICAL vulnerabilities found - deployment blocked!"
-              exit 1
-            fi
-
-            echo "✓ Only moderate/low vulnerabilities in dev dependencies - proceeding with deployment"
-          else
-            echo "✓ No vulnerabilities found"
-          fi
+          echo "Checking all dependencies (including dev)..."
+          npm audit --audit-level=low
+          echo "✓ All dependencies are vulnerability-free"
 
   # Job 5: Build the application
   build:
@@ -198,17 +177,18 @@ jobs:
           npm_config_prefer_offline: false
           npm_config_audit: false
 
-      - name: Build React PWA with Vite
+      - name: Build online web app mode
         run: |
-          # Always perform a production build in CI to avoid shipping dev-only features.
-          # If dev-mode builds are needed for experimentation, run them locally or in a
-          # separate, non-deploying workflow to ensure they never reach production URLs.
-          npm run build
+          echo "🌐 Building online web app mode..."
+          npm run build:mode:web
         env:
           CI: true
-          VITE_BASE_URL: '/aurorae-haven/'
+          AURORAE_VITE_BASE_URL_OVERRIDE: '/aurorae-haven/'
 
-      - name: Verify build output
+      - name: Verify online web app mode output
+        run: test -f dist/index.html
+
+      - name: Verify online web app output
         run: |
           echo "Checking Vite build output..."
           if [ ! -d "dist" ]; then
@@ -230,13 +210,41 @@ jobs:
           test -f dist/sw.js && echo "  ✓ sw.js (service worker)"
           test -d dist/assets && echo "  ✓ assets/ directory"
 
-      - name: Create offline package
+      - name: Snapshot online web app output for later restore
         run: |
-          echo "📦 Creating offline package for download..."
-          echo "This will build the app with relative paths for offline use"
-          npm run build:offline
+          rm -rf dist-web-online
+          cp -R dist dist-web-online
+          test -f dist-web-online/index.html
+
+      - name: Build offline desktop app mode
+        run: |
+          echo "💻 Building offline desktop app mode..."
+          npm run build:mode:desktop
         env:
           CI: true
+
+      - name: Verify offline desktop app mode output
+        run: test -f dist-offline-build/index.html
+
+      - name: Build Android app mode
+        run: |
+          echo "📱 Building Android app mode..."
+          npm run build:mode:android
+        env:
+          CI: true
+
+      - name: Verify Android app mode output
+        run: test -f dist-android-web/index.html
+
+      - name: Restore online web app output for Pages artifact
+        run: |
+          echo "🌐 Restoring online web app mode output for GitHub Pages artifact..."
+          rm -rf dist
+          cp -R dist-web-online dist
+          test -f dist/index.html
+
+      - name: Verify all compilation mode outputs
+        run: npm run verify:mode-outputs
 
       - name: Upload offline package as artifact
         uses: actions/upload-artifact@v4

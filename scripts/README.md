@@ -71,11 +71,15 @@ git branch -D pre-commit-hook-test
 
 ## Other Scripts
 
+- `build-mode.js` - Mode-aware build wrapper for `android`, `desktop-offline`, `web-online`
+- `compilationModes.js` - Shared mode definitions (build env + auth providers)
 - `buildConstants.js` - Build-time constants
 - `create-offline-package.js` - Creates offline distribution package
 - `embedded-server.js` / `embedded-server.py` - Local server implementations
+- `package-android-twa.js` - Android packaging command wrapper (Bubblewrap)
 - `prepare-dist.sh` - Prepares distribution files
 - `test-offline-package.js` - Tests offline package
 - `test-security-check.sh` - Security validation
 - `test-spa-routing.js` - SPA routing tests
 - `validate-pwa.cjs` - PWA validation
+- `verify-mode-outputs.js` - Validates generated outputs for web, offline desktop, and Android mode builds

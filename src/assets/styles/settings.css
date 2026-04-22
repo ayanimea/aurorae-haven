@@ -165,6 +165,22 @@
   opacity: 0.9;
 }
 
+.settings-button-auth {
+  background-color: var(--line-strong);
+  color: var(--text);
+}
+
+.settings-button-auth:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.settings-auth-provider-grid {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
 /* Status display */
 .settings-status {
   margin-bottom: 1rem;

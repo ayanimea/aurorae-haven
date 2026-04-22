@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { COMPILATION_MODES } from '../../scripts/compilationModes'
 import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
@@ -24,6 +25,21 @@ import '../assets/styles/settings.css'
 
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
+const AUTH_PROVIDER_LABELS = {
+  email: 'Email',
+  google: 'Google',
+  facebook: 'Facebook',
+  github: 'GitHub'
+}
+
+const formatProviderList = (providerNames) => {
+  if (providerNames.length === 0) return ''
+  if (providerNames.length === 1) return providerNames[0]
+  if (providerNames.length === 2) {
+    return `${providerNames[0]} and ${providerNames[1]}`
+  }
+  return `${providerNames.slice(0, -1).join(', ')}, and ${providerNames[providerNames.length - 1]}`
+}
 
 function Settings() {
   const [settings, setSettingsState] = useState(getSettings())
@@ -32,6 +48,58 @@ function Settings() {
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [message, setMessage] = useState({ text: '', isError: false })
   const [isConfiguring, setIsConfiguring] = useState(false)
+  const processEnv =
+    typeof process !== 'undefined' && process?.env ? process.env : {}
+  const viteEnv =
+    typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
+  const isTestEnv =
+    viteEnv.MODE === 'test' || processEnv.NODE_ENV === 'test'
+  const getEnvVariable = (key) =>
+    isTestEnv ? processEnv[key] ?? viteEnv[key] : viteEnv[key] ?? processEnv[key]
+  const compileMode =
+    getEnvVariable('VITE_COMPILE_MODE') ||
+    getEnvVariable('AURORAE_COMPILE_MODE') ||
+    'desktop-offline'
+  const authRequired =
+    getEnvVariable('VITE_AUTH_REQUIRED') === 'true'
+  const modeProviders = COMPILATION_MODES[compileMode]?.authProviders ?? []
+  const emailAuthEnabled = getEnvVariable('VITE_AUTH_EMAIL_ENABLED') === 'true'
+  const googleClientId = getEnvVariable('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
+  const facebookAppId = getEnvVariable('VITE_OAUTH_FACEBOOK_APP_ID') || ''
+  const githubClientId = getEnvVariable('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
+  const configuredProviders = useMemo(
+    () => {
+      if (!authRequired) {
+        return []
+      }
+
+      return modeProviders
+        .filter((provider) => {
+          if (provider === 'email') return emailAuthEnabled
+          if (provider === 'google') return Boolean(googleClientId)
+          if (provider === 'facebook') return Boolean(facebookAppId)
+          if (provider === 'github') return Boolean(githubClientId)
+          return false
+        })
+        .map((provider) => ({
+          key: provider,
+          label: AUTH_PROVIDER_LABELS[provider]
+        }))
+        .filter((provider) => Boolean(provider.label))
+    },
+    [
+      authRequired,
+      modeProviders,
+      emailAuthEnabled,
+      googleClientId,
+      facebookAppId,
+      githubClientId
+    ]
+  )
+  const configuredProviderLabels = useMemo(
+    () => configuredProviders.map((provider) => provider.label),
+    [configuredProviders]
+  )
 
   // Use refs to avoid stale closures
   const settingsRef = useRef(settings)
@@ -274,6 +342,25 @@ function Settings() {
     const days = Math.floor(hours / 24)
     return `${days} day${days !== 1 ? 's' : ''} ago`
   }
+
+  const handleProviderClick = useCallback(
+    (providerName) => {
+      showMessage(
+        `${providerName} authentication is configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md).`,
+        false,
+        4500
+      )
+    },
+    [showMessage]
+  )
+
+  const handleAuthEntryClick = useCallback(() => {
+    showMessage(
+      'Sign-in and sign-up are configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md).',
+      false,
+      4500
+    )
+  }, [showMessage])
 
   return (
     <div className='card'>
@@ -565,6 +652,55 @@ function Settings() {
               Open Template Library
             </Link>
           </div>
+        </div>
+
+        <div className='settings-divider'>
+          <h3 className='settings-section-title'>Sign-In &amp; Account</h3>
+          <p className='settings-placeholder-text'>
+            Current mode: <strong>{compileMode}</strong>. Authentication is{' '}
+            <strong>{authRequired ? 'required' : 'not required'}</strong> in this
+            mode.
+          </p>
+          {configuredProviderLabels.length > 0 ? (
+            <>
+              <p className='settings-placeholder-text'>
+                Available providers: {formatProviderList(configuredProviderLabels)}.
+              </p>
+              <div className='settings-button-group'>
+                <button
+                  type='button'
+                  className='settings-button settings-button-primary'
+                  onClick={handleAuthEntryClick}
+                >
+                  Sign in / Sign up
+                </button>
+              </div>
+              <div className='settings-auth-provider-grid'>
+                {configuredProviders.map((provider) => (
+                  <button
+                    type='button'
+                    key={provider.key}
+                    className='settings-button settings-button-auth'
+                    onClick={() => handleProviderClick(provider.label)}
+                  >
+                    Sign in with {provider.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : compileMode === 'desktop-offline' ? (
+            <p className='settings-placeholder-text'>
+              Sign-in and sign-up are unavailable in offline mode.
+            </p>
+          ) : !authRequired ? (
+            <p className='settings-placeholder-text'>
+              Authentication is not required in this mode.
+            </p>
+          ) : (
+            <p className='settings-placeholder-text'>
+              No sign-in providers are currently configured for this mode.
+            </p>
+          )}
         </div>
 
         {/* Other Settings Placeholder */}
