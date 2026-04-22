@@ -153,10 +153,27 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: DEV_SERVER_PORT,
-      open: true
+      open: true,
+      // Security headers for the development server (mirrors production nginx headers
+      // minus CSP, which is intentionally omitted here because Vite's HMR runtime
+      // injects inline scripts that would require 'unsafe-inline'/'unsafe-eval').
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=()'
+      }
     },
     preview: {
-      port: PREVIEW_SERVER_PORT
+      port: PREVIEW_SERVER_PORT,
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=()',
+        'Content-Security-Policy':
+          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';"
+      }
     },
     // Resolve configuration
     resolve: {
