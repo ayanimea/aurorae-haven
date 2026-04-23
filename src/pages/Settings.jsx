@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { COMPILATION_MODES } from '../../scripts/compilationModes.js'
+import { COMPILATION_MODES } from '../../scripts/compilationModes'
 import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
