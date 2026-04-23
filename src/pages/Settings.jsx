@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { COMPILATION_MODES } from '../../scripts/compilationModes'
+import { COMPILATION_MODES } from '../../scripts/compilationModes.js'
 import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
@@ -57,9 +57,7 @@ function Settings() {
   const getEnvVariable = (key) =>
     isTestEnv ? processEnv[key] ?? viteEnv[key] : viteEnv[key] ?? processEnv[key]
   const compileMode =
-    getEnvVariable('VITE_COMPILE_MODE') ||
-    getEnvVariable('AURORAE_COMPILE_MODE') ||
-    'desktop-offline'
+    getEnvVariable('VITE_COMPILE_MODE') || 'desktop-offline'
   const authRequired =
     getEnvVariable('VITE_AUTH_REQUIRED') === 'true'
   const modeProviders = COMPILATION_MODES[compileMode]?.authProviders ?? []

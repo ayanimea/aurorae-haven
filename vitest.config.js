@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // Point uuid to its Node ESM build to avoid CJS/ESM wrapper.mjs interop issue
+      // Point uuid to its Node entry to avoid CJS/ESM interop issues in tests
       uuid: fileURLToPath(
-        new URL('./node_modules/uuid/dist/esm-node/index.js', import.meta.url)
+        new URL('./node_modules/uuid/dist-node/index.js', import.meta.url)
       )
     }
   },
