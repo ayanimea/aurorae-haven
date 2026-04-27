@@ -25,6 +25,7 @@ export const getBuildCommandPlan = (
   }
 
   if (mode.key === 'desktop-offline') {
+    // Offline packaging always requires relative paths for direct file/server use.
     return {
       mode,
       args: ['run', 'build:offline'],
