@@ -21,7 +21,7 @@ describe('build-mode script helpers', () => {
       args: ['run', 'build:offline'],
       env: {
         VITE_COMPILE_MODE: 'desktop-offline',
-        VITE_BASE_URL: '/',
+        VITE_BASE_URL: './',
         VITE_AUTH_REQUIRED: 'false'
       }
     })
@@ -35,7 +35,7 @@ describe('build-mode script helpers', () => {
       }
     })
 
-    expect(getBuildCommandPlan('web-online')).toMatchObject({
+    expect(getBuildCommandPlan('web-online', '')).toMatchObject({
       args: ['run', 'build'],
       env: {
         VITE_COMPILE_MODE: 'web-online',
@@ -53,10 +53,10 @@ describe('build-mode script helpers', () => {
     })
   })
 
-  it('applies explicit base URL override for desktop-offline mode', () => {
+  it('uses offline package base URL for desktop-offline mode even with override', () => {
     expect(getBuildCommandPlan('desktop-offline', '/custom-base/')).toMatchObject({
       env: {
-        VITE_BASE_URL: '/custom-base/'
+        VITE_BASE_URL: './'
       }
     })
   })

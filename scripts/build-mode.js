@@ -28,10 +28,7 @@ export const getBuildCommandPlan = (
     return {
       mode,
       args: ['run', 'build:offline'],
-      env: {
-        ...mode.buildEnv,
-        VITE_BASE_URL: resolveBaseUrl(mode.buildEnv.VITE_BASE_URL, baseUrlOverride)
-      }
+      env: mode.buildEnv
     }
   }
 
