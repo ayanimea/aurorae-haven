@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { cpSync, existsSync, rmSync } from 'fs'
+import { cpSync, existsSync, realpathSync, rmSync } from 'fs'
 import { spawnSync } from 'child_process'
 import { resolve } from 'path'
 import { fileURLToPath } from 'url'
@@ -29,7 +29,7 @@ export const getBuildCommandPlan = (
     return {
       mode,
       args: ['run', 'build:offline'],
-      env: mode.buildEnv
+      env: { ...mode.buildEnv }
     }
   }
 
@@ -93,6 +93,17 @@ export const runBuildMode = (modeArg = process.argv[2]) => {
   console.log('✓ Android web bundle is available at dist-android-web/')
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  runBuildMode()
+if (process.argv[1]) {
+  const scriptPath = fileURLToPath(import.meta.url)
+
+  let isDirectExecution = false
+  try {
+    isDirectExecution = realpathSync(process.argv[1]) === realpathSync(scriptPath)
+  } catch {
+    isDirectExecution = resolve(process.argv[1]) === resolve(scriptPath)
+  }
+
+  if (isDirectExecution) {
+    runBuildMode()
+  }
 }
