@@ -74,8 +74,9 @@ export const runBuildMode = (modeArg = process.argv[2]) => {
     }
 
     if (result.status !== 0) {
-      console.error(`❌ npm command failed with exit code: ${result.status ?? 1}`)
-      process.exit(result.status ?? 1)
+      const exitCode = result.status ?? 1
+      console.error(`❌ npm command failed with exit code: ${exitCode}`)
+      process.exit(exitCode)
     }
   }
 
@@ -94,9 +95,6 @@ export const runBuildMode = (modeArg = process.argv[2]) => {
   console.log('✓ Android web bundle is available at dist-android-web/')
 }
 
-if (
-  typeof process.argv[1] === 'string' &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   runBuildMode()
 }
