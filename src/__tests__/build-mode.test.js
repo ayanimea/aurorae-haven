@@ -53,6 +53,14 @@ describe('build-mode script helpers', () => {
     })
   })
 
+  it('applies explicit base URL override for desktop-offline mode', () => {
+    expect(getBuildCommandPlan('desktop-offline', '/custom-base/')).toMatchObject({
+      env: {
+        VITE_BASE_URL: '/custom-base/'
+      }
+    })
+  })
+
   it('returns null for unknown modes', () => {
     expect(getBuildCommandPlan('unknown')).toBeNull()
   })
