@@ -2,6 +2,7 @@
 
 import { cpSync, existsSync, rmSync } from 'fs'
 import { spawnSync } from 'child_process'
+import { resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { COMPILATION_MODES, getCompilationMode } from './compilationModes.js'
 
@@ -27,7 +28,10 @@ export const getBuildCommandPlan = (
     return {
       mode,
       args: ['run', 'build:offline'],
-      env: mode.buildEnv
+      env: {
+        ...mode.buildEnv,
+        VITE_BASE_URL: resolveBaseUrl(mode.buildEnv.VITE_BASE_URL, baseUrlOverride)
+      }
     }
   }
 
@@ -59,7 +63,18 @@ export const runBuildMode = (modeArg = process.argv[2]) => {
       }
     })
 
+    if (result.error) {
+      console.error(`❌ Failed to run npm command: ${result.error.message}`)
+      process.exit(1)
+    }
+
+    if (result.signal) {
+      console.error(`❌ npm command terminated by signal: ${result.signal}`)
+      process.exit(1)
+    }
+
     if (result.status !== 0) {
+      console.error(`❌ npm command failed with exit code: ${result.status ?? 1}`)
       process.exit(result.status ?? 1)
     }
   }
@@ -79,6 +94,9 @@ export const runBuildMode = (modeArg = process.argv[2]) => {
   console.log('✓ Android web bundle is available at dist-android-web/')
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (
+  typeof process.argv[1] === 'string' &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   runBuildMode()
 }

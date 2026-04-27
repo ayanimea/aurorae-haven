@@ -21,7 +21,7 @@ describe('build-mode script helpers', () => {
       args: ['run', 'build:offline'],
       env: {
         VITE_COMPILE_MODE: 'desktop-offline',
-        VITE_BASE_URL: './',
+        VITE_BASE_URL: '/',
         VITE_AUTH_REQUIRED: 'false'
       }
     })
@@ -41,6 +41,14 @@ describe('build-mode script helpers', () => {
         VITE_COMPILE_MODE: 'web-online',
         VITE_BASE_URL: '/aurorae-haven/',
         VITE_AUTH_REQUIRED: 'true'
+      }
+    })
+  })
+
+  it('preserves default base URL when override is not provided', () => {
+    expect(getBuildCommandPlan('desktop-offline')).toMatchObject({
+      env: {
+        VITE_BASE_URL: './'
       }
     })
   })
