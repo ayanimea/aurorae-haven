@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 
-const require = createRequire(import.meta.url)
-const uuidPackageJsonPath = require.resolve('uuid/package.json')
+const moduleRequire = createRequire(import.meta.url)
+const uuidPackageJsonPath = moduleRequire.resolve('uuid/package.json')
 const uuidNodeEntryPath = join(dirname(uuidPackageJsonPath), 'dist-node/index.js')
 
 export default defineConfig({

@@ -29,7 +29,7 @@ export const getBuildCommandPlan = (
     return {
       mode,
       args: ['run', 'build:offline'],
-      env: { ...mode.buildEnv }
+      env: structuredClone(mode.buildEnv)
     }
   }
 
