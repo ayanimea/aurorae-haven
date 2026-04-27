@@ -25,7 +25,7 @@ export const getBuildCommandPlan = (
   }
 
   if (mode.key === 'desktop-offline') {
-    // Offline packaging always requires relative paths for direct file/server use.
+    // Offline packaging requires relative paths (./); base URL overrides are intentionally ignored for file:// and local server compatibility.
     return {
       mode,
       args: ['run', 'build:offline'],
