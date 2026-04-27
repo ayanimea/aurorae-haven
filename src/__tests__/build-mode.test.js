@@ -61,6 +61,14 @@ describe('build-mode script helpers', () => {
     })
   })
 
+  it('applies explicit base URL override for web-online mode', () => {
+    expect(getBuildCommandPlan('web-online', '/custom-base/')).toMatchObject({
+      env: {
+        VITE_BASE_URL: '/custom-base/'
+      }
+    })
+  })
+
   it('returns null for unknown modes', () => {
     expect(getBuildCommandPlan('unknown')).toBeNull()
   })
