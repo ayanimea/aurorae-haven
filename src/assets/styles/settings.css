@@ -166,7 +166,7 @@
 }
 
 .settings-button-auth {
-  background-color: var(--line-strong);
+  background-color: var(--line);
   color: var(--text);
 }
 

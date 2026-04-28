@@ -418,7 +418,7 @@ function Layout({ children, onExport }) {
 
       {/* Offline data warning — shown on web/android modes when not signed in */}
       {COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed && (
-        <div className='offline-data-warning' role='alert' aria-live='polite'>
+        <div className='offline-data-warning' role='status' aria-live='polite'>
           <Icon name='alertTriangle' className='offline-data-warning-icon' aria-hidden='true' />
           <span className='offline-data-warning-text'>
             Your data is stored locally in this browser and may be lost if you
@@ -431,15 +431,17 @@ function Layout({ children, onExport }) {
             >
               Export your data
             </button>{' '}
-            regularly to keep a backup, or{' '}
-            {MODE_HAS_AUTH ? (
-              <Link className='offline-data-warning-link' to='/sign-in'>
-                sign in
-              </Link>
-            ) : (
-              'sign in'
-            )}{' '}
-            to sync it to your account.
+            regularly to keep a backup
+            {MODE_HAS_AUTH && (
+              <>
+                {', or '}
+                <Link className='offline-data-warning-link' to='/sign-in'>
+                  sign in
+                </Link>
+                {' to sync it to your account'}
+              </>
+            )}
+            .
           </span>
           <button
             type='button'

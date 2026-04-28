@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
+import { getEnvVar } from '../utils/environment'
 import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
@@ -43,30 +44,20 @@ const formatProviderList = (providerNames) => {
   return `${providerNames.slice(0, -1).join(', ')}, and ${providerNames[providerNames.length - 1]}`
 }
 
-function Settings({ onExport = undefined, onImport = undefined }) {
+function Settings({ onExport, onImport }) {
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [message, setMessage] = useState({ text: '', isError: false })
   const [isConfiguring, setIsConfiguring] = useState(false)
-  const processEnv =
-    typeof process !== 'undefined' && process?.env ? process.env : {}
-  const viteEnv =
-    typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
-  const isTestEnv =
-    viteEnv.MODE === 'test' || processEnv.NODE_ENV === 'test'
-  const getEnvVariable = (key) =>
-    isTestEnv ? processEnv[key] ?? viteEnv[key] : viteEnv[key] ?? processEnv[key]
-  const compileMode =
-    getEnvVariable('VITE_COMPILE_MODE') || 'desktop-offline'
-  const authRequired =
-    getEnvVariable('VITE_AUTH_REQUIRED') === 'true'
+  const compileMode = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
+  const authRequired = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
   const modeProviders = COMPILATION_MODES[compileMode]?.authProviders ?? []
-  const emailAuthEnabled = getEnvVariable('VITE_AUTH_EMAIL_ENABLED') === 'true'
-  const googleClientId = getEnvVariable('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
-  const facebookAppId = getEnvVariable('VITE_OAUTH_FACEBOOK_APP_ID') || ''
-  const githubClientId = getEnvVariable('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
+  const emailAuthEnabled = getEnvVar('VITE_AUTH_EMAIL_ENABLED') === 'true'
+  const googleClientId = getEnvVar('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
+  const facebookAppId = getEnvVar('VITE_OAUTH_FACEBOOK_APP_ID') || ''
+  const githubClientId = getEnvVar('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
   const configuredProviders = useMemo(
     () => {
       if (!authRequired) {
@@ -777,8 +768,8 @@ function Settings({ onExport = undefined, onImport = undefined }) {
 }
 
 Settings.propTypes = {
-  onExport: PropTypes.func,
-  onImport: PropTypes.func
+  onExport: PropTypes.func.isRequired,
+  onImport: PropTypes.func.isRequired
 }
 
 export default Settings
