@@ -354,9 +354,9 @@ function Settings() {
 
   const handleAuthEntryClick = useCallback(() => {
     showMessage(
-      'Sign-in and sign-up are configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md).',
+      'Sign-in and sign-up are configured via backend auth endpoints. On sign-in, your local data will automatically be synced to your account (see docs/BACKEND_REQUIREMENTS.md).',
       false,
-      4500
+      6000
     )
   }, [showMessage])
 
@@ -664,6 +664,9 @@ function Settings() {
               <p className='settings-placeholder-text'>
                 Available providers: {formatProviderList(configuredProviderLabels)}.
               </p>
+              <p className='settings-hint' style={{ marginTop: '0.5rem' }}>
+                Any existing local data will be synced to your account when you sign in.
+              </p>
               <div className='settings-button-group'>
                 <button
                   type='button'
@@ -699,6 +702,35 @@ function Settings() {
               No sign-in providers are currently configured for this mode.
             </p>
           )}
+        </div>
+
+        {/* Appearance */}
+        <div className='settings-divider'>
+          <h3 className='settings-section-title'>Appearance</h3>
+          <div className='settings-field'>
+            <label htmlFor='theme-select' className='settings-label'>
+              Theme
+            </label>
+            <select
+              id='theme-select'
+              className='settings-select'
+              value={settings.theme ?? 'auto'}
+              onChange={(e) => {
+                const newSettings = updateSetting('theme', e.target.value)
+                setSettingsState(newSettings)
+                showMessage('Theme preference saved — light theme coming soon')
+              }}
+              aria-describedby='theme-select-hint'
+            >
+              <option value='auto'>Auto (system default)</option>
+              <option value='dark'>Dark</option>
+              <option value='light'>Light (coming soon)</option>
+            </select>
+            <small id='theme-select-hint' className='settings-hint'>
+              Light theme is planned for a future update. Dark mode is fully
+              supported.
+            </small>
+          </div>
         </div>
 
         {/* Other Settings Placeholder */}

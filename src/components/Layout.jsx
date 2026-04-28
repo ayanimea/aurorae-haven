@@ -7,11 +7,38 @@ import MoreMenu from './Layout/MoreMenu'
 import FileInputButton from './common/FileInputButton'
 import StarryBackground from './StarryBackground'
 
+// Read compile-mode env vars — works in both Vite (import.meta.env) and test (process.env)
+const _processEnv =
+  typeof process !== 'undefined' && process?.env ? process.env : {}
+const _viteEnv =
+  typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
+const _isTestEnv =
+  _viteEnv.MODE === 'test' || _processEnv.NODE_ENV === 'test'
+const _getEnv = (key) =>
+  _isTestEnv ? _processEnv[key] ?? _viteEnv[key] : _viteEnv[key] ?? _processEnv[key]
+
+const COMPILE_MODE = _getEnv('VITE_COMPILE_MODE') || 'desktop-offline'
+const AUTH_REQUIRED = _getEnv('VITE_AUTH_REQUIRED') === 'true'
+
+/** True when the mode supports sign-in (not the offline-only desktop build) */
+const MODE_HAS_AUTH = COMPILE_MODE !== 'desktop-offline' && AUTH_REQUIRED
+
+const OFFLINE_WARNING_DISMISSED_KEY = 'aurorae_offline_warning_dismissed'
+
 function Layout({ children, onExport, onImport }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [offlineWarningDismissed, setOfflineWarningDismissed] = useState(
+    () => {
+      try {
+        return sessionStorage.getItem(OFFLINE_WARNING_DISMISSED_KEY) === '1'
+      } catch {
+        return false
+      }
+    }
+  )
   const hamburgerButtonRef = useRef(null)
   const mobileMenuRef = useRef(null)
   const moreMenuRef = useRef(null)
@@ -364,17 +391,19 @@ function Layout({ children, onExport, onImport }) {
               <Icon name='search' />
             </button>
 
-            {/* TAB-NAV-10: Theme toggle (placeholder for future) */}
-            <button
-              type='button'
-              className='figma-icon-btn'
-              aria-label='Toggle theme'
-              title='Theme (Coming soon)'
-            >
-              <Icon name='moon' />
-            </button>
-
             <span className='nav-separator' aria-hidden='true' />
+
+            {/* Sign In button — only shown in authenticated modes */}
+            {MODE_HAS_AUTH && (
+              <Link
+                className='figma-action-btn navbar-signin-btn'
+                to='/settings'
+                aria-label='Sign in or sign up'
+                title='Sign in / Sign up'
+              >
+                Sign In
+              </Link>
+            )}
 
             {/* Export/Import buttons */}
             <button
@@ -406,6 +435,49 @@ function Layout({ children, onExport, onImport }) {
         isActive={isActive}
         mobileMenuRef={mobileMenuRef}
       />
+
+      {/* Offline data warning — shown on web/android modes when not signed in */}
+      {COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed && (
+        <div className='offline-data-warning' role='alert' aria-live='polite'>
+          <Icon name='alertTriangle' className='offline-data-warning-icon' aria-hidden='true' />
+          <span className='offline-data-warning-text'>
+            Your data is stored locally in this browser and may be lost if you
+            clear your browser data.{' '}
+            <button
+              type='button'
+              className='offline-data-warning-link'
+              onClick={onExport}
+              aria-label='Export your data now'
+            >
+              Export your data
+            </button>{' '}
+            regularly to keep a backup, or{' '}
+            {MODE_HAS_AUTH ? (
+              <Link className='offline-data-warning-link' to='/settings'>
+                sign in
+              </Link>
+            ) : (
+              'sign in'
+            )}{' '}
+            to sync it to your account.
+          </span>
+          <button
+            type='button'
+            className='offline-data-warning-dismiss'
+            aria-label='Dismiss data warning'
+            onClick={() => {
+              setOfflineWarningDismissed(true)
+              try {
+                sessionStorage.setItem(OFFLINE_WARNING_DISMISSED_KEY, '1')
+              } catch {
+                // sessionStorage unavailable — warning won't be remembered this session
+              }
+            }}
+          >
+            <Icon name='x' />
+          </button>
+        </div>
+      )}
 
       <div className='shell'>{children}</div>
     </>

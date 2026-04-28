@@ -26,7 +26,7 @@
     "build:mode:android": "node scripts/build-mode.js android",
     "build:mode:desktop": "node scripts/build-mode.js desktop-offline",
     "build:mode:web": "node scripts/build-mode.js web-online",
-    "build:mode:all": "npm run build:mode:web && npm run build:mode:desktop && npm run build:mode:android",
+    "build:mode:all": "npm run build:mode:desktop && npm run build:mode:android && npm run build:mode:web",
     "verify:mode-outputs": "node scripts/verify-mode-outputs.js",
     "package:android": "node scripts/package-android-twa.js",
     "test:offline": "node scripts/test-offline-package.js",

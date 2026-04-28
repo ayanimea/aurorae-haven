@@ -88,12 +88,9 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
         </Layout>
       )
 
-      // Search and theme toggle icons
+      // Search icon
       expect(
         screen.getByRole('button', { name: /search/i })
-      ).toBeInTheDocument()
-      expect(
-        screen.getByRole('button', { name: /toggle theme/i })
       ).toBeInTheDocument()
 
       // Export/Import buttons
@@ -305,16 +302,17 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       expect(searchButton).toHaveAttribute('title', 'Search (Coming soon)')
     })
 
-    test('theme toggle button is present', () => {
+    test('theme toggle button is no longer in the navbar (moved to Settings)', () => {
       renderWithRouter(
         <Layout onExport={mockOnExport} onImport={mockOnImport}>
           <div>Content</div>
         </Layout>
       )
 
-      const themeButton = screen.getByRole('button', { name: /toggle theme/i })
-      expect(themeButton).toBeInTheDocument()
-      expect(themeButton).toHaveAttribute('title', 'Theme (Coming soon)')
+      // Theme toggle was moved to Settings page
+      expect(
+        screen.queryByRole('button', { name: /toggle theme/i })
+      ).not.toBeInTheDocument()
     })
 
     test('export button calls onExport handler', () => {

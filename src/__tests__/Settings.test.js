@@ -31,6 +31,7 @@ vi.mock('../utils/autoSaveFS', () => ({
 // Mock the settingsManager module
 vi.mock('../utils/settingsManager', () => ({
   getSettings: vi.fn(() => ({
+    theme: 'auto',
     autoSave: {
       enabled: false,
       intervalMinutes: 5,
@@ -39,6 +40,7 @@ vi.mock('../utils/settingsManager', () => ({
     }
   })),
   updateSetting: vi.fn((key, value) => ({
+    theme: key === 'theme' ? value : 'auto',
     autoSave: {
       enabled: key === 'autoSave.enabled' ? value : false,
       intervalMinutes: key === 'autoSave.intervalMinutes' ? value : 5,
@@ -50,7 +52,8 @@ vi.mock('../utils/settingsManager', () => ({
   getSetting: vi.fn((key) => {
     if (key === 'autoSave.keepCount') return 10
     return undefined
-  })
+  }),
+  VALID_GUIDANCE_LEVELS: ['full', 'header-only', 'off']
 }))
 
 // Mock the importData module
@@ -180,6 +183,28 @@ describe('Settings Component', () => {
     expect(
       screen.getByText(/sign-in and sign-up are configured via backend auth endpoints/i)
     ).toBeInTheDocument()
+  })
+
+  test('sign-in section mentions local data sync', () => {
+    process.env.VITE_COMPILE_MODE = 'web-online'
+    process.env.VITE_AUTH_REQUIRED = 'true'
+    process.env.VITE_AUTH_EMAIL_ENABLED = 'true'
+    process.env.VITE_OAUTH_GOOGLE_CLIENT_ID = 'google-client-id'
+    process.env.VITE_OAUTH_FACEBOOK_APP_ID = 'facebook-app-id'
+    process.env.VITE_OAUTH_GITHUB_CLIENT_ID = 'github-client-id'
+
+    render(<Settings />)
+
+    expect(
+      screen.getByText(/local data will be synced to your account/i)
+    ).toBeInTheDocument()
+  })
+
+  test('renders Appearance section with theme select', () => {
+    render(<Settings />)
+
+    expect(screen.getByText('Appearance')).toBeInTheDocument()
+    expect(screen.getByLabelText(/theme/i)).toBeInTheDocument()
   })
 
   test('shows auth not required message when non-offline mode does not require auth', () => {
