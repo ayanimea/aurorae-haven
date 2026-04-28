@@ -66,7 +66,13 @@ function Settings({ onExport, onImport }) {
 
     return modeProviders
       .filter((provider) => {
-        if (!AUTH_PROVIDERS[provider]) return false
+        if (!AUTH_PROVIDERS[provider]) {
+          if (process.env.NODE_ENV !== 'production') {
+            // eslint-disable-next-line no-console
+            console.warn(`[authProviders] Unknown provider key: "${provider}"`)
+          }
+          return false
+        }
         if (provider === 'email') return emailAuthEnabled
         if (provider === 'google') return Boolean(googleClientId)
         if (provider === 'facebook') return Boolean(facebookAppId)

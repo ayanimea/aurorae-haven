@@ -1,6 +1,12 @@
 /**
  * Single source of truth for auth provider display config and env var mapping.
  * Imported by both SignIn and Settings pages to prevent label drift.
+ *
+ * @type {Record<string, { label: string, icon: string }>}
+ *   Keys are provider identifiers ('email', 'google', 'facebook', 'github').
+ *   Each value has:
+ *   - `label`: human-readable name shown in the UI
+ *   - `icon`: camelCase icon name from the Icon component
  */
 export const AUTH_PROVIDERS = {
   email: { label: 'Email', icon: 'mail' },

@@ -19,7 +19,15 @@ function SignIn() {
       if (!authRequired) return []
       return modeProviders
         .filter((providerKey) => {
-          if (!AUTH_PROVIDERS[providerKey]) return false
+          if (!AUTH_PROVIDERS[providerKey]) {
+            if (process.env.NODE_ENV !== 'production') {
+              // eslint-disable-next-line no-console
+              console.warn(
+                `[authProviders] Unknown provider key: "${providerKey}"`
+              )
+            }
+            return false
+          }
           const envVar = PROVIDER_ENV_VARS[providerKey]
           if (!envVar) return false
           // VITE_AUTH_EMAIL_ENABLED is a boolean flag — '1'/'true' means enabled
