@@ -12,7 +12,7 @@ import { getDataTemplate } from '../utils/exportData'
 
 describe('authDataMigration', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('collectLocalDataForSync', () => {

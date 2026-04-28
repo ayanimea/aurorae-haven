@@ -240,17 +240,3 @@
   outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
-
-/* Data sync hint inside sign-in section */
-.settings-sync-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: rgba(134, 245, 224, 0.06);
-  border: 1px solid rgba(134, 245, 224, 0.12);
-  border-radius: 4px;
-  font-size: 0.875rem;
-  color: var(--dim);
-}
