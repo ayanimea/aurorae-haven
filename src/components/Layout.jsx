@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon from './common/Icon'
 import MobileMenu from './Layout/MobileMenu'
 import MoreMenu from './Layout/MoreMenu'
-import FileInputButton from './common/FileInputButton'
 import StarryBackground from './StarryBackground'
 
 // Read compile-mode env vars — works in both Vite (import.meta.env) and test (process.env)
@@ -25,7 +24,7 @@ const MODE_HAS_AUTH = COMPILE_MODE !== 'desktop-offline' && AUTH_REQUIRED
 
 const OFFLINE_WARNING_DISMISSED_KEY = 'aurorae_offline_warning_dismissed'
 
-function Layout({ children, onExport, onImport }) {
+function Layout({ children, onExport }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -404,25 +403,6 @@ function Layout({ children, onExport, onImport }) {
                 Sign In
               </Link>
             )}
-
-            {/* Export/Import buttons */}
-            <button
-              type='button'
-              className='figma-action-btn'
-              onClick={onExport}
-              aria-label='Export data'
-            >
-              Export
-            </button>
-            <FileInputButton
-              onFileSelect={onImport}
-              accept='application/json'
-              ariaLabel='Import data file'
-              title='Import data'
-              className='figma-action-btn'
-            >
-              Import
-            </FileInputButton>
           </div>
         </div>
       </header>
@@ -486,8 +466,7 @@ function Layout({ children, onExport, onImport }) {
 
 Layout.propTypes = {
   children: PropTypes.node.isRequired,
-  onExport: PropTypes.func.isRequired,
-  onImport: PropTypes.func.isRequired
+  onExport: PropTypes.func.isRequired
 }
 
 export default Layout

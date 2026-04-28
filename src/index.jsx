@@ -149,7 +149,7 @@ function RouterApp() {
   return (
     <BrowserRouter basename={basename}>
       <RedirectHandler />
-      <Layout onExport={handleExport} onImport={handleImport}>
+      <Layout onExport={handleExport}>
         <Routes>
           {/* Figma-aligned landing: Tasks at root */}
           <Route path='/' element={<Tasks />} />

@@ -93,11 +93,13 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
         screen.getByRole('button', { name: /search/i })
       ).toBeInTheDocument()
 
-      // Export/Import buttons
+      // Export/Import buttons are in Settings, not in the navbar
       expect(
-        screen.getByRole('button', { name: /export data/i })
-      ).toBeInTheDocument()
-      expect(screen.getByText(/import/i)).toBeInTheDocument()
+        screen.queryByRole('button', { name: /^export data$/i })
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: /^import$/i })
+      ).not.toBeInTheDocument()
     })
   })
 
@@ -315,33 +317,20 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       ).not.toBeInTheDocument()
     })
 
-    test('export button calls onExport handler', () => {
+    test('export and import buttons are no longer in the navbar (moved to Settings)', () => {
       renderWithRouter(
         <Layout onExport={mockOnExport} onImport={mockOnImport}>
           <div>Content</div>
         </Layout>
       )
 
-      const exportButton = screen.getByRole('button', { name: /export data/i })
-      fireEvent.click(exportButton)
-
-      expect(mockOnExport).toHaveBeenCalledTimes(1)
-    })
-
-    test('import file input calls onImport handler', () => {
-      const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
-          <div>Content</div>
-        </Layout>
-      )
-
-      // Find the hidden file input
-      const importInput = container.querySelector('input[type="file"]')
-      const file = new File(['{}'], 'test.json', { type: 'application/json' })
-
-      fireEvent.change(importInput, { target: { files: [file] } })
-
-      expect(mockOnImport).toHaveBeenCalledTimes(1)
+      expect(
+        screen.queryByRole('button', { name: /^export data$/i })
+      ).not.toBeInTheDocument()
+      // No hidden file input in the navbar
+      expect(
+        screen.queryByTitle(/import data/i)
+      ).not.toBeInTheDocument()
     })
   })
 
