@@ -119,8 +119,8 @@ function SignIn() {
         ) : (
           <div className='settings-section'>
             <p className='settings-hint' style={{ marginBottom: '1.5rem' }}>
-              Any existing local data will be synced to your account when you
-              sign in.
+              Sign in to access your account. Data sync will be available once
+              authentication is fully integrated.
             </p>
 
             <div className='signin-provider-list'>

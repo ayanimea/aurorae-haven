@@ -441,7 +441,7 @@ function Layout({ children, onExport }) {
                 <Link className='offline-data-warning-link' to='/sign-in'>
                   sign in
                 </Link>
-                {' to sync it to your account'}
+                {' to save it to your account'}
               </>
             )}
             .

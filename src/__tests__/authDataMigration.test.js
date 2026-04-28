@@ -27,11 +27,14 @@ describe('authDataMigration', () => {
 
       const result = await collectLocalDataForSync()
 
+      const parsedMigratedAt = Date.parse(result.migratedAt)
+
       expect(result.tasks).toHaveLength(1)
       expect(result.migratedAt).toBeDefined()
       expect(typeof result.migratedAt).toBe('string')
       // Should be a valid ISO date
-      expect(() => new Date(result.migratedAt)).not.toThrow()
+      expect(Number.isNaN(parsedMigratedAt)).toBe(false)
+      expect(new Date(parsedMigratedAt).toISOString()).toBe(result.migratedAt)
     })
 
     test('spreads all fields from getDataTemplate', async () => {

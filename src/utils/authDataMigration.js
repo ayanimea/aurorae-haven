@@ -25,11 +25,13 @@ export async function collectLocalDataForSync() {
 
 /**
  * Returns true when at least one local data collection has content.
+ * Calls getDataTemplate() directly to avoid creating an unnecessary
+ * migration payload with a migratedAt timestamp.
  *
  * @returns {Promise<boolean>}
  */
 export async function hasLocalDataToMigrate() {
-  const data = await collectLocalDataForSync()
+  const data = await getDataTemplate()
   return Boolean(
     (data.tasks?.length ?? 0) > 0 ||
       (data.routines?.length ?? 0) > 0 ||

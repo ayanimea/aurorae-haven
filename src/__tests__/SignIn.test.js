@@ -106,14 +106,16 @@ describe('SignIn Page', () => {
     ).toBeInTheDocument()
   })
 
-  test('shows local data sync notice when providers are configured', () => {
+  test('shows data sync info when providers are configured', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'true'
     process.env.VITE_AUTH_EMAIL_ENABLED = 'true'
 
     render(<SignIn />)
     expect(
-      screen.getByText(/local data will be synced to your account/i)
+      screen.getByText(
+        /data sync will be available once authentication is fully integrated/i
+      )
     ).toBeInTheDocument()
   })
 })

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
 import { getEnvVar, isDevelopment } from '../utils/environment'
-import { AUTH_PROVIDERS } from '../utils/authProviders'
+import { AUTH_PROVIDERS, PROVIDER_ENV_VARS } from '../utils/authProviders'
 import {
   getSettings,
   updateSetting,
@@ -55,10 +55,6 @@ function Settings({ onExport, onImport }) {
   const compileMode = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
   const authRequired = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
   const modeProviders = COMPILATION_MODES[compileMode]?.authProviders ?? []
-  const emailAuthEnabled = getEnvVar('VITE_AUTH_EMAIL_ENABLED') === 'true'
-  const googleClientId = getEnvVar('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
-  const facebookAppId = getEnvVar('VITE_OAUTH_FACEBOOK_APP_ID') || ''
-  const githubClientId = getEnvVar('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
   const configuredProviders = useMemo(() => {
     if (!authRequired) {
       return []
@@ -73,24 +69,18 @@ function Settings({ onExport, onImport }) {
           }
           return false
         }
-        if (provider === 'email') return emailAuthEnabled
-        if (provider === 'google') return Boolean(googleClientId)
-        if (provider === 'facebook') return Boolean(facebookAppId)
-        if (provider === 'github') return Boolean(githubClientId)
-        return false
+        const envVar = PROVIDER_ENV_VARS[provider]
+        if (!envVar) return false
+        // VITE_AUTH_EMAIL_ENABLED is a boolean flag — only 'true' enables Email
+        if (provider === 'email') return getEnvVar(envVar) === 'true'
+        // OAuth providers use a client-ID/app-ID string; any non-empty value means configured
+        return Boolean(getEnvVar(envVar))
       })
       .map((provider) => ({
         key: provider,
         label: AUTH_PROVIDERS[provider].label
       }))
-  }, [
-    authRequired,
-    modeProviders,
-    emailAuthEnabled,
-    googleClientId,
-    facebookAppId,
-    githubClientId
-  ])
+  }, [authRequired, modeProviders])
   const configuredProviderLabels = useMemo(
     () => configuredProviders.map((provider) => provider.label),
     [configuredProviders]
@@ -695,8 +685,8 @@ function Settings({ onExport, onImport }) {
                 {formatProviderList(configuredProviderLabels)}.
               </p>
               <p className='settings-hint' style={{ marginTop: '0.5rem' }}>
-                Any existing local data will be synced to your account when you
-                sign in.
+                Sign in to access your account. Data sync will be available
+                once authentication is fully integrated.
               </p>
               <div className='settings-button-group'>
                 <Link

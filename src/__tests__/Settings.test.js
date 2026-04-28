@@ -226,7 +226,7 @@ describe('Settings Component', () => {
     expect(signInLink).toHaveAttribute('href', '/sign-in')
   })
 
-  test('sign-in section mentions local data sync', () => {
+  test('sign-in section mentions data sync info', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'true'
     process.env.VITE_AUTH_EMAIL_ENABLED = 'true'
@@ -237,7 +237,7 @@ describe('Settings Component', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(
-      screen.getByText(/local data will be synced to your account/i)
+      screen.getByText(/data sync will be available once authentication is fully integrated/i)
     ).toBeInTheDocument()
   })
 
