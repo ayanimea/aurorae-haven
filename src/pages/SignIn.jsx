@@ -41,7 +41,11 @@ function SignIn() {
       return modeProviders
         .filter((providerKey) => {
           const envVar = PROVIDER_ENV_VARS[providerKey]
-          return envVar ? Boolean(getEnvVar(envVar)) : false
+          if (!envVar) return false
+          // VITE_AUTH_EMAIL_ENABLED is a boolean flag — '1'/'true' means enabled
+          if (providerKey === 'email') return getEnvVar(envVar) === 'true'
+          // OAuth providers use a client-ID/app-ID string; any non-empty value means configured
+          return Boolean(getEnvVar(envVar))
         })
         .map((providerKey) => ({ key: providerKey, ...AUTH_PROVIDERS[providerKey] }))
         .filter(Boolean)

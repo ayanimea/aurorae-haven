@@ -407,7 +407,7 @@ function Layout({ children, onExport }) {
         mobileMenuRef={mobileMenuRef}
       />
 
-      {/* Offline data warning — shown on web/android modes when not signed in */}
+      {/* Offline data warning — shown on web/android modes when not dismissed */}
       {COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed && (
         <div className='offline-data-warning' role='status' aria-live='polite'>
           <Icon name='alertTriangle' className='offline-data-warning-icon' aria-hidden='true' />

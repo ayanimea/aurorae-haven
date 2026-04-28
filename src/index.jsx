@@ -169,7 +169,12 @@ function RouterApp() {
           <Route path='/habits' element={<Habits />} />
           <Route path='/stats' element={<Stats />} />
           <Route path='/library' element={<Library />} />
-          <Route path='/settings' element={<Settings onExport={handleExport} onImport={handleImport} />} />
+          <Route
+            path='/settings'
+            element={
+              <Settings onExport={handleExport} onImport={handleImport} />
+            }
+          />
           <Route path='/sign-in' element={<SignIn />} />
 
           {/* Fallback: unknown routes → home */}

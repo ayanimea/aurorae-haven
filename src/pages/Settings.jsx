@@ -41,7 +41,9 @@ const formatProviderList = (providerNames) => {
   if (providerNames.length === 2) {
     return `${providerNames[0]} and ${providerNames[1]}`
   }
-  return `${providerNames.slice(0, -1).join(', ')}, and ${providerNames[providerNames.length - 1]}`
+  const allButLast = providerNames.slice(0, -1).join(', ')
+  const last = providerNames[providerNames.length - 1]
+  return `${allButLast}, and ${last}`
 }
 
 function Settings({ onExport, onImport }) {

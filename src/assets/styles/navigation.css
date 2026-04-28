@@ -1071,7 +1071,7 @@ body.mobile-menu-open .shell {
 }
 
 /* ===== Offline Data Warning Banner ===== */
-/* Shown on web/android modes when the user is not signed in */
+/* Shown on web/android modes when the offline warning has not been dismissed */
 .offline-data-warning {
   position: sticky;
   top: 0;
