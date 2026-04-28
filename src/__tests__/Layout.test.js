@@ -22,7 +22,6 @@ const renderWithRouter = (component, { route = '/' } = {}) => {
 
 // Mock functions for export/import
 const mockOnExport = jest.fn()
-const mockOnImport = jest.fn()
 
 describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   beforeEach(() => {
@@ -32,7 +31,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-01: Three-zone structure', () => {
     test('renders figma-inspired animated background layer', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -42,7 +41,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('renders left zone with logo and title', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -58,7 +57,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('renders center zone with primary tabs', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -83,7 +82,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('renders right zone with global actions', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -106,7 +105,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-04 & TAB-NAV-05: Logo functionality', () => {
     test('logo button has proper accessibility attributes', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -119,7 +118,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('logo button is clickable', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>,
         { route: '/schedule' }
@@ -137,7 +136,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-06 & TAB-NAV-07: Primary tabs styling', () => {
     test('all eight primary tabs are present', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -148,7 +147,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('tabs have proper structure with text labels', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -163,7 +162,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-08: Active tab state', () => {
     test('tasks tab has aria-selected when on /tasks route', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>,
         { route: '/tasks' }
@@ -176,7 +175,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('tabs have tabindex attribute for keyboard navigation', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>,
         { route: '/tasks' }
@@ -192,7 +191,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('tabs have active class styling capability', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>,
         { route: '/tasks' }
@@ -207,7 +206,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-09: Keyboard navigation', () => {
     test('tabs can be focused with Tab key', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -219,7 +218,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('arrow right key moves focus to next tab', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>,
         { route: '/tasks' }
@@ -238,7 +237,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('arrow left key moves focus to previous tab', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -256,7 +255,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('home key moves focus to first tab', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -274,7 +273,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('end key moves focus to last tab', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -294,7 +293,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-10: Right zone global actions', () => {
     test('search icon button is present', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -306,7 +305,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('theme toggle button is no longer in the navbar (moved to Settings)', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -319,7 +318,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('export and import buttons are no longer in the navbar (moved to Settings)', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -337,7 +336,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-13: Mobile hamburger menu', () => {
     test('hamburger button is present', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -352,7 +351,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('clicking hamburger opens mobile menu', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -376,7 +375,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('mobile menu has all navigation items', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -412,7 +411,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('clicking mobile menu item closes menu and navigates', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -440,7 +439,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-20 & TAB-NAV-21: ARIA roles and labels', () => {
     test('header has role="banner"', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -451,7 +450,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('nav has role="navigation" with aria-label', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -462,7 +461,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('tablist has proper aria-label', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -475,7 +474,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('all tabs have role="tab"', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -490,7 +489,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('TAB-NAV-22: Focus trap and escape key', () => {
     test('pressing Escape closes mobile menu', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -514,7 +513,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('mobile menu renders when hamburger button is clicked', async () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -536,7 +535,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('Content rendering', () => {
     test('renders children content', () => {
       renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div data-testid='test-content'>Test Content</div>
         </Layout>
       )
@@ -547,7 +546,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('renders planet decoration', () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -563,7 +562,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   describe('MoreMenu component tests', () => {
     test('More button is present in the UI', () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -574,7 +573,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('More button has correct accessibility attributes', () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -586,7 +585,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('clicking More button opens MoreMenu', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -605,7 +604,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('MoreMenu displays correct secondary tabs', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -630,7 +629,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('clicking MoreMenu item closes menu and navigates', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -652,7 +651,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('pressing Escape closes MoreMenu', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -674,7 +673,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('clicking outside MoreMenu closes it', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -696,7 +695,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('MoreMenu has proper ARIA attributes', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -719,7 +718,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('opening MoreMenu adds mobile-menu-open class to body', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -738,7 +737,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('closing MoreMenu removes mobile-menu-open class from body', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )
@@ -762,7 +761,7 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
 
     test('MoreMenu items have correct to paths', async () => {
       const { container } = renderWithRouter(
-        <Layout onExport={mockOnExport} onImport={mockOnImport}>
+        <Layout onExport={mockOnExport}>
           <div>Content</div>
         </Layout>
       )

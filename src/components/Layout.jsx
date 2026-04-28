@@ -1,23 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { getEnvVar } from '../utils/environment'
 import Icon from './common/Icon'
 import MobileMenu from './Layout/MobileMenu'
 import MoreMenu from './Layout/MoreMenu'
 import StarryBackground from './StarryBackground'
 
-// Read compile-mode env vars — works in both Vite (import.meta.env) and test (process.env)
-const PROCESS_ENV =
-  typeof process !== 'undefined' && process?.env ? process.env : {}
-const VITE_ENV =
-  typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
-const IS_TEST_ENV =
-  VITE_ENV.MODE === 'test' || PROCESS_ENV.NODE_ENV === 'test'
-const getLayoutEnv = (key) =>
-  IS_TEST_ENV ? PROCESS_ENV[key] ?? VITE_ENV[key] : VITE_ENV[key] ?? PROCESS_ENV[key]
-
-const COMPILE_MODE = getLayoutEnv('VITE_COMPILE_MODE') || 'desktop-offline'
-const AUTH_REQUIRED = getLayoutEnv('VITE_AUTH_REQUIRED') === 'true'
+const COMPILE_MODE = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
+const AUTH_REQUIRED = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
 
 /** True when the mode supports sign-in (not the offline-only desktop build) */
 const MODE_HAS_AUTH = COMPILE_MODE !== 'desktop-offline' && AUTH_REQUIRED
