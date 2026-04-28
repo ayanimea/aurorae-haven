@@ -1,7 +1,15 @@
 import { vi } from 'vitest'
 
-// Mock react-router-dom (uses src/__mocks__/react-router-dom.js)
-vi.mock('react-router-dom')
+// Mock react-router-dom with a factory so Link renders as a proper <a> element
+vi.mock('react-router-dom', () => ({
+  Link: ({ children, to, ...props }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+  useNavigate: vi.fn(() => vi.fn()),
+  useLocation: vi.fn(() => ({ pathname: '/' }))
+}))
 
 import { fireEvent, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
@@ -117,8 +125,12 @@ describe('Settings Component', () => {
   test('renders Data Management section at the top with Export and Import buttons', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(screen.getByText('Data Management')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /export all data/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/import data from json file/i)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /export all data/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByLabelText(/import data from json file/i)
+    ).toBeInTheDocument()
   })
 
   test('Export Data button calls onExport', () => {
@@ -150,7 +162,9 @@ describe('Settings Component', () => {
   })
 
   test('component renders without crashing', () => {
-    const { container } = render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+    const { container } = render(
+      <Settings onExport={mockOnExport} onImport={mockOnImport} />
+    )
     expect(container).toBeTruthy()
   })
 
@@ -163,12 +177,17 @@ describe('Settings Component', () => {
     process.env.VITE_OAUTH_GITHUB_CLIENT_ID = 'github-client-id'
 
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
-    const authButton = screen.getByRole('button', { name: /sign in \/ sign up/i })
-    expect(authButton).toBeInTheDocument()
+    const signInLink = screen.getByRole('link', { name: /sign in \/ sign up/i })
+    expect(signInLink).toBeInTheDocument()
+    expect(signInLink).toHaveAttribute('href', '/sign-in')
 
-    const emailButton = screen.getByRole('button', { name: /sign in with email/i })
+    const emailButton = screen.getByRole('button', {
+      name: /sign in with email/i
+    })
     expect(emailButton).toBeInTheDocument()
-    const googleButton = screen.getByRole('button', { name: /sign in with google/i })
+    const googleButton = screen.getByRole('button', {
+      name: /sign in with google/i
+    })
     expect(googleButton).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /sign in with facebook/i })
@@ -190,11 +209,11 @@ describe('Settings Component', () => {
       screen.getByText(/sign-in and sign-up are unavailable in offline mode/i)
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: /sign in \/ sign up/i })
+      screen.queryByRole('link', { name: /sign in \/ sign up/i })
     ).not.toBeInTheDocument()
   })
 
-  test('shows integration message when sign-in/sign-up button is clicked', () => {
+  test('sign-in/sign-up entry is a link to /sign-in', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'true'
     process.env.VITE_AUTH_EMAIL_ENABLED = 'true'
@@ -203,11 +222,8 @@ describe('Settings Component', () => {
     process.env.VITE_OAUTH_GITHUB_CLIENT_ID = 'github-client-id'
 
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
-    fireEvent.click(screen.getByRole('button', { name: /sign in \/ sign up/i }))
-
-    expect(
-      screen.getByText(/sign-in and sign-up are configured via backend auth endpoints/i)
-    ).toBeInTheDocument()
+    const signInLink = screen.getByRole('link', { name: /sign in \/ sign up/i })
+    expect(signInLink).toHaveAttribute('href', '/sign-in')
   })
 
   test('sign-in section mentions local data sync', () => {
@@ -242,7 +258,9 @@ describe('Settings Component', () => {
       screen.getByText(/authentication is not required in this mode\./i)
     ).toBeInTheDocument()
     expect(
-      screen.queryByText(/no sign-in providers are currently configured for this mode/i)
+      screen.queryByText(
+        /no sign-in providers are currently configured for this mode/i
+      )
     ).not.toBeInTheDocument()
   })
 
@@ -253,7 +271,9 @@ describe('Settings Component', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(
-      screen.getByText(/no sign-in providers are currently configured for this mode/i)
+      screen.getByText(
+        /no sign-in providers are currently configured for this mode/i
+      )
     ).toBeInTheDocument()
   })
 })

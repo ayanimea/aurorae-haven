@@ -2,30 +2,9 @@ import { useMemo, useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
 import { getEnvVar } from '../utils/environment'
+import { AUTH_PROVIDERS, PROVIDER_ENV_VARS } from '../utils/authProviders'
 import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
-
-/**
- * Single source of truth for auth provider display config.
- * Each entry defines the label shown in the UI and the icon name from the Icon component.
- */
-const AUTH_PROVIDERS = {
-  email: { label: 'Email', icon: 'mail' },
-  google: { label: 'Google', icon: 'globe' },
-  facebook: { label: 'Facebook', icon: 'users' },
-  github: { label: 'GitHub', icon: 'gitBranch' }
-}
-
-/**
- * Maps provider keys to the environment variable that enables them.
- * If the env var is truthy the provider is treated as configured.
- */
-const PROVIDER_ENV_VARS = {
-  email: 'VITE_AUTH_EMAIL_ENABLED',
-  google: 'VITE_OAUTH_GOOGLE_CLIENT_ID',
-  facebook: 'VITE_OAUTH_FACEBOOK_APP_ID',
-  github: 'VITE_OAUTH_GITHUB_CLIENT_ID'
-}
 
 function SignIn() {
   const navigate = useNavigate()
@@ -40,6 +19,7 @@ function SignIn() {
       if (!authRequired) return []
       return modeProviders
         .filter((providerKey) => {
+          if (!AUTH_PROVIDERS[providerKey]) return false
           const envVar = PROVIDER_ENV_VARS[providerKey]
           if (!envVar) return false
           // VITE_AUTH_EMAIL_ENABLED is a boolean flag — '1'/'true' means enabled
@@ -47,22 +27,21 @@ function SignIn() {
           // OAuth providers use a client-ID/app-ID string; any non-empty value means configured
           return Boolean(getEnvVar(envVar))
         })
-        .map((providerKey) => ({ key: providerKey, ...AUTH_PROVIDERS[providerKey] }))
-        .filter(Boolean)
+        .map((providerKey) => ({
+          key: providerKey,
+          ...AUTH_PROVIDERS[providerKey]
+        }))
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [authRequired, modeProviders]
   )
 
-  const handleProviderSignIn = useCallback(
-    (providerLabel) => {
-      setMessage({
-        text: `${providerLabel} authentication is configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md). Integration in progress.`,
-        isError: false
-      })
-    },
-    []
-  )
+  const handleProviderSignIn = useCallback((providerLabel) => {
+    setMessage({
+      text: `${providerLabel} authentication is configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md). Integration in progress.`,
+      isError: false
+    })
+  }, [])
 
   const handleBackClick = useCallback(() => {
     navigate(-1)
@@ -94,8 +73,14 @@ function SignIn() {
                 ? 'Sign-in and sign-up are unavailable in offline mode. All data is stored locally on your device.'
                 : 'Authentication is not required in this mode.'}
             </p>
-            <div className='settings-button-group' style={{ marginTop: '1rem' }}>
-              <Link to='/settings' className='settings-button settings-button-primary'>
+            <div
+              className='settings-button-group'
+              style={{ marginTop: '1rem' }}
+            >
+              <Link
+                to='/settings'
+                className='settings-button settings-button-primary'
+              >
                 Back to Settings
               </Link>
             </div>
@@ -111,8 +96,14 @@ function SignIn() {
               <code>VITE_OAUTH_GOOGLE_CLIENT_ID</code>, etc.) and rebuild to
               enable sign-in.
             </p>
-            <div className='settings-button-group' style={{ marginTop: '1rem' }}>
-              <Link to='/settings' className='settings-button settings-button-primary'>
+            <div
+              className='settings-button-group'
+              style={{ marginTop: '1rem' }}
+            >
+              <Link
+                to='/settings'
+                className='settings-button settings-button-primary'
+              >
                 Back to Settings
               </Link>
             </div>

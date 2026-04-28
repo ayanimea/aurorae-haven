@@ -3,7 +3,12 @@ import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
 import { getEnvVar } from '../utils/environment'
-import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
+import { AUTH_PROVIDERS } from '../utils/authProviders'
+import {
+  getSettings,
+  updateSetting,
+  VALID_GUIDANCE_LEVELS
+} from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
   requestDirectoryAccess,
@@ -28,12 +33,6 @@ import '../assets/styles/settings.css'
 
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
-const AUTH_PROVIDER_LABELS = {
-  email: 'Email',
-  google: 'Google',
-  facebook: 'Facebook',
-  github: 'GitHub'
-}
 
 const formatProviderList = (providerNames) => {
   if (providerNames.length === 0) return ''
@@ -60,35 +59,32 @@ function Settings({ onExport, onImport }) {
   const googleClientId = getEnvVar('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
   const facebookAppId = getEnvVar('VITE_OAUTH_FACEBOOK_APP_ID') || ''
   const githubClientId = getEnvVar('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
-  const configuredProviders = useMemo(
-    () => {
-      if (!authRequired) {
-        return []
-      }
+  const configuredProviders = useMemo(() => {
+    if (!authRequired) {
+      return []
+    }
 
-      return modeProviders
-        .filter((provider) => {
-          if (provider === 'email') return emailAuthEnabled
-          if (provider === 'google') return Boolean(googleClientId)
-          if (provider === 'facebook') return Boolean(facebookAppId)
-          if (provider === 'github') return Boolean(githubClientId)
-          return false
-        })
-        .map((provider) => ({
-          key: provider,
-          label: AUTH_PROVIDER_LABELS[provider]
-        }))
-        .filter((provider) => Boolean(provider.label))
-    },
-    [
-      authRequired,
-      modeProviders,
-      emailAuthEnabled,
-      googleClientId,
-      facebookAppId,
-      githubClientId
-    ]
-  )
+    return modeProviders
+      .filter((provider) => {
+        if (!AUTH_PROVIDERS[provider]) return false
+        if (provider === 'email') return emailAuthEnabled
+        if (provider === 'google') return Boolean(googleClientId)
+        if (provider === 'facebook') return Boolean(facebookAppId)
+        if (provider === 'github') return Boolean(githubClientId)
+        return false
+      })
+      .map((provider) => ({
+        key: provider,
+        label: AUTH_PROVIDERS[provider].label
+      }))
+  }, [
+    authRequired,
+    modeProviders,
+    emailAuthEnabled,
+    googleClientId,
+    facebookAppId,
+    githubClientId
+  ])
   const configuredProviderLabels = useMemo(
     () => configuredProviders.map((provider) => provider.label),
     [configuredProviders]
@@ -347,14 +343,6 @@ function Settings({ onExport, onImport }) {
     [showMessage]
   )
 
-  const handleAuthEntryClick = useCallback(() => {
-    showMessage(
-      'Sign-in and sign-up are configured via backend auth endpoints. On sign-in, your local data will automatically be synced to your account (see docs/BACKEND_REQUIREMENTS.md).',
-      false,
-      6000
-    )
-  }, [showMessage])
-
   return (
     <div className='card'>
       <div className='card-h'>
@@ -442,7 +430,8 @@ function Settings({ onExport, onImport }) {
                     className='settings-input'
                     aria-describedby='save-directory-hint'
                   />
-                  <button type="button"
+                  <button
+                    type='button'
                     onClick={handleSelectDirectory}
                     disabled={isConfiguring}
                     className='settings-button settings-button-primary'
@@ -537,7 +526,8 @@ function Settings({ onExport, onImport }) {
                 role='group'
                 aria-label='Auto-save actions'
               >
-                <button type="button"
+                <button
+                  type='button'
                   onClick={handleManualSave}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-success'
@@ -546,7 +536,8 @@ function Settings({ onExport, onImport }) {
                 >
                   Save Now
                 </button>
-                <button type="button"
+                <button
+                  type='button'
                   onClick={handleLoadLastSave}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-info'
@@ -555,7 +546,8 @@ function Settings({ onExport, onImport }) {
                 >
                   Load Last Save
                 </button>
-                <button type="button"
+                <button
+                  type='button'
                   onClick={handleCleanOldFiles}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-warning'
@@ -618,7 +610,10 @@ function Settings({ onExport, onImport }) {
 
           {/* Load Awareness Guidance Level */}
           <div className='settings-field'>
-            <label className='settings-label' htmlFor='scheduling-guidance-level'>
+            <label
+              className='settings-label'
+              htmlFor='scheduling-guidance-level'
+            >
               <strong>Load Awareness Guidance</strong>
             </label>
             <select
@@ -645,16 +640,20 @@ function Settings({ onExport, onImport }) {
               }}
               aria-describedby='guidance-level-hint'
             >
-              <option value='full'>Full: header indicators, warnings &amp; suggestions</option>
-              <option value='header-only'>Header only: indicators only, no warnings</option>
+              <option value='full'>
+                Full: header indicators, warnings &amp; suggestions
+              </option>
+              <option value='header-only'>
+                Header only: indicators only, no warnings
+              </option>
               <option value='off'>Off: indicators disabled</option>
             </select>
             <small id='guidance-level-hint' className='settings-checkbox-hint'>
               Week and day headers, plus month cells, show an amber underline
-              when 8 h of events are scheduled (end of the work block), and a
-              ⚠ icon at 9 h (into leisure time). Structural limits still apply
-              regardless of this setting: max 2 simultaneous events, or up to
-              3 when one event is all-day.
+              when 8 h of events are scheduled (end of the work block), and a ⚠
+              icon at 9 h (into leisure time). Structural limits still apply
+              regardless of this setting: max 2 simultaneous events, or up to 3
+              when one event is all-day.
             </small>
           </div>
         </div>
@@ -680,25 +679,26 @@ function Settings({ onExport, onImport }) {
           <h3 className='settings-section-title'>Sign-In &amp; Account</h3>
           <p className='settings-placeholder-text'>
             Current mode: <strong>{compileMode}</strong>. Authentication is{' '}
-            <strong>{authRequired ? 'required' : 'not required'}</strong> in this
-            mode.
+            <strong>{authRequired ? 'required' : 'not required'}</strong> in
+            this mode.
           </p>
           {configuredProviderLabels.length > 0 ? (
             <>
               <p className='settings-placeholder-text'>
-                Available providers: {formatProviderList(configuredProviderLabels)}.
+                Available providers:{' '}
+                {formatProviderList(configuredProviderLabels)}.
               </p>
               <p className='settings-hint' style={{ marginTop: '0.5rem' }}>
-                Any existing local data will be synced to your account when you sign in.
+                Any existing local data will be synced to your account when you
+                sign in.
               </p>
               <div className='settings-button-group'>
-                <button
-                  type='button'
+                <Link
+                  to='/sign-in'
                   className='settings-button settings-button-primary'
-                  onClick={handleAuthEntryClick}
                 >
                   Sign in / Sign up
-                </button>
+                </Link>
               </div>
               <div className='settings-auth-provider-grid'>
                 {configuredProviders.map((provider) => (

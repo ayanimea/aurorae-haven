@@ -7,28 +7,25 @@ import MobileMenu from './Layout/MobileMenu'
 import MoreMenu from './Layout/MoreMenu'
 import StarryBackground from './StarryBackground'
 
-const COMPILE_MODE = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
-const AUTH_REQUIRED = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
-
-/** True when the mode supports sign-in (not the offline-only desktop build) */
-const MODE_HAS_AUTH = COMPILE_MODE !== 'desktop-offline' && AUTH_REQUIRED
-
 const OFFLINE_WARNING_DISMISSED_KEY = 'aurorae_offline_warning_dismissed'
 
 function Layout({ children, onExport }) {
   const location = useLocation()
   const navigate = useNavigate()
+
+  const COMPILE_MODE = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
+  const AUTH_REQUIRED = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
+  /** True when the mode supports sign-in (not the offline-only desktop build) */
+  const MODE_HAS_AUTH = COMPILE_MODE !== 'desktop-offline' && AUTH_REQUIRED
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
-  const [offlineWarningDismissed, setOfflineWarningDismissed] = useState(
-    () => {
-      try {
-        return sessionStorage.getItem(OFFLINE_WARNING_DISMISSED_KEY) === '1'
-      } catch {
-        return false
-      }
+  const [offlineWarningDismissed, setOfflineWarningDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem(OFFLINE_WARNING_DISMISSED_KEY) === '1'
+    } catch {
+      return false
     }
-  )
+  })
   const hamburgerButtonRef = useRef(null)
   const mobileMenuRef = useRef(null)
   const moreMenuRef = useRef(null)
@@ -267,7 +264,17 @@ function Layout({ children, onExport }) {
             >
               {/* Icon shown on mobile where brand text is hidden */}
               <span className='logo-icon' aria-hidden='true'>
-                <svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                <svg
+                  viewBox='0 0 24 24'
+                  width='24'
+                  height='24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='1.5'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  aria-hidden='true'
+                >
                   <path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z' />
                 </svg>
               </span>
@@ -299,41 +306,42 @@ function Layout({ children, onExport }) {
                 ))}
               </div>
 
-            {/* Mobile portrait bottom bar: Primary tabs + More button */}
-            <div
-              className='mobile-bottom-tabs'
-              data-testid='mobile-tabs'
-            >
-              {primaryTabs.map((tab) => (
-                <Link
-                  key={`mobile-${tab.path}`}
-                  className={`nav-tab ${isActive(tab.path) ? 'active' : ''}`}
-                  to={tab.path}
-                  aria-label={tab.label}
-                  aria-current={isActive(tab.path) ? 'page' : undefined}
-                  onClick={() => setMoreMenuOpen(false)}
+              {/* Mobile portrait bottom bar: Primary tabs + More button */}
+              <div className='mobile-bottom-tabs' data-testid='mobile-tabs'>
+                {primaryTabs.map((tab) => (
+                  <Link
+                    key={`mobile-${tab.path}`}
+                    className={`nav-tab ${isActive(tab.path) ? 'active' : ''}`}
+                    to={tab.path}
+                    aria-label={tab.label}
+                    aria-current={isActive(tab.path) ? 'page' : undefined}
+                    onClick={() => setMoreMenuOpen(false)}
+                  >
+                    <svg
+                      className='icon'
+                      viewBox='0 0 24 24'
+                      aria-hidden='true'
+                    >
+                      <path d={tab.icon} />
+                    </svg>
+                    <span>{tab.label}</span>
+                  </Link>
+                ))}
+                {/* More menu button */}
+                <button
+                  type='button'
+                  className={`nav-tab more-button ${secondaryTabs.some((tab) => isActive(tab.path)) || moreMenuOpen ? 'active' : ''}`}
+                  onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                  aria-haspopup='true'
+                  aria-expanded={moreMenuOpen}
+                  aria-label='More options'
                 >
                   <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
-                    <path d={tab.icon} />
+                    <path d='M4 6h16M4 12h16M4 18h16' />
                   </svg>
-                  <span>{tab.label}</span>
-                </Link>
-              ))}
-              {/* More menu button */}
-              <button
-                type='button'
-                className={`nav-tab more-button ${secondaryTabs.some((tab) => isActive(tab.path)) || moreMenuOpen ? 'active' : ''}`}
-                onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                aria-haspopup='true'
-                aria-expanded={moreMenuOpen}
-                aria-label='More options'
-              >
-                <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
-                  <path d='M4 6h16M4 12h16M4 18h16' />
-                </svg>
-                <span>More</span>
-              </button>
-            </div>
+                  <span>More</span>
+                </button>
+              </div>
             </nav>
           </div>
 
@@ -410,7 +418,11 @@ function Layout({ children, onExport }) {
       {/* Offline data warning — shown on web/android modes when not dismissed */}
       {COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed && (
         <div className='offline-data-warning' role='status' aria-live='polite'>
-          <Icon name='alertTriangle' className='offline-data-warning-icon' aria-hidden='true' />
+          <Icon
+            name='alertTriangle'
+            className='offline-data-warning-icon'
+            aria-hidden='true'
+          />
           <span className='offline-data-warning-text'>
             Your data is stored locally in this browser and may be lost if you
             clear your browser data.{' '}

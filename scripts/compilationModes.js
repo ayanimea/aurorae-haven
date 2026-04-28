@@ -4,7 +4,7 @@ export const COMPILATION_MODES = {
     description: 'Android web bundle for native APK/AAB packaging',
     authProviders: ['email', 'google', 'facebook', 'github'],
     buildEnv: {
-      VITE_BASE_URL: './',
+      VITE_BASE_URL: '/aurorae-haven/',
       VITE_COMPILE_MODE: 'android',
       VITE_AUTH_REQUIRED: 'true'
     }
