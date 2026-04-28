@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
-import { getEnvVar } from '../utils/environment'
+import { getEnvVar, isDevelopment } from '../utils/environment'
 import { AUTH_PROVIDERS, PROVIDER_ENV_VARS } from '../utils/authProviders'
 import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
@@ -20,7 +20,7 @@ function SignIn() {
       return modeProviders
         .filter((providerKey) => {
           if (!AUTH_PROVIDERS[providerKey]) {
-            if (process.env.NODE_ENV !== 'production') {
+            if (isDevelopment()) {
               // eslint-disable-next-line no-console
               console.warn(
                 `[authProviders] Unknown provider key: "${providerKey}"`
@@ -30,7 +30,7 @@ function SignIn() {
           }
           const envVar = PROVIDER_ENV_VARS[providerKey]
           if (!envVar) return false
-          // VITE_AUTH_EMAIL_ENABLED is a boolean flag — '1'/'true' means enabled
+          // VITE_AUTH_EMAIL_ENABLED is a boolean flag — only the literal string 'true' means enabled
           if (providerKey === 'email') return getEnvVar(envVar) === 'true'
           // OAuth providers use a client-ID/app-ID string; any non-empty value means configured
           return Boolean(getEnvVar(envVar))

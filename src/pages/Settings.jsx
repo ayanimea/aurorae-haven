@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
-import { getEnvVar } from '../utils/environment'
+import { getEnvVar, isDevelopment } from '../utils/environment'
 import { AUTH_PROVIDERS } from '../utils/authProviders'
 import {
   getSettings,
@@ -67,7 +67,7 @@ function Settings({ onExport, onImport }) {
     return modeProviders
       .filter((provider) => {
         if (!AUTH_PROVIDERS[provider]) {
-          if (process.env.NODE_ENV !== 'production') {
+          if (isDevelopment()) {
             // eslint-disable-next-line no-console
             console.warn(`[authProviders] Unknown provider key: "${provider}"`)
           }
