@@ -1,70 +1,53 @@
 import { useMemo, useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
+import { getEnvVar } from '../utils/environment'
 import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
 
-const AUTH_PROVIDER_LABELS = {
-  email: 'Email',
-  google: 'Google',
-  facebook: 'Facebook',
-  github: 'GitHub'
+/**
+ * Single source of truth for auth provider display config.
+ * Each entry defines the label shown in the UI and the icon name from the Icon component.
+ */
+const AUTH_PROVIDERS = {
+  email: { label: 'Email', icon: 'mail' },
+  google: { label: 'Google', icon: 'globe' },
+  facebook: { label: 'Facebook', icon: 'users' },
+  github: { label: 'GitHub', icon: 'gitBranch' }
 }
 
-const AUTH_PROVIDER_ICONS = {
-  email: 'mail',
-  google: 'globe',
-  facebook: 'users',
-  github: 'gitBranch'
+/**
+ * Maps provider keys to the environment variable that enables them.
+ * If the env var is truthy the provider is treated as configured.
+ */
+const PROVIDER_ENV_VARS = {
+  email: 'VITE_AUTH_EMAIL_ENABLED',
+  google: 'VITE_OAUTH_GOOGLE_CLIENT_ID',
+  facebook: 'VITE_OAUTH_FACEBOOK_APP_ID',
+  github: 'VITE_OAUTH_GITHUB_CLIENT_ID'
 }
 
 function SignIn() {
   const navigate = useNavigate()
   const [message, setMessage] = useState({ text: '', isError: false })
 
-  const processEnv =
-    typeof process !== 'undefined' && process?.env ? process.env : {}
-  const viteEnv =
-    typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
-  const isTestEnv =
-    viteEnv.MODE === 'test' || processEnv.NODE_ENV === 'test'
-  const getEnvVariable = (key) =>
-    isTestEnv ? processEnv[key] ?? viteEnv[key] : viteEnv[key] ?? processEnv[key]
-
-  const compileMode = getEnvVariable('VITE_COMPILE_MODE') || 'desktop-offline'
-  const authRequired = getEnvVariable('VITE_AUTH_REQUIRED') === 'true'
+  const compileMode = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
+  const authRequired = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
   const modeProviders = COMPILATION_MODES[compileMode]?.authProviders ?? []
-  const emailAuthEnabled = getEnvVariable('VITE_AUTH_EMAIL_ENABLED') === 'true'
-  const googleClientId = getEnvVariable('VITE_OAUTH_GOOGLE_CLIENT_ID') || ''
-  const facebookAppId = getEnvVariable('VITE_OAUTH_FACEBOOK_APP_ID') || ''
-  const githubClientId = getEnvVariable('VITE_OAUTH_GITHUB_CLIENT_ID') || ''
 
   const configuredProviders = useMemo(
     () => {
       if (!authRequired) return []
       return modeProviders
-        .filter((provider) => {
-          if (provider === 'email') return emailAuthEnabled
-          if (provider === 'google') return Boolean(googleClientId)
-          if (provider === 'facebook') return Boolean(facebookAppId)
-          if (provider === 'github') return Boolean(githubClientId)
-          return false
+        .filter((providerKey) => {
+          const envVar = PROVIDER_ENV_VARS[providerKey]
+          return envVar ? Boolean(getEnvVar(envVar)) : false
         })
-        .map((provider) => ({
-          key: provider,
-          label: AUTH_PROVIDER_LABELS[provider],
-          icon: AUTH_PROVIDER_ICONS[provider]
-        }))
-        .filter((provider) => Boolean(provider.label))
+        .map((providerKey) => ({ key: providerKey, ...AUTH_PROVIDERS[providerKey] }))
+        .filter(Boolean)
     },
-    [
-      authRequired,
-      modeProviders,
-      emailAuthEnabled,
-      googleClientId,
-      facebookAppId,
-      githubClientId
-    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [authRequired, modeProviders]
   )
 
   const handleProviderSignIn = useCallback(
