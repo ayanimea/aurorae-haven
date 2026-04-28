@@ -397,7 +397,7 @@ function Layout({ children, onExport, onImport }) {
             {MODE_HAS_AUTH && (
               <Link
                 className='figma-action-btn navbar-signin-btn'
-                to='/settings'
+                to='/sign-in'
                 aria-label='Sign in or sign up'
                 title='Sign in / Sign up'
               >
@@ -453,7 +453,7 @@ function Layout({ children, onExport, onImport }) {
             </button>{' '}
             regularly to keep a backup, or{' '}
             {MODE_HAS_AUTH ? (
-              <Link className='offline-data-warning-link' to='/settings'>
+              <Link className='offline-data-warning-link' to='/sign-in'>
                 sign in
               </Link>
             ) : (

@@ -25,6 +25,7 @@ import Habits from './pages/Habits.jsx'
 import Stats from './pages/Stats.jsx'
 import Library from './pages/Library.jsx'
 import Settings from './pages/Settings.jsx'
+import SignIn from './pages/SignIn.jsx'
 
 // Utils
 import {
@@ -168,7 +169,8 @@ function RouterApp() {
           <Route path='/habits' element={<Habits />} />
           <Route path='/stats' element={<Stats />} />
           <Route path='/library' element={<Library />} />
-          <Route path='/settings' element={<Settings />} />
+          <Route path='/settings' element={<Settings onExport={handleExport} onImport={handleImport} />} />
+          <Route path='/sign-in' element={<SignIn />} />
 
           {/* Fallback: unknown routes → home */}
           <Route path='*' element={<Navigate to='/' replace />} />

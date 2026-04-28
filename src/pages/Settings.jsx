@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import PropTypes from 'prop-types'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
 import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import {
@@ -20,6 +21,7 @@ import {
   reloadPageAfterDelay,
   IMPORT_SUCCESS_MESSAGE
 } from '../utils/importData'
+import FileInputButton from '../components/common/FileInputButton'
 import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
 
@@ -41,7 +43,7 @@ const formatProviderList = (providerNames) => {
   return `${providerNames.slice(0, -1).join(', ')}, and ${providerNames[providerNames.length - 1]}`
 }
 
-function Settings() {
+function Settings({ onExport = undefined, onImport = undefined }) {
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)
@@ -367,6 +369,35 @@ function Settings() {
         <span className='small'>Customize your experience</span>
       </div>
       <div className='card-b'>
+        {/* Data Management — Export / Import at the top */}
+        <div className='settings-section'>
+          <h3 className='settings-section-title'>Data Management</h3>
+          <p className='settings-hint' style={{ marginBottom: '0.75rem' }}>
+            Export your data regularly to keep a local backup. You can import it
+            again at any time.
+          </p>
+          <div className='settings-button-group'>
+            <button
+              type='button'
+              className='settings-button settings-button-success'
+              onClick={onExport}
+              aria-label='Export all data as JSON'
+            >
+              <Icon name='download' />
+              Export Data
+            </button>
+            <FileInputButton
+              onFileSelect={onImport}
+              accept='application/json'
+              ariaLabel='Import data from JSON file'
+              className='settings-button settings-button-primary'
+            >
+              <Icon name='upload' />
+              Import Data
+            </FileInputButton>
+          </div>
+        </div>
+
         {/* Auto-Save Settings Section */}
         <div className='settings-section'>
           <h3 className='settings-section-title'>Automatic Save</h3>
@@ -743,6 +774,11 @@ function Settings() {
       </div>
     </div>
   )
+}
+
+Settings.propTypes = {
+  onExport: PropTypes.func,
+  onImport: PropTypes.func
 }
 
 export default Settings

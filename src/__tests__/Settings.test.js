@@ -62,7 +62,19 @@ vi.mock('../utils/importData', () => ({
   IMPORT_SUCCESS_MESSAGE: 'Data imported successfully'
 }))
 
+// Mock FileInputButton to simplify export/import testing in Settings
+vi.mock('../components/common/FileInputButton', () => ({
+  default: ({ children, onFileSelect, ariaLabel, className }) => (
+    <label aria-label={ariaLabel} className={className}>
+      {children}
+      <input type='file' onChange={onFileSelect} style={{ display: 'none' }} />
+    </label>
+  )
+}))
+
 describe('Settings Component', () => {
+  const mockOnExport = vi.fn()
+  const mockOnImport = vi.fn()
   const originalViteCompileMode = process.env.VITE_COMPILE_MODE
   const originalAuthRequired = process.env.VITE_AUTH_REQUIRED
   const originalAuthEmailEnabled = process.env.VITE_AUTH_EMAIL_ENABLED
@@ -78,7 +90,7 @@ describe('Settings Component', () => {
   }
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     process.env.VITE_COMPILE_MODE = 'desktop-offline'
     process.env.VITE_AUTH_REQUIRED = 'false'
     process.env.VITE_AUTH_EMAIL_ENABLED = ''
@@ -97,27 +109,40 @@ describe('Settings Component', () => {
   })
 
   test('renders settings page with title', () => {
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(screen.getByText('Settings')).toBeInTheDocument()
     expect(screen.getByText('Customize your experience')).toBeInTheDocument()
   })
 
+  test('renders Data Management section at the top with Export and Import buttons', () => {
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+    expect(screen.getByText('Data Management')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /export all data/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/import data from json file/i)).toBeInTheDocument()
+  })
+
+  test('Export Data button calls onExport', () => {
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+    fireEvent.click(screen.getByRole('button', { name: /export all data/i }))
+    expect(mockOnExport).toHaveBeenCalledTimes(1)
+  })
+
   test('renders auto-save section when File System API is supported', () => {
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(screen.getByText('Automatic Save')).toBeInTheDocument()
   })
 
   test('shows warning when File System API is not supported', () => {
     autoSaveFS.isFileSystemAccessSupported.mockReturnValue(false)
 
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     const alert = screen.getByRole('alert')
     expect(alert).toBeInTheDocument()
     expect(screen.getByText(/Not Supported/)).toBeInTheDocument()
   })
 
   test('renders placeholder for other settings', () => {
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(screen.getByText('Other Settings')).toBeInTheDocument()
     expect(
       screen.getByText(/Additional settings will be available/i)
@@ -125,7 +150,7 @@ describe('Settings Component', () => {
   })
 
   test('component renders without crashing', () => {
-    const { container } = render(<Settings />)
+    const { container } = render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(container).toBeTruthy()
   })
 
@@ -137,7 +162,7 @@ describe('Settings Component', () => {
     process.env.VITE_OAUTH_FACEBOOK_APP_ID = 'facebook-app-id'
     process.env.VITE_OAUTH_GITHUB_CLIENT_ID = 'github-client-id'
 
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     const authButton = screen.getByRole('button', { name: /sign in \/ sign up/i })
     expect(authButton).toBeInTheDocument()
 
@@ -159,7 +184,7 @@ describe('Settings Component', () => {
   })
 
   test('shows sign-in unavailable message in offline mode', () => {
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(
       screen.getByText(/sign-in and sign-up are unavailable in offline mode/i)
@@ -177,7 +202,7 @@ describe('Settings Component', () => {
     process.env.VITE_OAUTH_FACEBOOK_APP_ID = 'facebook-app-id'
     process.env.VITE_OAUTH_GITHUB_CLIENT_ID = 'github-client-id'
 
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     fireEvent.click(screen.getByRole('button', { name: /sign in \/ sign up/i }))
 
     expect(
@@ -193,7 +218,7 @@ describe('Settings Component', () => {
     process.env.VITE_OAUTH_FACEBOOK_APP_ID = 'facebook-app-id'
     process.env.VITE_OAUTH_GITHUB_CLIENT_ID = 'github-client-id'
 
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(
       screen.getByText(/local data will be synced to your account/i)
@@ -201,7 +226,7 @@ describe('Settings Component', () => {
   })
 
   test('renders Appearance section with theme select', () => {
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(screen.getByText('Appearance')).toBeInTheDocument()
     expect(screen.getByLabelText(/theme/i)).toBeInTheDocument()
@@ -211,7 +236,7 @@ describe('Settings Component', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'false'
 
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(
       screen.getByText(/authentication is not required in this mode\./i)
@@ -225,7 +250,7 @@ describe('Settings Component', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'true'
 
-    render(<Settings />)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(
       screen.getByText(/no sign-in providers are currently configured for this mode/i)
