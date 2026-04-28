@@ -1,15 +1,18 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+
+const moduleRequire = createRequire(import.meta.url)
+const uuidPackageJsonPath = moduleRequire.resolve('uuid/package.json')
+const uuidNodeEntryPath = join(dirname(uuidPackageJsonPath), 'dist-node/index.js')
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // Point uuid to its Node ESM build to avoid CJS/ESM wrapper.mjs interop issue
-      uuid: fileURLToPath(
-        new URL('./node_modules/uuid/dist/esm-node/index.js', import.meta.url)
-      )
+      // Point uuid to its Node entry to avoid CJS/ESM interop issues in tests
+      uuid: uuidNodeEntryPath
     }
   },
   test: {

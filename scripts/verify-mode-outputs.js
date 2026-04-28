@@ -51,8 +51,10 @@ if (manifestAvailable) {
   try {
     twaManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : String(error)
     console.error(
-      `❌ Failed to parse ${manifestPath}: ${error.message}. Please ensure the file contains valid JSON.`
+      `❌ Failed to parse ${manifestPath}: ${errorMessage}. Please ensure the file contains valid JSON.`
     )
     hasFailure = true
   }

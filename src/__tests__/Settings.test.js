@@ -60,7 +60,6 @@ vi.mock('../utils/importData', () => ({
 }))
 
 describe('Settings Component', () => {
-  const originalAuroraeCompileMode = process.env.AURORAE_COMPILE_MODE
   const originalViteCompileMode = process.env.VITE_COMPILE_MODE
   const originalAuthRequired = process.env.VITE_AUTH_REQUIRED
   const originalAuthEmailEnabled = process.env.VITE_AUTH_EMAIL_ENABLED
@@ -78,7 +77,6 @@ describe('Settings Component', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     process.env.VITE_COMPILE_MODE = 'desktop-offline'
-    process.env.AURORAE_COMPILE_MODE = 'desktop-offline'
     process.env.VITE_AUTH_REQUIRED = 'false'
     process.env.VITE_AUTH_EMAIL_ENABLED = ''
     process.env.VITE_OAUTH_GOOGLE_CLIENT_ID = ''
@@ -88,7 +86,6 @@ describe('Settings Component', () => {
 
   afterEach(() => {
     restoreEnvVar('VITE_COMPILE_MODE', originalViteCompileMode)
-    restoreEnvVar('AURORAE_COMPILE_MODE', originalAuroraeCompileMode)
     restoreEnvVar('VITE_AUTH_REQUIRED', originalAuthRequired)
     restoreEnvVar('VITE_AUTH_EMAIL_ENABLED', originalAuthEmailEnabled)
     restoreEnvVar('VITE_OAUTH_GOOGLE_CLIENT_ID', originalGoogleClientId)
@@ -131,7 +128,6 @@ describe('Settings Component', () => {
 
   test('renders sign-in/sign-up and providers for signed-in web mode', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
-    process.env.AURORAE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'true'
     process.env.VITE_AUTH_EMAIL_ENABLED = 'true'
     process.env.VITE_OAUTH_GOOGLE_CLIENT_ID = 'google-client-id'
@@ -172,7 +168,6 @@ describe('Settings Component', () => {
 
   test('shows integration message when sign-in/sign-up button is clicked', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
-    process.env.AURORAE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'true'
     process.env.VITE_AUTH_EMAIL_ENABLED = 'true'
     process.env.VITE_OAUTH_GOOGLE_CLIENT_ID = 'google-client-id'
@@ -189,7 +184,6 @@ describe('Settings Component', () => {
 
   test('shows auth not required message when non-offline mode does not require auth', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
-    process.env.AURORAE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'false'
 
     render(<Settings />)
@@ -204,7 +198,6 @@ describe('Settings Component', () => {
 
   test('shows unconfigured providers message when auth is required but providers are missing', () => {
     process.env.VITE_COMPILE_MODE = 'web-online'
-    process.env.AURORAE_COMPILE_MODE = 'web-online'
     process.env.VITE_AUTH_REQUIRED = 'true'
 
     render(<Settings />)
