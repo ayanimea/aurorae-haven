@@ -133,6 +133,16 @@ function Layout({ children, onExport }) {
     }
   }, [mobileMenuOpen])
 
+  // Manage body class for offline warning so shell padding adjusts when banner is visible
+  useEffect(() => {
+    const shouldShow =
+      COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed
+    document.body.classList.toggle('offline-warning-visible', shouldShow)
+    return () => {
+      document.body.classList.remove('offline-warning-visible')
+    }
+  }, [COMPILE_MODE, offlineWarningDismissed])
+
   // More menu: Escape key, click-outside handling, and body class management
   useEffect(() => {
     if (moreMenuOpen) {
@@ -404,6 +414,60 @@ function Layout({ children, onExport }) {
             )}
           </div>
         </div>
+
+        {/* Offline data warning — persistent bar below navbar on web/android modes when not dismissed */}
+        {COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed && (
+          <div
+            className='offline-data-warning'
+            role='status'
+            aria-live='polite'
+          >
+            <Icon
+              name='alertTriangle'
+              className='offline-data-warning-icon'
+              aria-hidden='true'
+            />
+            <span className='offline-data-warning-text'>
+              Your data is stored locally in this browser and may be lost if you
+              clear your browser data.{' '}
+              <button
+                type='button'
+                className='offline-data-warning-link'
+                onClick={onExport}
+                aria-label='Export your data now'
+              >
+                Export your data
+              </button>{' '}
+              regularly to keep a backup
+              {MODE_HAS_AUTH && (
+                <>
+                  {', or '}
+                  <Link className='offline-data-warning-link' to='/sign-in'>
+                    sign in
+                  </Link>
+                  {' to save it to your account'}
+                </>
+              )}
+              .
+            </span>
+            <button
+              type='button'
+              className='offline-data-warning-dismiss'
+              aria-label='Dismiss data warning'
+              onClick={() => {
+                setOfflineWarningDismissed(true)
+                try {
+                  sessionStorage.setItem(OFFLINE_WARNING_DISMISSED_KEY, '1')
+                } catch {
+                  // sessionStorage unavailable — banner is hidden for this page lifetime
+                  // but dismissal won't persist across page reloads
+                }
+              }}
+            >
+              <Icon name='x' />
+            </button>
+          </div>
+        )}
       </header>
 
       {/* TAB-NAV-14 & TAB-NAV-22: Mobile hamburger menu with aria-modal */}
@@ -414,56 +478,6 @@ function Layout({ children, onExport }) {
         isActive={isActive}
         mobileMenuRef={mobileMenuRef}
       />
-
-      {/* Offline data warning — shown on web/android modes when not dismissed */}
-      {COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed && (
-        <div className='offline-data-warning' role='status' aria-live='polite'>
-          <Icon
-            name='alertTriangle'
-            className='offline-data-warning-icon'
-            aria-hidden='true'
-          />
-          <span className='offline-data-warning-text'>
-            Your data is stored locally in this browser and may be lost if you
-            clear your browser data.{' '}
-            <button
-              type='button'
-              className='offline-data-warning-link'
-              onClick={onExport}
-              aria-label='Export your data now'
-            >
-              Export your data
-            </button>{' '}
-            regularly to keep a backup
-            {MODE_HAS_AUTH && (
-              <>
-                {', or '}
-                <Link className='offline-data-warning-link' to='/sign-in'>
-                  sign in
-                </Link>
-                {' to save it to your account'}
-              </>
-            )}
-            .
-          </span>
-          <button
-            type='button'
-            className='offline-data-warning-dismiss'
-            aria-label='Dismiss data warning'
-            onClick={() => {
-              setOfflineWarningDismissed(true)
-              try {
-                sessionStorage.setItem(OFFLINE_WARNING_DISMISSED_KEY, '1')
-              } catch {
-                // sessionStorage unavailable — banner is hidden for this page lifetime
-                // but dismissal won't persist across page reloads
-              }
-            }}
-          >
-            <Icon name='x' />
-          </button>
-        </div>
-      )}
 
       <div className='shell'>{children}</div>
     </>

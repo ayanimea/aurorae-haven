@@ -474,12 +474,11 @@ body.density-cozy {
 }
 
 .more-menu-item.active {
-  background:
-    linear-gradient(
-      180deg,
-      var(--glass-accent-top) 0%,
-      var(--glass-accent-bg) 100%
-    );
+  background: linear-gradient(
+    180deg,
+    var(--glass-accent-top) 0%,
+    var(--glass-accent-bg) 100%
+  );
   color: var(--mint);
   font-weight: 600;
   border-color: var(--nav-active-border);
@@ -769,12 +768,11 @@ body.density-cozy {
   }
 
   .more-button.active {
-    background:
-      linear-gradient(
-        180deg,
-        var(--glass-accent-top) 0%,
-        var(--glass-accent-bg) 100%
-      );
+    background: linear-gradient(
+      180deg,
+      var(--glass-accent-top) 0%,
+      var(--glass-accent-bg) 100%
+    );
     border-color: var(--nav-active-border);
     color: var(--mint);
   }
@@ -834,6 +832,10 @@ body.density-cozy {
   /* Increase shell top padding to account for taller navbar with vertical layout */
   .shell {
     padding-top: calc(85px * var(--density-multiplier));
+  }
+
+  body.offline-warning-visible .shell {
+    padding-top: calc(85px * var(--density-multiplier) + 40px);
   }
 }
 
@@ -900,6 +902,10 @@ body.density-cozy {
   /* Increase shell top padding to account for taller navbar with vertical layout */
   .shell {
     padding-top: calc(90px * var(--density-multiplier));
+  }
+
+  body.offline-warning-visible .shell {
+    padding-top: calc(90px * var(--density-multiplier) + 40px);
   }
 }
 
@@ -1071,20 +1077,21 @@ body.mobile-menu-open .shell {
 }
 
 /* ===== Offline Data Warning Banner ===== */
-/* Shown on web/android modes when the offline warning has not been dismissed */
+/* Persistent bar below the navbar on web/android modes when the offline warning has not been dismissed */
 .offline-data-warning {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-notification);
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.625rem 1rem;
   background: rgba(251, 191, 36, 0.12);
-  border-bottom: 1px solid rgba(251, 191, 36, 0.3);
-  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(251, 191, 36, 0.3);
   font-size: 0.875rem;
   color: rgba(251, 191, 36, 0.95);
+}
+
+/* Increase shell top padding to account for warning bar height (~40px) */
+body.offline-warning-visible .shell {
+  padding-top: calc(70px * var(--density-multiplier) + 40px);
 }
 
 .offline-data-warning-icon {
