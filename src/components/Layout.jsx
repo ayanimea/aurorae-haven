@@ -135,9 +135,10 @@ function Layout({ children, onExport }) {
 
   // Manage body class for offline warning so shell padding adjusts when banner is visible
   useEffect(() => {
-    const shouldShow =
+    document.body.classList.toggle(
+      'offline-warning-visible',
       COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed
-    document.body.classList.toggle('offline-warning-visible', shouldShow)
+    )
     return () => {
       document.body.classList.remove('offline-warning-visible')
     }

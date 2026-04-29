@@ -13,6 +13,8 @@
 /* Default: comfortable (current) */
 :root {
   --density-multiplier: 1;
+  /* Height of the offline data warning banner (used to offset .shell top padding) */
+  --offline-warning-height: 40px;
 }
 
 /* Compact density */
@@ -835,7 +837,9 @@ body.density-cozy {
   }
 
   body.offline-warning-visible .shell {
-    padding-top: calc(85px * var(--density-multiplier) + 40px);
+    padding-top: calc(
+      85px * var(--density-multiplier) + var(--offline-warning-height)
+    );
   }
 }
 
@@ -905,7 +909,9 @@ body.density-cozy {
   }
 
   body.offline-warning-visible .shell {
-    padding-top: calc(90px * var(--density-multiplier) + 40px);
+    padding-top: calc(
+      90px * var(--density-multiplier) + var(--offline-warning-height)
+    );
   }
 }
 
@@ -1089,9 +1095,11 @@ body.mobile-menu-open .shell {
   color: rgba(251, 191, 36, 0.95);
 }
 
-/* Increase shell top padding to account for warning bar height (~40px) */
+/* Increase shell top padding to account for warning bar (see --offline-warning-height) */
 body.offline-warning-visible .shell {
-  padding-top: calc(70px * var(--density-multiplier) + 40px);
+  padding-top: calc(
+    70px * var(--density-multiplier) + var(--offline-warning-height)
+  );
 }
 
 .offline-data-warning-icon {
