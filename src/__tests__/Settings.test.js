@@ -1,15 +1,7 @@
 import { vi } from 'vitest'
 
-// Mock react-router-dom with a factory so Link renders as a proper <a> element
-vi.mock('react-router-dom', () => ({
-  Link: ({ children, to, ...props }) => (
-    <a href={to} {...props}>
-      {children}
-    </a>
-  ),
-  useNavigate: vi.fn(() => vi.fn()),
-  useLocation: vi.fn(() => ({ pathname: '/' }))
-}))
+// Use the shared manual mock from src/__mocks__/react-router-dom.js
+vi.mock('react-router-dom')
 
 import { fireEvent, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'

@@ -13,8 +13,12 @@
 /* Default: comfortable (current) */
 :root {
   --density-multiplier: 1;
-  /* Height of the offline data warning banner (used to offset .shell top padding) */
-  --offline-warning-height: 40px;
+  /* Appbar height – overridden per breakpoint where the navbar is taller */
+  --appbar-height: 70px;
+  /* Height of the offline data warning banner (used to offset .shell top padding).
+     Uses max() so the banner can grow for wrapped text on narrow screens.
+     The `lh` unit is supported in Chrome 109+, Firefox 110+, Safari 16.4+ (2023+). */
+  --offline-warning-height: max(40px, calc(2lh + 16px));
 }
 
 /* Compact density */
@@ -831,15 +835,9 @@ body.density-cozy {
     display: none;
   }
 
-  /* Increase shell top padding to account for taller navbar with vertical layout */
-  .shell {
-    padding-top: calc(85px * var(--density-multiplier));
-  }
-
-  body.offline-warning-visible .shell {
-    padding-top: calc(
-      85px * var(--density-multiplier) + var(--offline-warning-height)
-    );
+  /* Taller navbar for this layout – update the shared height var */
+  :root {
+    --appbar-height: 85px;
   }
 }
 
@@ -903,15 +901,9 @@ body.density-cozy {
     height: 18px;
   }
 
-  /* Increase shell top padding to account for taller navbar with vertical layout */
-  .shell {
-    padding-top: calc(90px * var(--density-multiplier));
-  }
-
-  body.offline-warning-visible .shell {
-    padding-top: calc(
-      90px * var(--density-multiplier) + var(--offline-warning-height)
-    );
+  /* Even taller navbar at this breakpoint – override the height var */
+  :root {
+    --appbar-height: 90px;
   }
 }
 
@@ -966,9 +958,9 @@ body.density-cozy {
 .shell {
   max-width: min(100%, 1920px);
   width: 100%;
-  min-height: calc(100vh - 70px * var(--density-multiplier));
+  min-height: calc(100vh - var(--appbar-height) * var(--density-multiplier));
   margin: 0 auto;
-  padding: calc(70px * var(--density-multiplier))
+  padding: calc(var(--appbar-height) * var(--density-multiplier))
     calc(18px * var(--density-multiplier))
     calc(24px * var(--density-multiplier));
   display: flex;
@@ -1095,10 +1087,11 @@ body.mobile-menu-open .shell {
   color: rgba(251, 191, 36, 0.95);
 }
 
-/* Increase shell top padding to account for warning bar (see --offline-warning-height) */
+/* Increase shell top padding to account for warning bar (see --offline-warning-height).
+   --appbar-height is set per breakpoint above, so this single rule handles all layouts. */
 body.offline-warning-visible .shell {
   padding-top: calc(
-    70px * var(--density-multiplier) + var(--offline-warning-height)
+    var(--appbar-height) * var(--density-multiplier) + var(--offline-warning-height)
   );
 }
 
