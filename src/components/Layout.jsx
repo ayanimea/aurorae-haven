@@ -455,7 +455,8 @@ function Layout({ children, onExport }) {
               try {
                 sessionStorage.setItem(OFFLINE_WARNING_DISMISSED_KEY, '1')
               } catch {
-                // sessionStorage unavailable — warning won't be remembered this session
+                // sessionStorage unavailable — banner is hidden for this page lifetime
+                // but dismissal won't persist across page reloads
               }
             }}
           >
