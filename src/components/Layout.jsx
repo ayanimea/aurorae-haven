@@ -429,10 +429,8 @@ function Layout({ children, onExport }) {
             <span className='sr-only' aria-live='polite' aria-atomic='true'>
               Your data is stored locally in this browser and may be lost if you
               clear your browser data. Export your data regularly to keep a
-              backup
-              {MODE_HAS_AUTH
-                ? ', or sign in to save it to your account.'
-                : '.'}
+              backup.
+              {MODE_HAS_AUTH && ' Sign in to save it to your account.'}
             </span>
             <Icon
               name='alertTriangle'
