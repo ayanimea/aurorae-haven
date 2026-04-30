@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { COMPILATION_MODES } from '../../scripts/compilationModes'
-import { getEnvVar, isDevelopment } from '../utils/environment'
+import { getEnvVar } from '../utils/environment'
 import { AUTH_PROVIDERS, PROVIDER_ENV_VARS } from '../utils/authProviders'
 import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
@@ -19,15 +19,7 @@ function SignIn() {
       if (!authRequired) return []
       return modeProviders
         .filter((providerKey) => {
-          if (!AUTH_PROVIDERS[providerKey]) {
-            if (isDevelopment()) {
-              // eslint-disable-next-line no-console
-              console.warn(
-                `[authProviders] Unknown provider key: "${providerKey}"`
-              )
-            }
-            return false
-          }
+          if (!AUTH_PROVIDERS[providerKey]) return false
           const envVar = PROVIDER_ENV_VARS[providerKey]
           if (!envVar) return false
           // VITE_AUTH_EMAIL_ENABLED is a boolean flag — only the literal string 'true' means enabled
