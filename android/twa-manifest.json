@@ -1,0 +1,18 @@
+{
+  "packageId": "io.auroraehaven.app",
+  "host": "aurorae-haven.github.io",
+  "name": "Aurorae Haven",
+  "launcherName": "Aurorae Haven",
+  "display": "standalone",
+  "themeColor": "#0f172a",
+  "navigationColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "startUrl": "/aurorae-haven/",
+  "iconUrl": "https://aurorae-haven.github.io/aurorae-haven/icon-512x512.svg",
+  "maskableIconUrl": "https://aurorae-haven.github.io/aurorae-haven/icon-512x512.svg",
+  "appVersionName": "1.0.1",
+  "appVersionCode": 101,
+  "fallbackType": "customtabs",
+  "enableNotifications": true,
+  "shortcuts": []
+}

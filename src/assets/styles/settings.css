@@ -165,6 +165,22 @@
   opacity: 0.9;
 }
 
+.settings-button-auth {
+  background-color: var(--line);
+  color: var(--text);
+}
+
+.settings-button-auth:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.settings-auth-provider-grid {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
 /* Status display */
 .settings-status {
   margin-bottom: 1rem;
@@ -204,6 +220,90 @@
 
 @media (prefers-reduced-motion: reduce) {
   .settings-button {
+    transition: none;
+  }
+}
+
+/* Select input */
+.settings-select {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--glass-lo);
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.settings-select:focus {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+/* ===== Sign-In page ===== */
+.signin-provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.signin-provider-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 360px;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--glass-lo);
+  color: var(--ink);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.signin-provider-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--mint);
+}
+
+.signin-provider-btn:focus {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.signin-provider-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.signin-footer-text {
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--dim);
+}
+
+.signin-footer-link {
+  color: var(--mint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.signin-footer-link:hover {
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signin-provider-btn {
     transition: none;
   }
 }

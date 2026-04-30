@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { isDevelopment, isProduction } from '../utils/environment'
+import { isDevelopment, isProduction, getEnvVar } from '../utils/environment'
 
 describe('environment utilities', () => {
   const originalEnv = process.env.NODE_ENV
@@ -71,6 +71,32 @@ describe('environment utilities', () => {
       // Should default to development (non-production)
       expect(isDevelopment()).toBe(true)
       expect(isProduction()).toBe(false)
+    })
+  })
+
+  describe('getEnvVar', () => {
+    const originalCompileMode = process.env.VITE_COMPILE_MODE
+
+    afterEach(() => {
+      if (originalCompileMode === undefined) {
+        delete process.env.VITE_COMPILE_MODE
+      } else {
+        process.env.VITE_COMPILE_MODE = originalCompileMode
+      }
+    })
+
+    test('reads value from process.env in test environment', () => {
+      process.env.VITE_COMPILE_MODE = 'web-online'
+      expect(getEnvVar('VITE_COMPILE_MODE')).toBe('web-online')
+    })
+
+    test('returns undefined for an unset variable', () => {
+      delete process.env.VITE_COMPILE_MODE
+      expect(getEnvVar('VITE_COMPILE_MODE')).toBeUndefined()
+    })
+
+    test('does not throw for unknown keys', () => {
+      expect(() => getEnvVar('VITE_NONEXISTENT_KEY')).not.toThrow()
     })
   })
 })
