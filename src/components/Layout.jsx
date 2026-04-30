@@ -420,9 +420,20 @@ function Layout({ children, onExport }) {
         {COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed && (
           <div
             className='offline-data-warning'
-            role='status'
-            aria-live='polite'
+            role='region'
+            aria-label='Data storage warning'
           >
+            {/* Non-interactive live region for screen-reader announcements only.
+                Interactive controls must not be inside a live region to avoid
+                confusing screen-reader focus/announcement behaviour (WCAG 4.1.3). */}
+            <span className='sr-only' aria-live='polite' aria-atomic='true'>
+              Your data is stored locally in this browser and may be lost if you
+              clear your browser data. Export your data regularly to keep a
+              backup
+              {MODE_HAS_AUTH
+                ? ', or sign in to save it to your account.'
+                : '.'}
+            </span>
             <Icon
               name='alertTriangle'
               className='offline-data-warning-icon'
