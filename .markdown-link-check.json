@@ -16,7 +16,7 @@
       "pattern": "^https://aurorae-haven\\.github\\.io/aurorae-haven/"
     },
     {
-      "pattern": "^https://github\\.com/ayanimea/aurorae-haven/actions/workflows/"
+      "pattern": "^https://github\\.com/ayanimea/aurorae-haven/actions"
     },
     {
       "pattern": "^https://iso25000\\.com/"

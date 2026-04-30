@@ -1,6 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { getSettings, updateSetting, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
+import PropTypes from 'prop-types'
+import { COMPILATION_MODES } from '../../scripts/compilationModes'
+import { getEnvVar, isDevelopment } from '../utils/environment'
+import { AUTH_PROVIDERS, PROVIDER_ENV_VARS } from '../utils/authProviders'
+import {
+  getSettings,
+  updateSetting,
+  VALID_GUIDANCE_LEVELS
+} from '../utils/settingsManager'
 import {
   isFileSystemAccessSupported,
   requestDirectoryAccess,
@@ -19,19 +27,64 @@ import {
   reloadPageAfterDelay,
   IMPORT_SUCCESS_MESSAGE
 } from '../utils/importData'
+import FileInputButton from '../components/common/FileInputButton'
 import Icon from '../components/common/Icon'
 import '../assets/styles/settings.css'
 
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
 
-function Settings() {
+const formatProviderList = (providerNames) => {
+  if (providerNames.length === 0) return ''
+  if (providerNames.length === 1) return providerNames[0]
+  if (providerNames.length === 2) {
+    return `${providerNames[0]} and ${providerNames[1]}`
+  }
+  const allButLast = providerNames.slice(0, -1).join(', ')
+  const last = providerNames[providerNames.length - 1]
+  return `${allButLast}, and ${last}`
+}
+
+function Settings({ onExport, onImport }) {
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [message, setMessage] = useState({ text: '', isError: false })
   const [isConfiguring, setIsConfiguring] = useState(false)
+  const compileMode = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
+  const authRequired = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
+  const modeProviders = COMPILATION_MODES[compileMode]?.authProviders ?? []
+  const configuredProviders = useMemo(() => {
+    if (!authRequired) {
+      return []
+    }
+
+    return modeProviders
+      .filter((provider) => {
+        if (!AUTH_PROVIDERS[provider]) {
+          if (isDevelopment()) {
+            // eslint-disable-next-line no-console
+            console.warn(`[authProviders] Unknown provider key: "${provider}"`)
+          }
+          return false
+        }
+        const envVar = PROVIDER_ENV_VARS[provider]
+        if (!envVar) return false
+        // VITE_AUTH_EMAIL_ENABLED is a boolean flag — only 'true' enables Email
+        if (provider === 'email') return getEnvVar(envVar) === 'true'
+        // OAuth providers use a client-ID/app-ID string; any non-empty value means configured
+        return Boolean(getEnvVar(envVar))
+      })
+      .map((provider) => ({
+        key: provider,
+        label: AUTH_PROVIDERS[provider].label
+      }))
+  }, [authRequired, modeProviders])
+  const configuredProviderLabels = useMemo(
+    () => configuredProviders.map((provider) => provider.label),
+    [configuredProviders]
+  )
 
   // Use refs to avoid stale closures
   const settingsRef = useRef(settings)
@@ -275,6 +328,17 @@ function Settings() {
     return `${days} day${days !== 1 ? 's' : ''} ago`
   }
 
+  const handleProviderClick = useCallback(
+    (providerName) => {
+      showMessage(
+        `${providerName} authentication is configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md).`,
+        false,
+        4500
+      )
+    },
+    [showMessage]
+  )
+
   return (
     <div className='card'>
       <div className='card-h'>
@@ -282,6 +346,35 @@ function Settings() {
         <span className='small'>Customize your experience</span>
       </div>
       <div className='card-b'>
+        {/* Data Management — Export / Import at the top */}
+        <div className='settings-section'>
+          <h3 className='settings-section-title'>Data Management</h3>
+          <p className='settings-hint' style={{ marginBottom: '0.75rem' }}>
+            Export your data regularly to keep a local backup. You can import it
+            again at any time.
+          </p>
+          <div className='settings-button-group'>
+            <button
+              type='button'
+              className='settings-button settings-button-success'
+              onClick={onExport}
+              aria-label='Export all data as JSON'
+            >
+              <Icon name='download' />
+              Export Data
+            </button>
+            <FileInputButton
+              onFileSelect={onImport}
+              accept='application/json'
+              ariaLabel='Import data from JSON file'
+              className='settings-button settings-button-primary'
+            >
+              <Icon name='upload' />
+              Import Data
+            </FileInputButton>
+          </div>
+        </div>
+
         {/* Auto-Save Settings Section */}
         <div className='settings-section'>
           <h3 className='settings-section-title'>Automatic Save</h3>
@@ -333,7 +426,8 @@ function Settings() {
                     className='settings-input'
                     aria-describedby='save-directory-hint'
                   />
-                  <button type="button"
+                  <button
+                    type='button'
                     onClick={handleSelectDirectory}
                     disabled={isConfiguring}
                     className='settings-button settings-button-primary'
@@ -428,7 +522,8 @@ function Settings() {
                 role='group'
                 aria-label='Auto-save actions'
               >
-                <button type="button"
+                <button
+                  type='button'
                   onClick={handleManualSave}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-success'
@@ -437,7 +532,8 @@ function Settings() {
                 >
                   Save Now
                 </button>
-                <button type="button"
+                <button
+                  type='button'
                   onClick={handleLoadLastSave}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-info'
@@ -446,7 +542,8 @@ function Settings() {
                 >
                   Load Last Save
                 </button>
-                <button type="button"
+                <button
+                  type='button'
                   onClick={handleCleanOldFiles}
                   disabled={!directoryName || isConfiguring}
                   className='settings-button settings-button-warning'
@@ -509,7 +606,10 @@ function Settings() {
 
           {/* Load Awareness Guidance Level */}
           <div className='settings-field'>
-            <label className='settings-label' htmlFor='scheduling-guidance-level'>
+            <label
+              className='settings-label'
+              htmlFor='scheduling-guidance-level'
+            >
               <strong>Load Awareness Guidance</strong>
             </label>
             <select
@@ -536,16 +636,20 @@ function Settings() {
               }}
               aria-describedby='guidance-level-hint'
             >
-              <option value='full'>Full: header indicators, warnings &amp; suggestions</option>
-              <option value='header-only'>Header only: indicators only, no warnings</option>
+              <option value='full'>
+                Full: header indicators, warnings &amp; suggestions
+              </option>
+              <option value='header-only'>
+                Header only: indicators only, no warnings
+              </option>
               <option value='off'>Off: indicators disabled</option>
             </select>
             <small id='guidance-level-hint' className='settings-checkbox-hint'>
               Week and day headers, plus month cells, show an amber underline
-              when 8 h of events are scheduled (end of the work block), and a
-              ⚠ icon at 9 h (into leisure time). Structural limits still apply
-              regardless of this setting: max 2 simultaneous events, or up to
-              3 when one event is all-day.
+              when 8 h of events are scheduled (end of the work block), and a ⚠
+              icon at 9 h (into leisure time). Structural limits still apply
+              regardless of this setting: max 2 simultaneous events, or up to 3
+              when one event is all-day.
             </small>
           </div>
         </div>
@@ -567,6 +671,88 @@ function Settings() {
           </div>
         </div>
 
+        <div className='settings-divider'>
+          <h3 className='settings-section-title'>Sign-In &amp; Account</h3>
+          <p className='settings-placeholder-text'>
+            Current mode: <strong>{compileMode}</strong>. Authentication is{' '}
+            <strong>{authRequired ? 'required' : 'not required'}</strong> in
+            this mode.
+          </p>
+          {configuredProviderLabels.length > 0 ? (
+            <>
+              <p className='settings-placeholder-text'>
+                Available providers:{' '}
+                {formatProviderList(configuredProviderLabels)}.
+              </p>
+              <p className='settings-hint' style={{ marginTop: '0.5rem' }}>
+                Sign in to access your account. Data sync will be available
+                once authentication is fully integrated.
+              </p>
+              <div className='settings-button-group'>
+                <Link
+                  to='/sign-in'
+                  className='settings-button settings-button-primary'
+                >
+                  Sign in / Sign up
+                </Link>
+              </div>
+              <div className='settings-auth-provider-grid'>
+                {configuredProviders.map((provider) => (
+                  <button
+                    type='button'
+                    key={provider.key}
+                    className='settings-button settings-button-auth'
+                    onClick={() => handleProviderClick(provider.label)}
+                  >
+                    Sign in with {provider.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : compileMode === 'desktop-offline' ? (
+            <p className='settings-placeholder-text'>
+              Sign-in and sign-up are unavailable in offline mode.
+            </p>
+          ) : !authRequired ? (
+            <p className='settings-placeholder-text'>
+              Authentication is not required in this mode.
+            </p>
+          ) : (
+            <p className='settings-placeholder-text'>
+              No sign-in providers are currently configured for this mode.
+            </p>
+          )}
+        </div>
+
+        {/* Appearance */}
+        <div className='settings-divider'>
+          <h3 className='settings-section-title'>Appearance</h3>
+          <div className='settings-field'>
+            <label htmlFor='theme-select' className='settings-label'>
+              Theme
+            </label>
+            <select
+              id='theme-select'
+              className='settings-select'
+              value={settings.theme ?? 'auto'}
+              onChange={(e) => {
+                const newSettings = updateSetting('theme', e.target.value)
+                setSettingsState(newSettings)
+                showMessage('Theme preference saved — light theme coming soon')
+              }}
+              aria-describedby='theme-select-hint'
+            >
+              <option value='auto'>Auto (system default)</option>
+              <option value='dark'>Dark</option>
+              <option value='light'>Light (coming soon)</option>
+            </select>
+            <small id='theme-select-hint' className='settings-hint'>
+              Light theme is planned for a future update. Dark mode is fully
+              supported.
+            </small>
+          </div>
+        </div>
+
         {/* Other Settings Placeholder */}
         <div className='settings-divider'>
           <h3 className='settings-section-title'>Other Settings</h3>
@@ -577,6 +763,11 @@ function Settings() {
       </div>
     </div>
   )
+}
+
+Settings.propTypes = {
+  onExport: PropTypes.func.isRequired,
+  onImport: PropTypes.func.isRequired
 }
 
 export default Settings

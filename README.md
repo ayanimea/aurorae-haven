@@ -21,7 +21,7 @@
 - **Gamification** _(v2.0+)_: XP, levels, achievements, confetti/haptics
 - **Reminders** _(v2.0+)_: Tasks, routines, and habits notifications
 - **Secure by design**: Strict CSP, modular code, no inline scripts
-- **Mobile-ready**: Android .APK packaging in v2.0
+- **Multi-mode builds**: Android packaging, offline desktop distribution, and online web deployment
 
 ---
 
@@ -124,8 +124,9 @@ Aurorae Haven is now a Progressive Web App! You can install it on your device:
 
 - **Install Methods**:
   - ✅ Progressive Web App (PWA) installation
-  - Download and run locally (`index.html`)
-  - Android `.APK` _(planned for v2.0)_
+  - ✅ Offline desktop package (`npm run build:mode:desktop`)
+  - ✅ Android packaging flow (`npm run build:mode:android` + `npm run package:android`)
+  - ✅ Online web deployment (`npm run build:mode:web` + Docker)
 
 ---
 
@@ -215,6 +216,8 @@ The deployment workflow:
 - **Export/Import**: Use the Settings page to export your data as JSON for backup or migration
 - **Automatic Backups**: Daily backups stored locally in IndexedDB
 - **Storage**: All data stored locally on your device using IndexedDB and OPFS
+- **Future server schema**: [PostgreSQL account-scoped design draft](./docs/POSTGRESQL_ACCOUNT_SCHEMA.md)
+- **Backend integration contract**: [Backend requirements for signed-in modes](./docs/BACKEND_REQUIREMENTS.md)
 
 ### Feature Specifications
 
@@ -225,6 +228,7 @@ The deployment workflow:
 
 - **[Roadmap](./ROADMAP.md)**: Development milestones and future plans
 - **[Contributing Guide](./CONTRIBUTING.md)**: How to contribute to the project
+- **[Compilation Modes](./docs/COMPILATION_MODES.md)**: Android, offline desktop, and online web setup guide
 
 ---
 

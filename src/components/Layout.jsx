@@ -1,17 +1,31 @@
 import { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { getEnvVar } from '../utils/environment'
 import Icon from './common/Icon'
 import MobileMenu from './Layout/MobileMenu'
 import MoreMenu from './Layout/MoreMenu'
-import FileInputButton from './common/FileInputButton'
 import StarryBackground from './StarryBackground'
 
-function Layout({ children, onExport, onImport }) {
+const OFFLINE_WARNING_DISMISSED_KEY = 'aurorae_offline_warning_dismissed'
+
+function Layout({ children, onExport }) {
   const location = useLocation()
   const navigate = useNavigate()
+
+  const COMPILE_MODE = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
+  const AUTH_REQUIRED = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
+  /** True when the mode supports sign-in (not the offline-only desktop build) */
+  const MODE_HAS_AUTH = COMPILE_MODE !== 'desktop-offline' && AUTH_REQUIRED
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [offlineWarningDismissed, setOfflineWarningDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem(OFFLINE_WARNING_DISMISSED_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
   const hamburgerButtonRef = useRef(null)
   const mobileMenuRef = useRef(null)
   const moreMenuRef = useRef(null)
@@ -118,6 +132,17 @@ function Layout({ children, onExport, onImport }) {
       document.removeEventListener('keydown', handleFocusTrap)
     }
   }, [mobileMenuOpen])
+
+  // Manage body class for offline warning so shell padding adjusts when banner is visible
+  useEffect(() => {
+    document.body.classList.toggle(
+      'offline-warning-visible',
+      COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed
+    )
+    return () => {
+      document.body.classList.remove('offline-warning-visible')
+    }
+  }, [COMPILE_MODE, offlineWarningDismissed])
 
   // More menu: Escape key, click-outside handling, and body class management
   useEffect(() => {
@@ -250,7 +275,17 @@ function Layout({ children, onExport, onImport }) {
             >
               {/* Icon shown on mobile where brand text is hidden */}
               <span className='logo-icon' aria-hidden='true'>
-                <svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                <svg
+                  viewBox='0 0 24 24'
+                  width='24'
+                  height='24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='1.5'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  aria-hidden='true'
+                >
                   <path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z' />
                 </svg>
               </span>
@@ -282,41 +317,42 @@ function Layout({ children, onExport, onImport }) {
                 ))}
               </div>
 
-            {/* Mobile portrait bottom bar: Primary tabs + More button */}
-            <div
-              className='mobile-bottom-tabs'
-              data-testid='mobile-tabs'
-            >
-              {primaryTabs.map((tab) => (
-                <Link
-                  key={`mobile-${tab.path}`}
-                  className={`nav-tab ${isActive(tab.path) ? 'active' : ''}`}
-                  to={tab.path}
-                  aria-label={tab.label}
-                  aria-current={isActive(tab.path) ? 'page' : undefined}
-                  onClick={() => setMoreMenuOpen(false)}
+              {/* Mobile portrait bottom bar: Primary tabs + More button */}
+              <div className='mobile-bottom-tabs' data-testid='mobile-tabs'>
+                {primaryTabs.map((tab) => (
+                  <Link
+                    key={`mobile-${tab.path}`}
+                    className={`nav-tab ${isActive(tab.path) ? 'active' : ''}`}
+                    to={tab.path}
+                    aria-label={tab.label}
+                    aria-current={isActive(tab.path) ? 'page' : undefined}
+                    onClick={() => setMoreMenuOpen(false)}
+                  >
+                    <svg
+                      className='icon'
+                      viewBox='0 0 24 24'
+                      aria-hidden='true'
+                    >
+                      <path d={tab.icon} />
+                    </svg>
+                    <span>{tab.label}</span>
+                  </Link>
+                ))}
+                {/* More menu button */}
+                <button
+                  type='button'
+                  className={`nav-tab more-button ${secondaryTabs.some((tab) => isActive(tab.path)) || moreMenuOpen ? 'active' : ''}`}
+                  onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                  aria-haspopup='true'
+                  aria-expanded={moreMenuOpen}
+                  aria-label='More options'
                 >
                   <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
-                    <path d={tab.icon} />
+                    <path d='M4 6h16M4 12h16M4 18h16' />
                   </svg>
-                  <span>{tab.label}</span>
-                </Link>
-              ))}
-              {/* More menu button */}
-              <button
-                type='button'
-                className={`nav-tab more-button ${secondaryTabs.some((tab) => isActive(tab.path)) || moreMenuOpen ? 'active' : ''}`}
-                onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                aria-haspopup='true'
-                aria-expanded={moreMenuOpen}
-                aria-label='More options'
-              >
-                <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
-                  <path d='M4 6h16M4 12h16M4 18h16' />
-                </svg>
-                <span>More</span>
-              </button>
-            </div>
+                  <span>More</span>
+                </button>
+              </div>
             </nav>
           </div>
 
@@ -364,38 +400,84 @@ function Layout({ children, onExport, onImport }) {
               <Icon name='search' />
             </button>
 
-            {/* TAB-NAV-10: Theme toggle (placeholder for future) */}
-            <button
-              type='button'
-              className='figma-icon-btn'
-              aria-label='Toggle theme'
-              title='Theme (Coming soon)'
-            >
-              <Icon name='moon' />
-            </button>
-
             <span className='nav-separator' aria-hidden='true' />
 
-            {/* Export/Import buttons */}
-            <button
-              type='button'
-              className='figma-action-btn'
-              onClick={onExport}
-              aria-label='Export data'
-            >
-              Export
-            </button>
-            <FileInputButton
-              onFileSelect={onImport}
-              accept='application/json'
-              ariaLabel='Import data file'
-              title='Import data'
-              className='figma-action-btn'
-            >
-              Import
-            </FileInputButton>
+            {/* Sign In button — only shown in authenticated modes */}
+            {MODE_HAS_AUTH && (
+              <Link
+                className='figma-action-btn navbar-signin-btn'
+                to='/sign-in'
+                aria-label='Sign in or sign up'
+                title='Sign in / Sign up'
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
+
+        {/* Offline data warning — persistent bar below navbar on web/android modes when not dismissed */}
+        {COMPILE_MODE !== 'desktop-offline' && !offlineWarningDismissed && (
+          <div
+            className='offline-data-warning'
+            role='region'
+            aria-label='Data storage warning'
+          >
+            {/* Non-interactive live region for screen-reader announcements only.
+                Interactive controls must not be inside a live region to avoid
+                confusing screen-reader focus/announcement behaviour (WCAG 4.1.3). */}
+            <span className='sr-only' aria-live='polite' aria-atomic='true'>
+              Your data is stored locally in this browser and may be lost if you
+              clear your browser data. Export your data regularly to keep a
+              backup.
+              {MODE_HAS_AUTH && ' Sign in to save it to your account.'}
+            </span>
+            <Icon
+              name='alertTriangle'
+              className='offline-data-warning-icon'
+              aria-hidden='true'
+            />
+            <span className='offline-data-warning-text'>
+              Your data is stored locally in this browser and may be lost if you
+              clear your browser data.{' '}
+              <button
+                type='button'
+                className='offline-data-warning-link'
+                onClick={onExport}
+                aria-label='Export your data now'
+              >
+                Export your data
+              </button>{' '}
+              regularly to keep a backup
+              {MODE_HAS_AUTH && (
+                <>
+                  {', or '}
+                  <Link className='offline-data-warning-link' to='/sign-in'>
+                    sign in
+                  </Link>
+                  {' to save it to your account'}
+                </>
+              )}
+              .
+            </span>
+            <button
+              type='button'
+              className='offline-data-warning-dismiss'
+              aria-label='Dismiss data warning'
+              onClick={() => {
+                setOfflineWarningDismissed(true)
+                try {
+                  sessionStorage.setItem(OFFLINE_WARNING_DISMISSED_KEY, '1')
+                } catch {
+                  // sessionStorage unavailable — banner is hidden for this page lifetime
+                  // but dismissal won't persist across page reloads
+                }
+              }}
+            >
+              <Icon name='x' />
+            </button>
+          </div>
+        )}
       </header>
 
       {/* TAB-NAV-14 & TAB-NAV-22: Mobile hamburger menu with aria-modal */}
@@ -414,8 +496,7 @@ function Layout({ children, onExport, onImport }) {
 
 Layout.propTypes = {
   children: PropTypes.node.isRequired,
-  onExport: PropTypes.func.isRequired,
-  onImport: PropTypes.func.isRequired
+  onExport: PropTypes.func.isRequired
 }
 
 export default Layout
