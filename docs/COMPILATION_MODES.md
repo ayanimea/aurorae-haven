@@ -10,7 +10,7 @@ Aurorae Haven now ships with three explicit build/deployment targets:
 
 ### What this mode does
 
-- Builds a web bundle with relative paths for native wrapping.
+- Builds a web bundle with base path `/aurorae-haven/` for native wrapping (matching `android/twa-manifest.json` `startUrl`).
 - Produces `dist-android-web/` with `npm run build:mode:android`.
 - Supports sign-in/sign-up provider configuration for **Email, Google, Facebook, and GitHub**.
 

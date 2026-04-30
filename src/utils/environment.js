@@ -48,3 +48,21 @@ export const isDevelopment = () => {
 export const isProduction = () => {
   return !isDevelopment()
 }
+
+/**
+ * Read a VITE_ environment variable in both Vite and test (process.env) environments.
+ *
+ * In Vite builds, `import.meta.env` is the source of truth.
+ * In Vitest/Jest, `process.env` is used because `import.meta.env` is not populated.
+ *
+ * @param {string} key - The environment variable key (e.g. 'VITE_COMPILE_MODE')
+ * @returns {string | undefined}
+ */
+export const getEnvVar = (key) => {
+  const processEnv =
+    typeof process !== 'undefined' && process?.env ? process.env : {}
+  const viteEnv =
+    typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env : {}
+  const isTestEnv = viteEnv.MODE === 'test' || processEnv.NODE_ENV === 'test'
+  return isTestEnv ? processEnv[key] ?? viteEnv[key] : viteEnv[key] ?? processEnv[key]
+}
