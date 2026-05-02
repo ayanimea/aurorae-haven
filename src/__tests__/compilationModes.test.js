@@ -19,19 +19,9 @@ describe('compilation modes', () => {
     expect(getCompilationMode('web-online')?.buildEnv.VITE_COMPILE_MODE).toBe('web-online')
   })
 
-  it('requires email, google, facebook, and github auth providers in signed-in modes', () => {
-    expect(getCompilationMode('android')?.authProviders).toEqual([
-      'email',
-      'google',
-      'facebook',
-      'github'
-    ])
-    expect(getCompilationMode('web-online')?.authProviders).toEqual([
-      'email',
-      'google',
-      'facebook',
-      'github'
-    ])
+  it('does not define auth providers by default in current modes', () => {
+    expect(getCompilationMode('android')?.authProviders).toEqual([])
+    expect(getCompilationMode('web-online')?.authProviders).toEqual([])
   })
 
   it('returns null for unknown modes', () => {
