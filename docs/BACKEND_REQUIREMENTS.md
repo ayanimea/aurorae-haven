@@ -21,4 +21,5 @@ Backend and database infrastructure are intentionally **not implemented here**.
 - `npm run build:mode:desktop` -> offline desktop package
 - `npm run build:mode:web` -> online web app shell bundle
 
-If a backend team adds account-authenticated APIs later, that contract should be introduced in a future frontend update together with a user-facing sign-in flow.
+If a backend team adds account-authenticated APIs later, that contract should be introduced in a future frontend update.
+That update should include a user-facing sign-in flow.
