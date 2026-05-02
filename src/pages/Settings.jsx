@@ -1,9 +1,6 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { COMPILATION_MODES } from '../../scripts/compilationModes'
-import { getEnvVar } from '../utils/environment'
-import { AUTH_PROVIDERS, PROVIDER_ENV_VARS } from '../utils/authProviders'
 import {
   getSettings,
   updateSetting,
@@ -34,17 +31,6 @@ import '../assets/styles/settings.css'
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
 
-const formatProviderList = (providerNames) => {
-  if (providerNames.length === 0) return ''
-  if (providerNames.length === 1) return providerNames[0]
-  if (providerNames.length === 2) {
-    return `${providerNames[0]} and ${providerNames[1]}`
-  }
-  const allButLast = providerNames.slice(0, -1).join(', ')
-  const last = providerNames[providerNames.length - 1]
-  return `${allButLast}, and ${last}`
-}
-
 function Settings({ onExport, onImport }) {
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
@@ -52,33 +38,6 @@ function Settings({ onExport, onImport }) {
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [message, setMessage] = useState({ text: '', isError: false })
   const [isConfiguring, setIsConfiguring] = useState(false)
-  const compileMode = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
-  const authRequired = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
-  const modeProviders = COMPILATION_MODES[compileMode]?.authProviders ?? []
-  const configuredProviders = useMemo(() => {
-    if (!authRequired) {
-      return []
-    }
-
-    return modeProviders
-      .filter((provider) => {
-        if (!AUTH_PROVIDERS[provider]) return false
-        const envVar = PROVIDER_ENV_VARS[provider]
-        if (!envVar) return false
-        // VITE_AUTH_EMAIL_ENABLED is a boolean flag — only 'true' enables Email
-        if (provider === 'email') return getEnvVar(envVar) === 'true'
-        // OAuth providers use a client-ID/app-ID string; any non-empty value means configured
-        return Boolean(getEnvVar(envVar))
-      })
-      .map((provider) => ({
-        key: provider,
-        label: AUTH_PROVIDERS[provider].label
-      }))
-  }, [authRequired, modeProviders])
-  const configuredProviderLabels = useMemo(
-    () => configuredProviders.map((provider) => provider.label),
-    [configuredProviders]
-  )
 
   // Use refs to avoid stale closures
   const settingsRef = useRef(settings)
@@ -321,17 +280,6 @@ function Settings({ onExport, onImport }) {
     const days = Math.floor(hours / 24)
     return `${days} day${days !== 1 ? 's' : ''} ago`
   }
-
-  const handleProviderClick = useCallback(
-    (providerName) => {
-      showMessage(
-        `${providerName} authentication is configured via backend auth endpoints (see docs/BACKEND_REQUIREMENTS.md).`,
-        false,
-        4500
-      )
-    },
-    [showMessage]
-  )
 
   return (
     <div className='card'>
@@ -663,59 +611,6 @@ function Settings({ onExport, onImport }) {
               Open Template Library
             </Link>
           </div>
-        </div>
-
-        <div className='settings-divider'>
-          <h3 className='settings-section-title'>Sign-In &amp; Account</h3>
-          <p className='settings-placeholder-text'>
-            Current mode: <strong>{compileMode}</strong>. Authentication is{' '}
-            <strong>{authRequired ? 'required' : 'not required'}</strong> in
-            this mode.
-          </p>
-          {configuredProviderLabels.length > 0 ? (
-            <>
-              <p className='settings-placeholder-text'>
-                Available providers:{' '}
-                {formatProviderList(configuredProviderLabels)}.
-              </p>
-              <p className='settings-hint' style={{ marginTop: '0.5rem' }}>
-                Sign in to access your account. Data sync will be available
-                once authentication is fully integrated.
-              </p>
-              <div className='settings-button-group'>
-                <Link
-                  to='/sign-in'
-                  className='settings-button settings-button-primary'
-                >
-                  Sign in / Sign up
-                </Link>
-              </div>
-              <div className='settings-auth-provider-grid'>
-                {configuredProviders.map((provider) => (
-                  <button
-                    type='button'
-                    key={provider.key}
-                    className='settings-button settings-button-auth'
-                    onClick={() => handleProviderClick(provider.label)}
-                  >
-                    Sign in with {provider.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : compileMode === 'desktop-offline' ? (
-            <p className='settings-placeholder-text'>
-              Sign-in and sign-up are unavailable in offline mode.
-            </p>
-          ) : !authRequired ? (
-            <p className='settings-placeholder-text'>
-              Authentication is not required in this mode.
-            </p>
-          ) : (
-            <p className='settings-placeholder-text'>
-              No sign-in providers are currently configured for this mode.
-            </p>
-          )}
         </div>
 
         {/* Appearance */}

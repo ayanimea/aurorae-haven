@@ -14,9 +14,6 @@ function Layout({ children, onExport }) {
   const navigate = useNavigate()
 
   const COMPILE_MODE = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
-  const AUTH_REQUIRED = getEnvVar('VITE_AUTH_REQUIRED') === 'true'
-  /** True when the mode supports sign-in (not the offline-only desktop build) */
-  const MODE_HAS_AUTH = COMPILE_MODE !== 'desktop-offline' && AUTH_REQUIRED
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [offlineWarningDismissed, setOfflineWarningDismissed] = useState(() => {
@@ -402,17 +399,6 @@ function Layout({ children, onExport }) {
 
             <span className='nav-separator' aria-hidden='true' />
 
-            {/* Sign In button — only shown in authenticated modes */}
-            {MODE_HAS_AUTH && (
-              <Link
-                className='figma-action-btn navbar-signin-btn'
-                to='/sign-in'
-                aria-label='Sign in or sign up'
-                title='Sign in / Sign up'
-              >
-                Sign In
-              </Link>
-            )}
           </div>
         </div>
 
@@ -430,7 +416,6 @@ function Layout({ children, onExport }) {
               Your data is stored locally in this browser and may be lost if you
               clear your browser data. Export your data regularly to keep a
               backup.
-              {MODE_HAS_AUTH && ' Sign in to save it to your account.'}
             </span>
             <Icon
               name='alertTriangle'
@@ -448,17 +433,7 @@ function Layout({ children, onExport }) {
               >
                 Export your data
               </button>{' '}
-              regularly to keep a backup
-              {MODE_HAS_AUTH && (
-                <>
-                  {', or '}
-                  <Link className='offline-data-warning-link' to='/sign-in'>
-                    sign in
-                  </Link>
-                  {' to save it to your account'}
-                </>
-              )}
-              .
+              regularly to keep a backup.
             </span>
             <button
               type='button'
