@@ -217,7 +217,7 @@ The deployment workflow:
 - **Automatic Backups**: Daily backups stored locally in IndexedDB
 - **Storage**: All data stored locally on your device using IndexedDB and OPFS
 - **Future server schema**: [PostgreSQL account-scoped design draft](./docs/POSTGRESQL_ACCOUNT_SCHEMA.md)
-- **Backend integration contract**: [Backend integration requirements](./docs/BACKEND_REQUIREMENTS.md)
+- **Optional backend integration draft**: [Backend integration requirements](./docs/BACKEND_REQUIREMENTS.md) (for future/custom sync work; local-first app works without backend auth)
 
 ### Feature Specifications
 
