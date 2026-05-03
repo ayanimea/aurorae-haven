@@ -170,7 +170,7 @@ describe('noteOperations ODT inline formatting', () => {
 
   test('blocks URL with embedded control character', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
-    // \x01 is a control character that should be rejected
+    // U+0001 (SOH) is a C0 control character that must be rejected
     await exportNoteToOdtFile('Control URL', '[x](https://example.com/\x01path)')
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const contentXml = await odtZip.file('content.xml').async('string')

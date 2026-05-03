@@ -49,8 +49,9 @@ function escapeXml(text) {
 function isSafeOdtUrl(url) {
   if (!url) return false
   const s = url.trim()
-  // Reject anything with embedded whitespace or C0/DEL control characters.
-  if (/[\s\x00-\x1f\x7f]/.test(s)) return false
+  // Reject anything with embedded ASCII control characters or literal space.
+  // Percent-encoded equivalents (e.g. %20) are safe and not affected by this check.
+  if (/[\x00-\x20\x7f]/.test(s)) return false
   if (s.startsWith('#')) return true
   if (/^mailto:/i.test(s)) return true
   if (/^https?:/i.test(s)) {
@@ -82,6 +83,10 @@ function inlineToOdt(text) {
     { re: /^\*([^*\n]+?)\*/, type: 'italic' },
     { re: /^_([^_\n]+?)_/, type: 'italic' },
     { re: /^~~(.+?)~~/, type: 'strikethrough' },
+    // Link/image URL: supports one level of balanced parentheses in the URL
+    // (e.g. Wikipedia links like "Mathematics_(disambiguation)").
+    // Pattern: [^()]* matches non-paren chars; (?:\([^()]*\)[^()]*)* matches
+    // zero or more "(...non-parens...)" groups interspersed with non-paren chars.
     { re: /^!\[([^\]]*)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/, type: 'image' },
     { re: /^\[([^\]]+)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/, type: 'link' },
   ]
