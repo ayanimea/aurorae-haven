@@ -159,6 +159,39 @@ describe('noteOperations ODT inline formatting', () => {
     expect(contentXml).toContain('run')
   })
 
+  test('blocks http: URL with no host (malformed)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Bad URL', '[bad](http:)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('<text:a')
+    expect(contentXml).toContain('bad')
+  })
+
+  test('blocks URL with embedded control character', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    // \x01 is a control character that should be rejected
+    await exportNoteToOdtFile('Control URL', '[x](https://example.com/\x01path)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('<text:a')
+    expect(contentXml).not.toContain('xlink:href')
+  })
+
+  test('preserves Wikipedia-style URLs with parentheses', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile(
+      'Wiki Link',
+      '[disambiguation](https://en.wikipedia.org/wiki/Mathematics_(disambiguation))'
+    )
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('<text:a')
+    expect(contentXml).toContain(
+      'xlink:href="https://en.wikipedia.org/wiki/Mathematics_(disambiguation)"'
+    )
+    expect(contentXml).toContain('>disambiguation<')
+  })
   test('normalizes whitespace-padded URLs: trims before safety check and href attribute', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('Padded URL', '[link]( https://example.com )')
@@ -229,6 +262,16 @@ describe('noteOperations ODT table export', () => {
     expect(contentXml).toContain('>Age<')
     expect(contentXml).toContain('>Alice<')
     expect(contentXml).toContain('>Bob<')
+  })
+
+  test('single pipe-starting line with no following pipe is not treated as a table', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Lone Pipe', '| just one line\nNormal paragraph after.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).not.toContain('<table:table')
+    expect(contentXml).toContain('just one line')
   })
 
   test('plain text containing a pipe but no separator row is not treated as a table', async () => {

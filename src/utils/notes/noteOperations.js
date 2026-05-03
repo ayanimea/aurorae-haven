@@ -42,13 +42,26 @@ function escapeXml(text) {
     .replace(/'/g, '&apos;')
 }
 
-// Allowed URL schemes for ODT hyperlinks.
-// javascript:/data:/vbscript: and other non-listed schemes are blocked.
-const SAFE_ODT_URL_RE = /^(https?:|mailto:|#)/i
-
+// Validate a URL for use as an ODT xlink:href.
+// Allowed schemes: https, http, mailto, and fragment (#).
+// Rejects any URL containing whitespace or control characters, and requires
+// http/https URLs to parse correctly (e.g. rejects "http:" with no host).
 function isSafeOdtUrl(url) {
   if (!url) return false
-  return SAFE_ODT_URL_RE.test(url.trim())
+  const s = url.trim()
+  // Reject anything with embedded whitespace or C0/DEL control characters.
+  if (/[\s\x00-\x1f\x7f]/.test(s)) return false
+  if (s.startsWith('#')) return true
+  if (/^mailto:/i.test(s)) return true
+  if (/^https?:/i.test(s)) {
+    try {
+      const parsed = new URL(s)
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }
+  return false
 }
 
 // Tokenise inline markdown and convert to ODT XML.
@@ -69,8 +82,8 @@ function inlineToOdt(text) {
     { re: /^\*([^*\n]+?)\*/, type: 'italic' },
     { re: /^_([^_\n]+?)_/, type: 'italic' },
     { re: /^~~(.+?)~~/, type: 'strikethrough' },
-    { re: /^!\[([^\]]*)\]\(([^)]+)\)/, type: 'image' },
-    { re: /^\[([^\]]+)\]\(([^)]+)\)/, type: 'link' },
+    { re: /^!\[([^\]]*)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/, type: 'image' },
+    { re: /^\[([^\]]+)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/, type: 'link' },
   ]
 
   while (remaining.length > 0) {
@@ -260,10 +273,15 @@ function markdownToOdtElements(markdown) {
       continue
     }
 
-    // Table rows: lines with at least one pipe that either start with '|'
-    // (standard GFM), are already inside a table, or are immediately followed
-    // by a separator row (GFM pipes-optional header detection via lookahead).
-    if (line.includes('|') && (line.trim().startsWith('|') || inTable || isTableSeparatorLine(nextLine))) {
+    // Table rows: lines containing '|'.
+    // A new table is only started when there is evidence of more table content:
+    // the next line is a separator row OR the next line also contains '|'.
+    // This avoids treating a single pipe-containing paragraph line as a table.
+    // Once already inside a table, any line with '|' continues the table.
+    if (
+      (inTable && line.includes('|')) ||
+      (!inTable && line.includes('|') && (isTableSeparatorLine(nextLine) || nextLine.includes('|')))
+    ) {
       closeAllLists()
       inTable = true
       tableLines.push(line)
