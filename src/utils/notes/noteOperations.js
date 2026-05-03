@@ -42,6 +42,15 @@ function escapeXml(text) {
     .replace(/'/g, '&apos;')
 }
 
+// Allowed URL schemes for ODT hyperlinks.
+// javascript:/data:/vbscript: and other non-listed schemes are blocked.
+const SAFE_ODT_URL_RE = /^(https?:|mailto:|#)/i
+
+function isSafeOdtUrl(url) {
+  if (!url) return false
+  return SAFE_ODT_URL_RE.test(url.trim())
+}
+
 // Tokenise inline markdown and convert to ODT XML.
 // Handles: bold, italic, bold-italic, inline code, strikethrough, links, images.
 function inlineToOdt(text) {
@@ -102,7 +111,10 @@ function inlineToOdt(text) {
         case 'image':
           return `[${escapeXml(content)}]`
         case 'link':
-          return `<text:a xlink:type="simple" xlink:href="${escapeXml(url)}">${inlineToOdt(content)}</text:a>`
+          if (isSafeOdtUrl(url)) {
+            return `<text:a xlink:type="simple" xlink:href="${escapeXml(url)}">${inlineToOdt(content)}</text:a>`
+          }
+          return inlineToOdt(content)
         default:
           return escapeXml(content)
       }
@@ -222,7 +234,9 @@ function markdownToOdtElements(markdown) {
     }
   }
 
-  for (const line of lines) {
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const line = lines[lineIdx]
+    const nextLine = lineIdx + 1 < lines.length ? lines[lineIdx + 1] : ''
     if (/^```/.test(line.trim())) {
       if (inTable) flushTable()
       closeAllLists()
@@ -244,8 +258,10 @@ function markdownToOdtElements(markdown) {
       continue
     }
 
-    // Table rows: any line whose trimmed form begins with '|'.
-    if (line.trim().startsWith('|')) {
+    // Table rows: lines with at least one pipe that either start with '|'
+    // (standard GFM), are already inside a table, or are immediately followed
+    // by a separator row (GFM pipes-optional header detection via lookahead).
+    if (line.includes('|') && (line.trim().startsWith('|') || inTable || isTableSeparatorLine(nextLine))) {
       closeAllLists()
       inTable = true
       tableLines.push(line)

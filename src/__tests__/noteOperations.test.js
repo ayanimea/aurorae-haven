@@ -101,7 +101,7 @@ describe('noteOperations ODT inline formatting', () => {
     expect(contentXml).toContain('>this<')
   })
 
-  test('exports hyperlinks with text:a and xlink:href', async () => {
+  test('exports hyperlinks with text:a and xlink:href for safe http URLs', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('Link Test', 'Visit [example](https://example.com) site')
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
@@ -109,6 +109,54 @@ describe('noteOperations ODT inline formatting', () => {
     expect(contentXml).toContain('<text:a')
     expect(contentXml).toContain('xlink:href="https://example.com"')
     expect(contentXml).toContain('>example<')
+  })
+
+  test('allows mailto: links as safe URLs', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Mail Link', '[contact](mailto:hello@example.com)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('<text:a')
+    expect(contentXml).toContain('xlink:href="mailto:hello@example.com"')
+  })
+
+  test('allows fragment # links as safe URLs', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Anchor Link', '[section](#section-1)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('<text:a')
+    expect(contentXml).toContain('xlink:href="#section-1"')
+  })
+
+  test('blocks javascript: URLs and renders link text only', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('XSS Link', '[click](javascript:alert(1))')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('<text:a')
+    expect(contentXml).not.toContain('javascript:')
+    expect(contentXml).toContain('click')
+  })
+
+  test('blocks data: URLs and renders link text only', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Data Link', '[x](data:text/html,<h1>hi</h1>)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('<text:a')
+    expect(contentXml).not.toContain('xlink:href')
+    expect(contentXml).toContain('>x<')
+  })
+
+  test('blocks vbscript: URLs and renders link text only', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('VB Link', '[run](vbscript:MsgBox(1))')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('<text:a')
+    expect(contentXml).not.toContain('vbscript:')
+    expect(contentXml).toContain('run')
   })
 
   test('exports images as bracketed alt text', async () => {
@@ -156,6 +204,33 @@ describe('noteOperations ODT inline formatting', () => {
 })
 
 describe('noteOperations ODT table export', () => {
+  test('exports GFM pipes-optional table (no leading/trailing pipe characters)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile(
+      'Pipeless Table',
+      'Name | Age\n-----|-----\nAlice | 30\nBob | 25'
+    )
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('<table:table')
+    expect(contentXml).toContain('<table:table-header-rows>')
+    expect(contentXml).toContain('>Name<')
+    expect(contentXml).toContain('>Age<')
+    expect(contentXml).toContain('>Alice<')
+    expect(contentXml).toContain('>Bob<')
+  })
+
+  test('plain text containing a pipe but no separator row is not treated as a table', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Pipe in text', 'The price | cost is 10\nNext sentence.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).not.toContain('<table:table')
+    expect(contentXml).toContain('The price')
+  })
+
   test('exports markdown table with header and body rows', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile(
