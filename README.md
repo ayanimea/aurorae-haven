@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1194 KB compressed
+- ✅ Total size: 1193 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-05-03 08:35:16 UTC
+**Last Updated**: 2026-05-03 13:01:03 UTC
 **Source Branch**: implement-multiple-compilation-modes
-**Source Commit**: 0948515
+**Source Commit**: d7b1b57
 
 ---
 
