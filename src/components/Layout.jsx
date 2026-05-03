@@ -397,8 +397,6 @@ function Layout({ children, onExport }) {
               <Icon name='search' />
             </button>
 
-            <span className='nav-separator' aria-hidden='true' />
-
           </div>
         </div>
 
