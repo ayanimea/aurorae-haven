@@ -1,18 +1,17 @@
 # Compilation and Deployment Modes
 
-Aurorae Haven now ships with three explicit build/deployment targets:
+Aurorae Haven ships with three explicit build/deployment targets:
 
-1. **Android app mode** (signed-in, packaged from `dist-android-web`)
+1. **Android app mode** (packaged from `dist-android-web`)
 2. **Offline desktop mode** (current local-first package)
-3. **Online web mode** (signed-in app shell + backend contract)
+3. **Online web mode** (hosted app shell + optional backend API integration)
 
-## 1) Android app mode (signed-in, local-first)
+## 1) Android app mode (local-first)
 
 ### What this mode does
 
 - Builds a web bundle with base path `/aurorae-haven/` for native wrapping (matching `android/twa-manifest.json` `startUrl`).
 - Produces `dist-android-web/` with `npm run build:mode:android`.
-- Supports sign-in/sign-up provider configuration for **Email, Google, Facebook, and GitHub**.
 
 ### Build steps
 
@@ -61,14 +60,13 @@ npm run build:mode:desktop
 
 See: `docs/OFFLINE-DOWNLOAD.md`.
 
-## 3) Online web mode (signed-in + PostgreSQL)
+## 3) Online web mode (hosted app shell)
 
 ### What this mode does
 
 - Builds a production web bundle for hosted deployment.
-- Enables configuration for sign-in/sign-up with **Email, Google, Facebook, and GitHub**.
 - Provides Docker orchestration for static web hosting.
-- Documents backend/API requirements instead of managing backend/database infrastructure in this repository.
+- Supports optional backend/API integration without managing backend/database infrastructure in this repository.
 
 ### Build and run steps
 
@@ -84,37 +82,25 @@ docker compose -f docker-compose.web.yml up --build
 Docker Compose serves the web bundle at the root path (`/`) on `http://localhost:8080`.
 The compose build overrides the mode default with `AURORAE_VITE_BASE_URL_OVERRIDE=/` for local nginx hosting.
 
-### Backend and database requirements (provided to backend team)
+### Optional backend integration (provided to backend team)
 
-- Auth endpoints for Email account sign-in/sign-up and OAuth providers (Google, Facebook, GitHub).
-- Session endpoint and secure cookie/token lifecycle.
-- PostgreSQL-backed account storage and migration ownership.
-- API base URL exposed to frontend via `VITE_API_BASE_URL`.
+- Optional API base URL can be set via `VITE_API_BASE_URL` for future/custom backend integrations.
+- The current app shell does not consume `VITE_API_BASE_URL` by default.
+- Data API contracts and storage design can be owned by the backend team.
 
-Design reference: `docs/POSTGRESQL_ACCOUNT_SCHEMA.md`.
-
-## Session management and credentials
-
-For online/Android signed-in modes:
-
-- Use hashed session tokens and server-side expiration.
-- Keep auth configuration values and session secrets in environment variables only.
-- Never commit real credentials.
-
-Required variables are documented in `.env.web.example` and `.env.android.example`.
+Optional future backend draft reference: `docs/POSTGRESQL_ACCOUNT_SCHEMA.md`.
 
 ## Cross-mode data compatibility summary
 
 - **Offline desktop**: browser local storage stack (IndexedDB/OPFS/localStorage)
-- **Online web**: authenticated API contract with backend-managed PostgreSQL storage
-- **Android**: can run local-first or connect to the same backend API contract
+- **Online web**: hosted frontend bundle with optional API integration
+- **Android**: local-first app shell; optional API integration can be added by backend consumers
 
-Use import/export JSON backups when moving between local and account-backed modes.
+Use import/export JSON backups when moving between local-first installs and devices.
 
 ## Validation checklist
 
 - [ ] Android bundle builds: `npm run build:mode:android`
 - [ ] Offline package builds: `npm run build:mode:desktop`
 - [ ] Web bundle builds: `npm run build:mode:web`
-- [ ] Backend requirements for auth/session/PostgreSQL shared with backend team
-- [ ] Auth env variables present for Email + Google/Facebook/GitHub
+- [ ] Backend/API integration requirements shared with backend team (if needed)

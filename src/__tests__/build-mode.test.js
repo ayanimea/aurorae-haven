@@ -21,8 +21,7 @@ describe('build-mode script helpers', () => {
       args: ['run', 'build:offline'],
       env: {
         VITE_COMPILE_MODE: 'desktop-offline',
-        VITE_BASE_URL: './',
-        VITE_AUTH_REQUIRED: 'false'
+        VITE_BASE_URL: './'
       }
     })
 
@@ -30,8 +29,7 @@ describe('build-mode script helpers', () => {
       args: ['run', 'build'],
       env: {
         VITE_COMPILE_MODE: 'android',
-        VITE_BASE_URL: '/',
-        VITE_AUTH_REQUIRED: 'true'
+        VITE_BASE_URL: '/'
       }
     })
 
@@ -39,8 +37,7 @@ describe('build-mode script helpers', () => {
       args: ['run', 'build'],
       env: {
         VITE_COMPILE_MODE: 'web-online',
-        VITE_BASE_URL: '/aurorae-haven/',
-        VITE_AUTH_REQUIRED: 'true'
+        VITE_BASE_URL: '/aurorae-haven/'
       }
     })
   })
