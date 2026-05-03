@@ -65,39 +65,44 @@ function isSafeOdtUrl(url) {
   return false
 }
 
+// Inline Markdown patterns in priority order (longest/most-specific first).
+// Sticky flag (y) lets us match at a specific position without string slicing,
+// keeping inlineToOdt() O(n) rather than O(n²) on large inputs.
+// lastIndex is reset to the current position before every exec() call so
+// module-level state is safe even under recursive inlineToOdt() calls.
+const INLINE_PATTERNS = [
+  { re: /`([^`]+)`/y, type: 'code' },
+  { re: /\*\*\*(.+?)\*\*\*/y, type: 'bold-italic' },
+  { re: /___(.+?)___/y, type: 'bold-italic' },
+  { re: /\*\*([^*].*?)\*\*/y, type: 'bold' },
+  { re: /__([^_].*?)__/y, type: 'bold' },
+  { re: /\*([^*\n]+?)\*/y, type: 'italic' },
+  { re: /_([^_\n]+?)_/y, type: 'italic' },
+  { re: /~~(.+?)~~/y, type: 'strikethrough' },
+  // Link/image URL: supports one level of balanced parentheses in the URL
+  // (e.g. Wikipedia links like "Mathematics_(disambiguation)").
+  // Pattern: [^()]* matches non-paren chars; (?:\([^()]*\)[^()]*)* matches
+  // zero or more "(...non-parens...)" groups interspersed with non-paren chars.
+  { re: /!\[([^\]]*)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/y, type: 'image' },
+  { re: /\[([^\]]+)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/y, type: 'link' },
+]
+
 // Tokenise inline markdown and convert to ODT XML.
 // Handles: bold, italic, bold-italic, inline code, strikethrough, links, images.
 function inlineToOdt(text) {
   if (!text) return ''
 
   const tokens = []
-  let remaining = text
+  let pos = 0
 
-  // Patterns are checked in priority order (longest/most-specific first).
-  const patterns = [
-    { re: /^`([^`]+)`/, type: 'code' },
-    { re: /^\*\*\*(.+?)\*\*\*/, type: 'bold-italic' },
-    { re: /^___(.+?)___/, type: 'bold-italic' },
-    { re: /^\*\*([^*].*?)\*\*/, type: 'bold' },
-    { re: /^__([^_].*?)__/, type: 'bold' },
-    { re: /^\*([^*\n]+?)\*/, type: 'italic' },
-    { re: /^_([^_\n]+?)_/, type: 'italic' },
-    { re: /^~~(.+?)~~/, type: 'strikethrough' },
-    // Link/image URL: supports one level of balanced parentheses in the URL
-    // (e.g. Wikipedia links like "Mathematics_(disambiguation)").
-    // Pattern: [^()]* matches non-paren chars; (?:\([^()]*\)[^()]*)* matches
-    // zero or more "(...non-parens...)" groups interspersed with non-paren chars.
-    { re: /^!\[([^\]]*)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/, type: 'image' },
-    { re: /^\[([^\]]+)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/, type: 'link' },
-  ]
-
-  while (remaining.length > 0) {
+  while (pos < text.length) {
     let matched = false
-    for (const { re, type } of patterns) {
-      const m = remaining.match(re)
+    for (const { re, type } of INLINE_PATTERNS) {
+      re.lastIndex = pos
+      const m = re.exec(text)
       if (m) {
         tokens.push({ type, content: m[1], url: m[2] || null })
-        remaining = remaining.slice(m[0].length)
+        pos = re.lastIndex
         matched = true
         break
       }
@@ -105,11 +110,11 @@ function inlineToOdt(text) {
     if (!matched) {
       const last = tokens[tokens.length - 1]
       if (last?.type === 'text') {
-        last.content += remaining[0]
+        last.content += text[pos]
       } else {
-        tokens.push({ type: 'text', content: remaining[0] })
+        tokens.push({ type: 'text', content: text[pos] })
       }
-      remaining = remaining.slice(1)
+      pos++
     }
   }
 

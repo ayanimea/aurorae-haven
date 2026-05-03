@@ -11,8 +11,20 @@ let originalRevokeObjectURL = null
 let shouldRestoreCreateElement = false
 let shouldRestoreCreateObjectURL = false
 let shouldRestoreRevokeObjectURL = false
+let setTimeoutSpy = null
+let pendingTimerIds = []
 
 function setupDownloadMocks() {
+  // Intercept setTimeout to capture timer IDs so afterEach can cancel them before
+  // they fire. This prevents the deferred URL.revokeObjectURL in downloadBlob()
+  // from leaving pending timers between tests without affecting jsdom internals.
+  const origSetTimeout = global.setTimeout
+  setTimeoutSpy = vi.spyOn(global, 'setTimeout').mockImplementation((fn, delay, ...args) => {
+    const id = origSetTimeout.call(global, fn, delay, ...args)
+    pendingTimerIds.push(id)
+    return id
+  })
+
   const downloadedBlobs = []
   const mockClick = vi.fn()
 
@@ -41,6 +53,13 @@ function setupDownloadMocks() {
 }
 
 afterEach(() => {
+  // Cancel any pending timers (e.g. deferred URL.revokeObjectURL from downloadBlob)
+  // before restoring the spy, so they don't fire after mock cleanup.
+  pendingTimerIds.forEach((id) => clearTimeout(id))
+  pendingTimerIds = []
+  setTimeoutSpy?.mockRestore()
+  setTimeoutSpy = null
+
   if (shouldRestoreCreateElement) {
     document.createElement = originalCreateElement
     shouldRestoreCreateElement = false
