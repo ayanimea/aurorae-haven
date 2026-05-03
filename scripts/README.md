@@ -72,7 +72,7 @@ git branch -D pre-commit-hook-test
 ## Other Scripts
 
 - `build-mode.js` - Mode-aware build wrapper for `android`, `desktop-offline`, `web-online`
-- `compilationModes.js` - Shared mode definitions (build env + auth providers)
+- `compilationModes.js` - Shared mode definitions (build environment defaults)
 - `buildConstants.js` - Build-time constants
 - `create-offline-package.js` - Creates offline distribution package
 - `embedded-server.js` / `embedded-server.py` - Local server implementations
