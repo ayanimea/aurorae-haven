@@ -42,6 +42,74 @@ function escapeXml(text) {
     .replace(/'/g, '&apos;')
 }
 
+// Tokenise inline markdown and convert to ODT XML.
+// Handles: bold, italic, bold-italic, inline code, strikethrough, links, images.
+function inlineToOdt(text) {
+  if (!text) return ''
+
+  const tokens = []
+  let remaining = text
+
+  // Patterns are checked in priority order (longest/most-specific first).
+  const patterns = [
+    { re: /^`([^`]+)`/, type: 'code' },
+    { re: /^\*\*\*(.+?)\*\*\*/, type: 'bold-italic' },
+    { re: /^___(.+?)___/, type: 'bold-italic' },
+    { re: /^\*\*([^*].*?)\*\*/, type: 'bold' },
+    { re: /^__([^_].*?)__/, type: 'bold' },
+    { re: /^\*([^*\n]+?)\*/, type: 'italic' },
+    { re: /^_([^_\n]+?)_/, type: 'italic' },
+    { re: /^~~(.+?)~~/, type: 'strikethrough' },
+    { re: /^!\[([^\]]*)\]\(([^)]+)\)/, type: 'image' },
+    { re: /^\[([^\]]+)\]\(([^)]+)\)/, type: 'link' },
+  ]
+
+  while (remaining.length > 0) {
+    let matched = false
+    for (const { re, type } of patterns) {
+      const m = remaining.match(re)
+      if (m) {
+        tokens.push({ type, content: m[1], url: m[2] || null })
+        remaining = remaining.slice(m[0].length)
+        matched = true
+        break
+      }
+    }
+    if (!matched) {
+      const last = tokens[tokens.length - 1]
+      if (last?.type === 'text') {
+        last.content += remaining[0]
+      } else {
+        tokens.push({ type: 'text', content: remaining[0] })
+      }
+      remaining = remaining.slice(1)
+    }
+  }
+
+  return tokens
+    .map(({ type, content, url }) => {
+      switch (type) {
+        case 'code':
+          return `<text:span text:style-name="Code_Char">${escapeXml(content)}</text:span>`
+        case 'bold-italic':
+          return `<text:span text:style-name="Bold_Italic_Char">${inlineToOdt(content)}</text:span>`
+        case 'bold':
+          return `<text:span text:style-name="Bold_Char">${inlineToOdt(content)}</text:span>`
+        case 'italic':
+          return `<text:span text:style-name="Italic_Char">${inlineToOdt(content)}</text:span>`
+        case 'strikethrough':
+          return `<text:span text:style-name="Strikethrough_Char">${inlineToOdt(content)}</text:span>`
+        case 'image':
+          return `[${escapeXml(content)}]`
+        case 'link':
+          return `<text:a xlink:type="simple" xlink:href="${escapeXml(url)}">${inlineToOdt(content)}</text:a>`
+        default:
+          return escapeXml(content)
+      }
+    })
+    .join('')
+}
+
 function markdownToOdtElements(markdown) {
   if (!markdown) return '<text:p></text:p>'
 
@@ -50,6 +118,73 @@ function markdownToOdtElements(markdown) {
   let inCodeBlock = false
   const listStack = []
   let listIndentUnit = null
+
+  // --- Table state ---
+  let inTable = false
+  let tableLines = []
+  let tableIndex = 0
+
+  const parseTableRow = (line) =>
+    line
+      .trim()
+      .replace(/^\||\|$/g, '')
+      .split('|')
+      .map((cell) => cell.trim())
+
+  // A table separator row contains only |, -, :, and spaces.
+  const isTableSeparatorLine = (line) => {
+    const t = line.trim()
+    return t.includes('|') && t.includes('-') && /^[\|:\- ]+$/.test(t)
+  }
+
+  const flushTable = () => {
+    if (!inTable) return
+    const captured = tableLines
+    tableLines = []
+    inTable = false
+    if (captured.length === 0) return
+
+    tableIndex += 1
+    const parsedRows = captured.map(parseTableRow)
+
+    let headerRow = null
+    let bodyRows = parsedRows
+
+    if (captured.length >= 2 && isTableSeparatorLine(captured[1])) {
+      headerRow = parsedRows[0]
+      bodyRows = parsedRows.slice(2)
+    }
+
+    const numCols = Math.max(
+      headerRow ? headerRow.length : 0,
+      ...bodyRows.map((r) => r.length),
+      1
+    )
+
+    let xml = `<table:table table:name="Table${tableIndex}">`
+    for (let i = 0; i < numCols; i++) {
+      xml += `<table:table-column/>`
+    }
+
+    if (headerRow) {
+      xml += `<table:table-header-rows><table:table-row>`
+      for (let i = 0; i < numCols; i++) {
+        xml += `<table:table-cell><text:p text:style-name="Table_Header_Contents">${inlineToOdt(headerRow[i] || '')}</text:p></table:table-cell>`
+      }
+      xml += `</table:table-row></table:table-header-rows>`
+    }
+
+    for (const row of bodyRows) {
+      xml += `<table:table-row>`
+      for (let i = 0; i < numCols; i++) {
+        xml += `<table:table-cell><text:p text:style-name="Table_Contents">${inlineToOdt(row[i] || '')}</text:p></table:table-cell>`
+      }
+      xml += `</table:table-row>`
+    }
+
+    xml += `</table:table>`
+    elements.push(xml)
+  }
 
   // Normalize tabs to 4 spaces to keep nested list depth consistent.
   const normalizeIndentWidth = (indent) =>
@@ -89,6 +224,7 @@ function markdownToOdtElements(markdown) {
 
   for (const line of lines) {
     if (/^```/.test(line.trim())) {
+      if (inTable) flushTable()
       closeAllLists()
       inCodeBlock = !inCodeBlock
       continue
@@ -102,18 +238,46 @@ function markdownToOdtElements(markdown) {
     }
 
     if (!line.trim()) {
+      if (inTable) flushTable()
       closeAllLists()
       elements.push('<text:p></text:p>')
       continue
     }
 
+    // Table rows: any line whose trimmed form begins with '|'.
+    if (line.trim().startsWith('|')) {
+      closeAllLists()
+      inTable = true
+      tableLines.push(line)
+      continue
+    }
+
+    // Flush any accumulated table before processing non-table content.
+    if (inTable) flushTable()
+
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/)
     if (headingMatch) {
       closeAllLists()
       const level = headingMatch[1].length
-      const headingText = escapeXml(headingMatch[2])
       elements.push(
-        `<text:h text:outline-level="${level}">${headingText}</text:h>`
+        `<text:h text:outline-level="${level}">${inlineToOdt(headingMatch[2])}</text:h>`
+      )
+      continue
+    }
+
+    // Horizontal rule: three or more -, *, or _ with optional surrounding spaces.
+    if (/^(\s*[-*_]\s*){3,}$/.test(line.trim())) {
+      closeAllLists()
+      elements.push('<text:p text:style-name="Horizontal_Line"></text:p>')
+      continue
+    }
+
+    // Blockquote.
+    const blockquoteMatch = line.match(/^>\s?(.*)$/)
+    if (blockquoteMatch) {
+      closeAllLists()
+      elements.push(
+        `<text:p text:style-name="Quotations">${inlineToOdt(blockquoteMatch[1])}</text:p>`
       )
       continue
     }
@@ -147,16 +311,17 @@ function markdownToOdtElements(markdown) {
       }
 
       elements.push(
-        `<text:list-item><text:p>${escapeXml(listMatch[3])}</text:p>`
+        `<text:list-item><text:p>${inlineToOdt(listMatch[3])}</text:p>`
       )
       listStack[listStack.length - 1].itemOpen = true
       continue
     }
 
     closeAllLists()
-    elements.push(`<text:p>${escapeXml(line)}</text:p>`)
+    elements.push(`<text:p>${inlineToOdt(line)}</text:p>`)
   }
 
+  if (inTable) flushTable()
   closeAllLists()
   return elements.join('')
 }
@@ -183,10 +348,37 @@ async function createOdtBlob(title, content) {
   xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
   xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
   xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
   office:version="1.2">
   <office:styles>
     <style:style style:name="Preformatted_Text" style:family="paragraph">
       <style:text-properties style:font-name="Courier New"/>
+    </style:style>
+    <style:style style:name="Quotations" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="1.25cm" fo:margin-right="1.25cm"/>
+      <style:text-properties fo:font-style="italic"/>
+    </style:style>
+    <style:style style:name="Horizontal_Line" style:family="paragraph">
+      <style:paragraph-properties fo:border-bottom="0.06pt solid #000000" fo:padding-bottom="0.05cm"/>
+    </style:style>
+    <style:style style:name="Table_Contents" style:family="paragraph"/>
+    <style:style style:name="Table_Header_Contents" style:family="paragraph">
+      <style:text-properties fo:font-weight="bold"/>
+    </style:style>
+    <style:style style:name="Bold_Char" style:family="text">
+      <style:text-properties fo:font-weight="bold"/>
+    </style:style>
+    <style:style style:name="Italic_Char" style:family="text">
+      <style:text-properties fo:font-style="italic"/>
+    </style:style>
+    <style:style style:name="Bold_Italic_Char" style:family="text">
+      <style:text-properties fo:font-weight="bold" fo:font-style="italic"/>
+    </style:style>
+    <style:style style:name="Code_Char" style:family="text">
+      <style:text-properties style:font-name="Courier New"/>
+    </style:style>
+    <style:style style:name="Strikethrough_Char" style:family="text">
+      <style:text-properties style:text-line-through-style="solid"/>
     </style:style>
     <text:list-style style:name="List_20_1">
       <text:list-level-style-bullet text:level="1" text:bullet-char="•"/>
@@ -203,6 +395,10 @@ async function createOdtBlob(title, content) {
 <office:document-content
   xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
   xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
   office:version="1.2">
   <office:body>
     <office:text>

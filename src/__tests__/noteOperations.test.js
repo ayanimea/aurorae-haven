@@ -55,6 +55,229 @@ afterEach(() => {
   }
 })
 
+describe('noteOperations ODT inline formatting', () => {
+  test('exports bold text with Bold_Char span', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Bold Test', 'Hello **world** end')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('text:style-name="Bold_Char"')
+    expect(contentXml).toContain('>world<')
+  })
+
+  test('exports italic text with Italic_Char span', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Italic Test', 'Hello *world* end')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('text:style-name="Italic_Char"')
+    expect(contentXml).toContain('>world<')
+  })
+
+  test('exports bold-italic text with Bold_Italic_Char span', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('BoldItalic Test', 'Hello ***world*** end')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('text:style-name="Bold_Italic_Char"')
+    expect(contentXml).toContain('>world<')
+  })
+
+  test('exports inline code with Code_Char span', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Code Test', 'Use `console.log` here')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('text:style-name="Code_Char"')
+    expect(contentXml).toContain('>console.log<')
+  })
+
+  test('exports strikethrough text with Strikethrough_Char span', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Strike Test', 'Remove ~~this~~ please')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('text:style-name="Strikethrough_Char"')
+    expect(contentXml).toContain('>this<')
+  })
+
+  test('exports hyperlinks with text:a and xlink:href', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Link Test', 'Visit [example](https://example.com) site')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('<text:a')
+    expect(contentXml).toContain('xlink:href="https://example.com"')
+    expect(contentXml).toContain('>example<')
+  })
+
+  test('exports images as bracketed alt text', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Image Test', 'See ![a cat](cat.png) here')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('[a cat]')
+  })
+
+  test('applies inline formatting inside headings', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Heading Format', '## My **bold** heading')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('<text:h text:outline-level="2">')
+    expect(contentXml).toContain('text:style-name="Bold_Char"')
+  })
+
+  test('applies inline formatting inside list items', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('List Format', '- Item with **bold** text')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('text:style-name="Bold_Char"')
+  })
+
+  test('includes xlink namespace declaration in content.xml for links', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('NS Test', '[click](https://x.com)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('xmlns:xlink="http://www.w3.org/1999/xlink"')
+  })
+
+  test('includes table namespace declaration in content.xml', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('NS Table', '| a | b |\n|---|---|\n| 1 | 2 |')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain(
+      'xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"'
+    )
+  })
+})
+
+describe('noteOperations ODT table export', () => {
+  test('exports markdown table with header and body rows', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile(
+      'Table Note',
+      '| Name | Age |\n|------|-----|\n| Alice | 30 |\n| Bob | 25 |'
+    )
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('<table:table')
+    expect(contentXml).toContain('<table:table-header-rows>')
+    expect(contentXml).toContain('Table_Header_Contents')
+    expect(contentXml).toContain('>Name<')
+    expect(contentXml).toContain('>Age<')
+    expect(contentXml).toContain('>Alice<')
+    expect(contentXml).toContain('>Bob<')
+    expect(contentXml).toContain('>30<')
+    expect(contentXml).toContain('>25<')
+  })
+
+  test('exports table without separator row as body-only rows', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('NoHeader Table', '| foo | bar |\n| baz | qux |')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('<table:table')
+    expect(contentXml).not.toContain('<table:table-header-rows>')
+    expect(contentXml).toContain('>foo<')
+    expect(contentXml).toContain('>bar<')
+    expect(contentXml).toContain('>baz<')
+    expect(contentXml).toContain('>qux<')
+  })
+
+  test('exports multiple tables with distinct names', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile(
+      'Two Tables',
+      '| A |\n|---|\n| 1 |\n\n| B |\n|---|\n| 2 |'
+    )
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('table:name="Table1"')
+    expect(contentXml).toContain('table:name="Table2"')
+  })
+
+  test('applies inline formatting inside table cells', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile(
+      'Bold Cell',
+      '| **Header** |\n|---|\n| *italic* |'
+    )
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Bold_Char"')
+    expect(contentXml).toContain('text:style-name="Italic_Char"')
+  })
+
+  test('table at end of content is flushed correctly', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('End Table', '| X | Y |\n|---|---|\n| 1 | 2 |')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('<table:table')
+    expect(contentXml).toContain('</table:table>')
+  })
+})
+
+describe('noteOperations ODT blockquote and horizontal rule', () => {
+  test('exports blockquote with Quotations paragraph style', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Quote Note', '> This is a quote')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Quotations"')
+    expect(contentXml).toContain('>This is a quote<')
+  })
+
+  test('exports horizontal rule --- with Horizontal_Line paragraph style', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Rule Note', 'Above\n---\nBelow')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Horizontal_Line"')
+    expect(contentXml).toContain('>Above<')
+    expect(contentXml).toContain('>Below<')
+  })
+
+  test('exports horizontal rule *** with Horizontal_Line paragraph style', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Rule Note 2', 'A\n***\nB')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Horizontal_Line"')
+  })
+})
+
+describe('noteOperations ODT styles.xml', () => {
+  test('styles.xml includes character and paragraph style definitions', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Styles Test', 'text')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const stylesXml = await odtZip.file('styles.xml').async('string')
+
+    expect(stylesXml).toContain('style:name="Bold_Char"')
+    expect(stylesXml).toContain('style:name="Italic_Char"')
+    expect(stylesXml).toContain('style:name="Bold_Italic_Char"')
+    expect(stylesXml).toContain('style:name="Code_Char"')
+    expect(stylesXml).toContain('style:name="Strikethrough_Char"')
+    expect(stylesXml).toContain('style:name="Quotations"')
+    expect(stylesXml).toContain('style:name="Horizontal_Line"')
+    expect(stylesXml).toContain('style:name="Table_Contents"')
+    expect(stylesXml).toContain('style:name="Table_Header_Contents"')
+  })
+})
+
 describe('noteOperations ODT export', () => {
   test('includes nested-list structure and complete manifest entries in exported ODT', async () => {
     const { downloadedBlobs, mockClick } = setupDownloadMocks()
