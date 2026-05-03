@@ -8,7 +8,7 @@ Backend and database infrastructure are intentionally **not implemented here**.
 
 - The current frontend is local-first and does **not** ship sign-in UI/routes.
 - Authentication environment variables are not consumed by the active UI.
-- Optional backend sync can still be integrated through a custom API endpoint.
+- Optional backend sync can still be integrated as future work through a custom API endpoint.
 
 ## Frontend-provided inputs
 
