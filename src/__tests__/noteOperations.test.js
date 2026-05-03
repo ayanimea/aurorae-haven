@@ -234,7 +234,7 @@ describe('noteOperations ODT inline formatting', () => {
     await exportNoteToOdtFile('Heading Format', '## My **bold** heading')
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const contentXml = await odtZip.file('content.xml').async('string')
-    expect(contentXml).toContain('<text:h text:outline-level="2">')
+    expect(contentXml).toContain('<text:h text:style-name="Heading_2" text:outline-level="2">')
     expect(contentXml).toContain('text:style-name="Bold_Char"')
   })
 
@@ -422,6 +422,55 @@ describe('noteOperations ODT styles.xml', () => {
     expect(stylesXml).toContain('style:name="Horizontal_Line"')
     expect(stylesXml).toContain('style:name="Table_Contents"')
     expect(stylesXml).toContain('style:name="Table_Header_Contents"')
+    expect(stylesXml).toContain('style:name="Heading_1"')
+    expect(stylesXml).toContain('style:name="Heading_2"')
+    expect(stylesXml).toContain('style:name="Heading_3"')
+    expect(stylesXml).toContain('style:name="Heading_4"')
+    expect(stylesXml).toContain('style:name="Heading_5"')
+    expect(stylesXml).toContain('style:name="Heading_6"')
+  })
+})
+
+describe('noteOperations ODT heading export', () => {
+  test('exports H1-H6 with text:style-name and text:outline-level', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile(
+      'Heading Note',
+      '# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6'
+    )
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain(
+      'text:style-name="Heading_1" text:outline-level="1"'
+    )
+    expect(contentXml).toContain(
+      'text:style-name="Heading_2" text:outline-level="2"'
+    )
+    expect(contentXml).toContain(
+      'text:style-name="Heading_3" text:outline-level="3"'
+    )
+    expect(contentXml).toContain(
+      'text:style-name="Heading_4" text:outline-level="4"'
+    )
+    expect(contentXml).toContain(
+      'text:style-name="Heading_5" text:outline-level="5"'
+    )
+    expect(contentXml).toContain(
+      'text:style-name="Heading_6" text:outline-level="6"'
+    )
+    expect(contentXml).toContain('>H1<')
+    expect(contentXml).toContain('>H6<')
+  })
+
+  test('heading text passes through inlineToOdt (bold inside heading)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Heading Bold', '## Hello **world**')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Heading_2"')
+    expect(contentXml).toContain('text:style-name="Bold_Char"')
   })
 })
 

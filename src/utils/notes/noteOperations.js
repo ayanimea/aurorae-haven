@@ -306,7 +306,7 @@ function markdownToOdtElements(markdown) {
       closeAllLists()
       const level = headingMatch[1].length
       elements.push(
-        `<text:h text:outline-level="${level}">${inlineToOdt(headingMatch[2])}</text:h>`
+        `<text:h text:style-name="Heading_${level}" text:outline-level="${level}">${inlineToOdt(headingMatch[2])}</text:h>`
       )
       continue
     }
@@ -397,6 +397,24 @@ async function createOdtBlob(title, content) {
   xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
   office:version="1.2">
   <office:styles>
+    <style:style style:name="Heading_1" style:family="paragraph">
+      <style:text-properties fo:font-weight="bold" fo:font-size="2em"/>
+    </style:style>
+    <style:style style:name="Heading_2" style:family="paragraph">
+      <style:text-properties fo:font-weight="bold" fo:font-size="1.5em"/>
+    </style:style>
+    <style:style style:name="Heading_3" style:family="paragraph">
+      <style:text-properties fo:font-weight="bold" fo:font-size="1.17em"/>
+    </style:style>
+    <style:style style:name="Heading_4" style:family="paragraph">
+      <style:text-properties fo:font-weight="bold" fo:font-size="1em"/>
+    </style:style>
+    <style:style style:name="Heading_5" style:family="paragraph">
+      <style:text-properties fo:font-weight="bold" fo:font-size="0.83em"/>
+    </style:style>
+    <style:style style:name="Heading_6" style:family="paragraph">
+      <style:text-properties fo:font-weight="bold" fo:font-size="0.67em"/>
+    </style:style>
     <style:style style:name="Preformatted_Text" style:family="paragraph">
       <style:text-properties style:font-name="Courier New"/>
     </style:style>
@@ -448,7 +466,7 @@ async function createOdtBlob(title, content) {
   office:version="1.2">
   <office:body>
     <office:text>
-      <text:h text:outline-level="1">${escapeXml(title || 'Untitled Note')}</text:h>
+      <text:h text:style-name="Heading_1" text:outline-level="1">${escapeXml(title || 'Untitled Note')}</text:h>
       ${markdownToOdtElements(content)}
     </office:text>
   </office:body>
