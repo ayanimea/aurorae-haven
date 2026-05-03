@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1197 KB compressed
+- ✅ Total size: 1196 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-05-03 20:19:30 UTC
+**Last Updated**: 2026-05-03 20:24:58 UTC
 **Source Branch**: fix-odt-export-formatting
-**Source Commit**: 5b81f22
+**Source Commit**: ce0155b
 
 ---
 
