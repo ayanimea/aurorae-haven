@@ -497,25 +497,25 @@ function buildOdtZip(contentXml) {
 }
 
 async function createOdtBlob(title, content) {
-  const body =
-    `\n      <text:h text:style-name="Heading_1" text:outline-level="1">${escapeXml(title || 'Untitled Note')}</text:h>\n      ` +
-    markdownToOdtElements(content) +
-    '\n'
-  const contentXml = ODT_CONTENT_WRAPPER_OPEN + body + ODT_CONTENT_WRAPPER_CLOSE
+  const titleXml = escapeXml(title || 'Untitled Note')
+  const bodyXml = markdownToOdtElements(content)
+  const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
+      <text:h text:style-name="Heading_1" text:outline-level="1">${titleXml}</text:h>
+      ${bodyXml}
+${ODT_CONTENT_WRAPPER_CLOSE}`
   return buildOdtZip(contentXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
 async function createCombinedOdtBlob(notes) {
-  const parts = notes.map((note, index) => {
+  const noteParts = notes.map((note, index) => {
     const pageBreak = index === 0 ? '' : '<text:p text:style-name="Page_Break"/>'
-    return (
-      pageBreak +
-      `<text:h text:style-name="Heading_1" text:outline-level="1">${escapeXml(note?.title || 'Untitled Note')}</text:h>` +
-      markdownToOdtElements(note?.content ?? '')
-    )
+    const titleXml = escapeXml(note?.title || 'Untitled Note')
+    const bodyXml = markdownToOdtElements(note?.content ?? '')
+    return `${pageBreak}<text:h text:style-name="Heading_1" text:outline-level="1">${titleXml}</text:h>${bodyXml}`
   })
-  const body = '\n      ' + parts.join('\n      ') + '\n'
-  const contentXml = ODT_CONTENT_WRAPPER_OPEN + body + ODT_CONTENT_WRAPPER_CLOSE
+  const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
+      ${noteParts.join('\n      ')}
+${ODT_CONTENT_WRAPPER_CLOSE}`
   return buildOdtZip(contentXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
