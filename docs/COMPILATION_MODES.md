@@ -88,7 +88,7 @@ The compose build overrides the mode default with `AURORAE_VITE_BASE_URL_OVERRID
 - The current app shell does not consume `VITE_API_BASE_URL` by default.
 - Data API contracts and storage design can be owned by the backend team.
 
-Design reference: `docs/POSTGRESQL_ACCOUNT_SCHEMA.md`.
+Future backend draft reference (optional, not required for hosting the frontend bundle): `docs/POSTGRESQL_ACCOUNT_SCHEMA.md`.
 
 ## Cross-mode data compatibility summary
 

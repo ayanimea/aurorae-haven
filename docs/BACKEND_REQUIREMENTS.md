@@ -4,11 +4,11 @@ This repository owns frontend compilation targets and deployment packaging.
 
 Backend and database infrastructure are intentionally **not implemented here**.
 
-## Current frontend behavior
+## Current frontend behavior (implemented scope)
 
 - The current frontend is local-first and does **not** ship sign-in UI/routes.
 - Authentication environment variables are not consumed by the active UI.
-- Optional backend sync can still be integrated as future work through a custom API endpoint.
+- Optional backend sync and account-authenticated flows are future/custom integration work.
 - `VITE_API_BASE_URL` is available for future/custom integrations but is unused by the default app shell.
 
 ## Frontend-provided inputs
