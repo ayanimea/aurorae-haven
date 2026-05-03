@@ -19,9 +19,9 @@ describe('compilation modes', () => {
     expect(getCompilationMode('web-online')?.buildEnv.VITE_COMPILE_MODE).toBe('web-online')
   })
 
-  it('does not define auth providers by default in current modes', () => {
-    expect(getCompilationMode('android')?.authProviders).toEqual([])
-    expect(getCompilationMode('web-online')?.authProviders).toEqual([])
+  it('does not expose auth provider configuration in current modes', () => {
+    expect(getCompilationMode('android')).not.toHaveProperty('authProviders')
+    expect(getCompilationMode('web-online')).not.toHaveProperty('authProviders')
   })
 
   it('returns null for unknown modes', () => {

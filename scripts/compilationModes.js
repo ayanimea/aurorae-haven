@@ -2,7 +2,6 @@ export const COMPILATION_MODES = {
   android: {
     key: 'android',
     description: 'Android web bundle for native APK/AAB packaging',
-    authProviders: [],
     buildEnv: {
       VITE_BASE_URL: '/aurorae-haven/',
       VITE_COMPILE_MODE: 'android'
@@ -11,7 +10,6 @@ export const COMPILATION_MODES = {
   'desktop-offline': {
     key: 'desktop-offline',
     description: 'Offline desktop distribution with embedded local server',
-    authProviders: [],
     buildEnv: {
       VITE_BASE_URL: './',
       VITE_COMPILE_MODE: 'desktop-offline'
@@ -20,7 +18,6 @@ export const COMPILATION_MODES = {
   'web-online': {
     key: 'web-online',
     description: 'Online web app bundle for hosted deployment',
-    authProviders: [],
     buildEnv: {
       VITE_BASE_URL: '/aurorae-haven/',
       VITE_COMPILE_MODE: 'web-online'
