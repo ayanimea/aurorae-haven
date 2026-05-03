@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import JSZip from 'jszip'
 import {
   exportAllNotesToOdtZip,
+  exportAllNotesToCombinedOdt,
   exportNoteToOdtFile
 } from '../utils/notes/noteOperations'
 
@@ -26,6 +27,7 @@ function setupDownloadMocks() {
   })
 
   const downloadedBlobs = []
+  const downloadFilenames = []
   const mockClick = vi.fn()
 
   originalCreateObjectURL = global.URL.createObjectURL
@@ -44,12 +46,16 @@ function setupDownloadMocks() {
     if (tag === 'a') {
       const element = originalCreateElement.call(document, tag)
       element.click = mockClick
+      Object.defineProperty(element, 'download', {
+        set: (value) => { downloadFilenames.push(value) },
+        get: () => downloadFilenames[downloadFilenames.length - 1] || ''
+      })
       return element
     }
     return originalCreateElement.call(document, tag)
   })
 
-  return { downloadedBlobs, mockClick }
+  return { downloadedBlobs, mockClick, downloadFilenames }
 }
 
 afterEach(() => {
@@ -602,5 +608,97 @@ describe('noteOperations ODT export', () => {
     expect(new Set(odtEntries).size).toBe(2)
     expect(odtEntries).toContain('shared_title.odt')
     expect(odtEntries.some((name) => name !== 'shared_title.odt')).toBe(true)
+  })
+})
+
+describe('exportAllNotesToCombinedOdt', () => {
+  test('returns early for empty/invalid input', async () => {
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportAllNotesToCombinedOdt()
+    await exportAllNotesToCombinedOdt([])
+
+    expect(mockClick).not.toHaveBeenCalled()
+    expect(downloadedBlobs).toHaveLength(0)
+  })
+
+  test('downloads single note as individual .odt when only one note is provided', async () => {
+    const { downloadedBlobs, mockClick, downloadFilenames } = setupDownloadMocks()
+
+    await exportAllNotesToCombinedOdt([
+      { title: 'Solo Note', content: 'Only child' }
+    ])
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+    expect(downloadFilenames[0]).toMatch(/\.odt$/)
+
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('Solo Note')
+    expect(contentXml).toContain('Only child')
+  })
+
+  test('combines multiple notes into one .odt file with page breaks between them', async () => {
+    const { downloadedBlobs, mockClick, downloadFilenames } = setupDownloadMocks()
+
+    await exportAllNotesToCombinedOdt([
+      { title: 'Alpha', content: 'First content' },
+      { title: 'Beta', content: 'Second content' },
+      { title: 'Gamma', content: 'Third content' }
+    ])
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+    expect(downloadFilenames[0]).toMatch(/^braindump_notes_combined_\d{4}-\d{2}-\d{2}\.odt$/)
+
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('Alpha')
+    expect(contentXml).toContain('Beta')
+    expect(contentXml).toContain('Gamma')
+    expect(contentXml).toContain('First content')
+    expect(contentXml).toContain('Second content')
+    expect(contentXml).toContain('Third content')
+
+    // Two page breaks expected (before Beta and before Gamma)
+    const pageBreakCount = (contentXml.match(/Page_Break/g) || []).length
+    expect(pageBreakCount).toBe(2)
+  })
+
+  test('styles.xml contains Page_Break paragraph style', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportAllNotesToCombinedOdt([
+      { title: 'A', content: 'a' },
+      { title: 'B', content: 'b' }
+    ])
+
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const stylesXml = await odtZip.file('styles.xml').async('string')
+    expect(stylesXml).toContain('style:name="Page_Break"')
+    expect(stylesXml).toContain('fo:break-before="page"')
+  })
+
+  test('first note has no leading page break', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportAllNotesToCombinedOdt([
+      { title: 'First', content: 'content a' },
+      { title: 'Second', content: 'content b' }
+    ])
+
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    // Page_Break should appear exactly once (only before the second note)
+    const pageBreakCount = (contentXml.match(/Page_Break/g) || []).length
+    expect(pageBreakCount).toBe(1)
+
+    // The first heading should appear before the page break paragraph
+    const firstHeadingPos = contentXml.indexOf('First')
+    const pageBreakPos = contentXml.indexOf('Page_Break')
+    expect(firstHeadingPos).toBeLessThan(pageBreakPos)
   })
 })

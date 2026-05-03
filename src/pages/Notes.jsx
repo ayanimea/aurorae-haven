@@ -13,7 +13,7 @@ import {
   deleteNote as deleteNoteUtil,
   exportNoteToFile,
   exportNoteToOdtFile,
-  exportAllNotesToSingleOdtDownload,
+  exportAllNotesToCombinedOdt,
   exportAllNotesToOdtZip
 } from '../utils/notes/noteOperations'
 import NoteDetailsModal from '../components/Notes/NoteDetailsModal'
@@ -261,10 +261,10 @@ function Notes() {
   const handleExportAllOdt = async () => {
     if (notes.length === 0) return
     try {
-      await exportAllNotesToSingleOdtDownload(notes)
-      showToastNotification('✓ All notes exported as ODT (single download)')
+      await exportAllNotesToCombinedOdt(notes)
+      showToastNotification('✓ All notes exported as a combined ODT document')
     } catch (error) {
-      logger.error('Failed to export all notes as ODT files', error)
+      logger.error('Failed to export all notes as combined ODT', error)
       showToastNotification('⚠️ ODT export failed.')
     }
   }

@@ -634,7 +634,7 @@ describe('Notes Component', () => {
 
     })
 
-    test('exports all notes as ODT with a single browser download', async () => {
+    test('exports all notes as combined ODT document', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
       restoreDownloadMocks = restore
 
@@ -659,17 +659,17 @@ describe('Notes Component', () => {
       render(<Notes />)
       fireEvent.click(
         screen.getByRole('button', {
-          name: 'Export all notes as ODT (single download)'
+          name: 'Export all notes as combined ODT'
         })
       )
 
       await waitFor(() => {
         expect(mockClick).toHaveBeenCalledTimes(1)
       })
-      expect(downloadFilenames[0]).toMatch(/^braindump_odt_export_\d{4}-\d{2}-\d{2}\.zip$/)
+      expect(downloadFilenames[0]).toMatch(/^braindump_notes_combined_\d{4}-\d{2}-\d{2}\.odt$/)
     })
 
-    test('exports single note as ODT when using "export all ODT"', async () => {
+    test('exports single note as ODT when using "export all as combined ODT"', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
       restoreDownloadMocks = restore
 
@@ -687,7 +687,7 @@ describe('Notes Component', () => {
       render(<Notes />)
       fireEvent.click(
         screen.getByRole('button', {
-          name: 'Export all notes as ODT (single download)'
+          name: 'Export all notes as combined ODT'
         })
       )
 

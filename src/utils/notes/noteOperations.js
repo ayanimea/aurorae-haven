@@ -372,24 +372,7 @@ function markdownToOdtElements(markdown) {
   return elements.join('')
 }
 
-async function createOdtBlob(title, content) {
-  const zip = new JSZip()
-
-  zip.file('mimetype', ODT_MIME_TYPE, { compression: 'STORE' })
-  zip.file(
-    'META-INF/manifest.xml',
-    `<?xml version="1.0" encoding="UTF-8"?>
-<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
-  <manifest:file-entry manifest:media-type="${ODT_MIME_TYPE}" manifest:full-path="/"/>
-  <manifest:file-entry manifest:media-type="" manifest:full-path="META-INF/"/>
-  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="META-INF/manifest.xml"/>
-  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="content.xml"/>
-  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="styles.xml"/>
-</manifest:manifest>`
-  )
-  zip.file(
-    'styles.xml',
-    `<?xml version="1.0" encoding="UTF-8"?>
+const ODT_STYLES_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <office:document-styles
   xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
   xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
@@ -442,6 +425,9 @@ async function createOdtBlob(title, content) {
     <style:style style:name="Horizontal_Line" style:family="paragraph">
       <style:paragraph-properties fo:border-bottom="1pt solid #2a8f84" fo:padding-bottom="0.1cm" fo:margin-top="0.3cm" fo:margin-bottom="0.3cm"/>
     </style:style>
+    <style:style style:name="Page_Break" style:family="paragraph">
+      <style:paragraph-properties fo:break-before="page"/>
+    </style:style>
     <style:style style:name="Table_Contents" style:family="paragraph">
       <style:text-properties style:font-name="Inter" fo:font-size="11pt"/>
     </style:style>
@@ -475,10 +461,17 @@ async function createOdtBlob(title, content) {
     </text:list-style>
   </office:styles>
 </office:document-styles>`
-  )
-  zip.file(
-    'content.xml',
-    `<?xml version="1.0" encoding="UTF-8"?>
+
+const ODT_MANIFEST_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
+  <manifest:file-entry manifest:media-type="${ODT_MIME_TYPE}" manifest:full-path="/"/>
+  <manifest:file-entry manifest:media-type="" manifest:full-path="META-INF/"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="META-INF/manifest.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="content.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="styles.xml"/>
+</manifest:manifest>`
+
+const ODT_CONTENT_WRAPPER_OPEN = `<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
   xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
   xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
@@ -488,15 +481,42 @@ async function createOdtBlob(title, content) {
   xmlns:xlink="http://www.w3.org/1999/xlink"
   office:version="1.2">
   <office:body>
-    <office:text>
-      <text:h text:style-name="Heading_1" text:outline-level="1">${escapeXml(title || 'Untitled Note')}</text:h>
-      ${markdownToOdtElements(content)}
-    </office:text>
+    <office:text>`
+
+const ODT_CONTENT_WRAPPER_CLOSE = `    </office:text>
   </office:body>
 </office:document-content>`
-  )
 
-  return zip.generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
+function buildOdtZip(contentXml) {
+  const zip = new JSZip()
+  zip.file('mimetype', ODT_MIME_TYPE, { compression: 'STORE' })
+  zip.file('META-INF/manifest.xml', ODT_MANIFEST_XML)
+  zip.file('styles.xml', ODT_STYLES_XML)
+  zip.file('content.xml', contentXml)
+  return zip
+}
+
+async function createOdtBlob(title, content) {
+  const body =
+    `\n      <text:h text:style-name="Heading_1" text:outline-level="1">${escapeXml(title || 'Untitled Note')}</text:h>\n      ` +
+    markdownToOdtElements(content) +
+    '\n'
+  const contentXml = ODT_CONTENT_WRAPPER_OPEN + body + ODT_CONTENT_WRAPPER_CLOSE
+  return buildOdtZip(contentXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
+}
+
+async function createCombinedOdtBlob(notes) {
+  const parts = notes.map((note, index) => {
+    const pageBreak = index === 0 ? '' : '<text:p text:style-name="Page_Break"/>'
+    return (
+      pageBreak +
+      `<text:h text:style-name="Heading_1" text:outline-level="1">${escapeXml(note?.title || 'Untitled Note')}</text:h>` +
+      markdownToOdtElements(note?.content ?? '')
+    )
+  })
+  const body = '\n      ' + parts.join('\n      ') + '\n'
+  const contentXml = ODT_CONTENT_WRAPPER_OPEN + body + ODT_CONTENT_WRAPPER_CLOSE
+  return buildOdtZip(contentXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
 function downloadBlob(blob, filename) {
@@ -655,7 +675,24 @@ export async function exportAllNotesToSingleOdtDownload(notes) {
 }
 
 /**
- * Export all notes as a ZIP archive containing ODT files
+ * Export all notes as a single ODT document with each note on its own page.
+ * @param {Array} notes - Notes to export
+ * @returns {Promise<void>}
+ */
+export async function exportAllNotesToCombinedOdt(notes) {
+  if (!Array.isArray(notes) || notes.length === 0) return
+
+  if (notes.length === 1) {
+    const [note] = notes
+    await exportNoteToOdtFile(note.title, note.content)
+    return
+  }
+
+  const blob = await createCombinedOdtBlob(notes)
+  downloadBlob(blob, `braindump_notes_combined_${new Date().toISOString().slice(0, 10)}.odt`)
+}
+
+/**
  * @param {Array} notes - Notes to export
  * @returns {Promise<void>}
  */
