@@ -159,6 +159,16 @@ describe('noteOperations ODT inline formatting', () => {
     expect(contentXml).toContain('run')
   })
 
+  test('normalizes whitespace-padded URLs: trims before safety check and href attribute', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Padded URL', '[link]( https://example.com )')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).toContain('<text:a')
+    expect(contentXml).toContain('xlink:href="https://example.com"')
+    expect(contentXml).not.toContain('xlink:href=" https://example.com ')
+  })
+
   test('exports images as bracketed alt text', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('Image Test', 'See ![a cat](cat.png) here')

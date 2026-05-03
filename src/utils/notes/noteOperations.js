@@ -110,11 +110,13 @@ function inlineToOdt(text) {
           return `<text:span text:style-name="Strikethrough_Char">${inlineToOdt(content)}</text:span>`
         case 'image':
           return `[${escapeXml(content)}]`
-        case 'link':
-          if (isSafeOdtUrl(url)) {
-            return `<text:a xlink:type="simple" xlink:href="${escapeXml(url)}">${inlineToOdt(content)}</text:a>`
+        case 'link': {
+          const href = url ? url.trim() : ''
+          if (isSafeOdtUrl(href)) {
+            return `<text:a xlink:type="simple" xlink:href="${escapeXml(href)}">${inlineToOdt(content)}</text:a>`
           }
           return inlineToOdt(content)
+        }
         default:
           return escapeXml(content)
       }
