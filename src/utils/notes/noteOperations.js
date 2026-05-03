@@ -136,7 +136,7 @@ function inlineToOdt(text) {
         case 'link': {
           const href = url ? url.trim() : ''
           if (isSafeOdtUrl(href)) {
-            return `<text:a xlink:type="simple" xlink:href="${escapeXml(href)}">${inlineToOdt(content)}</text:a>`
+            return `<text:a xlink:type="simple" xlink:href="${escapeXml(href)}" text:style-name="Internet_Link">${inlineToOdt(content)}</text:a>`
           }
           return inlineToOdt(content)
         }
@@ -395,39 +395,59 @@ async function createOdtBlob(title, content) {
   xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
   xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
   xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+  xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
   office:version="1.2">
+  <office:font-face-decls>
+    <style:font-face style:name="Space Grotesk" svg:font-family="'Space Grotesk'" style:font-family-generic="swiss" style:font-pitch="variable"/>
+    <style:font-face style:name="Inter" svg:font-family="Inter" style:font-family-generic="swiss" style:font-pitch="variable"/>
+    <style:font-face style:name="Courier New" svg:font-family="'Courier New'" style:font-family-generic="modern" style:font-pitch="fixed"/>
+  </office:font-face-decls>
   <office:styles>
+    <style:default-style style:family="paragraph">
+      <style:paragraph-properties fo:line-height="155%" fo:margin-bottom="0.2cm"/>
+      <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-size="11pt" fo:color="#1a1d2e" fo:language="en" fo:country="US"/>
+    </style:default-style>
     <style:style style:name="Heading_1" style:family="paragraph">
-      <style:text-properties fo:font-weight="bold" fo:font-size="2em"/>
+      <style:paragraph-properties fo:margin-top="0.5cm" fo:margin-bottom="0.2cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="24pt" fo:color="#0f1535"/>
     </style:style>
     <style:style style:name="Heading_2" style:family="paragraph">
-      <style:text-properties fo:font-weight="bold" fo:font-size="1.5em"/>
+      <style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.15cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="18pt" fo:color="#1a1d2e"/>
     </style:style>
     <style:style style:name="Heading_3" style:family="paragraph">
-      <style:text-properties fo:font-weight="bold" fo:font-size="1.17em"/>
+      <style:paragraph-properties fo:margin-top="0.35cm" fo:margin-bottom="0.12cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="14pt" fo:color="#2a2e52"/>
     </style:style>
     <style:style style:name="Heading_4" style:family="paragraph">
-      <style:text-properties fo:font-weight="bold" fo:font-size="1em"/>
+      <style:paragraph-properties fo:margin-top="0.3cm" fo:margin-bottom="0.1cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="12pt" fo:color="#1a1d2e"/>
     </style:style>
     <style:style style:name="Heading_5" style:family="paragraph">
-      <style:text-properties fo:font-weight="bold" fo:font-size="0.83em"/>
+      <style:paragraph-properties fo:margin-top="0.25cm" fo:margin-bottom="0.08cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="11pt" fo:color="#1a1d2e"/>
     </style:style>
     <style:style style:name="Heading_6" style:family="paragraph">
-      <style:text-properties fo:font-weight="bold" fo:font-size="0.67em"/>
+      <style:paragraph-properties fo:margin-top="0.2cm" fo:margin-bottom="0.06cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-style="italic" fo:font-size="10pt" fo:color="#2a2e52"/>
     </style:style>
     <style:style style:name="Preformatted_Text" style:family="paragraph">
-      <style:text-properties style:font-name="Courier New"/>
+      <style:paragraph-properties fo:background-color="#f4f5f9" fo:padding="0.2cm" fo:margin-top="0.2cm" fo:margin-bottom="0.2cm"/>
+      <style:text-properties style:font-name="Courier New" fo:font-family="'Courier New', Courier, monospace" fo:font-size="10pt" fo:color="#1a1d2e"/>
     </style:style>
     <style:style style:name="Quotations" style:family="paragraph">
-      <style:paragraph-properties fo:margin-left="1.25cm" fo:margin-right="1.25cm"/>
-      <style:text-properties fo:font-style="italic"/>
+      <style:paragraph-properties fo:border-left="3pt solid #2a8f84" fo:padding-left="0.5cm" fo:padding-top="0.15cm" fo:padding-bottom="0.15cm" fo:margin-left="0.5cm" fo:margin-right="0.5cm" fo:background-color="#f4f5fa" fo:margin-top="0.2cm" fo:margin-bottom="0.2cm"/>
+      <style:text-properties fo:font-style="italic" fo:color="#2a2e52"/>
     </style:style>
     <style:style style:name="Horizontal_Line" style:family="paragraph">
-      <style:paragraph-properties fo:border-bottom="0.06pt solid #000000" fo:padding-bottom="0.05cm"/>
+      <style:paragraph-properties fo:border-bottom="1pt solid #2a8f84" fo:padding-bottom="0.1cm" fo:margin-top="0.3cm" fo:margin-bottom="0.3cm"/>
     </style:style>
-    <style:style style:name="Table_Contents" style:family="paragraph"/>
+    <style:style style:name="Table_Contents" style:family="paragraph">
+      <style:text-properties style:font-name="Inter" fo:font-size="11pt"/>
+    </style:style>
     <style:style style:name="Table_Header_Contents" style:family="paragraph">
-      <style:text-properties fo:font-weight="bold"/>
+      <style:paragraph-properties fo:background-color="#eef0ff"/>
+      <style:text-properties style:font-name="Inter" fo:font-weight="bold" fo:font-size="11pt" fo:color="#0f1535"/>
     </style:style>
     <style:style style:name="Bold_Char" style:family="text">
       <style:text-properties fo:font-weight="bold"/>
@@ -439,10 +459,13 @@ async function createOdtBlob(title, content) {
       <style:text-properties fo:font-weight="bold" fo:font-style="italic"/>
     </style:style>
     <style:style style:name="Code_Char" style:family="text">
-      <style:text-properties style:font-name="Courier New"/>
+      <style:text-properties style:font-name="Courier New" fo:font-size="10pt" fo:background-color="#eef0f4"/>
     </style:style>
     <style:style style:name="Strikethrough_Char" style:family="text">
       <style:text-properties style:text-line-through-style="solid"/>
+    </style:style>
+    <style:style style:name="Internet_Link" style:family="text">
+      <style:text-properties fo:color="#007b6b" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color"/>
     </style:style>
     <text:list-style style:name="List_20_1">
       <text:list-level-style-bullet text:level="1" text:bullet-char="•"/>

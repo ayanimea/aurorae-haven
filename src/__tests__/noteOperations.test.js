@@ -120,13 +120,14 @@ describe('noteOperations ODT inline formatting', () => {
     expect(contentXml).toContain('>this<')
   })
 
-  test('exports hyperlinks with text:a and xlink:href for safe http URLs', async () => {
+  test('exports hyperlinks with text:a, xlink:href, and Internet_Link style for safe http URLs', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('Link Test', 'Visit [example](https://example.com) site')
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const contentXml = await odtZip.file('content.xml').async('string')
     expect(contentXml).toContain('<text:a')
     expect(contentXml).toContain('xlink:href="https://example.com"')
+    expect(contentXml).toContain('text:style-name="Internet_Link"')
     expect(contentXml).toContain('>example<')
   })
 
@@ -418,6 +419,7 @@ describe('noteOperations ODT styles.xml', () => {
     expect(stylesXml).toContain('style:name="Bold_Italic_Char"')
     expect(stylesXml).toContain('style:name="Code_Char"')
     expect(stylesXml).toContain('style:name="Strikethrough_Char"')
+    expect(stylesXml).toContain('style:name="Internet_Link"')
     expect(stylesXml).toContain('style:name="Quotations"')
     expect(stylesXml).toContain('style:name="Horizontal_Line"')
     expect(stylesXml).toContain('style:name="Table_Contents"')
@@ -428,6 +430,19 @@ describe('noteOperations ODT styles.xml', () => {
     expect(stylesXml).toContain('style:name="Heading_4"')
     expect(stylesXml).toContain('style:name="Heading_5"')
     expect(stylesXml).toContain('style:name="Heading_6"')
+  })
+
+  test('styles.xml uses AH-style Space Grotesk font and pt sizes for headings', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('AH Style Test', 'text')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const stylesXml = await odtZip.file('styles.xml').async('string')
+
+    expect(stylesXml).toContain('Space Grotesk')
+    expect(stylesXml).toContain('fo:font-size="24pt"')
+    expect(stylesXml).toContain('fo:color="#0f1535"')
+    expect(stylesXml).toContain('fo:color="#007b6b"')
+    expect(stylesXml).toContain('style:default-style')
   })
 })
 
