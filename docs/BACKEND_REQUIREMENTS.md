@@ -9,10 +9,11 @@ Backend and database infrastructure are intentionally **not implemented here**.
 - The current frontend is local-first and does **not** ship sign-in UI/routes.
 - Authentication environment variables are not consumed by the active UI.
 - Optional backend sync can still be integrated as future work through a custom API endpoint.
+- `VITE_API_BASE_URL` is available for future/custom integrations but is unused by the default app shell.
 
 ## Frontend-provided inputs
 
-- API base URL:
+- Optional API base URL (future/custom sync integrations only):
   - `VITE_API_BASE_URL`
 
 ## Compile mode coverage

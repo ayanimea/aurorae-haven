@@ -84,7 +84,8 @@ The compose build overrides the mode default with `AURORAE_VITE_BASE_URL_OVERRID
 
 ### Optional backend integration (provided to backend team)
 
-- API base URL exposed to frontend via `VITE_API_BASE_URL`.
+- Optional API base URL can be set via `VITE_API_BASE_URL` for future/custom backend integrations.
+- The current app shell does not consume `VITE_API_BASE_URL` by default.
 - Data API contracts and storage design can be owned by the backend team.
 
 Design reference: `docs/POSTGRESQL_ACCOUNT_SCHEMA.md`.
