@@ -95,7 +95,7 @@ Design reference: `docs/POSTGRESQL_ACCOUNT_SCHEMA.md`.
 - **Online web**: hosted frontend bundle with optional API integration
 - **Android**: local-first app shell; optional API integration can be added by backend consumers
 
-Use import/export JSON backups when moving between local and account-backed modes.
+Use import/export JSON backups when moving between local-first installs and devices.
 
 ## Validation checklist
 
