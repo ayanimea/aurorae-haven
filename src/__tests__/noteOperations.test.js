@@ -99,6 +99,15 @@ describe('noteOperations ODT inline formatting', () => {
     expect(contentXml).toContain('>world<')
   })
 
+  test('does not treat intraword underscores as italic (word-boundary guard)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Intraword', 'a_b_c and SOME_CONST_NAME')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('text:style-name="Italic_Char"')
+    expect(contentXml).toContain('a_b_c')
+  })
+
   test('exports bold-italic text with Bold_Italic_Char span', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('BoldItalic Test', 'Hello ***world*** end')
@@ -188,6 +197,15 @@ describe('noteOperations ODT inline formatting', () => {
   test('blocks http: URL with no host (malformed)', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('Bad URL', '[bad](http:)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('<text:a')
+    expect(contentXml).toContain('bad')
+  })
+
+  test('blocks http:// URL with empty host', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Empty Host URL', '[bad](http://)')
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const contentXml = await odtZip.file('content.xml').async('string')
     expect(contentXml).not.toContain('<text:a')
@@ -330,18 +348,15 @@ describe('noteOperations ODT table export', () => {
     expect(contentXml).toContain('>25<')
   })
 
-  test('exports table without separator row as body-only rows', async () => {
+  test('two pipe-lines without a separator row are not treated as a table', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('NoHeader Table', '| foo | bar |\n| baz | qux |')
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const contentXml = await odtZip.file('content.xml').async('string')
 
-    expect(contentXml).toContain('<table:table')
-    expect(contentXml).not.toContain('<table:table-header-rows>')
-    expect(contentXml).toContain('>foo<')
-    expect(contentXml).toContain('>bar<')
-    expect(contentXml).toContain('>baz<')
-    expect(contentXml).toContain('>qux<')
+    expect(contentXml).not.toContain('<table:table')
+    expect(contentXml).toContain('foo')
+    expect(contentXml).toContain('baz')
   })
 
   test('exports multiple tables with distinct names', async () => {

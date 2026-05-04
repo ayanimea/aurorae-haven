@@ -57,7 +57,10 @@ function isSafeOdtUrl(url) {
   if (/^https?:/i.test(s)) {
     try {
       const parsed = new URL(s)
-      return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+      return (
+        (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+        parsed.hostname !== ''
+      )
     } catch {
       return false
     }
@@ -73,11 +76,11 @@ function isSafeOdtUrl(url) {
 const INLINE_PATTERNS = [
   { re: /`([^`]+)`/y, type: 'code' },
   { re: /\*\*\*(.+?)\*\*\*/y, type: 'bold-italic' },
-  { re: /___(.+?)___/y, type: 'bold-italic' },
+  { re: /(?<!\w)___(.+?)___(?!\w)/y, type: 'bold-italic' },
   { re: /\*\*([^*].*?)\*\*/y, type: 'bold' },
-  { re: /__([^_].*?)__/y, type: 'bold' },
+  { re: /(?<!\w)__([^_].*?)__(?!\w)/y, type: 'bold' },
   { re: /\*([^*\n]+?)\*/y, type: 'italic' },
-  { re: /_([^_\n]+?)_/y, type: 'italic' },
+  { re: /(?<!\w)_([^_\n]+?)_(?!\w)/y, type: 'italic' },
   { re: /~~(.+?)~~/y, type: 'strikethrough' },
   // Link/image URL: supports one level of balanced parentheses in the URL
   // (e.g. Wikipedia links like "Mathematics_(disambiguation)").
@@ -284,13 +287,13 @@ function markdownToOdtElements(markdown) {
     }
 
     // Table rows: lines containing '|'.
-    // A new table is only started when there is evidence of more table content:
-    // the next line is a separator row OR the next line also contains '|'.
-    // This avoids treating a single pipe-containing paragraph line as a table.
+    // A new table is only started when the next line is a valid GFM separator row
+    // (e.g. |---|---|). This matches how the app's marked preview handles tables
+    // and prevents false positives for normal text that happens to contain pipes.
     // Once already inside a table, any line with '|' continues the table.
     if (
       (inTable && line.includes('|')) ||
-      (!inTable && line.includes('|') && (isTableSeparatorLine(nextLine) || nextLine.includes('|')))
+      (!inTable && line.includes('|') && isTableSeparatorLine(nextLine))
     ) {
       closeAllLists()
       inTable = true
