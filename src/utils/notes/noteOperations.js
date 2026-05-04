@@ -408,9 +408,13 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
     .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .replace(/\*(.+?)\*/g, '$1')
-    .replace(/___(.+?)___/g, '$1')
-    .replace(/__(.+?)__/g, '$1')
-    .replace(/_(.+?)_/g, '$1')
+    // Underscore emphasis: require a non-word char (or line start) before the
+    // opener so that identifiers like SOME_CONST_NAME are not stripped.
+    // Lookahead is used on the closing side (supported in Safari 14+);
+    // the leading non-word char is captured and re-emitted as $1.
+    .replace(/(^|[^a-zA-Z0-9])___(.+?)___(?=[^a-zA-Z0-9]|$)/g, '$1$2')
+    .replace(/(^|[^a-zA-Z0-9])__(.+?)__(?=[^a-zA-Z0-9]|$)/g, '$1$2')
+    .replace(/(^|[^a-zA-Z0-9])_(.+?)_(?=[^a-zA-Z0-9]|$)/g, '$1$2')
     .replace(/~~(.+?)~~/g, '$1')
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
@@ -418,7 +422,9 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
     .replace(/^[-*_]{3,}\s*$/gm, '')
     .replace(/^\s*[-*+]\s+/gm, '')
     .replace(/^\s*\d+\.\s+/gm, '')
-    .replace(/\|[:\- |]+\|/g, '')
+    // Strip GFM table separator rows in both piped (|---|---|) and
+    // pipeless (---|---) forms: a line consisting only of -, :, |, and spaces.
+    .replace(/^[ \t]*\|?[ \t]*:?-+:?(?:[ \t]*[|+][ \t]*:?-+:?)+[ \t]*\|?[ \t]*$/gm, '')
     .replace(/\|/g, ' ')
     .replace(/\n{2,}/g, '\n')
     .trim()
@@ -587,13 +593,14 @@ function buildOdtZip(contentXml, metaXml) {
 }
 
 async function createOdtBlob(title, content, meta = {}) {
-  const titleXml = escapeXml(title || 'Untitled Note')
+  const resolvedTitle = title || 'Untitled Note'
+  const titleXml = escapeXml(resolvedTitle)
   const bodyXml = markdownToOdtElements(content)
   const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
       <text:p text:style-name="Title">${titleXml}</text:p>
       ${bodyXml}
 ${ODT_CONTENT_WRAPPER_CLOSE}`
-  const metaXml = buildMetaXml(title, extractTextSummary(content), meta.createdAt, meta.updatedAt)
+  const metaXml = buildMetaXml(resolvedTitle, extractTextSummary(content), meta.createdAt, meta.updatedAt)
   return buildOdtZip(contentXml, metaXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
