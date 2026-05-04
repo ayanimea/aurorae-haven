@@ -759,13 +759,13 @@ describe('noteOperations ODT meta.xml document properties', () => {
     expect(metaXml).not.toContain('##')
   })
 
-  test('meta.xml contains Aurorae Haven as creator', async () => {
+  test('meta.xml does not contain hardcoded author fields', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('Creator Test', 'Content.')
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const metaXml = await odtZip.file('meta.xml').async('string')
-    expect(metaXml).toContain('<meta:initial-creator>Aurorae Haven</meta:initial-creator>')
-    expect(metaXml).toContain('<dc:creator>Aurorae Haven</dc:creator>')
+    expect(metaXml).not.toContain('meta:initial-creator')
+    expect(metaXml).not.toContain('dc:creator')
   })
 
   test('manifest.xml references meta.xml', async () => {

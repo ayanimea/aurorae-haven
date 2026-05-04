@@ -450,8 +450,6 @@ function buildMetaXml(title, description, createdAt, modifiedAt) {
   <office:meta>
     <dc:title>${escapeXml(title || '')}</dc:title>
     <dc:description>${escapeXml(description || '')}</dc:description>
-    <meta:initial-creator>Aurorae Haven</meta:initial-creator>
-    <dc:creator>Aurorae Haven</dc:creator>
     <meta:creation-date>${created}</meta:creation-date>
     <dc:date>${modified}</dc:date>
   </office:meta>
