@@ -77,7 +77,8 @@ const INLINE_PATTERNS = [
   { re: /`([^`]+)`/y, type: 'code' },
   { re: /\*\*\*(.+?)\*\*\*/y, type: 'bold-italic' },
   // wordBoundary: true — word-boundary guard is applied in JS (text[pos-1] / text[lastIndex])
-  // rather than regex lookbehind, which is not supported in Safari 14/15.
+  // rather than regex negative lookbehind (?<!\w) / lookahead (?!\w), which are
+  // not supported in Safari 14/15 (causes a parse-time SyntaxError).
   { re: /___(.+?)___/y, type: 'bold-italic', wordBoundary: true },
   { re: /\*\*([^*].*?)\*\*/y, type: 'bold' },
   { re: /__([^_].*?)__/y, type: 'bold', wordBoundary: true },
@@ -109,8 +110,8 @@ function inlineToOdt(text) {
       // For underscore-based patterns, guard against intraword matches (e.g. a_b_c).
       // This check replaces regex lookbehind/lookahead which is unsupported in Safari 14/15.
       if (wordBoundary) {
-        const before = pos > 0 ? text[pos - 1] : ''
-        const after = re.lastIndex < text.length ? text[re.lastIndex] : ''
+        const before = pos > 0 ? text[pos - 1] : ' '
+        const after = re.lastIndex < text.length ? text[re.lastIndex] : ' '
         if (/\w/.test(before) || /\w/.test(after)) continue
       }
       tokens.push({ type, content: m[1], url: m[2] || null })
