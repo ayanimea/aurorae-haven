@@ -410,7 +410,7 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
     .replace(/\*(.+?)\*/g, '$1')
     .replace(/___(.+?)___/g, '$1')
     .replace(/__(.+?)__/g, '$1')
-    .replace(/_([^_]+)_/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
     .replace(/~~(.+?)~~/g, '$1')
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
