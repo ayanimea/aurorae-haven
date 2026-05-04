@@ -717,3 +717,64 @@ describe('exportAllNotesToCombinedOdt', () => {
     expect(firstHeadingPos).toBeLessThan(pageBreakPos)
   })
 })
+
+describe('noteOperations ODT meta.xml document properties', () => {
+  test('single note export includes meta.xml in the ODT ZIP', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('My Note', 'Some content here.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    expect(odtZip.file('meta.xml')).not.toBeNull()
+  })
+
+  test('meta.xml contains the note title as dc:title', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Titled Note', 'Body content.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    expect(metaXml).toContain('<dc:title>Titled Note</dc:title>')
+  })
+
+  test('meta.xml dc:description is populated with plain-text summary of note content', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Summary Note', '## Heading\n\nThis is the **body** text.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    // Markdown stripped: heading marker removed, bold markers removed
+    expect(metaXml).toContain('<dc:description>')
+    expect(metaXml).toContain('Heading')
+    expect(metaXml).toContain('body text')
+    // Markdown syntax should not appear in the summary
+    expect(metaXml).not.toContain('**')
+    expect(metaXml).not.toContain('##')
+  })
+
+  test('meta.xml contains Aurorae Haven as creator', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Creator Test', 'Content.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    expect(metaXml).toContain('<meta:initial-creator>Aurorae Haven</meta:initial-creator>')
+    expect(metaXml).toContain('<dc:creator>Aurorae Haven</dc:creator>')
+  })
+
+  test('manifest.xml references meta.xml', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Manifest Test', 'Content.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const manifestXml = await odtZip.file('META-INF/manifest.xml').async('string')
+    expect(manifestXml).toContain('manifest:full-path="meta.xml"')
+  })
+
+  test('combined ODT meta.xml uses "Combined Notes Export" title for multiple notes', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportAllNotesToCombinedOdt([
+      { title: 'Note A', content: 'First note body.' },
+      { title: 'Note B', content: 'Second note body.' }
+    ])
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    expect(metaXml).toContain('<dc:title>Combined Notes Export</dc:title>')
+    expect(metaXml).toContain('Note A')
+    expect(metaXml).toContain('Note B')
+  })
+})

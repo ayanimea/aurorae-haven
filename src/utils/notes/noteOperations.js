@@ -183,7 +183,7 @@ function markdownToOdtElements(markdown) {
   // A table separator row contains only |, -, :, and spaces.
   const isTableSeparatorLine = (line) => {
     const t = line.trim()
-    return t.includes('|') && t.includes('-') && /^[\|:\- ]+$/.test(t)
+    return t.includes('|') && t.includes('-') && /^[|:\- ]+$/.test(t)
   }
 
   const flushTable = () => {
@@ -384,6 +384,56 @@ function markdownToOdtElements(markdown) {
   return elements.join('')
 }
 
+// Strip markdown syntax and return the first maxLen characters of plain text.
+// Used to populate the ODT document description (Summary) in meta.xml so that
+// word processors like LibreOffice Writer and Microsoft Word auto-populate the
+// "Summary" / "Description" field in File → Properties without any extra steps.
+function extractTextSummary(markdown, maxLen = 300) {
+  if (!markdown) return ''
+  return markdown
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^>\s*/gm, '')
+    .replace(/^[-*_]{3,}\s*$/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    .replace(/\|[:\- |]+\|/g, '')
+    .replace(/\|/g, ' ')
+    .replace(/\n{2,}/g, '\n')
+    .trim()
+    .slice(0, maxLen)
+}
+
+// Build an ODT meta.xml string with document properties.
+// <dc:description> is the "Summary/Comments" field shown in
+// LibreOffice File → Properties → Description and
+// MS Word File → Info → Properties → Comments.
+function buildMetaXml(title, description, createdAt, modifiedAt) {
+  const now = new Date().toISOString()
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-meta
+  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+  office:version="1.2">
+  <office:meta>
+    <dc:title>${escapeXml(title || '')}</dc:title>
+    <dc:description>${escapeXml(description || '')}</dc:description>
+    <meta:initial-creator>Aurorae Haven</meta:initial-creator>
+    <dc:creator>Aurorae Haven</dc:creator>
+    <meta:creation-date>${escapeXml(createdAt || now)}</meta:creation-date>
+    <dc:date>${escapeXml(modifiedAt || now)}</dc:date>
+  </office:meta>
+</office:document-meta>`
+}
+
 const ODT_STYLES_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <office:document-styles
   xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -479,6 +529,7 @@ const ODT_MANIFEST_XML = `<?xml version="1.0" encoding="UTF-8"?>
   <manifest:file-entry manifest:media-type="${ODT_MIME_TYPE}" manifest:full-path="/"/>
   <manifest:file-entry manifest:media-type="" manifest:full-path="META-INF/"/>
   <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="META-INF/manifest.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="meta.xml"/>
   <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="content.xml"/>
   <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="styles.xml"/>
 </manifest:manifest>`
@@ -499,11 +550,12 @@ const ODT_CONTENT_WRAPPER_CLOSE = `    </office:text>
   </office:body>
 </office:document-content>`
 
-function buildOdtZip(contentXml) {
+function buildOdtZip(contentXml, metaXml) {
   const zip = new JSZip()
   zip.file('mimetype', ODT_MIME_TYPE, { compression: 'STORE' })
   zip.file('META-INF/manifest.xml', ODT_MANIFEST_XML)
   zip.file('styles.xml', ODT_STYLES_XML)
+  zip.file('meta.xml', metaXml)
   zip.file('content.xml', contentXml)
   return zip
 }
@@ -515,7 +567,8 @@ async function createOdtBlob(title, content) {
       <text:h text:style-name="Heading 1" text:outline-level="1">${titleXml}</text:h>
       ${bodyXml}
 ${ODT_CONTENT_WRAPPER_CLOSE}`
-  return buildOdtZip(contentXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
+  const metaXml = buildMetaXml(title, extractTextSummary(content))
+  return buildOdtZip(contentXml, metaXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
 async function createCombinedOdtBlob(notes) {
@@ -528,7 +581,19 @@ async function createCombinedOdtBlob(notes) {
   const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
       ${noteParts.join('\n      ')}
 ${ODT_CONTENT_WRAPPER_CLOSE}`
-  return buildOdtZip(contentXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
+  const combinedTitle = notes.length === 1
+    ? (notes[0]?.title || 'Untitled Note')
+    : 'Combined Notes Export'
+  const combinedDescription = notes.length === 1
+    ? extractTextSummary(notes[0]?.content || '')
+    : `Contains ${notes.length} notes: ${notes.map((n) => n?.title || 'Untitled').join(', ')}`.slice(0, 300)
+  const metaXml = buildMetaXml(
+    combinedTitle,
+    combinedDescription,
+    notes[0]?.createdAt,
+    notes[notes.length - 1]?.updatedAt
+  )
+  return buildOdtZip(contentXml, metaXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
 function downloadBlob(blob, filename) {
