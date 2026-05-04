@@ -427,6 +427,36 @@ describe('noteOperations ODT blockquote and horizontal rule', () => {
     expect(contentXml).toContain('>This is a quote<')
   })
 
+  test('exports indented blockquote (1 space) as Quotations', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Indented BQ 1', ' > indented one')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Quotations"')
+    expect(contentXml).toContain('>indented one<')
+  })
+
+  test('exports indented blockquote (3 spaces) as Quotations', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Indented BQ 3', '   > indented three')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Quotations"')
+    expect(contentXml).toContain('>indented three<')
+  })
+
+  test('indented blockquote with pipe is not treated as table row', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Indented BQ Pipe', '  > A | B')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).not.toContain('<table:table')
+    expect(contentXml).toContain('text:style-name="Quotations"')
+  })
+
   test('exports horizontal rule --- with Horizontal_Line paragraph style', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile('Rule Note', 'Above\n---\nBelow')

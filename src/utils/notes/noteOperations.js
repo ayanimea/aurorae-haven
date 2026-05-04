@@ -197,8 +197,9 @@ function markdownToOdtElements(markdown) {
 
   // Returns true when the line starts with a blockquote (>) or list (-/*/+/1.)
   // marker — such lines must never be mis-parsed as table rows.
+  // Markdown allows up to 3 leading spaces before the > character.
   const hasBlockquoteOrListPrefix = (line) =>
-    /^>/.test(line) || /^\s*([-*+]|\d+\.)\s/.test(line)
+    /^\s{0,3}>/.test(line) || /^\s*([-*+]|\d+\.)\s/.test(line)
 
   const flushTable = () => {
     if (!inTable) return
@@ -347,8 +348,8 @@ function markdownToOdtElements(markdown) {
       continue
     }
 
-    // Blockquote.
-    const blockquoteMatch = line.match(/^>\s?(.*)$/)
+    // Blockquote. Markdown allows up to 3 leading spaces before the > marker.
+    const blockquoteMatch = line.match(/^\s{0,3}>\s?(.*)$/)
     if (blockquoteMatch) {
       closeAllLists()
       elements.push(
