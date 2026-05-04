@@ -259,7 +259,7 @@ describe('noteOperations ODT inline formatting', () => {
     await exportNoteToOdtFile('Heading Format', '## My **bold** heading')
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const contentXml = await odtZip.file('content.xml').async('string')
-    expect(contentXml).toContain('<text:h text:style-name="Heading_2" text:outline-level="2">')
+    expect(contentXml).toContain('<text:h text:style-name="Heading 2" text:outline-level="2">')
     expect(contentXml).toContain('text:style-name="Bold_Char"')
   })
 
@@ -445,12 +445,12 @@ describe('noteOperations ODT styles.xml', () => {
     expect(stylesXml).toContain('style:name="Horizontal_Line"')
     expect(stylesXml).toContain('style:name="Table_Contents"')
     expect(stylesXml).toContain('style:name="Table_Header_Contents"')
-    expect(stylesXml).toContain('style:name="Heading_1"')
-    expect(stylesXml).toContain('style:name="Heading_2"')
-    expect(stylesXml).toContain('style:name="Heading_3"')
-    expect(stylesXml).toContain('style:name="Heading_4"')
-    expect(stylesXml).toContain('style:name="Heading_5"')
-    expect(stylesXml).toContain('style:name="Heading_6"')
+    expect(stylesXml).toContain('style:name="Heading 1"')
+    expect(stylesXml).toContain('style:name="Heading 2"')
+    expect(stylesXml).toContain('style:name="Heading 3"')
+    expect(stylesXml).toContain('style:name="Heading 4"')
+    expect(stylesXml).toContain('style:name="Heading 5"')
+    expect(stylesXml).toContain('style:name="Heading 6"')
   })
 
   test('styles.xml uses AH-style Space Grotesk font and pt sizes for headings', async () => {
@@ -478,22 +478,22 @@ describe('noteOperations ODT heading export', () => {
     const contentXml = await odtZip.file('content.xml').async('string')
 
     expect(contentXml).toContain(
-      'text:style-name="Heading_1" text:outline-level="1"'
+      'text:style-name="Heading 1" text:outline-level="1"'
     )
     expect(contentXml).toContain(
-      'text:style-name="Heading_2" text:outline-level="2"'
+      'text:style-name="Heading 2" text:outline-level="2"'
     )
     expect(contentXml).toContain(
-      'text:style-name="Heading_3" text:outline-level="3"'
+      'text:style-name="Heading 3" text:outline-level="3"'
     )
     expect(contentXml).toContain(
-      'text:style-name="Heading_4" text:outline-level="4"'
+      'text:style-name="Heading 4" text:outline-level="4"'
     )
     expect(contentXml).toContain(
-      'text:style-name="Heading_5" text:outline-level="5"'
+      'text:style-name="Heading 5" text:outline-level="5"'
     )
     expect(contentXml).toContain(
-      'text:style-name="Heading_6" text:outline-level="6"'
+      'text:style-name="Heading 6" text:outline-level="6"'
     )
     expect(contentXml).toContain('>H1<')
     expect(contentXml).toContain('>H6<')
@@ -505,7 +505,7 @@ describe('noteOperations ODT heading export', () => {
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const contentXml = await odtZip.file('content.xml').async('string')
 
-    expect(contentXml).toContain('text:style-name="Heading_2"')
+    expect(contentXml).toContain('text:style-name="Heading 2"')
     expect(contentXml).toContain('text:style-name="Bold_Char"')
   })
 })

@@ -76,11 +76,13 @@ function isSafeOdtUrl(url) {
 const INLINE_PATTERNS = [
   { re: /`([^`]+)`/y, type: 'code' },
   { re: /\*\*\*(.+?)\*\*\*/y, type: 'bold-italic' },
-  { re: /(?<!\w)___(.+?)___(?!\w)/y, type: 'bold-italic' },
+  // wordBoundary: true — word-boundary guard is applied in JS (text[pos-1] / text[lastIndex])
+  // rather than regex lookbehind, which is not supported in Safari 14/15.
+  { re: /___(.+?)___/y, type: 'bold-italic', wordBoundary: true },
   { re: /\*\*([^*].*?)\*\*/y, type: 'bold' },
-  { re: /(?<!\w)__([^_].*?)__(?!\w)/y, type: 'bold' },
+  { re: /__([^_].*?)__/y, type: 'bold', wordBoundary: true },
   { re: /\*([^*\n]+?)\*/y, type: 'italic' },
-  { re: /(?<!\w)_([^_\n]+?)_(?!\w)/y, type: 'italic' },
+  { re: /_([^_\n]+?)_/y, type: 'italic', wordBoundary: true },
   { re: /~~(.+?)~~/y, type: 'strikethrough' },
   // Link/image URL: supports one level of balanced parentheses in the URL
   // (e.g. Wikipedia links like "Mathematics_(disambiguation)").
@@ -100,15 +102,21 @@ function inlineToOdt(text) {
 
   while (pos < text.length) {
     let matched = false
-    for (const { re, type } of INLINE_PATTERNS) {
+    for (const { re, type, wordBoundary } of INLINE_PATTERNS) {
       re.lastIndex = pos
       const m = re.exec(text)
-      if (m) {
-        tokens.push({ type, content: m[1], url: m[2] || null })
-        pos = re.lastIndex
-        matched = true
-        break
+      if (!m) continue
+      // For underscore-based patterns, guard against intraword matches (e.g. a_b_c).
+      // This check replaces regex lookbehind/lookahead which is unsupported in Safari 14/15.
+      if (wordBoundary) {
+        const before = pos > 0 ? text[pos - 1] : ''
+        const after = re.lastIndex < text.length ? text[re.lastIndex] : ''
+        if (/\w/.test(before) || /\w/.test(after)) continue
       }
+      tokens.push({ type, content: m[1], url: m[2] || null })
+      pos = re.lastIndex
+      matched = true
+      break
     }
     if (!matched) {
       const last = tokens[tokens.length - 1]
@@ -309,7 +317,7 @@ function markdownToOdtElements(markdown) {
       closeAllLists()
       const level = headingMatch[1].length
       elements.push(
-        `<text:h text:style-name="Heading_${level}" text:outline-level="${level}">${inlineToOdt(headingMatch[2])}</text:h>`
+        `<text:h text:style-name="Heading ${level}" text:outline-level="${level}">${inlineToOdt(headingMatch[2])}</text:h>`
       )
       continue
     }
@@ -393,27 +401,27 @@ const ODT_STYLES_XML = `<?xml version="1.0" encoding="UTF-8"?>
       <style:paragraph-properties fo:line-height="155%" fo:margin-bottom="0.2cm"/>
       <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-size="11pt" fo:color="#1a1d2e" fo:language="en" fo:country="US"/>
     </style:default-style>
-    <style:style style:name="Heading_1" style:family="paragraph">
+    <style:style style:name="Heading 1" style:family="paragraph">
       <style:paragraph-properties fo:margin-top="0.5cm" fo:margin-bottom="0.2cm" fo:keep-with-next="always"/>
       <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="24pt" fo:color="#0f1535"/>
     </style:style>
-    <style:style style:name="Heading_2" style:family="paragraph">
+    <style:style style:name="Heading 2" style:family="paragraph">
       <style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.15cm" fo:keep-with-next="always"/>
       <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="18pt" fo:color="#1a1d2e"/>
     </style:style>
-    <style:style style:name="Heading_3" style:family="paragraph">
+    <style:style style:name="Heading 3" style:family="paragraph">
       <style:paragraph-properties fo:margin-top="0.35cm" fo:margin-bottom="0.12cm" fo:keep-with-next="always"/>
       <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="14pt" fo:color="#2a2e52"/>
     </style:style>
-    <style:style style:name="Heading_4" style:family="paragraph">
+    <style:style style:name="Heading 4" style:family="paragraph">
       <style:paragraph-properties fo:margin-top="0.3cm" fo:margin-bottom="0.1cm" fo:keep-with-next="always"/>
       <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="12pt" fo:color="#1a1d2e"/>
     </style:style>
-    <style:style style:name="Heading_5" style:family="paragraph">
+    <style:style style:name="Heading 5" style:family="paragraph">
       <style:paragraph-properties fo:margin-top="0.25cm" fo:margin-bottom="0.08cm" fo:keep-with-next="always"/>
       <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="11pt" fo:color="#1a1d2e"/>
     </style:style>
-    <style:style style:name="Heading_6" style:family="paragraph">
+    <style:style style:name="Heading 6" style:family="paragraph">
       <style:paragraph-properties fo:margin-top="0.2cm" fo:margin-bottom="0.06cm" fo:keep-with-next="always"/>
       <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-style="italic" fo:font-size="10pt" fo:color="#2a2e52"/>
     </style:style>
@@ -503,7 +511,7 @@ async function createOdtBlob(title, content) {
   const titleXml = escapeXml(title || 'Untitled Note')
   const bodyXml = markdownToOdtElements(content)
   const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
-      <text:h text:style-name="Heading_1" text:outline-level="1">${titleXml}</text:h>
+      <text:h text:style-name="Heading 1" text:outline-level="1">${titleXml}</text:h>
       ${bodyXml}
 ${ODT_CONTENT_WRAPPER_CLOSE}`
   return buildOdtZip(contentXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
@@ -514,7 +522,7 @@ async function createCombinedOdtBlob(notes) {
     const pageBreak = index === 0 ? '' : '<text:p text:style-name="Page_Break"/>'
     const titleXml = escapeXml(note?.title || 'Untitled Note')
     const bodyXml = markdownToOdtElements(note?.content ?? '')
-    return `${pageBreak}<text:h text:style-name="Heading_1" text:outline-level="1">${titleXml}</text:h>${bodyXml}`
+    return `${pageBreak}<text:h text:style-name="Heading 1" text:outline-level="1">${titleXml}</text:h>${bodyXml}`
   })
   const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
       ${noteParts.join('\n      ')}
