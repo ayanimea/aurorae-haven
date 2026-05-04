@@ -451,6 +451,7 @@ describe('noteOperations ODT styles.xml', () => {
     expect(stylesXml).toContain('style:name="Heading 4"')
     expect(stylesXml).toContain('style:name="Heading 5"')
     expect(stylesXml).toContain('style:name="Heading 6"')
+    expect(stylesXml).toContain('style:name="Title"')
   })
 
   test('styles.xml uses AH-style Space Grotesk font and pt sizes for headings', async () => {
@@ -497,6 +498,16 @@ describe('noteOperations ODT heading export', () => {
     )
     expect(contentXml).toContain('>H1<')
     expect(contentXml).toContain('>H6<')
+  })
+
+  test('note title uses Title style, not Heading 1', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('My Note Title', '# First Heading\nsome text')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Title">My Note Title<')
+    expect(contentXml).toContain('text:style-name="Heading 1" text:outline-level="1"')
   })
 
   test('heading text passes through inlineToOdt (bold inside heading)', async () => {

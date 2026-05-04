@@ -476,6 +476,10 @@ const ODT_STYLES_XML = `<?xml version="1.0" encoding="UTF-8"?>
       <style:paragraph-properties fo:line-height="155%" fo:margin-bottom="0.2cm"/>
       <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-size="11pt" fo:color="#1a1d2e" fo:language="en" fo:country="US"/>
     </style:default-style>
+    <style:style style:name="Title" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0" fo:margin-bottom="0.4cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="28pt" fo:color="#0f1535"/>
+    </style:style>
     <style:style style:name="Heading 1" style:family="paragraph">
       <style:paragraph-properties fo:margin-top="0.5cm" fo:margin-bottom="0.2cm" fo:keep-with-next="always"/>
       <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="24pt" fo:color="#0f1535"/>
@@ -588,7 +592,7 @@ async function createOdtBlob(title, content, meta = {}) {
   const titleXml = escapeXml(title || 'Untitled Note')
   const bodyXml = markdownToOdtElements(content)
   const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
-      <text:h text:style-name="Heading 1" text:outline-level="1">${titleXml}</text:h>
+      <text:p text:style-name="Title">${titleXml}</text:p>
       ${bodyXml}
 ${ODT_CONTENT_WRAPPER_CLOSE}`
   const metaXml = buildMetaXml(title, extractTextSummary(content), meta.createdAt, meta.updatedAt)
@@ -600,7 +604,7 @@ async function createCombinedOdtBlob(notes) {
     const pageBreak = index === 0 ? '' : '<text:p text:style-name="Page_Break"/>'
     const titleXml = escapeXml(note?.title || 'Untitled Note')
     const bodyXml = markdownToOdtElements(note?.content ?? '')
-    return `${pageBreak}<text:h text:style-name="Heading 1" text:outline-level="1">${titleXml}</text:h>${bodyXml}`
+    return `${pageBreak}<text:p text:style-name="Title">${titleXml}</text:p>${bodyXml}`
   })
   const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
       ${noteParts.join('\n      ')}
