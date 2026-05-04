@@ -1002,4 +1002,29 @@ describe('noteOperations ODT meta.xml document properties', () => {
     expect(descText).toContain('An indented quote')
     expect(descText).toContain('Plain text after')
   })
+
+  test('meta.xml dc:description strips spaced/indented HR variants (- - -, ***,    ---)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Spaced HR', 'Before\n- - -\nMiddle\n   ***\nAfter')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    const descMatch = metaXml.match(/<dc:description>([\s\S]*?)<\/dc:description>/)
+    const descText = descMatch ? descMatch[1] : ''
+    expect(descText).not.toContain('- - -')
+    expect(descText).not.toContain('***')
+    expect(descText).toContain('Before')
+    expect(descText).toContain('Middle')
+    expect(descText).toContain('After')
+  })
+
+  test('meta.xml dc:description does not strip ASCII-art separators containing "+"', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('ASCII Art', 'Some text\n---+---\nMore text')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    const descMatch = metaXml.match(/<dc:description>([\s\S]*?)<\/dc:description>/)
+    const descText = descMatch ? descMatch[1] : ''
+    // "---+---" is NOT a GFM table separator (contains +), it should not be stripped
+    expect(descText).toContain('---+---')
+  })
 })

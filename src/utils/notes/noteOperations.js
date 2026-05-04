@@ -447,12 +447,12 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/^\s{0,3}>\s*/gm, '')
-    .replace(/^[-*_]{3,}\s*$/gm, '')
+    .replace(/^\s{0,3}([-*_]\s*){3,}$/gm, '')
     .replace(/^\s*[-*+]\s+/gm, '')
     .replace(/^\s*\d+\.\s+/gm, '')
     // Strip GFM table separator rows in both piped (|---|---|) and
     // pipeless (---|---) forms: a line consisting only of -, :, |, and spaces.
-    .replace(/^[ \t]*\|?[ \t]*:?-+:?(?:[ \t]*[|+][ \t]*:?-+:?)+[ \t]*\|?[ \t]*$/gm, '')
+    .replace(/^[ ]*\|?[ ]*:?-+:?(?:[ ]*\|[ ]*:?-+:?)+[ ]*\|?[ ]*$/gm, '')
     .replace(/\|/g, ' ')
     .replace(/\n{2,}/g, '\n')
     .trim()
