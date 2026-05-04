@@ -394,6 +394,26 @@ describe('noteOperations ODT table export', () => {
     expect(contentXml).toContain('<table:table')
     expect(contentXml).toContain('</table:table>')
   })
+
+  test('blockquote containing pipe is not treated as table row', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('BQ Pipe', '> A | B')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).not.toContain('<table:table')
+    expect(contentXml).toContain('text:style-name="Quotations"')
+  })
+
+  test('list item containing pipe is not treated as table row', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('List Pipe', '- A | B')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).not.toContain('<table:table')
+    expect(contentXml).toContain('<text:list')
+  })
 })
 
 describe('noteOperations ODT blockquote and horizontal rule', () => {

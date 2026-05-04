@@ -186,6 +186,11 @@ function markdownToOdtElements(markdown) {
     return t.includes('|') && t.includes('-') && /^[|:\- ]+$/.test(t)
   }
 
+  // Returns true when the line starts with a blockquote (>) or list (-/*/+/1.)
+  // marker — such lines must never be mis-parsed as table rows.
+  const hasBlockquoteOrListPrefix = (line) =>
+    /^>/.test(line) || /^\s*([-*+]|\d+\.)\s/.test(line)
+
   const flushTable = () => {
     if (!inTable) return
     const captured = tableLines
@@ -300,9 +305,12 @@ function markdownToOdtElements(markdown) {
     // (e.g. |---|---|). This matches how the app's marked preview handles tables
     // and prevents false positives for normal text that happens to contain pipes.
     // Once already inside a table, any line with '|' continues the table.
+    // Lines that begin with a blockquote (>) or list (- / * / + / 1.) prefix are
+    // excluded — they must be parsed by the blockquote/list handlers further down.
     if (
-      (inTable && line.includes('|')) ||
-      (!inTable && line.includes('|') && isTableSeparatorLine(nextLine))
+      !hasBlockquoteOrListPrefix(line) &&
+      ((inTable && line.includes('|')) ||
+        (!inTable && line.includes('|') && isTableSeparatorLine(nextLine)))
     ) {
       closeAllLists()
       inTable = true
