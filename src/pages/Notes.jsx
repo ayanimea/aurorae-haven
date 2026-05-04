@@ -262,7 +262,11 @@ function Notes() {
     if (notes.length === 0) return
     try {
       await exportAllNotesToCombinedOdt(notes)
-      showToastNotification('✓ All notes exported as a combined ODT document')
+      showToastNotification(
+        notes.length === 1
+          ? '✓ Note exported as ODT document'
+          : '✓ All notes exported as a combined ODT document'
+      )
     } catch (error) {
       logger.error('Failed to export all notes as combined ODT', error)
       showToastNotification('⚠️ ODT export failed.')
