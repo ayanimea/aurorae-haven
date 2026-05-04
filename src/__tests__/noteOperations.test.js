@@ -839,4 +839,45 @@ describe('noteOperations ODT meta.xml document properties', () => {
     expect(metaXml).toMatch(/<meta:creation-date>\d{4}-\d{2}-\d{2}T/)
     expect(metaXml).toMatch(/<dc:date>\d{4}-\d{2}-\d{2}T/)
   })
+
+  test('meta.xml dc:description strips underscore-based emphasis but preserves intraword underscores', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    // _italic_ and __bold__ should be stripped; SOME_CONST_NAME should stay intact
+    await exportNoteToOdtFile('Underscore Note', 'This is _italic_ and __bold__ text with SOME_CONST_NAME identifier.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    // Markdown syntax markers should be removed
+    expect(metaXml).not.toContain('_italic_')
+    expect(metaXml).not.toContain('__bold__')
+    // The visible text should remain
+    expect(metaXml).toContain('italic')
+    expect(metaXml).toContain('bold')
+    // Intraword underscores in identifiers should be preserved
+    expect(metaXml).toContain('SOME_CONST_NAME')
+  })
+
+  test('meta.xml dc:description strips pipeless GFM table separator rows', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Table Note', 'Header A | Header B\n---|---\nCell A | Cell B')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    // The separator row dashes should not appear in the summary
+    expect(metaXml).not.toMatch(/---|---/)
+    // Table cell content should appear
+    expect(metaXml).toContain('Header A')
+    expect(metaXml).toContain('Cell A')
+  })
+
+  test('meta.xml dc:title uses fallback "Untitled Note" when title is empty, matching content.xml', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('', 'Body content.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const [contentXml, metaXml] = await Promise.all([
+      odtZip.file('content.xml').async('string'),
+      odtZip.file('meta.xml').async('string')
+    ])
+    // Both files should use the same resolved title
+    expect(contentXml).toContain('Untitled Note')
+    expect(metaXml).toContain('<dc:title>Untitled Note</dc:title>')
+  })
 })
