@@ -882,7 +882,7 @@ describe('noteOperations ODT meta.xml document properties', () => {
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const metaXml = await odtZip.file('meta.xml').async('string')
     // The separator row dashes should not appear in the summary
-    expect(metaXml).not.toMatch(/---|---/)
+    expect(metaXml).not.toContain('---|---')
     // Table cell content should appear
     expect(metaXml).toContain('Header A')
     expect(metaXml).toContain('Cell A')

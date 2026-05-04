@@ -180,10 +180,19 @@ function markdownToOdtElements(markdown) {
       .split('|')
       .map((cell) => cell.trim())
 
-  // A table separator row contains only |, -, :, and spaces.
+  // A table separator row: every non-empty cell (split on |) must be at least
+  // three dashes with optional leading/trailing colon for column alignment
+  // (e.g. "---", ":---", "---:", ":---:"). Matches GFM/marked behaviour.
+  // A line with no pipe at all (e.g. bare "---") is NOT a valid separator —
+  // that is a thematic break (horizontal rule) instead.
   const isTableSeparatorLine = (line) => {
     const t = line.trim()
-    return t.includes('|') && t.includes('-') && /^[|:\- ]+$/.test(t)
+    if (!t.includes('|')) return false
+    const cells = t
+      .split('|')
+      .map((c) => c.trim())
+      .filter((c) => c !== '')
+    return cells.length >= 1 && cells.every((c) => /^:?-{3,}:?$/.test(c))
   }
 
   // Returns true when the line starts with a blockquote (>) or list (-/*/+/1.)
