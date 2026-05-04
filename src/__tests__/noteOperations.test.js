@@ -222,6 +222,25 @@ describe('noteOperations ODT inline formatting', () => {
     expect(contentXml).not.toContain('xlink:href')
   })
 
+  test('blocks URL with Unicode NBSP (U+00A0)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    // Non-breaking space is a Unicode whitespace char; should be rejected
+    await exportNoteToOdtFile('NBSP URL', '[x](https://example.com/\u00a0path)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('<text:a')
+    expect(contentXml).not.toContain('xlink:href')
+  })
+
+  test('blocks URL with Unicode line separator (U+2028)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('LS URL', '[x](https://example.com/\u2028path)')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+    expect(contentXml).not.toContain('<text:a')
+    expect(contentXml).not.toContain('xlink:href')
+  })
+
   test('preserves Wikipedia-style URLs with parentheses', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
     await exportNoteToOdtFile(
@@ -413,6 +432,25 @@ describe('noteOperations ODT table export', () => {
 
     expect(contentXml).not.toContain('<table:table')
     expect(contentXml).toContain('<text:list')
+  })
+
+  test('table row whose first cell starts with a dash is still part of the table', async () => {
+    // Once a table is started, continuation rows must not be prematurely ended
+    // by the list-prefix guard. A cell value like "- item" in the first column
+    // should remain a table cell, not trigger list parsing.
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile(
+      'Dash Cell Table',
+      'Col A | Col B\n------|------\n- item | value'
+    )
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    // Should still be a table, not a list
+    expect(contentXml).toContain('<table:table')
+    // Both cell values should appear
+    expect(contentXml).toContain('- item')
+    expect(contentXml).toContain('value')
   })
 })
 
@@ -947,5 +985,21 @@ describe('noteOperations ODT meta.xml document properties', () => {
     // Both files should use the same resolved title
     expect(contentXml).toContain('Untitled Note')
     expect(metaXml).toContain('<dc:title>Untitled Note</dc:title>')
+  })
+
+  test('meta.xml dc:description strips indented blockquote markers (up to 3 spaces)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    // Indented blockquote with 1–3 leading spaces must also have the '>' stripped
+    await exportNoteToOdtFile('Indented BQ Note', '  > An indented quote\nPlain text after.')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    // Extract the dc:description value to check its text content
+    const descMatch = metaXml.match(/<dc:description>([\s\S]*?)<\/dc:description>/)
+    const descText = descMatch ? descMatch[1] : ''
+    // The '>' marker must not appear in the plain-text summary
+    expect(descText).not.toContain('>')
+    // The quoted text should still appear
+    expect(descText).toContain('An indented quote')
+    expect(descText).toContain('Plain text after')
   })
 })

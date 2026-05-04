@@ -44,14 +44,15 @@ function escapeXml(text) {
 
 // Validate a URL for use as an ODT xlink:href.
 // Allowed schemes: https, http, mailto, and fragment (#).
-// Rejects any URL containing whitespace or control characters, and requires
-// http/https URLs to parse correctly (e.g. rejects "http:" with no host).
+// Rejects any URL containing whitespace or control characters (ASCII and Unicode),
+// and requires http/https URLs to parse correctly (e.g. rejects "http:" with no host).
 function isSafeOdtUrl(url) {
   if (!url) return false
   const s = url.trim()
-  // Reject anything with embedded ASCII control characters or literal space.
+  // Reject ASCII control characters, ASCII space, DEL, and Unicode whitespace
+  // (NBSP U+00A0, line/paragraph separators U+2028/U+2029, BOM U+FEFF, etc.).
   // Percent-encoded equivalents (e.g. %20) are safe and not affected by this check.
-  if (/[\x00-\x20\x7f]/.test(s)) return false
+  if (/[\x00-\x20\x7f\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/.test(s)) return false
   if (s.startsWith('#')) return true
   if (/^mailto:/i.test(s)) return true
   if (/^https?:/i.test(s)) {
@@ -95,11 +96,14 @@ const INLINE_PATTERNS = [
 
 // Tokenise inline markdown and convert to ODT XML.
 // Handles: bold, italic, bold-italic, inline code, strikethrough, links, images.
+// Plain-text runs are accumulated via slice indices (O(n)) rather than
+// character-by-character concatenation (which degrades to O(n²) on long lines).
 function inlineToOdt(text) {
   if (!text) return ''
 
   const tokens = []
   let pos = 0
+  let textRunStart = 0
 
   while (pos < text.length) {
     let matched = false
@@ -114,20 +118,23 @@ function inlineToOdt(text) {
         const after = re.lastIndex < text.length ? text[re.lastIndex] : ' '
         if (/\w/.test(before) || /\w/.test(after)) continue
       }
+      // Flush any plain-text run that precedes this match as a single slice.
+      if (pos > textRunStart) {
+        tokens.push({ type: 'text', content: text.slice(textRunStart, pos) })
+      }
       tokens.push({ type, content: m[1], url: m[2] || null })
       pos = re.lastIndex
+      textRunStart = pos
       matched = true
       break
     }
     if (!matched) {
-      const last = tokens[tokens.length - 1]
-      if (last?.type === 'text') {
-        last.content += text[pos]
-      } else {
-        tokens.push({ type: 'text', content: text[pos] })
-      }
       pos++
     }
+  }
+  // Flush any remaining plain-text run.
+  if (pos > textRunStart) {
+    tokens.push({ type: 'text', content: text.slice(textRunStart, pos) })
   }
 
   return tokens
@@ -314,13 +321,15 @@ function markdownToOdtElements(markdown) {
     // A new table is only started when the next line is a valid GFM separator row
     // (e.g. |---|---|). This matches how the app's marked preview handles tables
     // and prevents false positives for normal text that happens to contain pipes.
-    // Once already inside a table, any line with '|' continues the table.
-    // Lines that begin with a blockquote (>) or list (- / * / + / 1.) prefix are
-    // excluded — they must be parsed by the blockquote/list handlers further down.
+    // Once already inside a table, any line with '|' continues the table —
+    // the blockquote/list-prefix guard is intentionally NOT applied here so that
+    // table rows whose first cell starts with a list-like token (e.g. "- item | val")
+    // are not prematurely terminated.
+    // The prefix guard IS applied when deciding whether to START a table, so
+    // "- | A | B |" at the top of a list still falls through to the list handler.
     if (
-      !hasBlockquoteOrListPrefix(line) &&
-      ((inTable && line.includes('|')) ||
-        (!inTable && line.includes('|') && isTableSeparatorLine(nextLine)))
+      (inTable && line.includes('|')) ||
+      (!inTable && !hasBlockquoteOrListPrefix(line) && line.includes('|') && isTableSeparatorLine(nextLine))
     ) {
       closeAllLists()
       inTable = true
@@ -437,7 +446,7 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
     .replace(/~~(.+?)~~/g, '$1')
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/^>\s*/gm, '')
+    .replace(/^\s{0,3}>\s*/gm, '')
     .replace(/^[-*_]{3,}\s*$/gm, '')
     .replace(/^\s*[-*+]\s+/gm, '')
     .replace(/^\s*\d+\.\s+/gm, '')
@@ -794,24 +803,6 @@ export function exportNoteToFile(title, content) {
 export async function exportNoteToOdtFile(title, content, meta = {}) {
   const blob = await createOdtBlob(title, content, meta)
   downloadBlob(blob, generateOdtFilename(title))
-}
-
-/**
- * Export all notes as ODT content using a single browser download.
- * For multiple notes, bulk export is delivered as a ZIP archive.
- * @param {Array} notes - Notes to export
- * @returns {Promise<void>}
- */
-export async function exportAllNotesToSingleOdtDownload(notes) {
-  if (!Array.isArray(notes) || notes.length === 0) return
-
-  if (notes.length === 1) {
-    const [note] = notes
-    await exportNoteToOdtFile(note.title, note.content, { createdAt: note.createdAt, updatedAt: note.updatedAt })
-    return
-  }
-
-  await exportAllNotesToOdtZip(notes)
 }
 
 /**
