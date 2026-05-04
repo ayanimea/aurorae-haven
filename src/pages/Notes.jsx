@@ -250,7 +250,10 @@ function Notes() {
   const handleExportOdt = async () => {
     if (!currentNoteId) return
     try {
-      await exportNoteToOdtFile(title, content)
+      await exportNoteToOdtFile(title, content, {
+        createdAt: currentNote?.createdAt,
+        updatedAt: currentNote?.updatedAt,
+      })
       showToastNotification('✓ Note exported as ODT')
     } catch (error) {
       logger.error('Failed to export note as ODT', error)

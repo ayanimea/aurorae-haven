@@ -476,6 +476,24 @@ describe('noteOperations ODT blockquote and horizontal rule', () => {
 
     expect(contentXml).toContain('text:style-name="Horizontal_Line"')
   })
+
+  test('4-space-indented line is NOT parsed as an HR (indented code block rule)', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Indented HR', 'Text\n    ---\nText')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).not.toContain('text:style-name="Horizontal_Line"')
+  })
+
+  test('3-space-indented HR is still exported as Horizontal_Line', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile('Indented 3 HR', 'Text\n   ---\nText')
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await odtZip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:style-name="Horizontal_Line"')
+  })
 })
 
 describe('noteOperations ODT styles.xml', () => {

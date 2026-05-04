@@ -341,8 +341,9 @@ function markdownToOdtElements(markdown) {
       continue
     }
 
-    // Horizontal rule: three or more -, *, or _ with optional surrounding spaces.
-    if (/^(\s*[-*_]\s*){3,}$/.test(line.trim())) {
+    // Horizontal rule: CommonMark allows up to 3 leading spaces; 4+ spaces is an
+    // indented code block and must not be treated as an HR.
+    if (/^\s{0,3}([-*_]\s*){3,}$/.test(line)) {
       closeAllLists()
       elements.push('<text:p text:style-name="Horizontal_Line"></text:p>')
       continue
