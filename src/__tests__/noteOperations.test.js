@@ -797,9 +797,22 @@ describe('noteOperations ODT meta.xml document properties', () => {
     ])
     const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
     const metaXml = await odtZip.file('meta.xml').async('string')
-    // creation-date comes from first note, dc:date from last note's updatedAt
+    // creation-date from earliest note, dc:date from latest updatedAt
     expect(metaXml).toContain('<meta:creation-date>2024-01-15T10:00:00.000Z</meta:creation-date>')
     expect(metaXml).toContain('<dc:date>2024-03-20T15:30:00.000Z</dc:date>')
+  })
+
+  test('single-note ODT export includes note timestamps in meta.xml via exportNoteToOdtFile', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportNoteToOdtFile(
+      'Timestamped Note',
+      'Content here.',
+      { createdAt: '2023-06-01T08:00:00.000Z', updatedAt: '2023-09-15T12:00:00.000Z' }
+    )
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    expect(metaXml).toContain('<meta:creation-date>2023-06-01T08:00:00.000Z</meta:creation-date>')
+    expect(metaXml).toContain('<dc:date>2023-09-15T12:00:00.000Z</dc:date>')
   })
 
   test('meta.xml falls back to current date when timestamps are invalid', async () => {

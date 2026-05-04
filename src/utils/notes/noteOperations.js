@@ -387,13 +387,21 @@ function markdownToOdtElements(markdown) {
 // Maximum length for auto-generated ODT document description (Summary) text.
 const MAX_DESCRIPTION_LENGTH = 300
 
+// Truncate text to maxLen characters at a word boundary to avoid mid-word cuts.
+function truncateAtWord(text, maxLen) {
+  if (text.length <= maxLen) return text
+  const cut = text.slice(0, maxLen)
+  const lastSpace = cut.lastIndexOf(' ')
+  return lastSpace > 0 ? cut.slice(0, lastSpace) : cut
+}
+
 // Strip markdown syntax and return the first MAX_DESCRIPTION_LENGTH characters of plain text.
 // Used to populate the ODT document description (Summary) in meta.xml so that
 // word processors like LibreOffice Writer and Microsoft Word auto-populate the
 // "Summary" / "Description" field in File → Properties without any extra steps.
 function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
   if (!markdown) return ''
-  return markdown
+  const plain = markdown
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/^#{1,6}\s+/gm, '')
@@ -411,7 +419,7 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
     .replace(/\|/g, ' ')
     .replace(/\n{2,}/g, '\n')
     .trim()
-    .slice(0, maxLen)
+  return truncateAtWord(plain, maxLen)
 }
 
 // Coerce a value to a valid ISO 8601 date string.
@@ -573,14 +581,14 @@ function buildOdtZip(contentXml, metaXml) {
   return zip
 }
 
-async function createOdtBlob(title, content) {
+async function createOdtBlob(title, content, meta = {}) {
   const titleXml = escapeXml(title || 'Untitled Note')
   const bodyXml = markdownToOdtElements(content)
   const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
       <text:h text:style-name="Heading 1" text:outline-level="1">${titleXml}</text:h>
       ${bodyXml}
 ${ODT_CONTENT_WRAPPER_CLOSE}`
-  const metaXml = buildMetaXml(title, extractTextSummary(content))
+  const metaXml = buildMetaXml(title, extractTextSummary(content), meta.createdAt, meta.updatedAt)
   return buildOdtZip(contentXml, metaXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
@@ -599,13 +607,23 @@ ${ODT_CONTENT_WRAPPER_CLOSE}`
     : 'Combined Notes Export'
   const combinedDescription = notes.length === 1
     ? extractTextSummary(notes[0]?.content || '')
-    : `Contains ${notes.length} notes: ${notes.map((n) => n?.title || 'Untitled').join(', ')}`.slice(0, MAX_DESCRIPTION_LENGTH)
-  const metaXml = buildMetaXml(
-    combinedTitle,
-    combinedDescription,
-    notes[0]?.createdAt,
-    notes[notes.length - 1]?.updatedAt
-  )
+    : truncateAtWord(
+        `Contains ${notes.length} notes: ${notes.map((n) => n?.title || 'Untitled').join(', ')}`,
+        MAX_DESCRIPTION_LENGTH
+      )
+  // Use the earliest createdAt and latest updatedAt across all notes so the
+  // timestamps reflect the actual range of the exported content regardless of
+  // note ordering.
+  const validDates = notes
+    .map((n) => ({ c: toIsoDate(n?.createdAt), u: toIsoDate(n?.updatedAt) }))
+    .filter((d) => d.c || d.u)
+  const earliestCreated = validDates.length
+    ? validDates.reduce((min, d) => (d.c && (!min || d.c < min) ? d.c : min), null)
+    : null
+  const latestUpdated = validDates.length
+    ? validDates.reduce((max, d) => (d.u && (!max || d.u > max) ? d.u : max), null)
+    : null
+  const metaXml = buildMetaXml(combinedTitle, combinedDescription, earliestCreated, latestUpdated)
   return buildOdtZip(contentXml, metaXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
@@ -739,10 +757,11 @@ export function exportNoteToFile(title, content) {
  * Export a single note to ODT format
  * @param {string} title - Note title
  * @param {string} content - Note content
+ * @param {Object} [meta] - Optional note metadata ({ createdAt, updatedAt })
  * @returns {Promise<void>}
  */
-export async function exportNoteToOdtFile(title, content) {
-  const blob = await createOdtBlob(title, content)
+export async function exportNoteToOdtFile(title, content, meta = {}) {
+  const blob = await createOdtBlob(title, content, meta)
   downloadBlob(blob, generateOdtFilename(title))
 }
 
@@ -774,7 +793,7 @@ export async function exportAllNotesToCombinedOdt(notes) {
 
   if (notes.length === 1) {
     const [note] = notes
-    await exportNoteToOdtFile(note.title, note.content)
+    await exportNoteToOdtFile(note.title, note.content, { createdAt: note.createdAt, updatedAt: note.updatedAt })
     return
   }
 
