@@ -783,7 +783,7 @@ export async function exportAllNotesToSingleOdtDownload(notes) {
 
   if (notes.length === 1) {
     const [note] = notes
-    await exportNoteToOdtFile(note.title, note.content)
+    await exportNoteToOdtFile(note.title, note.content, { createdAt: note.createdAt, updatedAt: note.updatedAt })
     return
   }
 
@@ -809,6 +809,7 @@ export async function exportAllNotesToCombinedOdt(notes) {
 }
 
 /**
+ * Export all notes as individual ODT files packaged in a ZIP archive.
  * @param {Array} notes - Notes to export
  * @returns {Promise<void>}
  */
@@ -865,7 +866,7 @@ export async function exportAllNotesToOdtZip(notes) {
         currentIndex += concurrencyLimit
       ) {
         const { note } = zipEntries[currentIndex]
-        odtBlobs[currentIndex] = await createOdtBlob(note.title, note.content)
+        odtBlobs[currentIndex] = await createOdtBlob(note.title, note.content, { createdAt: note.createdAt, updatedAt: note.updatedAt })
       }
     })()
   })
