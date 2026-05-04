@@ -777,4 +777,42 @@ describe('noteOperations ODT meta.xml document properties', () => {
     expect(metaXml).toContain('Note A')
     expect(metaXml).toContain('Note B')
   })
+
+  test('meta.xml uses note createdAt/updatedAt timestamps when available', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    // Use two notes to exercise the combined path (which has access to note metadata).
+    await exportAllNotesToCombinedOdt([
+      {
+        title: 'Dated Note',
+        content: 'Body.',
+        createdAt: '2024-01-15T10:00:00.000Z',
+        updatedAt: '2024-01-15T10:00:00.000Z'
+      },
+      {
+        title: 'Second Note',
+        content: 'More.',
+        createdAt: '2024-01-15T10:00:00.000Z',
+        updatedAt: '2024-03-20T15:30:00.000Z'
+      }
+    ])
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    // creation-date comes from first note, dc:date from last note's updatedAt
+    expect(metaXml).toContain('<meta:creation-date>2024-01-15T10:00:00.000Z</meta:creation-date>')
+    expect(metaXml).toContain('<dc:date>2024-03-20T15:30:00.000Z</dc:date>')
+  })
+
+  test('meta.xml falls back to current date when timestamps are invalid', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+    await exportAllNotesToCombinedOdt([
+      { title: 'Bad Date Note', content: 'Body.', createdAt: 'not-a-date', updatedAt: '' },
+      { title: 'Second Note', content: 'More.' }
+    ])
+    const odtZip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await odtZip.file('meta.xml').async('string')
+    // Should contain a valid ISO date string (not the invalid value)
+    expect(metaXml).not.toContain('not-a-date')
+    expect(metaXml).toMatch(/<meta:creation-date>\d{4}-\d{2}-\d{2}T/)
+    expect(metaXml).toMatch(/<dc:date>\d{4}-\d{2}-\d{2}T/)
+  })
 })

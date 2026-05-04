@@ -384,11 +384,14 @@ function markdownToOdtElements(markdown) {
   return elements.join('')
 }
 
-// Strip markdown syntax and return the first maxLen characters of plain text.
+// Maximum length for auto-generated ODT document description (Summary) text.
+const MAX_DESCRIPTION_LENGTH = 300
+
+// Strip markdown syntax and return the first MAX_DESCRIPTION_LENGTH characters of plain text.
 // Used to populate the ODT document description (Summary) in meta.xml so that
 // word processors like LibreOffice Writer and Microsoft Word auto-populate the
 // "Summary" / "Description" field in File → Properties without any extra steps.
-function extractTextSummary(markdown, maxLen = 300) {
+function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
   if (!markdown) return ''
   return markdown
     .replace(/```[\s\S]*?```/g, '')
@@ -411,12 +414,22 @@ function extractTextSummary(markdown, maxLen = 300) {
     .slice(0, maxLen)
 }
 
+// Coerce a value to a valid ISO 8601 date string.
+// Returns null if the value is absent or not a valid date.
+function toIsoDate(value) {
+  if (!value) return null
+  const parsed = new Date(value)
+  return isNaN(parsed.getTime()) ? null : parsed.toISOString()
+}
+
 // Build an ODT meta.xml string with document properties.
 // <dc:description> is the "Summary/Comments" field shown in
 // LibreOffice File → Properties → Description and
 // MS Word File → Info → Properties → Comments.
 function buildMetaXml(title, description, createdAt, modifiedAt) {
   const now = new Date().toISOString()
+  const created = toIsoDate(createdAt) || now
+  const modified = toIsoDate(modifiedAt) || now
   return `<?xml version="1.0" encoding="UTF-8"?>
 <office:document-meta
   xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -428,8 +441,8 @@ function buildMetaXml(title, description, createdAt, modifiedAt) {
     <dc:description>${escapeXml(description || '')}</dc:description>
     <meta:initial-creator>Aurorae Haven</meta:initial-creator>
     <dc:creator>Aurorae Haven</dc:creator>
-    <meta:creation-date>${escapeXml(createdAt || now)}</meta:creation-date>
-    <dc:date>${escapeXml(modifiedAt || now)}</dc:date>
+    <meta:creation-date>${created}</meta:creation-date>
+    <dc:date>${modified}</dc:date>
   </office:meta>
 </office:document-meta>`
 }
@@ -586,7 +599,7 @@ ${ODT_CONTENT_WRAPPER_CLOSE}`
     : 'Combined Notes Export'
   const combinedDescription = notes.length === 1
     ? extractTextSummary(notes[0]?.content || '')
-    : `Contains ${notes.length} notes: ${notes.map((n) => n?.title || 'Untitled').join(', ')}`.slice(0, 300)
+    : `Contains ${notes.length} notes: ${notes.map((n) => n?.title || 'Untitled').join(', ')}`.slice(0, MAX_DESCRIPTION_LENGTH)
   const metaXml = buildMetaXml(
     combinedTitle,
     combinedDescription,
