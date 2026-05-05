@@ -794,6 +794,45 @@ export function exportNoteToFile(title, content) {
 }
 
 /**
+ * Generate a unique ZIP entry name for a note, deconflicting against already-used names.
+ * @param {Object} note - The note ({ title, id, createdAt })
+ * @param {number} index - Zero-based position of the note in the export list
+ * @param {string} ext - File extension including the dot (e.g. '.md', '.odt')
+ * @param {Set<string>} usedSet - Set of already-used entry names (mutated in place)
+ * @returns {string} A unique entry name
+ */
+function makeUniqueZipEntryName(note, index, ext, usedSet) {
+  const baseName = sanitizeFilename(note?.title || 'untitled')
+  const defaultEntryName = `${baseName}${ext}`
+  if (!usedSet.has(defaultEntryName)) {
+    usedSet.add(defaultEntryName)
+    return defaultEntryName
+  }
+
+  const suffixCandidates = [note?.id, note?.createdAt, index + 1]
+    .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
+    .map((value) => sanitizeFilename(String(value)))
+    .filter(Boolean)
+
+  for (const suffix of suffixCandidates) {
+    const entryName = `${baseName}-${suffix}${ext}`
+    if (!usedSet.has(entryName)) {
+      usedSet.add(entryName)
+      return entryName
+    }
+  }
+
+  let duplicateIndex = 2
+  let fallbackEntryName = `${baseName}-${duplicateIndex}${ext}`
+  while (usedSet.has(fallbackEntryName)) {
+    duplicateIndex += 1
+    fallbackEntryName = `${baseName}-${duplicateIndex}${ext}`
+  }
+  usedSet.add(fallbackEntryName)
+  return fallbackEntryName
+}
+
+/**
  * Export all notes as individual markdown files packaged in a ZIP archive.
  * Falls back to a single-file export when there is only one note.
  * @param {Array} notes - Notes to export
@@ -812,39 +851,8 @@ export async function exportAllNotesToMarkdownZip(notes) {
   const zip = new JSZip()
   const usedEntryNames = new Set()
 
-  const getUniqueEntryName = (note, index) => {
-    const baseName = sanitizeFilename(note?.title || 'untitled')
-    const defaultEntryName = `${baseName}.md`
-    if (!usedEntryNames.has(defaultEntryName)) {
-      usedEntryNames.add(defaultEntryName)
-      return defaultEntryName
-    }
-
-    const suffixCandidates = [note?.id, note?.createdAt, index + 1]
-      .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
-      .map((value) => sanitizeFilename(String(value)))
-      .filter(Boolean)
-
-    for (const suffix of suffixCandidates) {
-      const entryName = `${baseName}-${suffix}.md`
-      if (!usedEntryNames.has(entryName)) {
-        usedEntryNames.add(entryName)
-        return entryName
-      }
-    }
-
-    let duplicateIndex = 2
-    let fallbackEntryName = `${baseName}-${duplicateIndex}.md`
-    while (usedEntryNames.has(fallbackEntryName)) {
-      duplicateIndex += 1
-      fallbackEntryName = `${baseName}-${duplicateIndex}.md`
-    }
-    usedEntryNames.add(fallbackEntryName)
-    return fallbackEntryName
-  }
-
   for (const [index, note] of notes.entries()) {
-    const entryName = getUniqueEntryName(note, index)
+    const entryName = makeUniqueZipEntryName(note, index, '.md', usedEntryNames)
     zip.file(entryName, note.content || '')
   }
 
@@ -893,40 +901,9 @@ export async function exportAllNotesToOdtZip(notes) {
   const zip = new JSZip()
   const usedEntryNames = new Set()
 
-  const getUniqueEntryName = (note, index) => {
-    const baseName = sanitizeFilename(note?.title || 'untitled')
-    const defaultEntryName = `${baseName}.odt`
-    if (!usedEntryNames.has(defaultEntryName)) {
-      usedEntryNames.add(defaultEntryName)
-      return defaultEntryName
-    }
-
-    const suffixCandidates = [note?.id, note?.createdAt, index + 1]
-      .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
-      .map((value) => sanitizeFilename(String(value)))
-      .filter(Boolean)
-
-    for (const suffix of suffixCandidates) {
-      const entryName = `${baseName}-${suffix}.odt`
-      if (!usedEntryNames.has(entryName)) {
-        usedEntryNames.add(entryName)
-        return entryName
-      }
-    }
-
-    let duplicateIndex = 2
-    let fallbackEntryName = `${baseName}-${duplicateIndex}.odt`
-    while (usedEntryNames.has(fallbackEntryName)) {
-      duplicateIndex += 1
-      fallbackEntryName = `${baseName}-${duplicateIndex}.odt`
-    }
-    usedEntryNames.add(fallbackEntryName)
-    return fallbackEntryName
-  }
-
   const zipEntries = notes.map((note, index) => ({
     note,
-    entryName: getUniqueEntryName(note, index)
+    entryName: makeUniqueZipEntryName(note, index, '.odt', usedEntryNames)
   }))
   const odtBlobs = new Array(zipEntries.length)
   const concurrencyLimit = Math.min(MAX_CONCURRENT_ODT_GENERATION, zipEntries.length)

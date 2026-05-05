@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { marked } from 'marked'
 import markedKatex from 'marked-katex-extension'
@@ -92,6 +92,12 @@ function Notes() {
 
   const { toastMessage, showToast, showToastNotification } = useToast()
 
+  // Stable refs so the global keydown listener never needs to be re-registered
+  const notesRef = useRef(notes)
+  const showToastRef = useRef(showToastNotification)
+  notesRef.current = notes
+  showToastRef.current = showToastNotification
+
   // UI state
   const [preview, setPreview] = useState('')
   const [showNoteList, setShowNoteList] = useState(true)
@@ -108,29 +114,32 @@ function Notes() {
   }, [])
 
   // Global Ctrl/Cmd+S shortcut: export all notes as markdown (save all)
+  // Registered once (empty deps); reads latest notes/toast via refs to avoid churn.
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        if (notes.length > 0) {
-          exportAllNotesToMarkdownZip(notes)
+        if (e.repeat) return
+        const currentNotes = notesRef.current
+        if (currentNotes.length > 0) {
+          exportAllNotesToMarkdownZip(currentNotes)
             .then(() => {
-              showToastNotification(
-                notes.length === 1
+              showToastRef.current(
+                currentNotes.length === 1
                   ? '✓ Note exported'
                   : '✓ All notes exported as ZIP'
               )
             })
             .catch((error) => {
               logger.error('Failed to export notes as markdown', error)
-              showToastNotification('⚠️ Export failed.')
+              showToastRef.current('⚠️ Export failed.')
             })
         }
       }
     }
     window.addEventListener('keydown', handleGlobalKeyDown)
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [notes, showToastNotification])
+  }, [])
 
   useEffect(() => {
     const enablePrintLayout = () => {
