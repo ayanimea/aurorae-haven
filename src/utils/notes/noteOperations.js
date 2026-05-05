@@ -804,7 +804,8 @@ export async function exportAllNotesToMarkdownZip(notes) {
 
   if (notes.length === 1) {
     const [note] = notes
-    exportNoteToFile(note.title, note.content)
+    const blob = new Blob([note.content ?? ''], { type: 'text/markdown' })
+    downloadBlob(blob, generateBrainDumpFilename(note.title))
     return
   }
 

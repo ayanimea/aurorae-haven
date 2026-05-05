@@ -715,13 +715,17 @@ describe('Notes Component', () => {
       // Empty localStorage — no notes
       render(<Notes />)
 
+      // Wait for the component to fully mount (effects attached) before firing shortcut
+      await waitFor(() => {
+        expect(screen.getByLabelText('Export')).toBeInTheDocument()
+      })
+
       // Fire global Ctrl+S — should be a no-op because notes array is empty
       fireEvent.keyDown(window, { key: 's', ctrlKey: true })
 
-      // Give time for any async operations
-      await new Promise((resolve) => setTimeout(resolve, 50))
-
-      expect(mockClick).not.toHaveBeenCalled()
+      await waitFor(() => {
+        expect(mockClick).not.toHaveBeenCalled()
+      })
     })
 
     test('does not export when no note is selected', () => {

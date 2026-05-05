@@ -110,16 +110,21 @@ function Notes() {
   // Global Ctrl/Cmd+S shortcut: export all notes as markdown (save all)
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
         if (notes.length > 0) {
-          exportAllNotesToMarkdownZip(notes).then(() => {
-            showToastNotification(
-              notes.length === 1
-                ? '✓ Note exported'
-                : '✓ All notes exported as ZIP'
-            )
-          })
+          exportAllNotesToMarkdownZip(notes)
+            .then(() => {
+              showToastNotification(
+                notes.length === 1
+                  ? '✓ Note exported'
+                  : '✓ All notes exported as ZIP'
+              )
+            })
+            .catch((error) => {
+              logger.error('Failed to export notes as markdown', error)
+              showToastNotification('⚠️ Export failed.')
+            })
         }
       }
     }
