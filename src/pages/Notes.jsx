@@ -106,6 +106,21 @@ function Notes() {
     configureSanitization(DOMPurify)
   }, [])
 
+  // Global Ctrl/Cmd+S shortcut: export current note as markdown
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        if (currentNoteId) {
+          exportNoteToFile(title, content)
+          showToastNotification('✓ Note exported')
+        }
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [currentNoteId, title, content, showToastNotification])
+
   useEffect(() => {
     const enablePrintLayout = () => {
       document.body.classList.add('layout-notes-print')

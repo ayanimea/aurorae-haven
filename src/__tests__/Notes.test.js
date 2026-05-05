@@ -600,6 +600,91 @@ describe('Notes Component', () => {
 
     })
 
+    test('exports current note as markdown via global Ctrl+S shortcut', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'Keyboard Export Note',
+          content: 'Exported via keyboard',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      // Wait for note to be loaded
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('Start writing your note in Markdown...')
+        ).toHaveValue('Exported via keyboard')
+      })
+
+      // Fire global Ctrl+S keydown on window
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalled()
+      })
+      expect(downloadFilenames[0]).toMatch(
+        /^braindump_keyboard_export_note_\d{8}_\d{4}\.md$/
+      )
+    })
+
+    test('exports current note as markdown via global Cmd+S shortcut (Mac)', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'Mac Export Note',
+          content: 'Exported via cmd+s',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('Start writing your note in Markdown...')
+        ).toHaveValue('Exported via cmd+s')
+      })
+
+      // Fire global Cmd+S (metaKey) keydown on window
+      fireEvent.keyDown(window, { key: 's', metaKey: true })
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalled()
+      })
+      expect(downloadFilenames[0]).toMatch(
+        /^braindump_mac_export_note_\d{8}_\d{4}\.md$/
+      )
+    })
+
+    test('does not export via Ctrl+S when no note is selected', async () => {
+      const { mockClick, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      // Empty localStorage — no notes, so currentNoteId stays null
+      render(<Notes />)
+
+      // Fire global Ctrl+S — should be a no-op because currentNoteId is null
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+      // Give time for any async operations
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      expect(mockClick).not.toHaveBeenCalled()
+    })
+
     test('does not export when no note is selected', () => {
       render(<Notes />)
 
