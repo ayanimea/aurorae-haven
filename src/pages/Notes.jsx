@@ -13,6 +13,7 @@ import {
   deleteNote as deleteNoteUtil,
   exportNoteToFile,
   exportNoteToOdtFile,
+  exportAllNotesToMarkdownZip,
   exportAllNotesToCombinedOdt,
   exportAllNotesToOdtZip
 } from '../utils/notes/noteOperations'
@@ -106,20 +107,25 @@ function Notes() {
     configureSanitization(DOMPurify)
   }, [])
 
-  // Global Ctrl/Cmd+S shortcut: export current note as markdown
+  // Global Ctrl/Cmd+S shortcut: export all notes as markdown (save all)
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault()
-        if (currentNoteId) {
-          exportNoteToFile(title, content)
-          showToastNotification('✓ Note exported')
+        if (notes.length > 0) {
+          exportAllNotesToMarkdownZip(notes).then(() => {
+            showToastNotification(
+              notes.length === 1
+                ? '✓ Note exported'
+                : '✓ All notes exported as ZIP'
+            )
+          })
         }
       }
     }
     window.addEventListener('keydown', handleGlobalKeyDown)
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [currentNoteId, title, content, showToastNotification])
+  }, [notes, showToastNotification])
 
   useEffect(() => {
     const enablePrintLayout = () => {

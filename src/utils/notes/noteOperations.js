@@ -794,6 +794,64 @@ export function exportNoteToFile(title, content) {
 }
 
 /**
+ * Export all notes as individual markdown files packaged in a ZIP archive.
+ * Falls back to a single-file export when there is only one note.
+ * @param {Array} notes - Notes to export
+ * @returns {Promise<void>}
+ */
+export async function exportAllNotesToMarkdownZip(notes) {
+  if (!Array.isArray(notes) || notes.length === 0) return
+
+  if (notes.length === 1) {
+    const [note] = notes
+    exportNoteToFile(note.title, note.content)
+    return
+  }
+
+  const zip = new JSZip()
+  const usedEntryNames = new Set()
+
+  const getUniqueEntryName = (note, index) => {
+    const baseName = sanitizeFilename(note?.title || 'untitled')
+    const defaultEntryName = `${baseName}.md`
+    if (!usedEntryNames.has(defaultEntryName)) {
+      usedEntryNames.add(defaultEntryName)
+      return defaultEntryName
+    }
+
+    const suffixCandidates = [note?.id, note?.createdAt, index + 1]
+      .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
+      .map((value) => sanitizeFilename(String(value)))
+      .filter(Boolean)
+
+    for (const suffix of suffixCandidates) {
+      const entryName = `${baseName}-${suffix}.md`
+      if (!usedEntryNames.has(entryName)) {
+        usedEntryNames.add(entryName)
+        return entryName
+      }
+    }
+
+    let duplicateIndex = 2
+    let fallbackEntryName = `${baseName}-${duplicateIndex}.md`
+    while (usedEntryNames.has(fallbackEntryName)) {
+      duplicateIndex += 1
+      fallbackEntryName = `${baseName}-${duplicateIndex}.md`
+    }
+    usedEntryNames.add(fallbackEntryName)
+    return fallbackEntryName
+  }
+
+  for (const [index, note] of notes.entries()) {
+    const entryName = getUniqueEntryName(note, index)
+    zip.file(entryName, note.content || '')
+  }
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' })
+  downloadBlob(zipBlob, `braindump_md_export_${new Date().toISOString().slice(0, 10)}.zip`)
+}
+
+/**
  * Export a single note to ODT format
  * @param {string} title - Note title
  * @param {string} content - Note content

@@ -600,7 +600,7 @@ describe('Notes Component', () => {
 
     })
 
-    test('exports current note as markdown via global Ctrl+S shortcut', async () => {
+    test('exports single note as markdown via global Ctrl+S shortcut (save all)', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
       restoreDownloadMocks = restore
 
@@ -624,7 +624,7 @@ describe('Notes Component', () => {
         ).toHaveValue('Exported via keyboard')
       })
 
-      // Fire global Ctrl+S keydown on window
+      // Fire global Ctrl+S keydown on window — single note → single .md file
       fireEvent.keyDown(window, { key: 's', ctrlKey: true })
 
       await waitFor(() => {
@@ -635,7 +635,7 @@ describe('Notes Component', () => {
       )
     })
 
-    test('exports current note as markdown via global Cmd+S shortcut (Mac)', async () => {
+    test('exports single note as markdown via global Cmd+S shortcut (Mac, save all)', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
       restoreDownloadMocks = restore
 
@@ -658,7 +658,7 @@ describe('Notes Component', () => {
         ).toHaveValue('Exported via cmd+s')
       })
 
-      // Fire global Cmd+S (metaKey) keydown on window
+      // Fire global Cmd+S (metaKey) keydown on window — single note → single .md file
       fireEvent.keyDown(window, { key: 's', metaKey: true })
 
       await waitFor(() => {
@@ -669,14 +669,53 @@ describe('Notes Component', () => {
       )
     })
 
-    test('does not export via Ctrl+S when no note is selected', async () => {
+    test('exports all notes as markdown ZIP via global Ctrl+S when multiple notes exist (save all)', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id-1',
+          title: 'First Md Note',
+          content: 'Content one',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'test-id-2',
+          title: 'Second Md Note',
+          content: 'Content two',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('Start writing your note in Markdown...')
+        ).toHaveValue('Content one')
+      })
+
+      // Fire global Ctrl+S — multiple notes → ZIP archive
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalled()
+      })
+      expect(downloadFilenames[0]).toMatch(/^braindump_md_export_\d{4}-\d{2}-\d{2}\.zip$/)
+    })
+
+    test('does not export via Ctrl+S when there are no notes', async () => {
       const { mockClick, restore } = setupDownloadMocks()
       restoreDownloadMocks = restore
 
-      // Empty localStorage — no notes, so currentNoteId stays null
+      // Empty localStorage — no notes
       render(<Notes />)
 
-      // Fire global Ctrl+S — should be a no-op because currentNoteId is null
+      // Fire global Ctrl+S — should be a no-op because notes array is empty
       fireEvent.keyDown(window, { key: 's', ctrlKey: true })
 
       // Give time for any async operations
