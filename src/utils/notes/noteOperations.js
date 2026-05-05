@@ -42,6 +42,130 @@ function escapeXml(text) {
     .replace(/'/g, '&apos;')
 }
 
+// Validate a URL for use as an ODT xlink:href.
+// Allowed schemes: https, http, mailto, and fragment (#).
+// Rejects any URL containing whitespace or control characters (ASCII and Unicode),
+// and requires http/https URLs to parse correctly (e.g. rejects "http:" with no host).
+function isSafeOdtUrl(url) {
+  if (!url) return false
+  const s = url.trim()
+  // Reject ASCII control characters, ASCII space, DEL, and Unicode whitespace
+  // (NBSP U+00A0, line/paragraph separators U+2028/U+2029, BOM U+FEFF, etc.).
+  // Percent-encoded equivalents (e.g. %20) are safe and not affected by this check.
+  if (/[\x00-\x20\x7f\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/.test(s)) return false
+  if (s.startsWith('#')) return true
+  if (/^mailto:/i.test(s)) return true
+  if (/^https?:/i.test(s)) {
+    try {
+      const parsed = new URL(s)
+      return (
+        (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+        parsed.hostname !== ''
+      )
+    } catch {
+      return false
+    }
+  }
+  return false
+}
+
+// Inline Markdown patterns in priority order (longest/most-specific first).
+// Sticky flag (y) lets us match at a specific position without string slicing,
+// keeping inlineToOdt() O(n) rather than O(n²) on large inputs.
+// lastIndex is reset to the current position before every exec() call so
+// module-level state is safe even under recursive inlineToOdt() calls.
+const INLINE_PATTERNS = [
+  { re: /`([^`]+)`/y, type: 'code' },
+  { re: /\*\*\*(.+?)\*\*\*/y, type: 'bold-italic' },
+  // wordBoundary: true — word-boundary guard is applied in JS (text[pos-1] / text[lastIndex])
+  // rather than regex negative lookbehind (?<!\w) / lookahead (?!\w), which are
+  // not supported in Safari 14/15 (causes a parse-time SyntaxError).
+  { re: /___(.+?)___/y, type: 'bold-italic', wordBoundary: true },
+  { re: /\*\*([^*].*?)\*\*/y, type: 'bold' },
+  { re: /__([^_].*?)__/y, type: 'bold', wordBoundary: true },
+  { re: /\*([^*\n]+?)\*/y, type: 'italic' },
+  { re: /_([^_\n]+?)_/y, type: 'italic', wordBoundary: true },
+  { re: /~~(.+?)~~/y, type: 'strikethrough' },
+  // Link/image URL: supports one level of balanced parentheses in the URL
+  // (e.g. Wikipedia links like "Mathematics_(disambiguation)").
+  // Pattern: [^()]* matches non-paren chars; (?:\([^()]*\)[^()]*)* matches
+  // zero or more "(...non-parens...)" groups interspersed with non-paren chars.
+  { re: /!\[([^\]]*)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/y, type: 'image' },
+  { re: /\[([^\]]+)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/y, type: 'link' },
+]
+
+// Tokenise inline markdown and convert to ODT XML.
+// Handles: bold, italic, bold-italic, inline code, strikethrough, links, images.
+// Plain-text runs are accumulated via slice indices (O(n)) rather than
+// character-by-character concatenation (which degrades to O(n²) on long lines).
+function inlineToOdt(text) {
+  if (!text) return ''
+
+  const tokens = []
+  let pos = 0
+  let textRunStart = 0
+
+  while (pos < text.length) {
+    let matched = false
+    for (const { re, type, wordBoundary } of INLINE_PATTERNS) {
+      re.lastIndex = pos
+      const m = re.exec(text)
+      if (!m) continue
+      // For underscore-based patterns, guard against intraword matches (e.g. a_b_c).
+      // This check replaces regex lookbehind/lookahead which is unsupported in Safari 14/15.
+      if (wordBoundary) {
+        const before = pos > 0 ? text[pos - 1] : ' '
+        const after = re.lastIndex < text.length ? text[re.lastIndex] : ' '
+        if (/\w/.test(before) || /\w/.test(after)) continue
+      }
+      // Flush any plain-text run that precedes this match as a single slice.
+      if (pos > textRunStart) {
+        tokens.push({ type: 'text', content: text.slice(textRunStart, pos) })
+      }
+      tokens.push({ type, content: m[1], url: m[2] || null })
+      pos = re.lastIndex
+      textRunStart = pos
+      matched = true
+      break
+    }
+    if (!matched) {
+      pos++
+    }
+  }
+  // Flush any remaining plain-text run.
+  if (pos > textRunStart) {
+    tokens.push({ type: 'text', content: text.slice(textRunStart, pos) })
+  }
+
+  return tokens
+    .map(({ type, content, url }) => {
+      switch (type) {
+        case 'code':
+          return `<text:span text:style-name="Code_Char">${escapeXml(content)}</text:span>`
+        case 'bold-italic':
+          return `<text:span text:style-name="Bold_Italic_Char">${inlineToOdt(content)}</text:span>`
+        case 'bold':
+          return `<text:span text:style-name="Bold_Char">${inlineToOdt(content)}</text:span>`
+        case 'italic':
+          return `<text:span text:style-name="Italic_Char">${inlineToOdt(content)}</text:span>`
+        case 'strikethrough':
+          return `<text:span text:style-name="Strikethrough_Char">${inlineToOdt(content)}</text:span>`
+        case 'image':
+          return `[${escapeXml(content)}]`
+        case 'link': {
+          const href = url ? url.trim() : ''
+          if (isSafeOdtUrl(href)) {
+            return `<text:a xlink:type="simple" xlink:href="${escapeXml(href)}" text:style-name="Internet_Link">${inlineToOdt(content)}</text:a>`
+          }
+          return inlineToOdt(content)
+        }
+        default:
+          return escapeXml(content)
+      }
+    })
+    .join('')
+}
+
 function markdownToOdtElements(markdown) {
   if (!markdown) return '<text:p></text:p>'
 
@@ -50,6 +174,88 @@ function markdownToOdtElements(markdown) {
   let inCodeBlock = false
   const listStack = []
   let listIndentUnit = null
+
+  // --- Table state ---
+  let inTable = false
+  let tableLines = []
+  let tableIndex = 0
+
+  const parseTableRow = (line) =>
+    line
+      .trim()
+      .replace(/^\||\|$/g, '')
+      .split('|')
+      .map((cell) => cell.trim())
+
+  // A table separator row: every non-empty cell (split on |) must be at least
+  // three dashes with optional leading/trailing colon for column alignment
+  // (e.g. "---", ":---", "---:", ":---:"). Matches GFM/marked behaviour.
+  // A line with no pipe at all (e.g. bare "---") is NOT a valid separator —
+  // that is a thematic break (horizontal rule) instead.
+  const isTableSeparatorLine = (line) => {
+    const t = line.trim()
+    if (!t.includes('|')) return false
+    const cells = t
+      .split('|')
+      .map((c) => c.trim())
+      .filter((c) => c !== '')
+    return cells.length >= 1 && cells.every((c) => /^:?-{3,}:?$/.test(c))
+  }
+
+  // Returns true when the line starts with a blockquote (>) or list (-/*/+/1.)
+  // marker — such lines must never be mis-parsed as table rows.
+  // Markdown allows up to 3 leading spaces before the > character.
+  const hasBlockquoteOrListPrefix = (line) =>
+    /^\s{0,3}>/.test(line) || /^\s*([-*+]|\d+\.)\s/.test(line)
+
+  const flushTable = () => {
+    if (!inTable) return
+    const captured = tableLines
+    tableLines = []
+    inTable = false
+    if (captured.length === 0) return
+
+    tableIndex += 1
+    const parsedRows = captured.map(parseTableRow)
+
+    let headerRow = null
+    let bodyRows = parsedRows
+
+    if (captured.length >= 2 && isTableSeparatorLine(captured[1])) {
+      headerRow = parsedRows[0]
+      bodyRows = parsedRows.slice(2)
+    }
+
+    const numCols = Math.max(
+      headerRow ? headerRow.length : 0,
+      ...bodyRows.map((r) => r.length),
+      1
+    )
+
+    let xml = `<table:table table:name="Table${tableIndex}">`
+    for (let i = 0; i < numCols; i++) {
+      xml += `<table:table-column/>`
+    }
+
+    if (headerRow) {
+      xml += `<table:table-header-rows><table:table-row>`
+      for (let i = 0; i < numCols; i++) {
+        xml += `<table:table-cell><text:p text:style-name="Table_Header_Contents">${inlineToOdt(headerRow[i] || '')}</text:p></table:table-cell>`
+      }
+      xml += `</table:table-row></table:table-header-rows>`
+    }
+
+    for (const row of bodyRows) {
+      xml += `<table:table-row>`
+      for (let i = 0; i < numCols; i++) {
+        xml += `<table:table-cell><text:p text:style-name="Table_Contents">${inlineToOdt(row[i] || '')}</text:p></table:table-cell>`
+      }
+      xml += `</table:table-row>`
+    }
+
+    xml += `</table:table>`
+    elements.push(xml)
+  }
 
   // Normalize tabs to 4 spaces to keep nested list depth consistent.
   const normalizeIndentWidth = (indent) =>
@@ -87,8 +293,11 @@ function markdownToOdtElements(markdown) {
     }
   }
 
-  for (const line of lines) {
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const line = lines[lineIdx]
+    const nextLine = lineIdx + 1 < lines.length ? lines[lineIdx + 1] : ''
     if (/^```/.test(line.trim())) {
+      if (inTable) flushTable()
       closeAllLists()
       inCodeBlock = !inCodeBlock
       continue
@@ -102,18 +311,59 @@ function markdownToOdtElements(markdown) {
     }
 
     if (!line.trim()) {
+      if (inTable) flushTable()
       closeAllLists()
       elements.push('<text:p></text:p>')
       continue
     }
 
+    // Table rows: lines containing '|'.
+    // A new table is only started when the next line is a valid GFM separator row
+    // (e.g. |---|---|). This matches how the app's marked preview handles tables
+    // and prevents false positives for normal text that happens to contain pipes.
+    // Once already inside a table, any line with '|' continues the table —
+    // the blockquote/list-prefix guard is intentionally NOT applied here so that
+    // table rows whose first cell starts with a list-like token (e.g. "- item | val")
+    // are not prematurely terminated.
+    // The prefix guard IS applied when deciding whether to START a table, so
+    // "- | A | B |" at the top of a list still falls through to the list handler.
+    if (
+      (inTable && line.includes('|')) ||
+      (!inTable && !hasBlockquoteOrListPrefix(line) && line.includes('|') && isTableSeparatorLine(nextLine))
+    ) {
+      closeAllLists()
+      inTable = true
+      tableLines.push(line)
+      continue
+    }
+
+    // Flush any accumulated table before processing non-table content.
+    if (inTable) flushTable()
+
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/)
     if (headingMatch) {
       closeAllLists()
       const level = headingMatch[1].length
-      const headingText = escapeXml(headingMatch[2])
       elements.push(
-        `<text:h text:outline-level="${level}">${headingText}</text:h>`
+        `<text:h text:style-name="Heading ${level}" text:outline-level="${level}">${inlineToOdt(headingMatch[2])}</text:h>`
+      )
+      continue
+    }
+
+    // Horizontal rule: CommonMark allows up to 3 leading spaces; 4+ spaces is an
+    // indented code block and must not be treated as an HR.
+    if (/^\s{0,3}([-*_]\s*){3,}$/.test(line)) {
+      closeAllLists()
+      elements.push('<text:p text:style-name="Horizontal_Line"></text:p>')
+      continue
+    }
+
+    // Blockquote. Markdown allows up to 3 leading spaces before the > marker.
+    const blockquoteMatch = line.match(/^\s{0,3}>\s?(.*)$/)
+    if (blockquoteMatch) {
+      closeAllLists()
+      elements.push(
+        `<text:p text:style-name="Quotations">${inlineToOdt(blockquoteMatch[1])}</text:p>`
       )
       continue
     }
@@ -147,46 +397,183 @@ function markdownToOdtElements(markdown) {
       }
 
       elements.push(
-        `<text:list-item><text:p>${escapeXml(listMatch[3])}</text:p>`
+        `<text:list-item><text:p>${inlineToOdt(listMatch[3])}</text:p>`
       )
       listStack[listStack.length - 1].itemOpen = true
       continue
     }
 
     closeAllLists()
-    elements.push(`<text:p>${escapeXml(line)}</text:p>`)
+    elements.push(`<text:p>${inlineToOdt(line)}</text:p>`)
   }
 
+  if (inTable) flushTable()
   closeAllLists()
   return elements.join('')
 }
 
-async function createOdtBlob(title, content) {
-  const zip = new JSZip()
+// Maximum length for auto-generated ODT document description (Summary) text.
+const MAX_DESCRIPTION_LENGTH = 300
 
-  zip.file('mimetype', ODT_MIME_TYPE, { compression: 'STORE' })
-  zip.file(
-    'META-INF/manifest.xml',
-    `<?xml version="1.0" encoding="UTF-8"?>
-<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
-  <manifest:file-entry manifest:media-type="${ODT_MIME_TYPE}" manifest:full-path="/"/>
-  <manifest:file-entry manifest:media-type="" manifest:full-path="META-INF/"/>
-  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="META-INF/manifest.xml"/>
-  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="content.xml"/>
-  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="styles.xml"/>
-</manifest:manifest>`
-  )
-  zip.file(
-    'styles.xml',
-    `<?xml version="1.0" encoding="UTF-8"?>
+// Truncate text to maxLen characters at a word boundary to avoid mid-word cuts.
+function truncateAtWord(text, maxLen) {
+  if (text.length <= maxLen) return text
+  const cut = text.slice(0, maxLen)
+  const lastSpace = cut.lastIndexOf(' ')
+  return lastSpace > 0 ? cut.slice(0, lastSpace) : cut
+}
+
+// Strip markdown syntax and return the first MAX_DESCRIPTION_LENGTH characters of plain text.
+// Used to populate the ODT document description (Summary) in meta.xml so that
+// word processors like LibreOffice Writer and Microsoft Word auto-populate the
+// "Summary" / "Description" field in File → Properties without any extra steps.
+function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
+  if (!markdown) return ''
+  const plain = markdown
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    // Underscore emphasis: require a non-word char (or line start) before the
+    // opener so that identifiers like SOME_CONST_NAME are not stripped.
+    // Lookahead is used on the closing side (supported in Safari 14+);
+    // the leading non-word char is captured and re-emitted as $1.
+    .replace(/(^|[^a-zA-Z0-9])___(.+?)___(?=[^a-zA-Z0-9]|$)/g, '$1$2')
+    .replace(/(^|[^a-zA-Z0-9])__(.+?)__(?=[^a-zA-Z0-9]|$)/g, '$1$2')
+    .replace(/(^|[^a-zA-Z0-9])_(.+?)_(?=[^a-zA-Z0-9]|$)/g, '$1$2')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^\s{0,3}>\s*/gm, '')
+    .replace(/^\s{0,3}([-*_]\s*){3,}$/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    // Strip GFM table separator rows in both piped (|---|---|) and
+    // pipeless (---|---) forms: a line consisting only of -, :, |, and spaces.
+    .replace(/^[ ]*\|?[ ]*:?-+:?(?:[ ]*\|[ ]*:?-+:?)+[ ]*\|?[ ]*$/gm, '')
+    .replace(/\|/g, ' ')
+    .replace(/\n{2,}/g, '\n')
+    .trim()
+  return truncateAtWord(plain, maxLen)
+}
+
+// Coerce a value to a valid ISO 8601 date string.
+// Returns null if the value is absent or not a valid date.
+function toIsoDate(value) {
+  if (!value) return null
+  const parsed = new Date(value)
+  return isNaN(parsed.getTime()) ? null : parsed.toISOString()
+}
+
+// Build an ODT meta.xml string with document properties.
+// <dc:description> is the "Summary/Comments" field shown in
+// LibreOffice File → Properties → Description and
+// MS Word File → Info → Properties → Comments.
+function buildMetaXml(title, description, createdAt, modifiedAt) {
+  const now = new Date().toISOString()
+  const created = toIsoDate(createdAt) || now
+  const modified = toIsoDate(modifiedAt) || now
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-meta
+  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+  office:version="1.2">
+  <office:meta>
+    <dc:title>${escapeXml(title || '')}</dc:title>
+    <dc:description>${escapeXml(description || '')}</dc:description>
+    <meta:creation-date>${created}</meta:creation-date>
+    <dc:date>${modified}</dc:date>
+  </office:meta>
+</office:document-meta>`
+}
+
+const ODT_STYLES_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <office:document-styles
   xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
   xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
   xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+  xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
   office:version="1.2">
+  <office:font-face-decls>
+    <style:font-face style:name="Space Grotesk" svg:font-family="'Space Grotesk'" style:font-family-generic="swiss" style:font-pitch="variable"/>
+    <style:font-face style:name="Inter" svg:font-family="Inter" style:font-family-generic="swiss" style:font-pitch="variable"/>
+    <style:font-face style:name="Courier New" svg:font-family="'Courier New'" style:font-family-generic="modern" style:font-pitch="fixed"/>
+  </office:font-face-decls>
   <office:styles>
+    <style:default-style style:family="paragraph">
+      <style:paragraph-properties fo:line-height="155%" fo:margin-bottom="0.2cm"/>
+      <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-size="11pt" fo:color="#1a1d2e" fo:language="en" fo:country="US"/>
+    </style:default-style>
+    <style:style style:name="Title" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0" fo:margin-bottom="0.4cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="28pt" fo:color="#0f1535"/>
+    </style:style>
+    <style:style style:name="Heading 1" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.5cm" fo:margin-bottom="0.2cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="24pt" fo:color="#0f1535"/>
+    </style:style>
+    <style:style style:name="Heading 2" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.15cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="18pt" fo:color="#1a1d2e"/>
+    </style:style>
+    <style:style style:name="Heading 3" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.35cm" fo:margin-bottom="0.12cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-family="'Space Grotesk', Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="14pt" fo:color="#2a2e52"/>
+    </style:style>
+    <style:style style:name="Heading 4" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.3cm" fo:margin-bottom="0.1cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="12pt" fo:color="#1a1d2e"/>
+    </style:style>
+    <style:style style:name="Heading 5" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.25cm" fo:margin-bottom="0.08cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-size="11pt" fo:color="#1a1d2e"/>
+    </style:style>
+    <style:style style:name="Heading 6" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.2cm" fo:margin-bottom="0.06cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Inter" fo:font-family="Inter, system-ui, sans-serif" fo:font-weight="bold" fo:font-style="italic" fo:font-size="10pt" fo:color="#2a2e52"/>
+    </style:style>
     <style:style style:name="Preformatted_Text" style:family="paragraph">
-      <style:text-properties style:font-name="Courier New"/>
+      <style:paragraph-properties fo:background-color="#f4f5f9" fo:padding="0.2cm" fo:margin-top="0.2cm" fo:margin-bottom="0.2cm"/>
+      <style:text-properties style:font-name="Courier New" fo:font-family="'Courier New', Courier, monospace" fo:font-size="10pt" fo:color="#1a1d2e"/>
+    </style:style>
+    <style:style style:name="Quotations" style:family="paragraph">
+      <style:paragraph-properties fo:border-left="3pt solid #2a8f84" fo:padding-left="0.5cm" fo:padding-top="0.15cm" fo:padding-bottom="0.15cm" fo:margin-left="0.5cm" fo:margin-right="0.5cm" fo:background-color="#f4f5fa" fo:margin-top="0.2cm" fo:margin-bottom="0.2cm"/>
+      <style:text-properties fo:font-style="italic" fo:color="#2a2e52"/>
+    </style:style>
+    <style:style style:name="Horizontal_Line" style:family="paragraph">
+      <style:paragraph-properties fo:border-bottom="1pt solid #2a8f84" fo:padding-bottom="0.1cm" fo:margin-top="0.3cm" fo:margin-bottom="0.3cm"/>
+    </style:style>
+    <style:style style:name="Page_Break" style:family="paragraph">
+      <style:paragraph-properties fo:break-before="page"/>
+    </style:style>
+    <style:style style:name="Table_Contents" style:family="paragraph">
+      <style:text-properties style:font-name="Inter" fo:font-size="11pt"/>
+    </style:style>
+    <style:style style:name="Table_Header_Contents" style:family="paragraph">
+      <style:paragraph-properties fo:background-color="#eef0ff"/>
+      <style:text-properties style:font-name="Inter" fo:font-weight="bold" fo:font-size="11pt" fo:color="#0f1535"/>
+    </style:style>
+    <style:style style:name="Bold_Char" style:family="text">
+      <style:text-properties fo:font-weight="bold"/>
+    </style:style>
+    <style:style style:name="Italic_Char" style:family="text">
+      <style:text-properties fo:font-style="italic"/>
+    </style:style>
+    <style:style style:name="Bold_Italic_Char" style:family="text">
+      <style:text-properties fo:font-weight="bold" fo:font-style="italic"/>
+    </style:style>
+    <style:style style:name="Code_Char" style:family="text">
+      <style:text-properties style:font-name="Courier New" fo:font-size="10pt" fo:background-color="#eef0f4"/>
+    </style:style>
+    <style:style style:name="Strikethrough_Char" style:family="text">
+      <style:text-properties style:text-line-through-style="solid"/>
+    </style:style>
+    <style:style style:name="Internet_Link" style:family="text">
+      <style:text-properties fo:color="#007b6b" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color"/>
     </style:style>
     <text:list-style style:name="List_20_1">
       <text:list-level-style-bullet text:level="1" text:bullet-char="•"/>
@@ -196,24 +583,88 @@ async function createOdtBlob(title, content) {
     </text:list-style>
   </office:styles>
 </office:document-styles>`
-  )
-  zip.file(
-    'content.xml',
-    `<?xml version="1.0" encoding="UTF-8"?>
+
+const ODT_MANIFEST_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
+  <manifest:file-entry manifest:media-type="${ODT_MIME_TYPE}" manifest:full-path="/"/>
+  <manifest:file-entry manifest:media-type="" manifest:full-path="META-INF/"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="META-INF/manifest.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="meta.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="content.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="styles.xml"/>
+</manifest:manifest>`
+
+const ODT_CONTENT_WRAPPER_OPEN = `<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
   xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
   xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
   office:version="1.2">
   <office:body>
-    <office:text>
-      <text:h text:outline-level="1">${escapeXml(title || 'Untitled Note')}</text:h>
-      ${markdownToOdtElements(content)}
-    </office:text>
+    <office:text>`
+
+const ODT_CONTENT_WRAPPER_CLOSE = `    </office:text>
   </office:body>
 </office:document-content>`
-  )
 
-  return zip.generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
+function buildOdtZip(contentXml, metaXml) {
+  const zip = new JSZip()
+  zip.file('mimetype', ODT_MIME_TYPE, { compression: 'STORE' })
+  zip.file('META-INF/manifest.xml', ODT_MANIFEST_XML)
+  zip.file('styles.xml', ODT_STYLES_XML)
+  zip.file('meta.xml', metaXml)
+  zip.file('content.xml', contentXml)
+  return zip
+}
+
+async function createOdtBlob(title, content, meta = {}) {
+  const resolvedTitle = title || 'Untitled Note'
+  const titleXml = escapeXml(resolvedTitle)
+  const bodyXml = markdownToOdtElements(content)
+  const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
+      <text:p text:style-name="Title">${titleXml}</text:p>
+      ${bodyXml}
+${ODT_CONTENT_WRAPPER_CLOSE}`
+  const metaXml = buildMetaXml(resolvedTitle, extractTextSummary(content), meta.createdAt, meta.updatedAt)
+  return buildOdtZip(contentXml, metaXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
+}
+
+async function createCombinedOdtBlob(notes) {
+  const noteParts = notes.map((note, index) => {
+    const pageBreak = index === 0 ? '' : '<text:p text:style-name="Page_Break"/>'
+    const titleXml = escapeXml(note?.title || 'Untitled Note')
+    const bodyXml = markdownToOdtElements(note?.content ?? '')
+    return `${pageBreak}<text:p text:style-name="Title">${titleXml}</text:p>${bodyXml}`
+  })
+  const contentXml = `${ODT_CONTENT_WRAPPER_OPEN}
+      ${noteParts.join('\n      ')}
+${ODT_CONTENT_WRAPPER_CLOSE}`
+  const combinedTitle = notes.length === 1
+    ? (notes[0]?.title || 'Untitled Note')
+    : 'Combined Notes Export'
+  const combinedDescription = notes.length === 1
+    ? extractTextSummary(notes[0]?.content || '')
+    : truncateAtWord(
+        `Contains ${notes.length} notes: ${notes.map((n) => n?.title || 'Untitled').join(', ')}`,
+        MAX_DESCRIPTION_LENGTH
+      )
+  // Use the earliest createdAt and latest updatedAt across all notes so the
+  // timestamps reflect the actual range of the exported content regardless of
+  // note ordering.
+  const validDates = notes
+    .map((n) => ({ c: toIsoDate(n?.createdAt), u: toIsoDate(n?.updatedAt) }))
+    .filter((d) => d.c || d.u)
+  const earliestCreated = validDates.length
+    ? validDates.reduce((min, d) => (d.c && (!min || d.c < min) ? d.c : min), null)
+    : null
+  const latestUpdated = validDates.length
+    ? validDates.reduce((max, d) => (d.u && (!max || d.u > max) ? d.u : max), null)
+    : null
+  const metaXml = buildMetaXml(combinedTitle, combinedDescription, earliestCreated, latestUpdated)
+  return buildOdtZip(contentXml, metaXml).generateAsync({ type: 'blob', mimeType: ODT_MIME_TYPE })
 }
 
 function downloadBlob(blob, filename) {
@@ -346,33 +797,34 @@ export function exportNoteToFile(title, content) {
  * Export a single note to ODT format
  * @param {string} title - Note title
  * @param {string} content - Note content
+ * @param {Object} [meta] - Optional note metadata ({ createdAt, updatedAt })
  * @returns {Promise<void>}
  */
-export async function exportNoteToOdtFile(title, content) {
-  const blob = await createOdtBlob(title, content)
+export async function exportNoteToOdtFile(title, content, meta = {}) {
+  const blob = await createOdtBlob(title, content, meta)
   downloadBlob(blob, generateOdtFilename(title))
 }
 
 /**
- * Export all notes as ODT content using a single browser download.
- * For multiple notes, bulk export is delivered as a ZIP archive.
+ * Export all notes as a single ODT document with each note on its own page.
  * @param {Array} notes - Notes to export
  * @returns {Promise<void>}
  */
-export async function exportAllNotesToSingleOdtDownload(notes) {
+export async function exportAllNotesToCombinedOdt(notes) {
   if (!Array.isArray(notes) || notes.length === 0) return
 
   if (notes.length === 1) {
     const [note] = notes
-    await exportNoteToOdtFile(note.title, note.content)
+    await exportNoteToOdtFile(note.title, note.content, { createdAt: note.createdAt, updatedAt: note.updatedAt })
     return
   }
 
-  await exportAllNotesToOdtZip(notes)
+  const blob = await createCombinedOdtBlob(notes)
+  downloadBlob(blob, `braindump_notes_combined_${new Date().toISOString().slice(0, 10)}.odt`)
 }
 
 /**
- * Export all notes as a ZIP archive containing ODT files
+ * Export all notes as individual ODT files packaged in a ZIP archive.
  * @param {Array} notes - Notes to export
  * @returns {Promise<void>}
  */
@@ -429,7 +881,7 @@ export async function exportAllNotesToOdtZip(notes) {
         currentIndex += concurrencyLimit
       ) {
         const { note } = zipEntries[currentIndex]
-        odtBlobs[currentIndex] = await createOdtBlob(note.title, note.content)
+        odtBlobs[currentIndex] = await createOdtBlob(note.title, note.content, { createdAt: note.createdAt, updatedAt: note.updatedAt })
       }
     })()
   })
