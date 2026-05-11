@@ -723,9 +723,10 @@ describe('Notes Component', () => {
       // Fire global Ctrl+S — should be a no-op because notes array is empty
       fireEvent.keyDown(window, { key: 's', ctrlKey: true })
 
-      await waitFor(() => {
-        expect(mockClick).not.toHaveBeenCalled()
-      })
+      // Flush all microtasks/effects so any async export path would have run by now
+      await act(async () => {})
+
+      expect(mockClick).not.toHaveBeenCalled()
     })
 
     test('does not export when no note is selected', () => {
