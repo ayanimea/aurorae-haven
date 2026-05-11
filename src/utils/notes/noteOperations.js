@@ -843,6 +843,9 @@ export async function exportAllNotesToMarkdownZip(notes) {
 
   if (notes.length === 1) {
     const [note] = notes
+    // Always export even when content is empty — consistent with the multi-note ZIP
+    // path below and the semantics of "save all". This intentionally differs from
+    // exportNoteToFile(), which returns early for falsy content.
     const blob = new Blob([note.content ?? ''], { type: 'text/markdown' })
     downloadBlob(blob, generateBrainDumpFilename(note.title))
     return
