@@ -383,6 +383,26 @@ describe('Notes Component', () => {
       })
       textarea.dispatchEvent(ctrlAltSaveEvent)
       expect(ctrlAltSaveEvent.defaultPrevented).toBe(false)
+
+      const cmdShiftSaveEvent = new KeyboardEvent('keydown', {
+        key: 'S',
+        metaKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+      textarea.dispatchEvent(cmdShiftSaveEvent)
+      expect(cmdShiftSaveEvent.defaultPrevented).toBe(false)
+
+      const cmdAltSaveEvent = new KeyboardEvent('keydown', {
+        key: 's',
+        metaKey: true,
+        altKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+      textarea.dispatchEvent(cmdAltSaveEvent)
+      expect(cmdAltSaveEvent.defaultPrevented).toBe(false)
     })
 
     test('does not intercept Enter on non-list content', async () => {

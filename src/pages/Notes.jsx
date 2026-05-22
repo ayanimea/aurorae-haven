@@ -125,10 +125,10 @@ function Notes() {
         !e.altKey &&
         e.key.toLowerCase() === 's'
       ) {
-        e.preventDefault()
         if (e.repeat) return
         const currentNotes = notesRef.current
         if (currentNotes.length > 0) {
+          e.preventDefault()
           exportAllNotesToMarkdownZip(currentNotes)
             .then(() => {
               if (!isMounted) return
