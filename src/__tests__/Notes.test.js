@@ -357,6 +357,34 @@ describe('Notes Component', () => {
       expect(textarea.value).toBe('- Item')
     })
 
+    test('does not intercept Ctrl/Cmd+Shift+S or Alt-modified save shortcuts in editor', () => {
+      setupNoteForTest()
+      render(<Notes />)
+      const textarea = screen.getByPlaceholderText(
+        'Start writing your note in Markdown...'
+      )
+
+      const ctrlShiftSaveEvent = new KeyboardEvent('keydown', {
+        key: 'S',
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+      textarea.dispatchEvent(ctrlShiftSaveEvent)
+      expect(ctrlShiftSaveEvent.defaultPrevented).toBe(false)
+
+      const ctrlAltSaveEvent = new KeyboardEvent('keydown', {
+        key: 's',
+        ctrlKey: true,
+        altKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+      textarea.dispatchEvent(ctrlAltSaveEvent)
+      expect(ctrlAltSaveEvent.defaultPrevented).toBe(false)
+    })
+
     test('does not intercept Enter on non-list content', async () => {
       setupNoteForTest()
       render(<Notes />)
@@ -706,6 +734,37 @@ describe('Notes Component', () => {
         expect(mockClick).toHaveBeenCalled()
       })
       expect(downloadFilenames[0]).toMatch(/^braindump_md_export_\d{4}-\d{2}-\d{2}\.zip$/)
+    })
+
+    test('does not export for Ctrl/Cmd+Shift+S or Alt-modified save shortcuts', async () => {
+      const { mockClick, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'Shortcut Guard Note',
+          content: 'Should not export for Save As',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('Start writing your note in Markdown...')
+        ).toHaveValue('Should not export for Save As')
+      })
+
+      fireEvent.keyDown(window, { key: 'S', ctrlKey: true, shiftKey: true })
+      fireEvent.keyDown(window, { key: 's', metaKey: true, shiftKey: true })
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true, altKey: true })
+
+      await act(async () => {})
+      expect(mockClick).not.toHaveBeenCalled()
     })
 
     test('does not export via Ctrl+S when there are no notes', async () => {

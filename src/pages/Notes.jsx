@@ -117,7 +117,12 @@ function Notes() {
   // Registered once (empty deps); reads latest notes/toast via refs to avoid churn.
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        !e.altKey &&
+        e.key.toLowerCase() === 's'
+      ) {
         e.preventDefault()
         if (e.repeat) return
         const currentNotes = notesRef.current
