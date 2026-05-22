@@ -306,6 +306,8 @@ Save your markdown as a file:
 3. Import into other markdown editors
 4. Backup your work
 
+**Note:** Toolbar "📤 Export" skips download for empty notes.
+
 **Keyboard Shortcut:** `Ctrl/Cmd + S` — exports **all notes**
 
 - **Single note:** downloads one `.md` file directly

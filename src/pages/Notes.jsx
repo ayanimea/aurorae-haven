@@ -116,6 +116,8 @@ function Notes() {
   // Global Ctrl/Cmd+S shortcut: export all notes as markdown (save all)
   // Registered once (empty deps); reads latest notes/toast via refs to avoid churn.
   useEffect(() => {
+    let isMounted = true
+
     const handleGlobalKeyDown = (e) => {
       if (
         (e.ctrlKey || e.metaKey) &&
@@ -129,6 +131,7 @@ function Notes() {
         if (currentNotes.length > 0) {
           exportAllNotesToMarkdownZip(currentNotes)
             .then(() => {
+              if (!isMounted) return
               showToastRef.current(
                 currentNotes.length === 1
                   ? '✓ Note exported'
@@ -137,13 +140,17 @@ function Notes() {
             })
             .catch((error) => {
               logger.error('Failed to export notes as markdown', error)
+              if (!isMounted) return
               showToastRef.current('⚠️ Export failed.')
             })
         }
       }
     }
     window.addEventListener('keydown', handleGlobalKeyDown)
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+    return () => {
+      isMounted = false
+      window.removeEventListener('keydown', handleGlobalKeyDown)
+    }
   }, [])
 
   useEffect(() => {
