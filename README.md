@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1199 KB compressed
+- ✅ Total size: 1196 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-05-11 01:59:40 UTC
+**Last Updated**: 2026-05-22 20:39:07 UTC
 **Source Branch**: automatic-global-export-ctrl-s
-**Source Commit**: 33ce29a
+**Source Commit**: 22d9908
 
 ---
 
