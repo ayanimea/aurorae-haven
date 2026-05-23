@@ -357,6 +357,54 @@ describe('Notes Component', () => {
       expect(textarea.value).toBe('- Item')
     })
 
+    test('does not intercept Ctrl/Cmd+Shift+S or Alt-modified save shortcuts in editor', () => {
+      setupNoteForTest()
+      render(<Notes />)
+      const textarea = screen.getByPlaceholderText(
+        'Start writing your note in Markdown...'
+      )
+
+      const ctrlShiftSaveEvent = new KeyboardEvent('keydown', {
+        key: 'S',
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+      textarea.dispatchEvent(ctrlShiftSaveEvent)
+      expect(ctrlShiftSaveEvent.defaultPrevented).toBe(false)
+
+      const ctrlAltSaveEvent = new KeyboardEvent('keydown', {
+        key: 's',
+        ctrlKey: true,
+        altKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+      textarea.dispatchEvent(ctrlAltSaveEvent)
+      expect(ctrlAltSaveEvent.defaultPrevented).toBe(false)
+
+      const cmdShiftSaveEvent = new KeyboardEvent('keydown', {
+        key: 'S',
+        metaKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+      textarea.dispatchEvent(cmdShiftSaveEvent)
+      expect(cmdShiftSaveEvent.defaultPrevented).toBe(false)
+
+      const cmdAltSaveEvent = new KeyboardEvent('keydown', {
+        key: 's',
+        metaKey: true,
+        altKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+      textarea.dispatchEvent(cmdAltSaveEvent)
+      expect(cmdAltSaveEvent.defaultPrevented).toBe(false)
+    })
+
     test('does not intercept Enter on non-list content', async () => {
       setupNoteForTest()
       render(<Notes />)
@@ -598,6 +646,199 @@ describe('Notes Component', () => {
         /^braindump_my_test_note_\d{8}_\d{4}\.md$/
       )
 
+    })
+
+    test('exports single note as markdown via global Ctrl+S shortcut (save all)', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'Keyboard Export Note',
+          content: 'Exported via keyboard',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      // Wait for note to be loaded
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('Start writing your note in Markdown...')
+        ).toHaveValue('Exported via keyboard')
+      })
+
+      // Fire global Ctrl+S keydown on window — single note → single .md file
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalled()
+      })
+      expect(downloadFilenames[0]).toMatch(
+        /^braindump_keyboard_export_note_\d{8}_\d{4}\.md$/
+      )
+    })
+
+    test('exports latest in-editor changes via global Ctrl+S before autosave debounce completes', async () => {
+      const { mockClick, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'Debounced Note',
+          content: 'Old saved content',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      const textarea = await screen.findByPlaceholderText(
+        'Start writing your note in Markdown...'
+      )
+      expect(textarea).toHaveValue('Old saved content')
+
+      fireEvent.change(textarea, { target: { value: 'Fresh unsaved content' } })
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalled()
+      })
+
+      const [exportedBlob] = global.URL.createObjectURL.mock.calls.at(-1)
+      expect(await exportedBlob.text()).toBe('Fresh unsaved content')
+    })
+
+    test('exports single note as markdown via global Cmd+S shortcut (Mac, save all)', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'Mac Export Note',
+          content: 'Exported via cmd+s',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('Start writing your note in Markdown...')
+        ).toHaveValue('Exported via cmd+s')
+      })
+
+      // Fire global Cmd+S (metaKey) keydown on window — single note → single .md file
+      fireEvent.keyDown(window, { key: 's', metaKey: true })
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalled()
+      })
+      expect(downloadFilenames[0]).toMatch(
+        /^braindump_mac_export_note_\d{8}_\d{4}\.md$/
+      )
+    })
+
+    test('exports all notes as markdown ZIP via global Ctrl+S when multiple notes exist (save all)', async () => {
+      const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id-1',
+          title: 'First Md Note',
+          content: 'Content one',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'test-id-2',
+          title: 'Second Md Note',
+          content: 'Content two',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('Start writing your note in Markdown...')
+        ).toHaveValue('Content one')
+      })
+
+      // Fire global Ctrl+S — multiple notes → ZIP archive
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalled()
+      })
+      expect(downloadFilenames[0]).toMatch(/^braindump_md_export_\d{4}-\d{2}-\d{2}\.zip$/)
+    })
+
+    test('does not export for Ctrl/Cmd+Shift+S or Alt-modified save shortcuts', async () => {
+      const { mockClick, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'Shortcut Guard Note',
+          content: 'Should not export for Save As',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('Start writing your note in Markdown...')
+        ).toHaveValue('Should not export for Save As')
+      })
+
+      fireEvent.keyDown(window, { key: 'S', ctrlKey: true, shiftKey: true })
+      fireEvent.keyDown(window, { key: 's', metaKey: true, shiftKey: true })
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true, altKey: true })
+
+      await act(async () => {})
+      expect(mockClick).not.toHaveBeenCalled()
+    })
+
+    test('does not export via Ctrl+S when there are no notes', async () => {
+      const { mockClick, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      // Empty localStorage — no notes
+      render(<Notes />)
+
+      // Wait for the component to fully mount (effects attached) before firing shortcut
+      await waitFor(() => {
+        expect(screen.getByLabelText('Export')).toBeInTheDocument()
+      })
+
+      // Fire global Ctrl+S — should be a no-op because notes array is empty
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+      // Flush all microtasks/effects so any async export path would have run by now
+      await act(async () => {})
+
+      expect(mockClick).not.toHaveBeenCalled()
     })
 
     test('does not export when no note is selected', () => {

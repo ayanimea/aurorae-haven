@@ -152,7 +152,7 @@ This relates to [[Project Alpha]] and [[Meeting Notes 2024-01]]
 
 #### Keyboard Shortcuts
 
-- `Ctrl/Cmd + S`: Export markdown
+- `Ctrl/Cmd + S`: Export all notes as markdown (single `.md` for one note, `.zip` for multiple)
 - `Ctrl/Cmd + H`: Open version history
 - `Escape`: Close modals
 
