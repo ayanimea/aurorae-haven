@@ -275,7 +275,12 @@ function NoteEditor({
                       }
                     }, 0)
                   }
-                } else if (e.ctrlKey && e.key === 's') {
+                } else if (
+                  (e.ctrlKey || e.metaKey) &&
+                  !e.shiftKey &&
+                  !e.altKey &&
+                  e.key.toLowerCase() === 's'
+                ) {
                   e.preventDefault()
                 }
               }}

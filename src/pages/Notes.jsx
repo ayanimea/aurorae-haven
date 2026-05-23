@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { marked } from 'marked'
 import markedKatex from 'marked-katex-extension'
@@ -13,6 +13,7 @@ import {
   deleteNote as deleteNoteUtil,
   exportNoteToFile,
   exportNoteToOdtFile,
+  exportAllNotesToMarkdownZip,
   exportAllNotesToCombinedOdt,
   exportAllNotesToOdtZip
 } from '../utils/notes/noteOperations'
@@ -91,6 +92,24 @@ function Notes() {
 
   const { toastMessage, showToast, showToastNotification } = useToast()
 
+  // Stable refs so the global keydown listener never needs to be re-registered
+  const notesRef = useRef(notes)
+  const currentNoteIdRef = useRef(currentNoteId)
+  const titleRef = useRef(title)
+  const contentRef = useRef(content)
+  const categoryRef = useRef(category)
+  const showToastRef = useRef(showToastNotification)
+  const updateNotesRef = useRef(updateNotes)
+  const clearAutosaveTimeoutRef = useRef(clearAutosaveTimeout)
+  notesRef.current = notes
+  currentNoteIdRef.current = currentNoteId
+  titleRef.current = title
+  contentRef.current = content
+  categoryRef.current = category
+  showToastRef.current = showToastNotification
+  updateNotesRef.current = updateNotes
+  clearAutosaveTimeoutRef.current = clearAutosaveTimeout
+
   // UI state
   const [preview, setPreview] = useState('')
   const [showNoteList, setShowNoteList] = useState(true)
@@ -104,6 +123,71 @@ function Notes() {
   // Configure sanitization on mount
   useEffect(() => {
     configureSanitization(DOMPurify)
+  }, [])
+
+  // Global Ctrl/Cmd+S shortcut: export all notes as markdown (save all)
+  // Registered once (empty deps); reads latest notes/toast via refs to avoid churn.
+  useEffect(() => {
+    let isMounted = true
+
+    const handleGlobalKeyDown = (e) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        !e.altKey &&
+        e.key.toLowerCase() === 's'
+      ) {
+        e.preventDefault()
+        if (e.repeat) return
+        const currentNotes = notesRef.current
+        if (currentNotes.length > 0) {
+          let notesForExport = currentNotes
+          const activeNoteId = currentNoteIdRef.current
+          const activeNoteIndex = currentNotes.findIndex((note) => note.id === activeNoteId)
+          if (activeNoteIndex !== -1) {
+            const activeNote = currentNotes[activeNoteIndex]
+            const mergedActiveNote = {
+              ...activeNote,
+              title: titleRef.current,
+              content: contentRef.current,
+              category: categoryRef.current
+            }
+            const hasUnsavedActiveNoteChanges =
+              mergedActiveNote.title !== activeNote.title ||
+              mergedActiveNote.content !== activeNote.content ||
+              mergedActiveNote.category !== activeNote.category
+
+            if (hasUnsavedActiveNoteChanges) {
+              clearAutosaveTimeoutRef.current()
+              notesForExport = [...currentNotes]
+              notesForExport[activeNoteIndex] = mergedActiveNote
+              updateNotesRef.current(notesForExport)
+              notesRef.current = notesForExport
+            }
+          }
+
+          exportAllNotesToMarkdownZip(notesForExport)
+            .then(() => {
+              if (!isMounted) return
+              showToastRef.current(
+               notesForExport.length === 1
+                 ? '✓ Note exported'
+                 : '✓ All notes exported as ZIP'
+              )
+            })
+            .catch((error) => {
+              logger.error('Failed to export notes as markdown', error)
+              if (!isMounted) return
+              showToastRef.current('⚠️ Export failed.')
+            })
+        }
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => {
+      isMounted = false
+      window.removeEventListener('keydown', handleGlobalKeyDown)
+    }
   }, [])
 
   useEffect(() => {

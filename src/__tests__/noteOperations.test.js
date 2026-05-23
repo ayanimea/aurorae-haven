@@ -3,7 +3,8 @@ import JSZip from 'jszip'
 import {
   exportAllNotesToOdtZip,
   exportAllNotesToCombinedOdt,
-  exportNoteToOdtFile
+  exportNoteToOdtFile,
+  exportNotesToMarkdownDownloads
 } from '../utils/notes/noteOperations'
 
 let originalCreateElement = null
@@ -1026,5 +1027,97 @@ describe('noteOperations ODT meta.xml document properties', () => {
     const descText = descMatch ? descMatch[1] : ''
     // "---+---" is NOT a GFM table separator (contains +), it should not be stripped
     expect(descText).toContain('---+---')
+  })
+})
+
+describe('exportNotesToMarkdownDownloads', () => {
+  test('returns early for empty or invalid input', async () => {
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportNotesToMarkdownDownloads()
+    await exportNotesToMarkdownDownloads([])
+
+    expect(mockClick).not.toHaveBeenCalled()
+    expect(downloadedBlobs).toHaveLength(0)
+  })
+
+  test('single note downloads a .md file with correct content and filename', async () => {
+    const { downloadedBlobs, mockClick, downloadFilenames } = setupDownloadMocks()
+
+    await exportNotesToMarkdownDownloads([
+      { title: 'My Note', content: '# Hello\nWorld' }
+    ])
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+
+    const text = await downloadedBlobs[0].text()
+    expect(text).toBe('# Hello\nWorld')
+    expect(downloadFilenames[0]).toMatch(/^braindump_my_note_\d{8}_\d{4}\.md$/)
+  })
+
+  test('single note with empty content still downloads a .md file', async () => {
+    // exportNotesToMarkdownDownloads always exports even empty notes (consistent with
+    // the multi-note ZIP path). This intentionally differs from exportNoteToFile().
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportNotesToMarkdownDownloads([{ title: 'Empty Note', content: '' }])
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+    const text = await downloadedBlobs[0].text()
+    expect(text).toBe('')
+  })
+
+  test('multiple notes download a .zip with one .md per note containing correct content', async () => {
+    const { downloadedBlobs, mockClick, downloadFilenames } = setupDownloadMocks()
+
+    await exportNotesToMarkdownDownloads([
+      { id: 'a', title: 'Note One', content: 'Content 1' },
+      { id: 'b', title: 'Note Two', content: 'Content 2' }
+    ])
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+    expect(downloadFilenames[0]).toMatch(/^braindump_md_export_\d{4}-\d{2}-\d{2}\.zip$/)
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const mdEntries = Object.keys(zip.files).filter((name) => name.endsWith('.md'))
+    expect(mdEntries).toHaveLength(2)
+
+    const text1 = await zip.file('note_one.md').async('string')
+    const text2 = await zip.file('note_two.md').async('string')
+    expect(text1).toBe('Content 1')
+    expect(text2).toBe('Content 2')
+  })
+
+  test('preserves all notes by generating unique .md entry names in bulk ZIP', async () => {
+    const { downloadedBlobs, mockClick } = setupDownloadMocks()
+
+    await exportNotesToMarkdownDownloads([
+      {
+        id: 'dup-a',
+        title: 'Shared Title',
+        content: 'First',
+        createdAt: '2026-04-19T00:00:00.000Z'
+      },
+      {
+        id: 'dup-b',
+        title: 'Shared Title',
+        content: 'Second',
+        createdAt: '2026-04-20T00:00:00.000Z'
+      }
+    ])
+
+    expect(mockClick).toHaveBeenCalledTimes(1)
+    expect(downloadedBlobs).toHaveLength(1)
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const mdEntries = Object.keys(zip.files).filter((name) => name.endsWith('.md'))
+
+    expect(mdEntries).toHaveLength(2)
+    expect(new Set(mdEntries).size).toBe(2)
+    expect(mdEntries).toContain('shared_title.md')
+    expect(mdEntries.some((name) => name !== 'shared_title.md')).toBe(true)
   })
 })

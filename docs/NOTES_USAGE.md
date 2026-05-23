@@ -256,7 +256,7 @@ Full keyboard and screen reader support:
 
 **Keyboard Shortcuts:**
 
-- `Ctrl/Cmd + S`: Export markdown
+- `Ctrl/Cmd + S`: Export all notes as markdown (single `.md` for one note, `.zip` for multiple)
 - `Ctrl/Cmd + H`: Open version history
 - `Escape`: Close modals
 - `Enter`: Auto-continue lists
@@ -302,11 +302,16 @@ Remove all content and tags:
 Save your markdown as a file:
 
 1. Click "📤 Export"
-2. File downloads as `brain_dump.md`
+2. File downloads as a `.md` file
 3. Import into other markdown editors
 4. Backup your work
 
-**Keyboard Shortcut:** `Ctrl/Cmd + S`
+**Note:** Toolbar "📤 Export" skips download for empty notes.
+
+**Keyboard Shortcut:** `Ctrl/Cmd + S` — exports **all notes**
+
+- **Single note:** downloads one `.md` file directly
+- **Multiple notes:** downloads a `.zip` archive containing one `.md` file per note
 
 ### 🖨️ Print Formatted Preview
 
@@ -413,7 +418,7 @@ Bug found in login #bug #critical
 
 | Shortcut        | Action               |
 | --------------- | -------------------- |
-| `Ctrl/Cmd + S`  | Export markdown      |
+| `Ctrl/Cmd + S`  | Export all notes as markdown (ZIP if multiple) |
 | `Ctrl/Cmd + H`  | View version history |
 | `Escape`        | Close modal          |
 | `Enter`         | Continue list        |
