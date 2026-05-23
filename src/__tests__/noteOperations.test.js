@@ -4,7 +4,7 @@ import {
   exportAllNotesToOdtZip,
   exportAllNotesToCombinedOdt,
   exportNoteToOdtFile,
-  exportAllNotesToMarkdownZip
+  exportNotesToMarkdownDownloads
 } from '../utils/notes/noteOperations'
 
 let originalCreateElement = null
@@ -1030,12 +1030,12 @@ describe('noteOperations ODT meta.xml document properties', () => {
   })
 })
 
-describe('exportAllNotesToMarkdownZip', () => {
+describe('exportNotesToMarkdownDownloads', () => {
   test('returns early for empty or invalid input', async () => {
     const { downloadedBlobs, mockClick } = setupDownloadMocks()
 
-    await exportAllNotesToMarkdownZip()
-    await exportAllNotesToMarkdownZip([])
+    await exportNotesToMarkdownDownloads()
+    await exportNotesToMarkdownDownloads([])
 
     expect(mockClick).not.toHaveBeenCalled()
     expect(downloadedBlobs).toHaveLength(0)
@@ -1044,7 +1044,7 @@ describe('exportAllNotesToMarkdownZip', () => {
   test('single note downloads a .md file with correct content and filename', async () => {
     const { downloadedBlobs, mockClick, downloadFilenames } = setupDownloadMocks()
 
-    await exportAllNotesToMarkdownZip([
+    await exportNotesToMarkdownDownloads([
       { title: 'My Note', content: '# Hello\nWorld' }
     ])
 
@@ -1057,11 +1057,11 @@ describe('exportAllNotesToMarkdownZip', () => {
   })
 
   test('single note with empty content still downloads a .md file', async () => {
-    // exportAllNotesToMarkdownZip always exports even empty notes (consistent with
+    // exportNotesToMarkdownDownloads always exports even empty notes (consistent with
     // the multi-note ZIP path). This intentionally differs from exportNoteToFile().
     const { downloadedBlobs, mockClick } = setupDownloadMocks()
 
-    await exportAllNotesToMarkdownZip([{ title: 'Empty Note', content: '' }])
+    await exportNotesToMarkdownDownloads([{ title: 'Empty Note', content: '' }])
 
     expect(mockClick).toHaveBeenCalledTimes(1)
     expect(downloadedBlobs).toHaveLength(1)
@@ -1072,7 +1072,7 @@ describe('exportAllNotesToMarkdownZip', () => {
   test('multiple notes download a .zip with one .md per note containing correct content', async () => {
     const { downloadedBlobs, mockClick, downloadFilenames } = setupDownloadMocks()
 
-    await exportAllNotesToMarkdownZip([
+    await exportNotesToMarkdownDownloads([
       { id: 'a', title: 'Note One', content: 'Content 1' },
       { id: 'b', title: 'Note Two', content: 'Content 2' }
     ])
@@ -1094,7 +1094,7 @@ describe('exportAllNotesToMarkdownZip', () => {
   test('preserves all notes by generating unique .md entry names in bulk ZIP', async () => {
     const { downloadedBlobs, mockClick } = setupDownloadMocks()
 
-    await exportAllNotesToMarkdownZip([
+    await exportNotesToMarkdownDownloads([
       {
         id: 'dup-a',
         title: 'Shared Title',

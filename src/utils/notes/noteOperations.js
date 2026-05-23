@@ -833,12 +833,11 @@ function makeUniqueZipEntryName(note, index, ext, usedSet) {
 }
 
 /**
- * Export all notes as individual markdown files packaged in a ZIP archive.
- * Falls back to a single-file export when there is only one note.
+ * Export notes as markdown downloads (.md for one note, .zip for many).
  * @param {Array} notes - Notes to export
  * @returns {Promise<void>}
  */
-export async function exportAllNotesToMarkdownZip(notes) {
+export async function exportNotesToMarkdownDownloads(notes) {
   if (!Array.isArray(notes) || notes.length === 0) return
 
   if (notes.length === 1) {
