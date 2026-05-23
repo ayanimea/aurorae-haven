@@ -587,7 +587,7 @@ Aurorae Haven is designed with accessibility as a priority, following WCAG 2.2 A
 
 ### Keyboard Shortcuts
 
-- **Ctrl/Cmd + S**: Export markdown
+- **Ctrl/Cmd + S**: Export all notes as markdown (single `.md` for one note, `.zip` for multiple)
 - **Ctrl/Cmd + H**: Open version history
 - **Escape**: Close modals
 - **Enter**: Auto-continue lists

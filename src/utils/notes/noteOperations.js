@@ -837,7 +837,7 @@ function makeUniqueZipEntryName(note, index, ext, usedSet) {
  * @param {Array} notes - Notes to export
  * @returns {Promise<void>}
  */
-export async function exportNotesToMarkdownDownloads(notes) {
+export async function exportAllNotesToMarkdownZip(notes) {
   if (!Array.isArray(notes) || notes.length === 0) return
 
   if (notes.length === 1) {
@@ -860,6 +860,11 @@ export async function exportNotesToMarkdownDownloads(notes) {
 
   const zipBlob = await zip.generateAsync({ type: 'blob' })
   downloadBlob(zipBlob, `braindump_md_export_${new Date().toISOString().slice(0, 10)}.zip`)
+}
+
+// Backward-compatible alias for existing imports/tests.
+export async function exportNotesToMarkdownDownloads(notes) {
+  return exportAllNotesToMarkdownZip(notes)
 }
 
 /**

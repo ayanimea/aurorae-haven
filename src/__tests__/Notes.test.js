@@ -683,6 +683,39 @@ describe('Notes Component', () => {
       )
     })
 
+    test('exports latest in-editor changes via global Ctrl+S before autosave debounce completes', async () => {
+      const { mockClick, restore } = setupDownloadMocks()
+      restoreDownloadMocks = restore
+
+      const mockEntries = [
+        {
+          id: 'test-id',
+          title: 'Debounced Note',
+          content: 'Old saved content',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(mockEntries))
+
+      render(<Notes />)
+
+      const textarea = await screen.findByPlaceholderText(
+        'Start writing your note in Markdown...'
+      )
+      expect(textarea).toHaveValue('Old saved content')
+
+      fireEvent.change(textarea, { target: { value: 'Fresh unsaved content' } })
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+      await waitFor(() => {
+        expect(mockClick).toHaveBeenCalled()
+      })
+
+      const [exportedBlob] = global.URL.createObjectURL.mock.calls.at(-1)
+      expect(await exportedBlob.text()).toBe('Fresh unsaved content')
+    })
+
     test('exports single note as markdown via global Cmd+S shortcut (Mac, save all)', async () => {
       const { mockClick, downloadFilenames, restore } = setupDownloadMocks()
       restoreDownloadMocks = restore

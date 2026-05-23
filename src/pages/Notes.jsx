@@ -13,7 +13,7 @@ import {
   deleteNote as deleteNoteUtil,
   exportNoteToFile,
   exportNoteToOdtFile,
-  exportNotesToMarkdownDownloads,
+  exportAllNotesToMarkdownZip,
   exportAllNotesToCombinedOdt,
   exportAllNotesToOdtZip
 } from '../utils/notes/noteOperations'
@@ -94,9 +94,21 @@ function Notes() {
 
   // Stable refs so the global keydown listener never needs to be re-registered
   const notesRef = useRef(notes)
+  const currentNoteIdRef = useRef(currentNoteId)
+  const titleRef = useRef(title)
+  const contentRef = useRef(content)
+  const categoryRef = useRef(category)
   const showToastRef = useRef(showToastNotification)
+  const updateNotesRef = useRef(updateNotes)
+  const clearAutosaveTimeoutRef = useRef(clearAutosaveTimeout)
   notesRef.current = notes
+  currentNoteIdRef.current = currentNoteId
+  titleRef.current = title
+  contentRef.current = content
+  categoryRef.current = category
   showToastRef.current = showToastNotification
+  updateNotesRef.current = updateNotes
+  clearAutosaveTimeoutRef.current = clearAutosaveTimeout
 
   // UI state
   const [preview, setPreview] = useState('')
@@ -129,13 +141,38 @@ function Notes() {
         if (e.repeat) return
         const currentNotes = notesRef.current
         if (currentNotes.length > 0) {
-          exportNotesToMarkdownDownloads(currentNotes)
+          let notesForExport = currentNotes
+          const activeNoteId = currentNoteIdRef.current
+          const activeNoteIndex = currentNotes.findIndex((note) => note.id === activeNoteId)
+          if (activeNoteIndex !== -1) {
+            const activeNote = currentNotes[activeNoteIndex]
+            const mergedActiveNote = {
+              ...activeNote,
+              title: titleRef.current,
+              content: contentRef.current,
+              category: categoryRef.current
+            }
+            const hasUnsavedActiveNoteChanges =
+              mergedActiveNote.title !== activeNote.title ||
+              mergedActiveNote.content !== activeNote.content ||
+              mergedActiveNote.category !== activeNote.category
+
+            if (hasUnsavedActiveNoteChanges) {
+              clearAutosaveTimeoutRef.current()
+              notesForExport = [...currentNotes]
+              notesForExport[activeNoteIndex] = mergedActiveNote
+              updateNotesRef.current(notesForExport)
+              notesRef.current = notesForExport
+            }
+          }
+
+          exportAllNotesToMarkdownZip(notesForExport)
             .then(() => {
               if (!isMounted) return
               showToastRef.current(
-                currentNotes.length === 1
-                  ? '✓ Note exported'
-                  : '✓ All notes exported as ZIP'
+               notesForExport.length === 1
+                 ? '✓ Note exported'
+                 : '✓ All notes exported as ZIP'
               )
             })
             .catch((error) => {
