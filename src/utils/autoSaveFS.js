@@ -101,6 +101,7 @@ export function clearStoredDirectoryName() {
   localStorage.removeItem(DIRECTORY_NAME_KEY)
   // Also clear from settings so export/import stays consistent
   updateSetting('autoSave.directoryName', null)
+  updateSetting('autoSave.directoryConfigured', false)
 }
 
 /**
