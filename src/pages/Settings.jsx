@@ -62,7 +62,11 @@ function Settings({ onExport, onImport }) {
   // Load directory handle and last save time on mount
   useEffect(() => {
     const handle = getCurrentDirectoryHandle()
-    const storedName = getStoredDirectoryName()
+    // Fall back to settings.autoSave.directoryName so an imported settings JSON
+    // (which includes the directory name) is reflected in the UI even before the
+    // user re-grants directory access in a new browser session.
+    const storedName =
+      getStoredDirectoryName() || settings.autoSave?.directoryName
 
     if (handle) {
       setDirectoryName(handle.name)

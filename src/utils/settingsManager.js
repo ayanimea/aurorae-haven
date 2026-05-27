@@ -27,7 +27,8 @@ const DEFAULT_SETTINGS = {
     enabled: false,
     intervalMinutes: 5, // minutes between auto-saves
     keepCount: 10, // number of save files to keep
-    directoryConfigured: false // whether user has selected a directory
+    directoryConfigured: false, // whether user has selected a directory
+    directoryName: null // name of the configured save directory
   },
   notifications: {
     enabled: false,

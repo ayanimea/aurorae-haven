@@ -257,6 +257,27 @@ describe('Settings Manager', () => {
       expect(parsed.settings).toHaveProperty('backupEnabled')
     })
 
+    test('should include autoSave info (directoryName and intervalMinutes) in export', () => {
+      // Set a custom autosave configuration
+      updateSettings({
+        autoSave: {
+          enabled: true,
+          intervalMinutes: 15,
+          keepCount: 5,
+          directoryConfigured: true,
+          directoryName: 'MyBackups'
+        }
+      })
+
+      const json = exportSettings()
+      const parsed = JSON.parse(json)
+
+      expect(parsed.settings.autoSave).toBeDefined()
+      expect(parsed.settings.autoSave.directoryName).toBe('MyBackups')
+      expect(parsed.settings.autoSave.intervalMinutes).toBe(15)
+      expect(parsed.settings.autoSave.directoryConfigured).toBe(true)
+    })
+
     // TODO: Add test for export metadata
     test.todo('should include export metadata')
   })
@@ -336,6 +357,33 @@ describe('Settings Manager', () => {
 
       // Non-imported values should remain at defaults
       expect(settings.backupEnabled).toBeDefined()
+    })
+
+    test('should restore autoSave directoryName and intervalMinutes from imported JSON', () => {
+      const json = JSON.stringify({
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        settings: {
+          autoSave: {
+            enabled: true,
+            intervalMinutes: 10,
+            keepCount: 8,
+            directoryConfigured: true,
+            directoryName: 'AuroraeBackups'
+          }
+        }
+      })
+
+      const imported = importSettings(json)
+
+      expect(imported.autoSave.directoryName).toBe('AuroraeBackups')
+      expect(imported.autoSave.intervalMinutes).toBe(10)
+      expect(imported.autoSave.directoryConfigured).toBe(true)
+
+      // Verify it is also persisted via getSettings
+      const settings = getSettings()
+      expect(settings.autoSave.directoryName).toBe('AuroraeBackups')
+      expect(settings.autoSave.intervalMinutes).toBe(10)
     })
   })
 

@@ -9,7 +9,7 @@ import {
   importAllData as importToIndexedDB
 } from './indexedDBManager'
 import { importToLocalStorage } from './importData'
-import { getSetting } from './settingsManager'
+import { getSetting, updateSetting } from './settingsManager'
 
 const logger = createLogger('AutoSave')
 
@@ -64,6 +64,8 @@ export async function requestDirectoryAccess() {
     currentDirectoryHandle = handle
     // Store directory name in localStorage for UI persistence
     localStorage.setItem(DIRECTORY_NAME_KEY, handle.name)
+    // Also persist directory name inside settings so it is included in export/import
+    updateSetting('autoSave.directoryName', handle.name)
     logger.log('Directory access granted:', handle.name)
     return handle
   } catch (error) {
@@ -97,6 +99,8 @@ export function getStoredDirectoryName() {
  */
 export function clearStoredDirectoryName() {
   localStorage.removeItem(DIRECTORY_NAME_KEY)
+  // Also clear from settings so export/import stays consistent
+  updateSetting('autoSave.directoryName', null)
 }
 
 /**
@@ -107,6 +111,8 @@ export function setDirectoryHandle(handle) {
   currentDirectoryHandle = handle
   if (handle) {
     localStorage.setItem(DIRECTORY_NAME_KEY, handle.name)
+    // Also persist directory name inside settings so it is included in export/import
+    updateSetting('autoSave.directoryName', handle.name)
   }
 }
 

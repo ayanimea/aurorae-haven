@@ -36,7 +36,8 @@ vi.mock('../utils/settingsManager', () => ({
       enabled: false,
       intervalMinutes: 5,
       keepCount: 10,
-      directoryConfigured: false
+      directoryConfigured: false,
+      directoryName: null
     }
   })),
   updateSetting: vi.fn((key, value) => ({
@@ -46,7 +47,8 @@ vi.mock('../utils/settingsManager', () => ({
       intervalMinutes: key === 'autoSave.intervalMinutes' ? value : 5,
       keepCount: key === 'autoSave.keepCount' ? value : 10,
       directoryConfigured:
-        key === 'autoSave.directoryConfigured' ? value : false
+        key === 'autoSave.directoryConfigured' ? value : false,
+      directoryName: key === 'autoSave.directoryName' ? value : null
     }
   })),
   getSetting: vi.fn((key) => {
