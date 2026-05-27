@@ -4,10 +4,19 @@
  * These tests cover testable utility functions and error handling
  */
 
+import { vi } from 'vitest'
+
+vi.mock('../utils/settingsManager', () => ({
+  getSetting: vi.fn(),
+  updateSetting: vi.fn()
+}))
+
 import {
   isFileSystemAccessSupported,
-  getLastSaveTimestamp
+  getLastSaveTimestamp,
+  clearStoredDirectoryName
 } from '../utils/autoSaveFS'
+import * as settingsManager from '../utils/settingsManager'
 
 describe('AutoSaveFS', () => {
   beforeEach(() => {
@@ -65,6 +74,32 @@ describe('AutoSaveFS', () => {
       // Actual functionality requires File System API which needs user gestures
       expect(typeof isFileSystemAccessSupported).toBe('function')
       expect(typeof getLastSaveTimestamp).toBe('function')
+    })
+  })
+
+  describe('clearStoredDirectoryName', () => {
+    test('clears directoryConfigured setting to false', async () => {
+      localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
+      await clearStoredDirectoryName()
+      expect(settingsManager.updateSetting).toHaveBeenCalledWith(
+        'autoSave.directoryConfigured',
+        false
+      )
+    })
+
+    test('clears directoryName setting to null', async () => {
+      localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
+      await clearStoredDirectoryName()
+      expect(settingsManager.updateSetting).toHaveBeenCalledWith(
+        'autoSave.directoryName',
+        null
+      )
+    })
+
+    test('removes directory name from localStorage', async () => {
+      localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
+      await clearStoredDirectoryName()
+      expect(localStorage.getItem('aurorae_save_directory_name')).toBeNull()
     })
   })
 })

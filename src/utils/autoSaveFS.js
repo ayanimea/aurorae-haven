@@ -18,6 +18,120 @@ const LAST_SAVE_KEY = 'aurorae_last_save'
 const LAST_SAVE_HASH_KEY = 'aurorae_last_save_hash'
 const DIRECTORY_NAME_KEY = 'aurorae_save_directory_name'
 
+// IndexedDB config for persisting the directory handle (full-path reference)
+const HANDLE_IDB_NAME = 'aurorae_fs_handles'
+const HANDLE_IDB_STORE = 'directory_handles'
+const HANDLE_IDB_KEY = 'save_directory'
+
+/**
+ * Open the IndexedDB used to persist FileSystemDirectoryHandle objects.
+ * @returns {Promise<IDBDatabase>}
+ */
+function openHandleDB() {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === 'undefined') {
+      reject(new Error('IndexedDB not available'))
+      return
+    }
+    const request = indexedDB.open(HANDLE_IDB_NAME, 1)
+    request.onupgradeneeded = (event) => {
+      event.target.result.createObjectStore(HANDLE_IDB_STORE)
+    }
+    request.onsuccess = (event) => resolve(event.target.result)
+    request.onerror = (event) => reject(event.target.error)
+  })
+}
+
+/**
+ * Persist a FileSystemDirectoryHandle to IndexedDB so it survives page reloads.
+ * @param {FileSystemDirectoryHandle} handle
+ * @returns {Promise<void>}
+ */
+async function storeHandleInIDB(handle) {
+  try {
+    const db = await openHandleDB()
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HANDLE_IDB_STORE, 'readwrite')
+      const store = tx.objectStore(HANDLE_IDB_STORE)
+      store.put(handle, HANDLE_IDB_KEY)
+      tx.oncomplete = () => { db.close(); resolve() }
+      tx.onerror = (e) => { db.close(); reject(e.target.error) }
+    })
+  } catch (error) {
+    logger.warn('Failed to persist directory handle to IndexedDB:', error)
+  }
+}
+
+/**
+ * Retrieve the persisted FileSystemDirectoryHandle from IndexedDB.
+ * Returns null when nothing is stored or IndexedDB is unavailable.
+ * @returns {Promise<FileSystemDirectoryHandle|null>}
+ */
+export async function getStoredDirectoryHandle() {
+  try {
+    const db = await openHandleDB()
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(HANDLE_IDB_STORE, 'readonly')
+      const store = tx.objectStore(HANDLE_IDB_STORE)
+      const req = store.get(HANDLE_IDB_KEY)
+      let result = null
+      req.onsuccess = (e) => { result = e.target.result ?? null }
+      tx.oncomplete = () => { db.close(); resolve(result) }
+      tx.onerror = (e) => { db.close(); reject(e.target.error) }
+    })
+  } catch (error) {
+    logger.warn('Failed to load directory handle from IndexedDB:', error)
+    return null
+  }
+}
+
+/**
+ * Remove the persisted FileSystemDirectoryHandle from IndexedDB.
+ * @returns {Promise<void>}
+ */
+async function clearHandleFromIDB() {
+  try {
+    const db = await openHandleDB()
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HANDLE_IDB_STORE, 'readwrite')
+      const store = tx.objectStore(HANDLE_IDB_STORE)
+      store.delete(HANDLE_IDB_KEY)
+      tx.oncomplete = () => { db.close(); resolve() }
+      tx.onerror = (e) => { db.close(); reject(e.target.error) }
+    })
+  } catch (error) {
+    logger.warn('Failed to clear directory handle from IndexedDB:', error)
+  }
+}
+
+/**
+ * Re-request permission for the persisted directory handle without showing the
+ * directory picker again.  Must be called from a user-gesture handler.
+ * Returns the handle on success, or null if permission was denied or no handle
+ * was stored.
+ * @returns {Promise<FileSystemDirectoryHandle|null>}
+ */
+export async function requestStoredDirectoryPermission() {
+  const handle = currentDirectoryHandle ?? (await getStoredDirectoryHandle())
+  if (!handle) return null
+
+  try {
+    const permission = await handle.requestPermission({ mode: 'readwrite' })
+    if (permission === 'granted') {
+      currentDirectoryHandle = handle
+      localStorage.setItem(DIRECTORY_NAME_KEY, handle.name)
+      updateSetting('autoSave.directoryName', handle.name)
+      logger.log('Permission re-granted for stored directory:', handle.name)
+      return handle
+    }
+    logger.log('Permission denied for stored directory')
+    return null
+  } catch (error) {
+    logger.error('Failed to request permission for stored directory:', error)
+    return null
+  }
+}
+
 // Time constants
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
 
@@ -66,6 +180,8 @@ export async function requestDirectoryAccess() {
     localStorage.setItem(DIRECTORY_NAME_KEY, handle.name)
     // Also persist directory name inside settings so it is included in export/import
     updateSetting('autoSave.directoryName', handle.name)
+    // Persist handle to IndexedDB so permission can be re-requested without picker
+    await storeHandleInIDB(handle)
     logger.log('Directory access granted:', handle.name)
     return handle
   } catch (error) {
@@ -97,23 +213,27 @@ export function getStoredDirectoryName() {
 /**
  * Clear stored directory name
  */
-export function clearStoredDirectoryName() {
+export async function clearStoredDirectoryName() {
   localStorage.removeItem(DIRECTORY_NAME_KEY)
   // Also clear from settings so export/import stays consistent
   updateSetting('autoSave.directoryName', null)
   updateSetting('autoSave.directoryConfigured', false)
+  // Remove persisted handle from IndexedDB
+  await clearHandleFromIDB()
 }
 
 /**
  * Set directory handle (used for restoring after page load)
  * @param {FileSystemDirectoryHandle} handle
  */
-export function setDirectoryHandle(handle) {
+export async function setDirectoryHandle(handle) {
   currentDirectoryHandle = handle
   if (handle) {
     localStorage.setItem(DIRECTORY_NAME_KEY, handle.name)
     // Also persist directory name inside settings so it is included in export/import
     updateSetting('autoSave.directoryName', handle.name)
+    // Persist handle to IndexedDB so permission can be re-requested without picker
+    await storeHandleInIDB(handle)
   }
 }
 

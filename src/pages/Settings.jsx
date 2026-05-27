@@ -18,7 +18,9 @@ import {
   getLastSaveTimestamp,
   cleanOldSaveFiles,
   loadAndImportLastSave,
-  getStoredDirectoryName
+  getStoredDirectoryName,
+  getStoredDirectoryHandle,
+  requestStoredDirectoryPermission
 } from '../utils/autoSaveFS'
 import {
   reloadPageAfterDelay,
@@ -35,6 +37,7 @@ function Settings({ onExport, onImport }) {
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)
+  const [storedHandleAvailable, setStoredHandleAvailable] = useState(false)
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [message, setMessage] = useState({ text: '', isError: false })
   const [isConfiguring, setIsConfiguring] = useState(false)
@@ -71,10 +74,14 @@ function Settings({ onExport, onImport }) {
     if (handle) {
       setDirectoryName(handle.name)
       setDirectoryHandleLost(false)
+      setStoredHandleAvailable(false)
     } else if (storedName && settings.autoSave.directoryConfigured) {
-      // Handle was lost but we have the directory name
+      // Handle was lost but we have the directory name; check for IDB-persisted handle
       setDirectoryName(storedName)
       setDirectoryHandleLost(true)
+      getStoredDirectoryHandle()
+        .then((idbHandle) => setStoredHandleAvailable(!!idbHandle))
+        .catch(() => setStoredHandleAvailable(false))
     }
 
     const lastSave = getLastSaveTimestamp()
@@ -114,8 +121,9 @@ function Settings({ onExport, onImport }) {
       const handle = await requestDirectoryAccess()
       if (handle) {
         setDirectoryName(handle.name)
-        setDirectoryHandle(handle)
+        await setDirectoryHandle(handle)
         setDirectoryHandleLost(false)
+        setStoredHandleAvailable(false)
 
         // Update settings and get fresh settings
         const newSettings = updateSetting('autoSave.directoryConfigured', true)
@@ -131,6 +139,34 @@ function Settings({ onExport, onImport }) {
       }
     } catch (error) {
       showMessage('Failed to select directory: ' + error.message, true)
+    } finally {
+      setIsConfiguring(false)
+    }
+  }, [showMessage])
+
+  const handleGrantAccess = useCallback(async () => {
+    setIsConfiguring(true)
+    try {
+      const handle = await requestStoredDirectoryPermission()
+      if (handle) {
+        setDirectoryName(handle.name)
+        setDirectoryHandleLost(false)
+        setStoredHandleAvailable(false)
+
+        const newSettings = updateSetting('autoSave.directoryConfigured', true)
+        setSettingsState(newSettings)
+
+        showMessage(`Access granted to: ${handle.name}`)
+
+        if (newSettings.autoSave.enabled) {
+          stopAutoSave()
+          startAutoSave(newSettings.autoSave.intervalMinutes * MS_PER_MINUTE)
+        }
+      } else {
+        showMessage('Access was not granted to the directory', true)
+      }
+    } catch (error) {
+      showMessage('Failed to grant access: ' + error.message, true)
     } finally {
       setIsConfiguring(false)
     }
@@ -351,9 +387,10 @@ function Settings({ onExport, onImport }) {
                   </strong>
                   <p className='settings-warning-text'>
                     The directory &quot;{directoryName}&quot; was previously
-                    selected, but access has been lost after page reload. Please
-                    click &quot;Change Directory&quot; to re-grant access and
-                    resume auto-save functionality.
+                    selected, but access has been lost after page reload.
+                    {storedHandleAvailable
+                      ? ' Click "Grant Access" to restore access without browsing, or "Change Directory" to select a different folder.'
+                      : ' Please click "Change Directory" to re-grant access and resume auto-save functionality.'}
                   </p>
                 </div>
               )}
@@ -372,6 +409,18 @@ function Settings({ onExport, onImport }) {
                     className='settings-input'
                     aria-describedby='save-directory-hint'
                   />
+                  {storedHandleAvailable && directoryHandleLost && (
+                    <button
+                      type='button'
+                      onClick={handleGrantAccess}
+                      disabled={isConfiguring}
+                      className='settings-button settings-button-success'
+                      aria-label='Grant access to previously selected directory'
+                      aria-busy={isConfiguring}
+                    >
+                      Grant Access
+                    </button>
+                  )}
                   <button
                     type='button'
                     onClick={handleSelectDirectory}
