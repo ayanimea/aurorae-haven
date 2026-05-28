@@ -16,8 +16,11 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
+env:
+  PAGES_BASE_URL: '/aurorae-haven/'
+
 jobs:
-  # Builds the hosted web-online bundle (requires a backend / CDN deployment)
+  # Builds the hosted web-online bundle (requires a backend/CDN deployment)
   build-online:
     name: Build — Online (web-online)
     runs-on: ubuntu-latest
@@ -40,7 +43,7 @@ jobs:
         run: npm run build:mode:web
         env:
           CI: true
-          AURORAE_VITE_BASE_URL_OVERRIDE: '/aurorae-haven/'
+          AURORAE_VITE_BASE_URL_OVERRIDE: ${{ env.PAGES_BASE_URL }}
 
       - name: Verify output
         run: |

@@ -21,6 +21,9 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  PAGES_BASE_URL: '/aurorae-haven/'
+
 concurrency:
   group: 'pages-${{ github.ref }}'
   cancel-in-progress: true
@@ -184,7 +187,7 @@ jobs:
         env:
           CI: true
           VITE_COMPILE_MODE: 'desktop-offline'
-          VITE_BASE_URL: '/aurorae-haven/'
+          VITE_BASE_URL: ${{ env.PAGES_BASE_URL }}
 
       - name: Verify GitHub Pages build output
         run: test -f dist/index.html
