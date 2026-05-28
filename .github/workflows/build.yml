@@ -19,9 +19,6 @@ on:
 permissions:
   contents: read
 
-permissions:
-  contents: read
-
 env:
   PAGES_BASE_URL: '/aurorae-haven/'
 
