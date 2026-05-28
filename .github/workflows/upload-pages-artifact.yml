@@ -180,13 +180,13 @@ jobs:
           npm_config_prefer_offline: false
           npm_config_audit: false
 
-      - name: Build for GitHub Pages (offline mode, no backend)
+      - name: Build for GitHub Pages (online/web mode, no local folder autosave)
         run: |
-          echo "🌌 Building offline mode for GitHub Pages..."
+          echo "🌐 Building web-online mode for GitHub Pages..."
           npm run build
         env:
           CI: true
-          VITE_COMPILE_MODE: 'desktop-offline'
+          VITE_COMPILE_MODE: 'web-online'
           VITE_BASE_URL: ${{ env.PAGES_BASE_URL }}
 
       - name: Verify GitHub Pages build output
