@@ -1,0 +1,91 @@
+name: Build — Online & Offline Modes
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature-*'
+      - 'hotfix-*'
+      - 'copilot/**'
+  pull_request:
+    branches:
+      - main
+      - 'feature-*'
+      - 'hotfix-*'
+      - 'copilot/**'
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+jobs:
+  # Builds the hosted web-online bundle (requires a backend / CDN deployment)
+  build-online:
+    name: Build — Online (web-online)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          npm_config_prefer_offline: false
+          npm_config_audit: false
+
+      - name: Build online mode
+        run: npm run build:mode:web
+        env:
+          CI: true
+          AURORAE_VITE_BASE_URL_OVERRIDE: '/aurorae-haven/'
+
+      - name: Verify output
+        run: |
+          test -f dist/index.html
+          echo "✓ Online build output verified"
+
+      - name: Upload online build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-web-online
+          path: dist/
+          retention-days: 30
+
+  # Builds the self-contained offline desktop bundle (no backend required)
+  build-offline:
+    name: Build — Offline (desktop-offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          npm_config_prefer_offline: false
+          npm_config_audit: false
+
+      - name: Build offline mode
+        run: npm run build:mode:desktop
+        env:
+          CI: true
+
+      - name: Verify output
+        run: |
+          test -f dist-offline-build/index.html
+          echo "✓ Offline build output verified"
+
+      - name: Upload offline build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-desktop-offline
+          path: dist-offline-build/
+          retention-days: 30
