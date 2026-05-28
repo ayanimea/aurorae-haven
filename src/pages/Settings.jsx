@@ -35,9 +35,10 @@ import '../assets/styles/settings.css'
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
 
 function Settings({ onExport, onImport }) {
-  // Local folder autosave is only available in offline/desktop builds for security
-  const IS_OFFLINE_MODE =
-    (getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline') === 'desktop-offline'
+  // Local folder autosave is only available in offline/desktop builds for security.
+  // Default to false (restrictive) when VITE_COMPILE_MODE is not explicitly set,
+  // so filesystem access is never accidentally exposed in web/online builds.
+  const IS_OFFLINE_MODE = getEnvVar('VITE_COMPILE_MODE') === 'desktop-offline'
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)

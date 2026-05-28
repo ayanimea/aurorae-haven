@@ -8,6 +8,7 @@ import '@testing-library/jest-dom'
 import Settings from '../pages/Settings'
 import * as autoSaveFS from '../utils/autoSaveFS'
 import * as settingsManager from '../utils/settingsManager'
+import * as environment from '../utils/environment'
 
 // Mock CSS imports
 vi.mock('../assets/styles/settings.css', () => ({}))
@@ -183,11 +184,12 @@ describe('Settings Component', () => {
   })
 
   test('hides auto-save section when not in offline/desktop mode', () => {
-    process.env.VITE_COMPILE_MODE = 'web'
+    const spy = vi.spyOn(environment, 'getEnvVar').mockReturnValue('web')
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(screen.queryByText('Automatic Save')).not.toBeInTheDocument()
     // Export/Import section must still be present
     expect(screen.getByText('Data Management')).toBeInTheDocument()
+    spy.mockRestore()
   })
 
   test('Grant Access button calls requestStoredDirectoryPermission', async () => {
