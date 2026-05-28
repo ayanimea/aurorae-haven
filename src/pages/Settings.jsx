@@ -28,12 +28,16 @@ import {
 } from '../utils/importData'
 import FileInputButton from '../components/common/FileInputButton'
 import Icon from '../components/common/Icon'
+import { getEnvVar } from '../utils/environment'
 import '../assets/styles/settings.css'
 
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
 
 function Settings({ onExport, onImport }) {
+  // Local folder autosave is only available in offline/desktop builds for security
+  const IS_OFFLINE_MODE =
+    (getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline') === 'desktop-offline'
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)
@@ -357,7 +361,8 @@ function Settings({ onExport, onImport }) {
           </div>
         </div>
 
-        {/* Auto-Save Settings Section */}
+        {/* Auto-Save Settings Section — only available in offline/desktop mode */}
+        {IS_OFFLINE_MODE && (
         <div className='settings-section'>
           <h3 className='settings-section-title'>Automatic Save</h3>
 
@@ -551,6 +556,7 @@ function Settings({ onExport, onImport }) {
             </>
           )}
         </div>
+        )} {/* end IS_OFFLINE_MODE auto-save section */}
 
         {/* Message Display */}
         {message.text && (

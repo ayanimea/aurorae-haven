@@ -182,6 +182,14 @@ describe('Settings Component', () => {
     expect(grantBtn).toBeInTheDocument()
   })
 
+  test('hides auto-save section when not in offline/desktop mode', () => {
+    process.env.VITE_COMPILE_MODE = 'web'
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+    expect(screen.queryByText('Automatic Save')).not.toBeInTheDocument()
+    // Export/Import section must still be present
+    expect(screen.getByText('Data Management')).toBeInTheDocument()
+  })
+
   test('Grant Access button calls requestStoredDirectoryPermission', async () => {
     autoSaveFS.isFileSystemAccessSupported.mockReturnValue(true)
     settingsManager.getSettings.mockReturnValue({
