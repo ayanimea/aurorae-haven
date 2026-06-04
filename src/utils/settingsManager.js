@@ -16,6 +16,7 @@ function isPlainObject(value) {
 }
 
 const SETTINGS_KEY = 'aurorae_settings'
+const LEGACY_AUTO_SAVE_DIRECTORY_NAME_KEY = 'aurorae_save_directory_name'
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -211,11 +212,27 @@ export function resetSettings() {
 export function exportSettings() {
   // TODO: Implement settings export with metadata
   const settings = getSettings()
+  const resolvedDirectoryName =
+    settings.autoSave?.directoryName ??
+    (typeof localStorage !== 'undefined'
+      ? localStorage.getItem(LEGACY_AUTO_SAVE_DIRECTORY_NAME_KEY)
+      : null)
+  const exportableSettings = resolvedDirectoryName != null
+    ? {
+        ...settings,
+        autoSave: {
+          ...settings.autoSave,
+          directoryConfigured: true,
+          directoryName: resolvedDirectoryName
+        }
+      }
+    : settings
+
   return JSON.stringify(
     {
       version: 1,
       exportedAt: new Date().toISOString(),
-      settings
+      settings: exportableSettings
     },
     null,
     2

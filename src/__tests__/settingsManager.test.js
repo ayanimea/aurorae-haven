@@ -278,6 +278,29 @@ describe('Settings Manager', () => {
       expect(parsed.settings.autoSave.directoryConfigured).toBe(true)
     })
 
+    test('should export legacy autosave directory name when settings have not been migrated yet', () => {
+      localStorage.setItem(
+        'aurorae_settings',
+        JSON.stringify({
+          autoSave: {
+            enabled: true,
+            intervalMinutes: 15,
+            keepCount: 5,
+            directoryConfigured: false,
+            directoryName: null
+          }
+        })
+      )
+      localStorage.setItem('aurorae_save_directory_name', 'LegacyBackups')
+
+      const json = exportSettings()
+      const parsed = JSON.parse(json)
+
+      expect(parsed.settings.autoSave.directoryName).toBe('LegacyBackups')
+      expect(parsed.settings.autoSave.directoryConfigured).toBe(true)
+      expect(parsed.settings.autoSave.intervalMinutes).toBe(15)
+    })
+
     // TODO: Add test for export metadata
     test.todo('should include export metadata')
   })
