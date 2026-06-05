@@ -151,6 +151,19 @@ describe('Settings Component', () => {
     expect(container).toBeTruthy()
   })
 
+  test('component handles corrupted autoSave settings without crashing', () => {
+    settingsManager.getSettings.mockReturnValue({
+      theme: 'auto',
+      autoSave: null
+    })
+    autoSaveFS.getStoredDirectoryName.mockReturnValue('MyBackups')
+
+    const { container } = render(
+      <Settings onExport={mockOnExport} onImport={mockOnImport} />
+    )
+    expect(container).toBeTruthy()
+  })
+
   test('renders Appearance section with theme select', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 

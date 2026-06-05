@@ -23,6 +23,20 @@ const HANDLE_IDB_NAME = 'aurorae_fs_handles'
 const HANDLE_IDB_STORE = 'directory_handles'
 const HANDLE_IDB_KEY = 'save_directory'
 
+function syncDirectoryNameBestEffort(directoryName) {
+  try {
+    localStorage.setItem(DIRECTORY_NAME_KEY, directoryName)
+  } catch (error) {
+    logger.warn('Failed to persist directory name to localStorage:', error)
+  }
+
+  try {
+    updateSetting('autoSave.directoryName', directoryName)
+  } catch (error) {
+    logger.warn('Failed to persist directory name to settings:', error)
+  }
+}
+
 /**
  * Open the IndexedDB used to persist FileSystemDirectoryHandle objects.
  * @returns {Promise<IDBDatabase>}
@@ -119,8 +133,7 @@ export async function requestStoredDirectoryPermission() {
     const permission = await handle.requestPermission({ mode: 'readwrite' })
     if (permission === 'granted') {
       currentDirectoryHandle = handle
-      localStorage.setItem(DIRECTORY_NAME_KEY, handle.name)
-      updateSetting('autoSave.directoryName', handle.name)
+      syncDirectoryNameBestEffort(handle.name)
       logger.log('Permission re-granted for stored directory:', handle.name)
       return handle
     }
@@ -176,10 +189,7 @@ export async function requestDirectoryAccess() {
       startIn: 'documents'
     })
     currentDirectoryHandle = handle
-    // Store directory name in localStorage for UI persistence
-    localStorage.setItem(DIRECTORY_NAME_KEY, handle.name)
-    // Also persist directory name inside settings so it is included in export/import
-    updateSetting('autoSave.directoryName', handle.name)
+    syncDirectoryNameBestEffort(handle.name)
     // Persist handle to IndexedDB so permission can be re-requested without picker
     await storeHandleInIDB(handle)
     logger.log('Directory access granted:', handle.name)
@@ -214,10 +224,19 @@ export function getStoredDirectoryName() {
  * Clear stored directory name
  */
 export async function clearStoredDirectoryName() {
-  localStorage.removeItem(DIRECTORY_NAME_KEY)
-  // Also clear from settings so export/import stays consistent
-  updateSetting('autoSave.directoryName', null)
-  updateSetting('autoSave.directoryConfigured', false)
+  try {
+    localStorage.removeItem(DIRECTORY_NAME_KEY)
+  } catch (error) {
+    logger.warn('Failed to clear directory name from localStorage:', error)
+  }
+
+  try {
+    updateSetting('autoSave.directoryName', null)
+    updateSetting('autoSave.directoryConfigured', false)
+  } catch (error) {
+    logger.warn('Failed to clear directory settings:', error)
+  }
+
   // Remove persisted handle from IndexedDB
   await clearHandleFromIDB()
 }
@@ -229,9 +248,7 @@ export async function clearStoredDirectoryName() {
 export async function setDirectoryHandle(handle) {
   currentDirectoryHandle = handle
   if (handle) {
-    localStorage.setItem(DIRECTORY_NAME_KEY, handle.name)
-    // Also persist directory name inside settings so it is included in export/import
-    updateSetting('autoSave.directoryName', handle.name)
+    syncDirectoryNameBestEffort(handle.name)
     // Persist handle to IndexedDB so permission can be re-requested without picker
     await storeHandleInIDB(handle)
   }

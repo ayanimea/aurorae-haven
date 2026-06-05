@@ -80,7 +80,7 @@ function Settings({ onExport, onImport }) {
       setDirectoryName(handle.name)
       setDirectoryHandleLost(false)
       setStoredHandleAvailable(false)
-    } else if (storedName && settings.autoSave.directoryConfigured) {
+    } else if (storedName && settings.autoSave?.directoryConfigured) {
       // Handle was lost but we have the directory name; check for IDB-persisted handle
       setDirectoryName(storedName)
       setDirectoryHandleLost(true)
