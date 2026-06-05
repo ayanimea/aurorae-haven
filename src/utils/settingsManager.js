@@ -218,12 +218,16 @@ export function exportSettings() {
       ? localStorage.getItem(LEGACY_AUTO_SAVE_DIRECTORY_NAME_KEY)
       : null)
   const hasResolvedDirectoryName =
-    resolvedDirectoryName !== null && resolvedDirectoryName !== undefined
+    typeof resolvedDirectoryName === 'string' &&
+    resolvedDirectoryName.trim() !== ''
+  const normalizedAutoSave = isPlainObject(settings.autoSave)
+    ? settings.autoSave
+    : {}
   const exportableSettings = hasResolvedDirectoryName
     ? {
         ...settings,
         autoSave: {
-          ...settings.autoSave,
+          ...normalizedAutoSave,
           directoryConfigured: true,
           directoryName: resolvedDirectoryName
         }
