@@ -66,6 +66,10 @@ function Settings({ onExport, onImport }) {
 
   // Check if File System Access API is supported
   const fsSupported = isFileSystemAccessSupported()
+  const autoSaveSettings =
+    settings.autoSave && typeof settings.autoSave === 'object'
+      ? settings.autoSave
+      : null
 
   // Load directory handle and last save time on mount
   useEffect(() => {
@@ -73,14 +77,13 @@ function Settings({ onExport, onImport }) {
     // Fall back to settings.autoSave.directoryName so an imported settings JSON
     // (which includes the directory name) is reflected in the UI even before the
     // user re-grants directory access in a new browser session.
-    const storedName =
-      getStoredDirectoryName() || settings.autoSave?.directoryName
+    const storedName = getStoredDirectoryName() || autoSaveSettings?.directoryName
 
     if (handle) {
       setDirectoryName(handle.name)
       setDirectoryHandleLost(false)
       setStoredHandleAvailable(false)
-    } else if (storedName && settings.autoSave?.directoryConfigured) {
+    } else if (storedName && autoSaveSettings?.directoryConfigured) {
       // Handle was lost but we have the directory name; check for IDB-persisted handle
       setDirectoryName(storedName)
       setDirectoryHandleLost(true)
@@ -93,7 +96,7 @@ function Settings({ onExport, onImport }) {
     if (lastSave) {
       setLastSaveTime(new Date(lastSave))
     }
-  }, [settings])
+  }, [settings, autoSaveSettings])
 
   // Update last save time periodically
   useEffect(() => {
@@ -363,7 +366,7 @@ function Settings({ onExport, onImport }) {
         </div>
 
         {/* Auto-Save Settings Section — only available in offline/desktop mode */}
-        {IS_OFFLINE_MODE && (
+        {IS_OFFLINE_MODE && autoSaveSettings && (
         <div className='settings-section'>
           <h3 className='settings-section-title'>Automatic Save</h3>
 
@@ -451,7 +454,7 @@ function Settings({ onExport, onImport }) {
                 <label className='settings-checkbox-label'>
                   <input
                     type='checkbox'
-                    checked={settings.autoSave.enabled}
+                    checked={autoSaveSettings.enabled}
                     onChange={(e) => handleToggleAutoSave(e.target.checked)}
                     disabled={!directoryName}
                     className='settings-checkbox'
@@ -477,10 +480,10 @@ function Settings({ onExport, onImport }) {
                   type='number'
                   min='1'
                   max='60'
-                  value={settings.autoSave.intervalMinutes}
+                  value={autoSaveSettings.intervalMinutes}
                   onChange={handleIntervalInput}
                   onBlur={handleIntervalInput}
-                  disabled={!settings.autoSave.enabled}
+                  disabled={!autoSaveSettings.enabled}
                   className='settings-input-number'
                   aria-describedby='save-interval-hint'
                 />
@@ -499,7 +502,7 @@ function Settings({ onExport, onImport }) {
                   type='number'
                   min='1'
                   max='100'
-                  value={settings.autoSave.keepCount}
+                  value={autoSaveSettings.keepCount}
                   onChange={handleKeepCountInput}
                   onBlur={handleKeepCountInput}
                   className='settings-input-number'
