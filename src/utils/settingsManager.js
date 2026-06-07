@@ -217,7 +217,12 @@ export function exportSettings() {
     'Reading legacy directory name from localStorage',
     { showToast: false }
   ) ?? null
-  const resolvedDirectoryName = settings.autoSave?.directoryName ?? legacyDirectoryName
+  const settingsDirectoryName =
+    typeof settings.autoSave?.directoryName === 'string' &&
+    settings.autoSave.directoryName.trim() !== ''
+      ? settings.autoSave.directoryName
+      : null
+  const resolvedDirectoryName = settingsDirectoryName ?? legacyDirectoryName
   const hasResolvedDirectoryName =
     typeof resolvedDirectoryName === 'string' &&
     resolvedDirectoryName.trim() !== ''
