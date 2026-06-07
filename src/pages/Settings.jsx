@@ -67,7 +67,9 @@ function Settings({ onExport, onImport }) {
   // Check if File System Access API is supported
   const fsSupported = isFileSystemAccessSupported()
   const autoSaveSettings =
-    settings.autoSave && typeof settings.autoSave === 'object'
+    settings.autoSave &&
+    typeof settings.autoSave === 'object' &&
+    !Array.isArray(settings.autoSave)
       ? settings.autoSave
       : null
 
@@ -87,9 +89,11 @@ function Settings({ onExport, onImport }) {
       // Handle was lost but we have the directory name; check for IDB-persisted handle
       setDirectoryName(storedName)
       setDirectoryHandleLost(true)
-      getStoredDirectoryHandle()
-        .then((idbHandle) => setStoredHandleAvailable(!!idbHandle))
-        .catch(() => setStoredHandleAvailable(false))
+      if (IS_OFFLINE_MODE) {
+        getStoredDirectoryHandle()
+          .then((idbHandle) => setStoredHandleAvailable(!!idbHandle))
+          .catch(() => setStoredHandleAvailable(false))
+      }
     }
 
     const lastSave = getLastSaveTimestamp()
