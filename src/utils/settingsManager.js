@@ -233,6 +233,7 @@ export function exportSettings() {
     ? {
         ...settings,
         autoSave: {
+          ...DEFAULT_SETTINGS.autoSave,
           ...normalizedAutoSave,
           directoryConfigured: true,
           directoryName: resolvedDirectoryName
