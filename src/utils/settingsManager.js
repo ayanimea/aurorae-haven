@@ -212,11 +212,12 @@ export function resetSettings() {
 export function exportSettings() {
   // TODO: Implement settings export with metadata
   const settings = getSettings()
-  const resolvedDirectoryName =
-    settings.autoSave?.directoryName ??
-    (typeof localStorage !== 'undefined'
-      ? localStorage.getItem(LEGACY_AUTO_SAVE_DIRECTORY_NAME_KEY)
-      : null)
+  const legacyDirectoryName = tryCatch(
+    () => localStorage.getItem(LEGACY_AUTO_SAVE_DIRECTORY_NAME_KEY),
+    'Reading legacy directory name from localStorage',
+    { showToast: false }
+  ) ?? null
+  const resolvedDirectoryName = settings.autoSave?.directoryName ?? legacyDirectoryName
   const hasResolvedDirectoryName =
     typeof resolvedDirectoryName === 'string' &&
     resolvedDirectoryName.trim() !== ''
