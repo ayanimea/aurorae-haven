@@ -239,7 +239,13 @@ export function exportSettings() {
           directoryName: resolvedDirectoryName
         }
       }
-    : settings
+    : {
+        ...settings,
+        autoSave: {
+          ...DEFAULT_SETTINGS.autoSave,
+          ...normalizedAutoSave
+        }
+      }
 
   return JSON.stringify(
     {

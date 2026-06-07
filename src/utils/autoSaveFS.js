@@ -9,7 +9,7 @@ import {
   importAllData as importToIndexedDB
 } from './indexedDBManager'
 import { importToLocalStorage } from './importData'
-import { getSetting, updateSetting } from './settingsManager'
+import { getSetting, updateSetting, updateSettings } from './settingsManager'
 
 const logger = createLogger('AutoSave')
 
@@ -234,8 +234,7 @@ export async function clearStoredDirectoryName() {
   }
 
   try {
-    updateSetting('autoSave.directoryName', null)
-    updateSetting('autoSave.directoryConfigured', false)
+    updateSettings({ autoSave: { directoryName: null, directoryConfigured: false } })
   } catch (error) {
     logger.warn('Failed to clear directory settings:', error)
   }

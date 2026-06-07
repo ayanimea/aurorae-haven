@@ -322,6 +322,26 @@ describe('Settings Manager', () => {
       })
     })
 
+    test('should normalize corrupted autoSave to defaults when no directory name is resolved', () => {
+      localStorage.setItem(
+        'aurorae_settings',
+        JSON.stringify({
+          autoSave: null
+        })
+      )
+
+      const json = exportSettings()
+      const parsed = JSON.parse(json)
+
+      expect(parsed.settings.autoSave).toEqual({
+        enabled: false,
+        intervalMinutes: 5,
+        keepCount: 10,
+        directoryConfigured: false,
+        directoryName: null
+      })
+    })
+
     // TODO: Add test for export metadata
     test.todo('should include export metadata')
   })

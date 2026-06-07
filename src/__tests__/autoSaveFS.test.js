@@ -9,7 +9,8 @@ import 'fake-indexeddb/auto'
 
 vi.mock('../utils/settingsManager', () => ({
   getSetting: vi.fn(),
-  updateSetting: vi.fn()
+  updateSetting: vi.fn(),
+  updateSettings: vi.fn()
 }))
 
 import {
@@ -28,6 +29,8 @@ describe('AutoSaveFS', () => {
     localStorage.clear()
     settingsManager.updateSetting.mockReset()
     settingsManager.updateSetting.mockImplementation(() => {})
+    settingsManager.updateSettings.mockReset()
+    settingsManager.updateSettings.mockImplementation(() => {})
   })
 
   describe('isFileSystemAccessSupported', () => {
@@ -85,22 +88,12 @@ describe('AutoSaveFS', () => {
   })
 
   describe('clearStoredDirectoryName', () => {
-    test('clears directoryConfigured setting to false', async () => {
+    test('clears both directoryName and directoryConfigured in a single settings update', async () => {
       localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
       await clearStoredDirectoryName()
-      expect(settingsManager.updateSetting).toHaveBeenCalledWith(
-        'autoSave.directoryConfigured',
-        false
-      )
-    })
-
-    test('clears directoryName setting to null', async () => {
-      localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
-      await clearStoredDirectoryName()
-      expect(settingsManager.updateSetting).toHaveBeenCalledWith(
-        'autoSave.directoryName',
-        null
-      )
+      expect(settingsManager.updateSettings).toHaveBeenCalledWith({
+        autoSave: { directoryName: null, directoryConfigured: false }
+      })
     })
 
     test('removes directory name from localStorage', async () => {
@@ -110,7 +103,7 @@ describe('AutoSaveFS', () => {
     })
 
     test('continues clearing localStorage when settings update throws', async () => {
-      settingsManager.updateSetting.mockImplementation(() => {
+      settingsManager.updateSettings.mockImplementation(() => {
         throw new Error('corrupted settings')
       })
       localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
