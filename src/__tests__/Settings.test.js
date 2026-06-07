@@ -18,7 +18,6 @@ vi.mock('../utils/autoSaveFS', () => ({
   isFileSystemAccessSupported: vi.fn(() => true),
   requestDirectoryAccess: vi.fn(),
   getCurrentDirectoryHandle: vi.fn(() => null),
-  setDirectoryHandle: vi.fn(),
   verifyDirectoryHandle: vi.fn(),
   startAutoSave: vi.fn(),
   stopAutoSave: vi.fn(),

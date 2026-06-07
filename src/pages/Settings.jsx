@@ -10,7 +10,6 @@ import {
   isFileSystemAccessSupported,
   requestDirectoryAccess,
   getCurrentDirectoryHandle,
-  setDirectoryHandle,
   verifyDirectoryHandle,
   startAutoSave,
   stopAutoSave,
@@ -36,9 +35,10 @@ const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
 
 function Settings({ onExport, onImport }) {
   // Local folder autosave is only available in offline/desktop builds for security.
-  // Default to false (restrictive) when VITE_COMPILE_MODE is not explicitly set,
-  // so filesystem access is never accidentally exposed in web/online builds.
-  const IS_OFFLINE_MODE = getEnvVar('VITE_COMPILE_MODE') === 'desktop-offline'
+  // Default to 'desktop-offline' when VITE_COMPILE_MODE is not explicitly set,
+  // matching the default used by Layout.jsx so compile-mode behaviour is consistent.
+  const IS_OFFLINE_MODE =
+    (getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline') === 'desktop-offline'
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)
@@ -133,7 +133,6 @@ function Settings({ onExport, onImport }) {
       const handle = await requestDirectoryAccess()
       if (handle) {
         setDirectoryName(handle.name)
-        await setDirectoryHandle(handle)
         setDirectoryHandleLost(false)
         setStoredHandleAvailable(false)
 
