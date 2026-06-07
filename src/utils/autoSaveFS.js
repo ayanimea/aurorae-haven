@@ -53,6 +53,7 @@ function openHandleDB() {
     }
     request.onsuccess = (event) => resolve(event.target.result)
     request.onerror = (event) => reject(event.target.error)
+    request.onblocked = () => reject(new Error('IndexedDB open was blocked by another connection'))
   })
 }
 
