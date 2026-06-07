@@ -49,7 +49,9 @@ function openHandleDB() {
     }
     const request = indexedDB.open(HANDLE_IDB_NAME, 1)
     request.onupgradeneeded = (event) => {
-      event.target.result.createObjectStore(HANDLE_IDB_STORE)
+      if (!event.target.result.objectStoreNames.contains(HANDLE_IDB_STORE)) {
+        event.target.result.createObjectStore(HANDLE_IDB_STORE)
+      }
     }
     request.onsuccess = (event) => resolve(event.target.result)
     request.onerror = (event) => reject(event.target.error)

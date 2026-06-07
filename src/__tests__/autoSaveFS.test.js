@@ -5,6 +5,7 @@
  */
 
 import { vi } from 'vitest'
+import 'fake-indexeddb/auto'
 
 vi.mock('../utils/settingsManager', () => ({
   getSetting: vi.fn(),
@@ -15,6 +16,7 @@ import {
   isFileSystemAccessSupported,
   getLastSaveTimestamp,
   clearStoredDirectoryName,
+  getStoredDirectoryHandle,
   requestDirectoryAccess,
   requestStoredDirectoryPermission,
   setDirectoryHandle
@@ -148,6 +150,28 @@ describe('AutoSaveFS', () => {
       expect(localStorage.getItem('aurorae_save_directory_name')).toBe(
         'MyBackups'
       )
+    })
+  })
+
+  describe('directory handle IndexedDB persistence', () => {
+    test('stores and loads directory handle via IndexedDB', async () => {
+      const handle = { name: 'MyBackups' }
+
+      await setDirectoryHandle(handle)
+      await setDirectoryHandle(null)
+
+      await expect(getStoredDirectoryHandle()).resolves.toEqual(handle)
+    })
+
+    test('returns null when IndexedDB is unavailable', async () => {
+      const originalIndexedDB = globalThis.indexedDB
+      delete globalThis.indexedDB
+
+      try {
+        await expect(getStoredDirectoryHandle()).resolves.toBeNull()
+      } finally {
+        globalThis.indexedDB = originalIndexedDB
+      }
     })
   })
 })
