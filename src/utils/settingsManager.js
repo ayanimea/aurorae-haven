@@ -243,7 +243,9 @@ export function exportSettings() {
         ...settings,
         autoSave: {
           ...DEFAULT_SETTINGS.autoSave,
-          ...normalizedAutoSave
+          ...normalizedAutoSave,
+          directoryConfigured: false,
+          directoryName: null
         }
       }
 

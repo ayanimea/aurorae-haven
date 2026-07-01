@@ -220,7 +220,12 @@ export function getCurrentDirectoryHandle() {
  * @returns {string|null}
  */
 export function getStoredDirectoryName() {
-  return localStorage.getItem(DIRECTORY_NAME_KEY)
+  try {
+    return localStorage.getItem(DIRECTORY_NAME_KEY)
+  } catch (error) {
+    logger.warn('Failed to read directory name from localStorage:', error)
+    return null
+  }
 }
 
 /**
