@@ -21,6 +21,9 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  PAGES_BASE_URL: '/aurorae-haven/'
+
 concurrency:
   group: 'pages-${{ github.ref }}'
   cancel-in-progress: true
@@ -56,7 +59,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Cache markdown-link-check
@@ -119,7 +122,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -167,7 +170,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -177,18 +180,19 @@ jobs:
           npm_config_prefer_offline: false
           npm_config_audit: false
 
-      - name: Build online web app mode
+      - name: Build for GitHub Pages (offline mode, full feature set)
         run: |
-          echo "🌐 Building online web app mode..."
-          npm run build:mode:web
+          echo "🌌 Building desktop-offline mode for GitHub Pages..."
+          npm run build
         env:
           CI: true
-          AURORAE_VITE_BASE_URL_OVERRIDE: '/aurorae-haven/'
+          VITE_COMPILE_MODE: 'desktop-offline'
+          VITE_BASE_URL: ${{ env.PAGES_BASE_URL }}
 
-      - name: Verify online web app mode output
+      - name: Verify GitHub Pages build output
         run: test -f dist/index.html
 
-      - name: Verify online web app output
+      - name: Verify GitHub Pages build output files
         run: |
           echo "Checking Vite build output..."
           if [ ! -d "dist" ]; then
@@ -210,11 +214,11 @@ jobs:
           test -f dist/sw.js && echo "  ✓ sw.js (service worker)"
           test -d dist/assets && echo "  ✓ assets/ directory"
 
-      - name: Snapshot online web app output for later restore
+      - name: Snapshot GitHub Pages build for later restore
         run: |
-          rm -rf dist-web-online
-          cp -R dist dist-web-online
-          test -f dist-web-online/index.html
+          rm -rf dist-pages
+          cp -R dist dist-pages
+          test -f dist-pages/index.html
 
       - name: Build offline desktop app mode
         run: |
@@ -236,11 +240,11 @@ jobs:
       - name: Verify Android app mode output
         run: test -f dist-android-web/index.html
 
-      - name: Restore online web app output for Pages artifact
+      - name: Restore GitHub Pages build for artifact upload
         run: |
-          echo "🌐 Restoring online web app mode output for GitHub Pages artifact..."
+          echo "🌌 Restoring offline mode build for GitHub Pages artifact..."
           rm -rf dist
-          cp -R dist-web-online dist
+          cp -R dist-pages dist
           test -f dist/index.html
 
       - name: Verify all compilation mode outputs

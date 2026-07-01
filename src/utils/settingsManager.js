@@ -16,6 +16,7 @@ function isPlainObject(value) {
 }
 
 const SETTINGS_KEY = 'aurorae_settings'
+const LEGACY_AUTO_SAVE_DIRECTORY_NAME_KEY = 'aurorae_save_directory_name'
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -27,7 +28,8 @@ const DEFAULT_SETTINGS = {
     enabled: false,
     intervalMinutes: 5, // minutes between auto-saves
     keepCount: 10, // number of save files to keep
-    directoryConfigured: false // whether user has selected a directory
+    directoryConfigured: false, // whether user has selected a directory
+    directoryName: null // name of the configured save directory
   },
   notifications: {
     enabled: false,
@@ -210,11 +212,48 @@ export function resetSettings() {
 export function exportSettings() {
   // TODO: Implement settings export with metadata
   const settings = getSettings()
+  const legacyDirectoryName = tryCatch(
+    () => localStorage.getItem(LEGACY_AUTO_SAVE_DIRECTORY_NAME_KEY),
+    'Reading legacy directory name from localStorage',
+    { showToast: false }
+  ) ?? null
+  const settingsDirectoryName =
+    typeof settings.autoSave?.directoryName === 'string' &&
+    settings.autoSave.directoryName.trim() !== ''
+      ? settings.autoSave.directoryName
+      : null
+  const resolvedDirectoryName = settingsDirectoryName ?? legacyDirectoryName
+  const hasResolvedDirectoryName =
+    typeof resolvedDirectoryName === 'string' &&
+    resolvedDirectoryName.trim() !== ''
+  const normalizedAutoSave = isPlainObject(settings.autoSave)
+    ? settings.autoSave
+    : {}
+  const exportableSettings = hasResolvedDirectoryName
+    ? {
+        ...settings,
+        autoSave: {
+          ...DEFAULT_SETTINGS.autoSave,
+          ...normalizedAutoSave,
+          directoryConfigured: true,
+          directoryName: resolvedDirectoryName
+        }
+      }
+    : {
+        ...settings,
+        autoSave: {
+          ...DEFAULT_SETTINGS.autoSave,
+          ...normalizedAutoSave,
+          directoryConfigured: false,
+          directoryName: null
+        }
+      }
+
   return JSON.stringify(
     {
       version: 1,
       exportedAt: new Date().toISOString(),
-      settings
+      settings: exportableSettings
     },
     null,
     2
