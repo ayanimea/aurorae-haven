@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1188 KB compressed
+- ✅ Total size: 1189 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-07-01 13:13:23 UTC
+**Last Updated**: 2026-07-01 14:53:07 UTC
 **Source Branch**: save-settings-import-export-json-autosaves
-**Source Commit**: 2dac8c3
+**Source Commit**: bff003a
 
 ---
 
