@@ -24,7 +24,8 @@ vi.mock('../utils/importData', () => ({
 }))
 vi.mock('../utils/settingsManager', () => ({
   getSetting: vi.fn(),
-  updateSetting: vi.fn()
+  updateSetting: vi.fn(),
+  updateSettings: vi.fn()
 }))
 vi.mock('../utils/idGenerator', () => ({
   generateUniqueId: () => 'mock-id'

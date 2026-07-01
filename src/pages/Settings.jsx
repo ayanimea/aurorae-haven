@@ -98,7 +98,7 @@ function Settings({ onExport, onImport }) {
     if (lastSave) {
       setLastSaveTime(new Date(lastSave))
     }
-  }, [autoSaveSettings])
+  }, [autoSaveSettings, IS_OFFLINE_MODE])
 
   // Update last save time periodically
   useEffect(() => {
