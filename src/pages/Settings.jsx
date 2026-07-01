@@ -10,7 +10,6 @@ import {
   isFileSystemAccessSupported,
   requestDirectoryAccess,
   getCurrentDirectoryHandle,
-  setDirectoryHandle,
   verifyDirectoryHandle,
   startAutoSave,
   stopAutoSave,
@@ -18,7 +17,9 @@ import {
   getLastSaveTimestamp,
   cleanOldSaveFiles,
   loadAndImportLastSave,
-  getStoredDirectoryName
+  getStoredDirectoryName,
+  getStoredDirectoryHandle,
+  requestStoredDirectoryPermission
 } from '../utils/autoSaveFS'
 import {
   reloadPageAfterDelay,
@@ -26,15 +27,20 @@ import {
 } from '../utils/importData'
 import FileInputButton from '../components/common/FileInputButton'
 import Icon from '../components/common/Icon'
+import { getEnvVar } from '../utils/environment'
 import '../assets/styles/settings.css'
 
 // Time constant
 const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
 
 function Settings({ onExport, onImport }) {
+  // Local folder autosave is only available in offline/desktop builds for security.
+  // Defaults to false (restrictive) when VITE_COMPILE_MODE is not explicitly set.
+  const IS_OFFLINE_MODE = getEnvVar('VITE_COMPILE_MODE') === 'desktop-offline'
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)
+  const [storedHandleAvailable, setStoredHandleAvailable] = useState(false)
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [message, setMessage] = useState({ text: '', isError: false })
   const [isConfiguring, setIsConfiguring] = useState(false)
@@ -58,26 +64,41 @@ function Settings({ onExport, onImport }) {
 
   // Check if File System Access API is supported
   const fsSupported = isFileSystemAccessSupported()
+  const autoSaveSettings =
+    settings.autoSave &&
+    typeof settings.autoSave === 'object' &&
+    !Array.isArray(settings.autoSave)
+      ? settings.autoSave
+      : null
 
   // Load directory handle and last save time on mount
   useEffect(() => {
     const handle = getCurrentDirectoryHandle()
-    const storedName = getStoredDirectoryName()
+    // Fall back to settings.autoSave.directoryName so an imported settings JSON
+    // (which includes the directory name) is reflected in the UI even before the
+    // user re-grants directory access in a new browser session.
+    const storedName = getStoredDirectoryName() || autoSaveSettings?.directoryName
 
     if (handle) {
       setDirectoryName(handle.name)
       setDirectoryHandleLost(false)
-    } else if (storedName && settings.autoSave.directoryConfigured) {
-      // Handle was lost but we have the directory name
+      setStoredHandleAvailable(false)
+    } else if (storedName && autoSaveSettings?.directoryConfigured) {
+      // Handle was lost but we have the directory name; check for IDB-persisted handle
       setDirectoryName(storedName)
       setDirectoryHandleLost(true)
+      if (IS_OFFLINE_MODE) {
+        getStoredDirectoryHandle()
+          .then((idbHandle) => setStoredHandleAvailable(!!idbHandle))
+          .catch(() => setStoredHandleAvailable(false))
+      }
     }
 
     const lastSave = getLastSaveTimestamp()
     if (lastSave) {
       setLastSaveTime(new Date(lastSave))
     }
-  }, [settings])
+  }, [autoSaveSettings, IS_OFFLINE_MODE])
 
   // Update last save time periodically
   useEffect(() => {
@@ -110,8 +131,8 @@ function Settings({ onExport, onImport }) {
       const handle = await requestDirectoryAccess()
       if (handle) {
         setDirectoryName(handle.name)
-        setDirectoryHandle(handle)
         setDirectoryHandleLost(false)
+        setStoredHandleAvailable(false)
 
         // Update settings and get fresh settings
         const newSettings = updateSetting('autoSave.directoryConfigured', true)
@@ -127,6 +148,34 @@ function Settings({ onExport, onImport }) {
       }
     } catch (error) {
       showMessage('Failed to select directory: ' + error.message, true)
+    } finally {
+      setIsConfiguring(false)
+    }
+  }, [showMessage])
+
+  const handleGrantAccess = useCallback(async () => {
+    setIsConfiguring(true)
+    try {
+      const handle = await requestStoredDirectoryPermission()
+      if (handle) {
+        setDirectoryName(handle.name)
+        setDirectoryHandleLost(false)
+        setStoredHandleAvailable(false)
+
+        const newSettings = updateSetting('autoSave.directoryConfigured', true)
+        setSettingsState(newSettings)
+
+        showMessage(`Access granted to: ${handle.name}`)
+
+        if (newSettings.autoSave.enabled) {
+          stopAutoSave()
+          startAutoSave(newSettings.autoSave.intervalMinutes * MS_PER_MINUTE)
+        }
+      } else {
+        showMessage('Access was not granted to the directory', true)
+      }
+    } catch (error) {
+      showMessage('Failed to grant access: ' + error.message, true)
     } finally {
       setIsConfiguring(false)
     }
@@ -317,7 +366,8 @@ function Settings({ onExport, onImport }) {
           </div>
         </div>
 
-        {/* Auto-Save Settings Section */}
+        {/* Auto-Save Settings Section — only available in offline/desktop mode */}
+        {IS_OFFLINE_MODE && autoSaveSettings && (
         <div className='settings-section'>
           <h3 className='settings-section-title'>Automatic Save</h3>
 
@@ -347,9 +397,10 @@ function Settings({ onExport, onImport }) {
                   </strong>
                   <p className='settings-warning-text'>
                     The directory &quot;{directoryName}&quot; was previously
-                    selected, but access has been lost after page reload. Please
-                    click &quot;Change Directory&quot; to re-grant access and
-                    resume auto-save functionality.
+                    selected, but access has been lost after page reload.
+                    {storedHandleAvailable
+                      ? ' Click "Grant Access" to restore access without browsing, or "Change Directory" to select a different folder.'
+                      : ' Please click "Change Directory" to re-grant access and resume auto-save functionality.'}
                   </p>
                 </div>
               )}
@@ -368,6 +419,18 @@ function Settings({ onExport, onImport }) {
                     className='settings-input'
                     aria-describedby='save-directory-hint'
                   />
+                  {storedHandleAvailable && directoryHandleLost && (
+                    <button
+                      type='button'
+                      onClick={handleGrantAccess}
+                      disabled={isConfiguring}
+                      className='settings-button settings-button-success'
+                      aria-label='Grant access to previously selected directory'
+                      aria-busy={isConfiguring}
+                    >
+                      Grant Access
+                    </button>
+                  )}
                   <button
                     type='button'
                     onClick={handleSelectDirectory}
@@ -392,7 +455,7 @@ function Settings({ onExport, onImport }) {
                 <label className='settings-checkbox-label'>
                   <input
                     type='checkbox'
-                    checked={settings.autoSave.enabled}
+                    checked={autoSaveSettings.enabled}
                     onChange={(e) => handleToggleAutoSave(e.target.checked)}
                     disabled={!directoryName}
                     className='settings-checkbox'
@@ -418,10 +481,10 @@ function Settings({ onExport, onImport }) {
                   type='number'
                   min='1'
                   max='60'
-                  value={settings.autoSave.intervalMinutes}
+                  value={autoSaveSettings.intervalMinutes}
                   onChange={handleIntervalInput}
                   onBlur={handleIntervalInput}
-                  disabled={!settings.autoSave.enabled}
+                  disabled={!autoSaveSettings.enabled}
                   className='settings-input-number'
                   aria-describedby='save-interval-hint'
                 />
@@ -440,7 +503,7 @@ function Settings({ onExport, onImport }) {
                   type='number'
                   min='1'
                   max='100'
-                  value={settings.autoSave.keepCount}
+                  value={autoSaveSettings.keepCount}
                   onChange={handleKeepCountInput}
                   onBlur={handleKeepCountInput}
                   className='settings-input-number'
@@ -498,6 +561,7 @@ function Settings({ onExport, onImport }) {
             </>
           )}
         </div>
+        )} {/* end IS_OFFLINE_MODE auto-save section */}
 
         {/* Message Display */}
         {message.text && (

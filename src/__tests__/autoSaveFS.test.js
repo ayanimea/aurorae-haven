@@ -4,14 +4,33 @@
  * These tests cover testable utility functions and error handling
  */
 
+import { vi } from 'vitest'
+import 'fake-indexeddb/auto'
+
+vi.mock('../utils/settingsManager', () => ({
+  getSetting: vi.fn(),
+  updateSetting: vi.fn(),
+  updateSettings: vi.fn()
+}))
+
 import {
   isFileSystemAccessSupported,
-  getLastSaveTimestamp
+  getLastSaveTimestamp,
+  clearStoredDirectoryName,
+  getStoredDirectoryHandle,
+  requestDirectoryAccess,
+  requestStoredDirectoryPermission,
+  setDirectoryHandle
 } from '../utils/autoSaveFS'
+import * as settingsManager from '../utils/settingsManager'
 
 describe('AutoSaveFS', () => {
   beforeEach(() => {
     localStorage.clear()
+    settingsManager.updateSetting.mockReset()
+    settingsManager.updateSetting.mockImplementation(() => {})
+    settingsManager.updateSettings.mockReset()
+    settingsManager.updateSettings.mockImplementation(() => {})
   })
 
   describe('isFileSystemAccessSupported', () => {
@@ -65,6 +84,87 @@ describe('AutoSaveFS', () => {
       // Actual functionality requires File System API which needs user gestures
       expect(typeof isFileSystemAccessSupported).toBe('function')
       expect(typeof getLastSaveTimestamp).toBe('function')
+    })
+  })
+
+  describe('clearStoredDirectoryName', () => {
+    test('clears both directoryName and directoryConfigured in a single settings update', async () => {
+      localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
+      await clearStoredDirectoryName()
+      expect(settingsManager.updateSettings).toHaveBeenCalledWith({
+        autoSave: { directoryName: null, directoryConfigured: false }
+      })
+    })
+
+    test('removes directory name from localStorage', async () => {
+      localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
+      await clearStoredDirectoryName()
+      expect(localStorage.getItem('aurorae_save_directory_name')).toBeNull()
+    })
+
+    test('continues clearing localStorage when settings update throws', async () => {
+      settingsManager.updateSettings.mockImplementation(() => {
+        throw new Error('corrupted settings')
+      })
+      localStorage.setItem('aurorae_save_directory_name', 'MyBackups')
+
+      await expect(clearStoredDirectoryName()).resolves.toBeUndefined()
+      expect(localStorage.getItem('aurorae_save_directory_name')).toBeNull()
+    })
+  })
+
+  describe('directory settings sync resilience', () => {
+    test('requestStoredDirectoryPermission returns handle even when settings sync throws', async () => {
+      const handle = {
+        name: 'MyBackups',
+        requestPermission: vi.fn().mockResolvedValue('granted')
+      }
+      settingsManager.updateSetting.mockImplementation(() => {
+        throw new Error('corrupted settings')
+      })
+
+      window.showSaveFilePicker = vi.fn()
+      window.showDirectoryPicker = vi.fn().mockResolvedValue(handle)
+      const pickedHandle = await requestDirectoryAccess()
+      expect(pickedHandle).toBe(handle)
+
+      localStorage.removeItem('aurorae_save_directory_name')
+      const grantedHandle = await requestStoredDirectoryPermission()
+      expect(grantedHandle).toBe(handle)
+    })
+
+    test('setDirectoryHandle is best-effort when settings update throws', async () => {
+      settingsManager.updateSetting.mockImplementation(() => {
+        throw new Error('corrupted settings')
+      })
+      const handle = { name: 'MyBackups' }
+
+      await expect(setDirectoryHandle(handle)).resolves.toBeUndefined()
+      expect(localStorage.getItem('aurorae_save_directory_name')).toBe(
+        'MyBackups'
+      )
+    })
+  })
+
+  describe('directory handle IndexedDB persistence', () => {
+    test('stores and loads directory handle via IndexedDB', async () => {
+      const handle = { name: 'MyBackups' }
+
+      await setDirectoryHandle(handle)
+      await setDirectoryHandle(null)
+
+      await expect(getStoredDirectoryHandle()).resolves.toEqual(handle)
+    })
+
+    test('returns null when IndexedDB is unavailable', async () => {
+      const originalIndexedDB = globalThis.indexedDB
+      delete globalThis.indexedDB
+
+      try {
+        await expect(getStoredDirectoryHandle()).resolves.toBeNull()
+      } finally {
+        globalThis.indexedDB = originalIndexedDB
+      }
     })
   })
 })

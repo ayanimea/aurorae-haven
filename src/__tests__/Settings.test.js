@@ -7,6 +7,8 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Settings from '../pages/Settings'
 import * as autoSaveFS from '../utils/autoSaveFS'
+import * as settingsManager from '../utils/settingsManager'
+import * as environment from '../utils/environment'
 
 // Mock CSS imports
 vi.mock('../assets/styles/settings.css', () => ({}))
@@ -16,7 +18,6 @@ vi.mock('../utils/autoSaveFS', () => ({
   isFileSystemAccessSupported: vi.fn(() => true),
   requestDirectoryAccess: vi.fn(),
   getCurrentDirectoryHandle: vi.fn(() => null),
-  setDirectoryHandle: vi.fn(),
   verifyDirectoryHandle: vi.fn(),
   startAutoSave: vi.fn(),
   stopAutoSave: vi.fn(),
@@ -25,7 +26,9 @@ vi.mock('../utils/autoSaveFS', () => ({
   cleanOldSaveFiles: vi.fn(),
   loadAndImportLastSave: vi.fn(),
   getStoredDirectoryName: vi.fn(() => null),
-  clearStoredDirectoryName: vi.fn()
+  clearStoredDirectoryName: vi.fn(),
+  getStoredDirectoryHandle: vi.fn(() => Promise.resolve(null)),
+  requestStoredDirectoryPermission: vi.fn(() => Promise.resolve(null))
 }))
 
 // Mock the settingsManager module
@@ -36,7 +39,8 @@ vi.mock('../utils/settingsManager', () => ({
       enabled: false,
       intervalMinutes: 5,
       keepCount: 10,
-      directoryConfigured: false
+      directoryConfigured: false,
+      directoryName: null
     }
   })),
   updateSetting: vi.fn((key, value) => ({
@@ -46,7 +50,8 @@ vi.mock('../utils/settingsManager', () => ({
       intervalMinutes: key === 'autoSave.intervalMinutes' ? value : 5,
       keepCount: key === 'autoSave.keepCount' ? value : 10,
       directoryConfigured:
-        key === 'autoSave.directoryConfigured' ? value : false
+        key === 'autoSave.directoryConfigured' ? value : false,
+      directoryName: key === 'autoSave.directoryName' ? value : null
     }
   })),
   getSetting: vi.fn((key) => {
@@ -145,11 +150,92 @@ describe('Settings Component', () => {
     expect(container).toBeTruthy()
   })
 
+  test('component handles corrupted autoSave settings without crashing', () => {
+    settingsManager.getSettings.mockReturnValue({
+      theme: 'auto',
+      autoSave: null
+    })
+    autoSaveFS.getStoredDirectoryName.mockReturnValue('MyBackups')
+
+    const { container } = render(
+      <Settings onExport={mockOnExport} onImport={mockOnImport} />
+    )
+    expect(container).toBeTruthy()
+  })
+
   test('renders Appearance section with theme select', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(screen.getByText('Appearance')).toBeInTheDocument()
     expect(screen.getByLabelText(/theme/i)).toBeInTheDocument()
+  })
+
+  test('shows Grant Access button when stored handle is available and handle is lost', async () => {
+    autoSaveFS.isFileSystemAccessSupported.mockReturnValue(true)
+    settingsManager.getSettings.mockReturnValue({
+      theme: 'auto',
+      autoSave: {
+        enabled: false,
+        intervalMinutes: 5,
+        keepCount: 10,
+        directoryConfigured: true,
+        directoryName: 'MyBackups'
+      }
+    })
+    autoSaveFS.getStoredDirectoryName.mockReturnValue('MyBackups')
+    autoSaveFS.getStoredDirectoryHandle.mockResolvedValue({ name: 'MyBackups' })
+
+    const { findByRole } = render(
+      <Settings onExport={mockOnExport} onImport={mockOnImport} />
+    )
+
+    const grantBtn = await findByRole('button', {
+      name: /grant access to previously selected directory/i
+    })
+    expect(grantBtn).toBeInTheDocument()
+  })
+
+  test('hides auto-save section when not in offline/desktop mode', () => {
+    const spy = vi.spyOn(environment, 'getEnvVar').mockReturnValue('web')
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+    expect(screen.queryByText('Automatic Save')).not.toBeInTheDocument()
+    // Export/Import section must still be present
+    expect(screen.getByText('Data Management')).toBeInTheDocument()
+    spy.mockRestore()
+  })
+
+  test('Grant Access button calls requestStoredDirectoryPermission', async () => {
+    autoSaveFS.isFileSystemAccessSupported.mockReturnValue(true)
+    settingsManager.getSettings.mockReturnValue({
+      theme: 'auto',
+      autoSave: {
+        enabled: false,
+        intervalMinutes: 5,
+        keepCount: 10,
+        directoryConfigured: true,
+        directoryName: 'MyBackups'
+      }
+    })
+    autoSaveFS.getStoredDirectoryName.mockReturnValue('MyBackups')
+    autoSaveFS.getStoredDirectoryHandle.mockResolvedValue({ name: 'MyBackups' })
+    autoSaveFS.requestStoredDirectoryPermission.mockResolvedValue({
+      name: 'MyBackups'
+    })
+
+    const { findByRole } = render(
+      <Settings onExport={mockOnExport} onImport={mockOnImport} />
+    )
+
+    const grantBtn = await findByRole('button', {
+      name: /grant access to previously selected directory/i
+    })
+    fireEvent.click(grantBtn)
+
+    await vi.waitFor(() => {
+      expect(
+        autoSaveFS.requestStoredDirectoryPermission
+      ).toHaveBeenCalledTimes(1)
+    })
   })
 
 })
