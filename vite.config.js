@@ -154,8 +154,8 @@ export default defineConfig(({ mode }) => {
     server: {
       port: DEV_SERVER_PORT,
       open: true,
-      // Security headers for the development server (mirrors production nginx headers
-      // minus CSP, which is intentionally omitted here because Vite's HMR runtime
+      // Security headers for the development server (aligned with production non-CSP
+      // headers). CSP is intentionally omitted here because Vite's HMR runtime
       // injects inline scripts that would require 'unsafe-inline'/'unsafe-eval').
       headers: {
         'X-Content-Type-Options': 'nosniff',

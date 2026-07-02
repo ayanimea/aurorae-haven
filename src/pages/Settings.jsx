@@ -35,8 +35,9 @@ const MS_PER_MINUTE = 60 * 1000 // 60 seconds * 1000 milliseconds
 
 function Settings({ onExport, onImport }) {
   // Local folder autosave is only available in offline/desktop builds for security.
-  // Defaults to false (restrictive) when VITE_COMPILE_MODE is not explicitly set.
-  const IS_OFFLINE_MODE = getEnvVar('VITE_COMPILE_MODE') === 'desktop-offline'
+  // Defaults to desktop-offline when VITE_COMPILE_MODE is not explicitly set.
+  const COMPILE_MODE = getEnvVar('VITE_COMPILE_MODE') || 'desktop-offline'
+  const IS_OFFLINE_MODE = COMPILE_MODE === 'desktop-offline'
   const [settings, setSettingsState] = useState(getSettings())
   const [directoryName, setDirectoryName] = useState(null)
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)

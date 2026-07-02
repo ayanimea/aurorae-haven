@@ -84,7 +84,7 @@ written to the DOM. The sanitizer configuration:
 
 ### Calendar URL validation (`src/utils/calendarSubscriptionManager.js`)
 
-`validateCalendarURL()` enforces HTTPS/HTTP only and blocks localhost and private IP ranges
+`validateCalendarURL()` enforces HTTPS-only and blocks localhost and private IP ranges
 (RFC 1918 / RFC 4193 / link-local) to mitigate SSRF. Known limitation: DNS rebinding is not
 addressed at the frontend level; a server-side proxy with DNS resolution checks would be
 required for full SSRF protection.
