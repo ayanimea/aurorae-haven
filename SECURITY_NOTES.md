@@ -55,9 +55,11 @@ math rendering. All user-supplied HTML is still sanitized through DOMPurify befo
 the DOM.
 
 **Why `connect-src https:`**: The calendar subscription manager
-(`calendarSubscriptionManager.js`) fetches user-provided iCal URLs over HTTPS. Restricting to
+(`calendarSubscriptionManager.js`) fetches user-provided iCal URLs. Restricting to
 `'self'` would block this feature. All calendar URLs are validated by `validateCalendarURL()`
-before any fetch is made.
+before any fetch is made. `validateCalendarURL()` enforces HTTPS-only — `http://` URLs are
+rejected — which aligns with the `connect-src https:` CSP directive in preview/production
+builds.
 
 ---
 

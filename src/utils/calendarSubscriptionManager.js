@@ -263,8 +263,8 @@ function validateCalendarURL(url) {
   try {
     const parsedURL = new URL(url)
 
-    // Only allow https:// and http:// protocols (no file://, javascript:, etc.)
-    if (parsedURL.protocol !== 'https:' && parsedURL.protocol !== 'http:') {
+    // Only allow https:// protocol (no http://, file://, javascript:, etc.)
+    if (parsedURL.protocol !== 'https:') {
       logger.warn('Invalid protocol for calendar URL', {
         protocol: parsedURL.protocol
       })
