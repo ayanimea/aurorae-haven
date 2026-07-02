@@ -102,11 +102,13 @@ export function configureSanitization(DOMPurifyInstance) {
       'fill',
       'stroke'
     ],
-    // The trailing alternative [a-z+.-]+(?:[^a-z+.-:]|$) includes ':' in the negated
-    // character class so that scheme-like strings such as 'javascript:' do not match
-    // the fallback pattern (mirrors DOMPurify's own default ALLOWED_URI_REGEXP).
+    // The trailing alternative [a-z+.-]+(?:[^a-z+.:-]|$) excludes ':' and all other
+    // scheme characters from the lookahead class so that scheme-like strings such as
+    // 'javascript:' do not match the fallback pattern. The '-' is placed at the end of
+    // the character class to avoid creating an unintended range (mirrors DOMPurify's
+    // own default ALLOWED_URI_REGEXP).
     ALLOWED_URI_REGEXP:
-      /^(?:(?:(?:f|ht)tps?|mailto|tel):|#|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
+      /^(?:(?:(?:f|ht)tps?|mailto|tel):|#|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
     FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed'],
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
     KEEP_CONTENT: true,
