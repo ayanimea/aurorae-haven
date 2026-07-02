@@ -31,21 +31,21 @@ The dev server sets all non-CSP headers (`X-Content-Type-Options`, `X-Frame-Opti
 because Vite's HMR runtime requires inline scripts; adding a restrictive CSP would break hot
 module reload during development.
 
-The `vite preview` server (production-mode local preview) applies a full CSP:
+The `vite preview` server (production-mode local preview) applies the same CSP as the
+production Nginx deployment:
 
 ```text
 default-src 'self';
+base-uri 'self';
+object-src 'none';
+frame-ancestors 'none';
 script-src 'self';
 style-src 'self' 'unsafe-inline';
-img-src 'self' data: blob: https:;
+img-src 'self' data:;
 font-src 'self' data:;
 connect-src 'self' https:;
-worker-src 'self';
 manifest-src 'self';
-frame-ancestors 'none';
-base-uri 'self';
-form-action 'self';
-object-src 'none';
+worker-src 'self';
 ```
 
 **Why `style-src 'unsafe-inline'`**: KaTeX math rendering (via `marked-katex-extension`)
