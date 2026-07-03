@@ -43,7 +43,7 @@ script-src 'self';
 style-src 'self' 'unsafe-inline';
 img-src 'self' data:;
 font-src 'self' data:;
-connect-src 'self' https:;
+connect-src 'self';
 manifest-src 'self';
 worker-src 'self';
 ```
@@ -54,12 +54,21 @@ injects inline `style` attributes into the sanitized HTML written into the DOM v
 math rendering. All user-supplied HTML is still sanitized through DOMPurify before it reaches
 the DOM.
 
-**Why `connect-src https:`**: The calendar subscription manager
-(`calendarSubscriptionManager.js`) fetches user-provided iCal URLs. Restricting to
-`'self'` would block this feature. All calendar URLs are validated by `validateCalendarURL()`
-before any fetch is made. `validateCalendarURL()` enforces HTTPS-only — `http://` URLs are
-rejected — which aligns with the `connect-src https:` CSP directive in preview/production
-builds.
+**Why `connect-src 'self'`**: Both the production Nginx deployment and the `vite preview` server
+use `connect-src 'self'` to keep the CSP narrowly scoped and prevent data exfiltration if an
+XSS were to occur. Calendar subscription fetches (user-provided iCal URLs) require access to
+external origins; to support this in a production deployment without broadening `connect-src`,
+route the fetch through an Nginx `proxy_pass` endpoint so the request stays same-origin, or
+add the specific calendar origin(s) explicitly to `connect-src`:
+
+```nginx
+# Example: allow a single known calendar host
+connect-src 'self' https://calendar.example.com;
+```
+
+Avoid the broad `connect-src https:` directive — it negates CSP's ability to limit data
+exfiltration. All calendar URLs are still validated by `validateCalendarURL()` before any
+fetch is made; the validator enforces HTTPS-only and blocks private IP ranges.
 
 ---
 
