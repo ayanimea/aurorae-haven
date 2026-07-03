@@ -305,6 +305,18 @@ END:VCALENDAR`
       )
     })
 
+    test('should reject public http:// calendar URLs', async () => {
+      const subscription = {
+        name: 'Public HTTP Calendar',
+        url: 'http://example.com/calendar.ics',
+        color: '#86f5e0'
+      }
+
+      await expect(addCalendarSubscription(subscription)).rejects.toThrow(
+        'Invalid or unsafe calendar URL'
+      )
+    })
+
     test('should reject invalid IPv4 addresses (octets > 255)', async () => {
       const subscription = {
         name: 'Invalid IP Calendar',

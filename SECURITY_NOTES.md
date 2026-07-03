@@ -59,10 +59,11 @@ use `connect-src 'self'` to keep the CSP narrowly scoped and prevent data exfilt
 XSS were to occur. Calendar subscription fetches (user-provided iCal URLs) require access to
 external origins; to support this in a production deployment without broadening `connect-src`,
 route the fetch through an Nginx `proxy_pass` endpoint so the request stays same-origin, or
-add the specific calendar origin(s) explicitly to `connect-src`:
+add the specific calendar origin(s) explicitly to the `Content-Security-Policy` header's
+`connect-src` directive:
 
-```nginx
-# Example: allow a single known calendar host
+```text
+# Example CSP directive fragment for a single known calendar host
 connect-src 'self' https://calendar.example.com;
 ```
 
