@@ -320,7 +320,19 @@ END:VCALENDAR`
     test('should reject invalid IPv4 addresses (octets > 255)', async () => {
       const subscription = {
         name: 'Invalid IP Calendar',
-        url: 'http://999.999.999.999/calendar.ics',
+        url: 'https://999.999.999.999/calendar.ics',
+        color: '#86f5e0'
+      }
+
+      await expect(addCalendarSubscription(subscription)).rejects.toThrow(
+        'Invalid or unsafe calendar URL'
+      )
+    })
+
+    test('should reject https:// private IPv4 range (192.168.x.x)', async () => {
+      const subscription = {
+        name: 'Private HTTPS Calendar',
+        url: 'https://192.168.1.1/calendar.ics',
         color: '#86f5e0'
       }
 
