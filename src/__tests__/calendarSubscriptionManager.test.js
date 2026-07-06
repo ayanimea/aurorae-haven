@@ -244,7 +244,7 @@ END:VCALENDAR`
     test('should reject localhost URLs', async () => {
       const subscription = {
         name: 'Local Calendar',
-        url: 'http://localhost:8080/calendar.ics',
+        url: 'https://localhost:8080/calendar.ics',
         color: '#86f5e0'
       }
 
@@ -256,7 +256,7 @@ END:VCALENDAR`
     test('should reject private IP addresses', async () => {
       const subscription = {
         name: 'Private Calendar',
-        url: 'http://192.168.1.1/calendar.ics',
+        url: 'https://192.168.1.1/calendar.ics',
         color: '#86f5e0'
       }
 
@@ -271,7 +271,7 @@ END:VCALENDAR`
       for (const address of testAddresses) {
         const subscription = {
           name: 'Private Calendar',
-          url: `http://${address}/calendar.ics`,
+          url: `https://${address}/calendar.ics`,
           color: '#86f5e0'
         }
 
@@ -284,7 +284,7 @@ END:VCALENDAR`
     test('should reject 172.16-31.x.x private IP range', async () => {
       const subscription = {
         name: 'Private Calendar',
-        url: 'http://172.20.0.1/calendar.ics',
+        url: 'https://172.20.0.1/calendar.ics',
         color: '#86f5e0'
       }
 
@@ -329,17 +329,28 @@ END:VCALENDAR`
       )
     })
 
-    test('should reject https:// private IPv4 range (192.168.x.x)', async () => {
-      const subscription = {
-        name: 'Private HTTPS Calendar',
-        url: 'https://192.168.1.1/calendar.ics',
-        color: '#86f5e0'
-      }
+    test.each([
+      '10.0.0.1',
+      '172.20.0.1',
+      '192.168.1.1',
+      '127.0.0.1',
+      '169.254.169.254',
+      '100.64.0.1',
+      '192.0.0.1'
+    ])(
+      'should reject https:// private/reserved IPv4 address %s',
+      async (address) => {
+        const subscription = {
+          name: 'Private HTTPS Calendar',
+          url: `https://${address}/calendar.ics`,
+          color: '#86f5e0'
+        }
 
-      await expect(addCalendarSubscription(subscription)).rejects.toThrow(
-        'Invalid or unsafe calendar URL'
-      )
-    })
+        await expect(addCalendarSubscription(subscription)).rejects.toThrow(
+          'Invalid or unsafe calendar URL'
+        )
+      }
+    )
 
     test('should reject private IPv6 addresses', async () => {
       const testAddresses = ['fc00::1', 'fd00::1', 'fe80::1']
@@ -347,7 +358,7 @@ END:VCALENDAR`
       for (const address of testAddresses) {
         const subscription = {
           name: 'Private IPv6 Calendar',
-          url: `http://[${address}]/calendar.ics`,
+          url: `https://[${address}]/calendar.ics`,
           color: '#86f5e0'
         }
 
@@ -360,7 +371,7 @@ END:VCALENDAR`
     test('should reject IPv4-mapped IPv6 addresses pointing to private ranges', async () => {
       const subscription = {
         name: 'IPv4-mapped IPv6 Calendar',
-        url: 'http://[::ffff:192.168.1.1]/calendar.ics',
+        url: 'https://[::ffff:192.168.1.1]/calendar.ics',
         color: '#86f5e0'
       }
 
@@ -372,7 +383,7 @@ END:VCALENDAR`
     test('should reject link-local IP addresses (169.254.x.x)', async () => {
       const subscription = {
         name: 'Link-local Calendar',
-        url: 'http://169.254.169.254/calendar.ics',
+        url: 'https://169.254.169.254/calendar.ics',
         color: '#86f5e0'
       }
 
@@ -387,7 +398,7 @@ END:VCALENDAR`
       for (const address of testAddresses) {
         const subscription = {
           name: 'Loopback Calendar',
-          url: `http://${address}/calendar.ics`,
+          url: `https://${address}/calendar.ics`,
           color: '#86f5e0'
         }
 
@@ -403,7 +414,7 @@ END:VCALENDAR`
       for (const address of testAddresses) {
         const subscription = {
           name: 'CGN Calendar',
-          url: `http://${address}/calendar.ics`,
+          url: `https://${address}/calendar.ics`,
           color: '#86f5e0'
         }
 
@@ -416,7 +427,7 @@ END:VCALENDAR`
     test('should reject IETF protocol assignments range (192.0.0.x)', async () => {
       const subscription = {
         name: 'IETF Calendar',
-        url: 'http://192.0.0.1/calendar.ics',
+        url: 'https://192.0.0.1/calendar.ics',
         color: '#86f5e0'
       }
 

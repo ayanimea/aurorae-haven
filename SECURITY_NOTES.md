@@ -48,11 +48,11 @@ manifest-src 'self';
 worker-src 'self';
 ```
 
-**Why `style-src 'unsafe-inline'`**: KaTeX math rendering (via `marked-katex-extension`)
-injects inline `style` attributes into the sanitized HTML written into the DOM via
-`dangerouslySetInnerHTML`. Removing `'unsafe-inline'` from `style-src` would silently break
-math rendering. All user-supplied HTML is still sanitized through DOMPurify before it reaches
-the DOM.
+**Why `style-src 'unsafe-inline'`**: The React UI uses inline `style={{...}}` props in multiple
+components, and KaTeX math rendering (via `marked-katex-extension`) also injects inline `style`
+attributes into sanitized HTML written via `dangerouslySetInnerHTML`. Removing `'unsafe-inline'`
+from `style-src` would therefore break both regular UI rendering and math output. All
+user-supplied HTML is still sanitized through DOMPurify before it reaches the DOM.
 
 **Why `connect-src 'self'`**: Both the production Nginx deployment and the `vite preview` server
 use `connect-src 'self'` to keep the CSP narrowly scoped and prevent data exfiltration if an
