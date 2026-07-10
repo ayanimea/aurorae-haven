@@ -365,7 +365,7 @@ export async function syncCalendar(subscriptionId) {
   // Validate URL before fetching
   if (!validateCalendarURL(subscription.url)) {
     const error = new Error(
-      'Invalid or unsafe calendar URL. Only HTTPS URLs to public servers are allowed.'
+      'Invalid or unsafe calendar URL. Only HTTPS URLs are allowed (localhost and private/reserved IP ranges are blocked).'
     )
     logger.error('Calendar URL validation failed', { url: subscription.url })
 

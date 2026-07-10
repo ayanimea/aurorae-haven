@@ -130,5 +130,5 @@ These migrations resolved all previously documented vulnerabilities.
 
 ---
 
-_Last Updated_: 2026-04-22  
+_Last Updated_: 2026-07-10  
 _Risk Acceptance_: Development Team
