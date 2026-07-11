@@ -263,8 +263,8 @@ function validateCalendarURL(url) {
   try {
     const parsedURL = new URL(url)
 
-    // Only allow https:// and http:// protocols (no file://, javascript:, etc.)
-    if (parsedURL.protocol !== 'https:' && parsedURL.protocol !== 'http:') {
+    // Only allow https:// protocol (no http://, file://, javascript:, etc.)
+    if (parsedURL.protocol !== 'https:') {
       logger.warn('Invalid protocol for calendar URL', {
         protocol: parsedURL.protocol
       })
@@ -365,7 +365,7 @@ export async function syncCalendar(subscriptionId) {
   // Validate URL before fetching
   if (!validateCalendarURL(subscription.url)) {
     const error = new Error(
-      'Invalid or unsafe calendar URL. Only HTTPS/HTTP URLs to public servers are allowed.'
+      'Invalid or unsafe calendar URL. Only HTTPS URLs are allowed (localhost and private/reserved IP ranges are blocked).'
     )
     logger.error('Calendar URL validation failed', { url: subscription.url })
 

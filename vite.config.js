@@ -153,10 +153,32 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: DEV_SERVER_PORT,
-      open: true
+      open: true,
+      // Security headers for the development server (matching production non-CSP
+      // headers). CSP is intentionally omitted here because Vite's HMR runtime
+      // injects inline scripts that would require 'unsafe-inline'/'unsafe-eval'.
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'no-referrer',
+        'Permissions-Policy':
+          'accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), web-share=(), xr-spatial-tracking=()'
+      }
     },
     preview: {
-      port: PREVIEW_SERVER_PORT
+      port: PREVIEW_SERVER_PORT,
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'no-referrer',
+        'Permissions-Policy':
+          'accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), web-share=(), xr-spatial-tracking=()',
+        // This mirrors the restrictive production CSP. External calendar feeds
+        // therefore need either a same-origin proxy URL or an explicit
+        // per-origin connect-src allowlist in deployments that keep 'self' only.
+        'Content-Security-Policy':
+          "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'"
+      }
     },
     // Resolve configuration
     resolve: {

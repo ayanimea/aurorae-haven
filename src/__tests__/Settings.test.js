@@ -204,6 +204,14 @@ describe('Settings Component', () => {
     spy.mockRestore()
   })
 
+  test('hides auto-save section when compile mode is unset', () => {
+    const spy = vi.spyOn(environment, 'getEnvVar').mockReturnValue(undefined)
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+    expect(screen.queryByText('Automatic Save')).not.toBeInTheDocument()
+    expect(screen.getByText('Data Management')).toBeInTheDocument()
+    spy.mockRestore()
+  })
+
   test('Grant Access button calls requestStoredDirectoryPermission', async () => {
     autoSaveFS.isFileSystemAccessSupported.mockReturnValue(true)
     settingsManager.getSettings.mockReturnValue({

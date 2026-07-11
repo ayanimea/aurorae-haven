@@ -66,6 +66,18 @@ describe('Security: configureSanitization', () => {
     expect('#anchor').toMatch(config.ALLOWED_URI_REGEXP)
   })
 
+  test('blocks dangerous URI schemes (XSS prevention)', () => {
+    const config = configureSanitization()
+    // eslint-disable-next-line no-script-url
+    expect('javascript:alert(1)').not.toMatch(config.ALLOWED_URI_REGEXP)
+    // eslint-disable-next-line no-script-url
+    expect('JavaScript:alert(1)').not.toMatch(config.ALLOWED_URI_REGEXP)
+    expect('vbscript:msgbox').not.toMatch(config.ALLOWED_URI_REGEXP)
+    expect('data:text/html,<script>alert(1)</script>').not.toMatch(
+      config.ALLOWED_URI_REGEXP
+    )
+  })
+
   test('registers afterSanitizeAttributes hook', () => {
     configureSanitization()
     expect(mockDOMPurify.addHook).toHaveBeenCalledWith(
