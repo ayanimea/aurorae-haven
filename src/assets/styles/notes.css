@@ -841,8 +841,7 @@ textarea:focus {
 
 /* ===== TOC in preview ===== */
 
-.preview .note-toc,
-.preview ul:has(> li > a[href^='#']) {
+.preview .note-toc {
   background: rgba(16, 20, 44, 0.35);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -851,14 +850,31 @@ textarea:focus {
   font-size: 14px;
 }
 
-.preview .note-toc::before {
-  content: 'Contents';
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--dim);
-  margin-bottom: 8px;
+.preview .note-toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.preview .note-toc li {
+  padding: 3px 0;
+}
+
+.preview .note-toc li.toc-level-1 { padding-left: 0; }
+.preview .note-toc li.toc-level-2 { padding-left: 1.2em; }
+.preview .note-toc li.toc-level-3 { padding-left: 2.4em; }
+.preview .note-toc li.toc-level-4 { padding-left: 3.6em; }
+.preview .note-toc li.toc-level-5 { padding-left: 4.8em; }
+.preview .note-toc li.toc-level-6 { padding-left: 6em; }
+
+.preview .note-toc a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--dim);
+}
+
+.preview .note-toc a:hover {
+  color: var(--mint);
+  border-bottom-color: var(--mint);
 }
 

@@ -3,7 +3,9 @@ import {
   slugify,
   extractHeadings,
   buildTocMarkdown,
-  injectToc
+  buildHtmlTocList,
+  injectToc,
+  injectTocHtml
 } from '../utils/notes/tocGenerator'
 
 describe('slugify', () => {
@@ -160,5 +162,90 @@ describe('injectToc', () => {
     const md = '[TOC]\n\nJust a paragraph.'
     const result = injectToc(md)
     expect(result).toContain('No headings found')
+  })
+})
+
+describe('buildHtmlTocList', () => {
+  test('returns empty string for empty headings array', () => {
+    expect(buildHtmlTocList([])).toBe('')
+  })
+
+  test('wraps entries in a <ul> element', () => {
+    const headings = [{ level: 1, text: 'Intro', slug: 'intro' }]
+    const result = buildHtmlTocList(headings)
+    expect(result).toMatch(/^<ul>/)
+    expect(result).toMatch(/<\/ul>$/)
+  })
+
+  test('generates <li> with toc-level class and anchor link', () => {
+    const headings = [{ level: 2, text: 'Section', slug: 'section' }]
+    const result = buildHtmlTocList(headings)
+    expect(result).toContain('class="toc-level-2"')
+    expect(result).toContain('<a href="#section">Section</a>')
+  })
+
+  test('escapes HTML special characters in heading text', () => {
+    const headings = [{ level: 1, text: 'A & B <tag>', slug: 'a-b-tag' }]
+    const result = buildHtmlTocList(headings)
+    expect(result).toContain('A &amp; B &lt;tag&gt;')
+    expect(result).not.toContain('<tag>')
+  })
+
+  test('assigns correct toc-level class per heading level', () => {
+    const headings = [
+      { level: 1, text: 'H1', slug: 'h1' },
+      { level: 3, text: 'H3', slug: 'h3' }
+    ]
+    const result = buildHtmlTocList(headings)
+    expect(result).toContain('class="toc-level-1"')
+    expect(result).toContain('class="toc-level-3"')
+  })
+})
+
+describe('injectTocHtml', () => {
+  test('returns content unchanged when no [TOC] present', () => {
+    const md = '# Heading\n\nSome content.'
+    expect(injectTocHtml(md)).toBe(md)
+  })
+
+  test('returns empty string for falsy input', () => {
+    expect(injectTocHtml('')).toBe('')
+    expect(injectTocHtml(null)).toBe('')
+  })
+
+  test('replaces [TOC] with a <nav class="note-toc"> block', () => {
+    const md = '[TOC]\n\n# Hello\n\n## World'
+    const result = injectTocHtml(md)
+    expect(result).not.toContain('[TOC]')
+    expect(result).toContain('<nav class="note-toc"')
+    expect(result).toContain('</nav>')
+  })
+
+  test('includes anchor links to headings', () => {
+    const md = '[TOC]\n\n# Hello\n\n## World'
+    const result = injectTocHtml(md)
+    expect(result).toContain('href="#hello"')
+    expect(result).toContain('href="#world"')
+  })
+
+  test('replaces [TOC] case-insensitively', () => {
+    const md = '[toc]\n\n# Heading'
+    const result = injectTocHtml(md)
+    expect(result).not.toContain('[toc]')
+    expect(result).toContain('<nav class="note-toc"')
+  })
+
+  test('outputs fallback message when no headings found', () => {
+    const md = '[TOC]\n\nJust a paragraph.'
+    const result = injectTocHtml(md)
+    expect(result).toContain('No headings found')
+  })
+
+  test('replaces multiple [TOC] markers', () => {
+    const md = '[TOC]\n\n# Heading\n\n[TOC]'
+    const result = injectTocHtml(md)
+    expect(result.match(/\[TOC\]/gi)).toBeNull()
+    const navCount = (result.match(/<nav /g) || []).length
+    expect(navCount).toBe(2)
   })
 })

@@ -6,6 +6,7 @@ import {
   sanitizeFilename
 } from '../fileHelpers'
 import { createLogger } from '../logger'
+import { extractHeadings } from './tocGenerator'
 
 const logger = createLogger('NoteOperations')
 const ODT_MIME_TYPE = 'application/vnd.oasis.opendocument.text'
@@ -166,8 +167,61 @@ function inlineToOdt(text) {
     .join('')
 }
 
+/**
+ * Build an ODT native table-of-contents element from an array of heading objects.
+ * Produces a <text:table-of-content> with entry templates for each heading level
+ * used and a pre-populated index body so the TOC is visible without updating.
+ *
+ * @param {Array<{level: number, text: string, slug: string}>} headings
+ * @returns {string} ODT XML string
+ */
+function buildOdtToc(headings) {
+  if (!headings || headings.length === 0) {
+    return '<text:p><text:span text:style-name="Italic_Char">No headings found.</text:span></text:p>'
+  }
+
+  const maxLevel = Math.min(Math.max(...headings.map((h) => h.level)), 6)
+
+  // Build one entry template per level from 1 to maxLevel
+  const entryTemplates = Array.from({ length: maxLevel }, (_, i) => i + 1)
+    .map(
+      (level) =>
+        `<text:table-of-content-entry-template text:outline-level="${level}" text:style-name="Contents_${level}">` +
+        '<text:index-entry-chapter/>' +
+        '<text:index-entry-text/>' +
+        '<text:index-entry-tab-stop style:type="right" style:leader-char="."/>' +
+        '<text:index-entry-page-number/>' +
+        '</text:table-of-content-entry-template>'
+    )
+    .join('')
+
+  // Pre-populate the index body so it is visible without requiring an update
+  const bodyEntries = headings
+    .map(
+      (h) =>
+        `<text:p text:style-name="Contents_${h.level}">${escapeXml(h.text)}</text:p>`
+    )
+    .join('')
+
+  return (
+    `<text:table-of-content text:name="TOC1" text:protected="false">` +
+    `<text:table-of-content-source text:outline-level="${maxLevel}">` +
+    `<text:index-title-template text:style-name="Contents_Heading">Contents</text:index-title-template>` +
+    entryTemplates +
+    `</text:table-of-content-source>` +
+    `<text:index-body>` +
+    `<text:index-title><text:p text:style-name="Contents_Heading">Contents</text:p></text:index-title>` +
+    bodyEntries +
+    `</text:index-body>` +
+    `</text:table-of-content>`
+  )
+}
+
 function markdownToOdtElements(markdown) {
   if (!markdown) return '<text:p></text:p>'
+
+  // Pre-scan headings so we can generate an accurate TOC if [TOC] appears
+  const headings = extractHeadings(markdown)
 
   const lines = markdown.split('\n')
   const elements = []
@@ -317,6 +371,14 @@ function markdownToOdtElements(markdown) {
       continue
     }
 
+    // [TOC] marker — emit a native ODT table-of-contents element
+    if (/^\[TOC\]$/i.test(line.trim())) {
+      if (inTable) flushTable()
+      closeAllLists()
+      elements.push(buildOdtToc(headings))
+      continue
+    }
+
     // Table rows: lines containing '|'.
     // A new table is only started when the next line is a valid GFM separator row
     // (e.g. |---|---|). This matches how the app's marked preview handles tables
@@ -432,6 +494,7 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
   const plain = markdown
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s*\[TOC\]\s*$/gim, '') // strip [TOC] markers
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
     .replace(/\*\*(.+?)\*\*/g, '$1')
@@ -581,6 +644,28 @@ const ODT_STYLES_XML = `<?xml version="1.0" encoding="UTF-8"?>
     <text:list-style style:name="Numbering_20_1">
       <text:list-level-style-number text:level="1" style:num-format="1"/>
     </text:list-style>
+    <style:style style:name="Contents_Heading" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.25cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-weight="bold" fo:font-size="13pt" fo:color="#0f1535"/>
+    </style:style>
+    <style:style style:name="Contents_1" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="0cm" fo:margin-bottom="0.1cm"/>
+    </style:style>
+    <style:style style:name="Contents_2" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="0.5cm" fo:margin-bottom="0.08cm"/>
+    </style:style>
+    <style:style style:name="Contents_3" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="1cm" fo:margin-bottom="0.06cm"/>
+    </style:style>
+    <style:style style:name="Contents_4" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="1.5cm" fo:margin-bottom="0.05cm"/>
+    </style:style>
+    <style:style style:name="Contents_5" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="2cm" fo:margin-bottom="0.05cm"/>
+    </style:style>
+    <style:style style:name="Contents_6" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="2.5cm" fo:margin-bottom="0.05cm"/>
+    </style:style>
   </office:styles>
 </office:document-styles>`
 

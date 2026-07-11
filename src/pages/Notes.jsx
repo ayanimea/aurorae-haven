@@ -6,7 +6,7 @@ import DOMPurify from 'dompurify'
 import 'katex/dist/katex.min.css'
 import { configureSanitization } from '../utils/sanitization'
 import { preprocessLatex } from '../utils/latexPreprocessor'
-import { injectToc } from '../utils/notes/tocGenerator'
+import { injectTocHtml, slugify } from '../utils/notes/tocGenerator'
 import {
   createNewNote,
   createNoteFromImport,
@@ -65,6 +65,26 @@ try {
   }
 } catch (error) {
   logger.warn('Failed to configure marked options:', error)
+}
+
+// Add a custom heading renderer that injects id attributes so that [TOC]
+// anchor links (e.g. #introduction) resolve to the correct heading in-page.
+// The slug algorithm mirrors tocGenerator.slugify so IDs and href values match.
+try {
+  marked.use({
+    renderer: {
+      heading({ tokens, depth }) {
+        const rawText = this.parser.parseInline(tokens)
+        // Strip any HTML tags produced by inline rendering (e.g. from KaTeX)
+        // to get the plain text for slug generation.
+        const plainText = rawText.replace(/<[^>]+>/g, '')
+        const id = slugify(plainText)
+        return `<h${depth} id="${id}">${rawText}</h${depth}>\n`
+      }
+    }
+  })
+} catch (error) {
+  logger.warn('Failed to configure marked heading renderer:', error)
 }
 
 function Notes() {
@@ -216,8 +236,8 @@ function Notes() {
   // Security: Content is sanitized with DOMPurify before rendering
   useEffect(() => {
     const renderPreview = () => {
-      // Replace [TOC] markers with a generated table of contents
-      const contentWithToc = injectToc(content)
+      // Replace [TOC] markers with a rendered HTML table of contents
+      const contentWithToc = injectTocHtml(content)
       // Preprocess LaTeX to handle newlines within math blocks
       const preprocessedContent = preprocessLatex(contentWithToc)
       // Use enhanced sanitization configuration to prevent XSS

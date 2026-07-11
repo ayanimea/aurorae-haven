@@ -5,6 +5,15 @@
  * placeholder marker in markdown content.
  */
 
+// Minimal HTML entity escaping for text inserted into HTML attributes / content.
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 /**
  * Convert a heading text to an anchor-safe slug
  * @param {string} text - Raw heading text (may contain markdown)
@@ -81,8 +90,60 @@ export function buildTocMarkdown(headings) {
 }
 
 /**
- * Replace every [TOC] marker in the markdown with a generated table of contents.
- * The TOC is formatted as a fenced block so it renders distinctly in the preview.
+ * Build an HTML list for the TOC.
+ * Each entry is a flat <li> with a class encoding its depth level,
+ * so CSS can apply indentation without inline styles.
+ *
+ * @param {Array<{level: number, text: string, slug: string}>} headings
+ * @returns {string} HTML string (<ul>…</ul>)
+ */
+export function buildHtmlTocList(headings) {
+  if (!headings || headings.length === 0) return ''
+
+  const items = headings.map(({ level, text, slug }) => {
+    const escaped = escapeHtml(text)
+    return `<li class="toc-level-${level}"><a href="#${slug}">${escaped}</a></li>`
+  })
+
+  return `<ul>\n${items.join('\n')}\n</ul>`
+}
+
+/**
+ * Replace every [TOC] marker in the markdown with a rendered HTML
+ * table of contents wrapped in a <nav class="note-toc"> element.
+ * The nav block is treated as raw HTML by marked and passes through
+ * DOMPurify unmodified (nav + id + class are in the allow-lists).
+ *
+ * Heading IDs in the rendered preview are added by the custom marked
+ * heading renderer in Notes.jsx and match the slugs generated here.
+ *
+ * @param {string} markdown - Raw markdown content
+ * @returns {string} Markdown with [TOC] markers replaced by HTML nav blocks
+ */
+export function injectTocHtml(markdown) {
+  if (!markdown || typeof markdown !== 'string') return markdown || ''
+
+  // Only process if there is at least one [TOC] marker
+  if (!/\[TOC\]/i.test(markdown)) return markdown
+
+  const headings = extractHeadings(markdown)
+
+  let inner
+  if (headings.length === 0) {
+    inner = '<p><em>No headings found.</em></p>'
+  } else {
+    inner = buildHtmlTocList(headings)
+  }
+
+  const navBlock = `<nav class="note-toc" aria-label="Table of Contents">\n${inner}\n</nav>`
+
+  return markdown.replace(/\[TOC\]/gi, navBlock)
+}
+
+/**
+ * Replace every [TOC] marker in the markdown with a plain-markdown list.
+ * This variant is intended for ODT export pipelines that process
+ * the markdown themselves (see noteOperations.js).
  *
  * @param {string} markdown - Raw markdown content
  * @returns {string} Markdown with [TOC] markers replaced
@@ -90,7 +151,6 @@ export function buildTocMarkdown(headings) {
 export function injectToc(markdown) {
   if (!markdown || typeof markdown !== 'string') return markdown || ''
 
-  // Only process if there is at least one [TOC] marker
   if (!/\[TOC\]/i.test(markdown)) return markdown
 
   const headings = extractHeadings(markdown)
@@ -104,3 +164,4 @@ export function injectToc(markdown) {
 
   return markdown.replace(/\[TOC\]/gi, tocBlock)
 }
+

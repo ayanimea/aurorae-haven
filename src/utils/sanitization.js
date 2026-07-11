@@ -58,6 +58,8 @@ export function configureSanitization(DOMPurifyInstance) {
       'td',
       // Task lists
       'input', // for checkboxes
+      // Semantic navigation (e.g. TOC wrapper)
+      'nav',
       // KaTeX math rendering tags
       'span',
       'div',
