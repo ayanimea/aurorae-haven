@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify'
 import 'katex/dist/katex.min.css'
 import { configureSanitization } from '../utils/sanitization'
 import { preprocessLatex } from '../utils/latexPreprocessor'
+import { injectToc } from '../utils/notes/tocGenerator'
 import {
   createNewNote,
   createNoteFromImport,
@@ -19,6 +20,7 @@ import {
 } from '../utils/notes/noteOperations'
 import NoteDetailsModal from '../components/Notes/NoteDetailsModal'
 import HelpModal from '../components/Notes/HelpModal'
+import NewNoteModal from '../components/Notes/NewNoteModal'
 import NotesList from '../components/Notes/NotesList'
 import NoteEditor from '../components/Notes/NoteEditor'
 import FilterModal from '../components/Notes/FilterModal'
@@ -27,6 +29,7 @@ import ConfirmModal from '../components/common/ConfirmModal'
 import { useNotesState } from '../hooks/useNotesState'
 import { useToast } from '../hooks/useToast'
 import { createLogger } from '../utils/logger'
+import { getNoteTemplateById } from '../data/noteTemplates'
 
 const logger = createLogger('Notes')
 
@@ -116,6 +119,7 @@ function Notes() {
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
+  const [showNewNoteModal, setShowNewNoteModal] = useState(false)
   const [contextMenu, setContextMenu] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState(null)
@@ -212,8 +216,10 @@ function Notes() {
   // Security: Content is sanitized with DOMPurify before rendering
   useEffect(() => {
     const renderPreview = () => {
+      // Replace [TOC] markers with a generated table of contents
+      const contentWithToc = injectToc(content)
       // Preprocess LaTeX to handle newlines within math blocks
-      const preprocessedContent = preprocessLatex(content)
+      const preprocessedContent = preprocessLatex(contentWithToc)
       // Use enhanced sanitization configuration to prevent XSS
       const sanitizeConfig = configureSanitization(DOMPurify)
       // Parse markdown and sanitize HTML to remove any malicious content
@@ -402,6 +408,29 @@ function Notes() {
     })
   }
 
+  // Open the new-note template chooser instead of immediately creating
+  const handleNewNote = () => {
+    setShowNewNoteModal(true)
+  }
+
+  // Called when user confirms template selection in the modal
+  const handleNewNoteConfirm = (templateId, includeToc) => {
+    setShowNewNoteModal(false)
+    const template = getNoteTemplateById(templateId)
+    let noteContent = template?.content ?? ''
+
+    // Prepend [TOC] marker when requested (only meaningful for non-blank templates)
+    if (includeToc && noteContent) {
+      noteContent = `[TOC]\n\n${noteContent}`
+    }
+
+    const newNote = createNote(noteContent)
+    // If the template provides a sensible title derived from a first heading, use it
+    if (newNote && template && template.id !== 'blank') {
+      setTitle(template.name)
+    }
+  }
+
   return (
     <div className='brain-dump-container'>
       {/* Note List Sidebar */}
@@ -417,7 +446,7 @@ function Notes() {
         onFilterClick={() => setShowFilterModal(true)}
         onNoteClick={loadNote}
         onNoteContextMenu={handleNoteContextMenu}
-        onNewNote={createNote}
+        onNewNote={handleNewNote}
       />
 
       {/* Main Editor Area */}
@@ -436,7 +465,7 @@ function Notes() {
             onCategoryChange={setCategory}
             onContentChange={setContent}
             onToggleNoteList={() => setShowNoteList(!showNoteList)}
-            onNewNote={createNote}
+            onNewNote={handleNewNote}
             onImport={handleImport}
             onExport={handleExport}
             onExportOdt={handleExportOdt}
@@ -490,6 +519,13 @@ function Notes() {
 
       {/* Help Modal */}
       {showHelpModal && <HelpModal onClose={() => setShowHelpModal(false)} />}
+
+      {/* New Note Template Modal */}
+      <NewNoteModal
+        isOpen={showNewNoteModal}
+        onConfirm={handleNewNoteConfirm}
+        onCancel={() => setShowNewNoteModal(false)}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

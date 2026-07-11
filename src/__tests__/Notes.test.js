@@ -518,6 +518,10 @@ describe('Notes Component', () => {
       const newButtons = screen.getAllByRole('button', { name: /new note/i })
       fireEvent.click(newButtons[0])
 
+      // Confirm the template selection modal that now appears
+      const createButton = screen.getByRole('button', { name: /create note/i })
+      fireEvent.click(createButton)
+
       const entries = JSON.parse(
         localStorage.getItem('brainDumpEntries') || '[]'
       )
@@ -1319,6 +1323,10 @@ describe('Notes Component', () => {
       // Get all new note buttons (one in toolbar, one in notes list) and click the first one
       const newButtons = screen.getAllByRole('button', { name: /new note/i })
       fireEvent.click(newButtons[0])
+
+      // Confirm the template selection modal that now appears
+      const createButton = screen.getByRole('button', { name: /create note/i })
+      fireEvent.click(createButton)
 
       const entries = JSON.parse(
         localStorage.getItem('brainDumpEntries') || '[]'

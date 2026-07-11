@@ -142,9 +142,9 @@ export function useNotesState() {
     }
   }, [currentNoteId, title, content, category, currentNote])
 
-  // Create new note
-  const createNote = () => {
-    const newNote = createNewNote()
+  // Create new note, optionally with initial content from a template
+  const createNote = (initialContent = '') => {
+    const newNote = { ...createNewNote(), content: initialContent }
     const updatedNotes = [...notes, newNote]
     setNotes(updatedNotes)
     saveNotesToStorage(updatedNotes)

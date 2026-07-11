@@ -734,3 +734,131 @@ textarea:focus {
     transition: none;
   }
 }
+
+/* ===== New Note Modal ===== */
+
+.new-note-modal-content {
+  max-width: 680px;
+  width: 90vw;
+}
+
+.new-note-modal-subtitle {
+  margin: 0 0 14px;
+  color: var(--dim);
+  font-size: 14px;
+}
+
+.new-note-modal-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.4;
+}
+
+/* Template selection grid */
+.note-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.note-template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  background: var(--overlay);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+.note-template-card:hover {
+  border-color: rgba(200, 210, 255, 0.4);
+  background: rgba(25, 30, 60, 0.45);
+}
+
+.note-template-card:focus {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.note-template-card--selected {
+  border-color: var(--mint);
+  background: var(--editor-tint);
+}
+
+.note-template-card__emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.note-template-card__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.note-template-card__desc {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.3;
+}
+
+/* TOC toggle checkbox row */
+.note-toc-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+  margin-top: 4px;
+}
+
+.note-toc-toggle input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--mint);
+  cursor: pointer;
+}
+
+.note-toc-toggle--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.note-toc-toggle--disabled input[type='checkbox'] {
+  cursor: not-allowed;
+}
+
+/* ===== TOC in preview ===== */
+
+.preview .note-toc,
+.preview ul:has(> li > a[href^='#']) {
+  background: rgba(16, 20, 44, 0.35);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.preview .note-toc::before {
+  content: 'Contents';
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+
