@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1188 KB compressed
+- ✅ Total size: 1194 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-07-11 12:20:26 UTC
-**Source Branch**: main
-**Source Commit**: 554398a
+**Last Updated**: 2026-07-11 13:22:06 UTC
+**Source Branch**: add-toc-choose-template
+**Source Commit**: 2666bae
 
 ---
 
