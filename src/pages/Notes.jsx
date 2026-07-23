@@ -67,6 +67,20 @@ try {
   logger.warn('Failed to configure marked options:', error)
 }
 
+// Extract plain text from a marked inline token array without regex-based
+// HTML tag stripping (which is incomplete for edge cases like nested angle
+// brackets). Recursing over the token tree is safe and complete.
+function tokensToPlainText(tokens) {
+  if (!Array.isArray(tokens)) return ''
+  return tokens
+    .map(t => {
+      if (t.type === 'html') return ''
+      if (t.tokens) return tokensToPlainText(t.tokens)
+      return t.text ?? t.raw ?? ''
+    })
+    .join('')
+}
+
 // Add a custom heading renderer that injects id attributes so that [TOC]
 // anchor links (e.g. #introduction) resolve to the correct heading in-page.
 // The slug algorithm mirrors tocGenerator.slugify so IDs and href values match.
@@ -75,9 +89,9 @@ try {
     renderer: {
       heading({ tokens, depth }) {
         const rawText = this.parser.parseInline(tokens)
-        // Strip any HTML tags produced by inline rendering (e.g. from KaTeX)
-        // to get the plain text for slug generation.
-        const plainText = rawText.replace(/<[^>]+>/g, '')
+        // Derive plain text directly from the token tree to get a clean string
+        // for slug generation, avoiding incomplete regex-based HTML stripping.
+        const plainText = tokensToPlainText(tokens)
         const id = slugify(plainText)
         return `<h${depth} id="${id}">${rawText}</h${depth}>\n`
       }
