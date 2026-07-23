@@ -47,7 +47,7 @@ function replaceTocMarkersOutsideCodeFences(markdown, replacement) {
 
   return lines
     .map((line) => {
-      if (/^(`{3,}|~{3,})/.test(line)) {
+      if (/^\s{0,3}(`{3,}|~{3,})/.test(line)) {
         inCodeBlock = !inCodeBlock
         return line
       }
@@ -63,13 +63,16 @@ function replaceTocMarkersOutsideCodeFences(markdown, replacement) {
  * @returns {string} Slug suitable for use as an anchor id
  */
 export function slugify(text) {
-  return text
+  const slug = text
     .toLowerCase()
     .replace(/[*_`[\]()#]+/g, '') // strip markdown formatting characters
     .replace(/[^a-z0-9\s-]/g, '') // remove non-alphanumeric (keep spaces and hyphens)
     .trim()
     .replace(/\s+/g, '-') // spaces → hyphens
     .replace(/-+/g, '-') // collapse multiple hyphens
+  // Return a fallback only when the input was non-empty but produced no slug
+  // (e.g. headings containing only emoji or non-ASCII characters)
+  return slug || (text.trim() ? 'heading' : '')
 }
 
 /**
@@ -87,8 +90,9 @@ export function extractHeadings(markdown) {
   let inCodeBlock = false
 
   for (const line of lines) {
-    // Track fenced code blocks so we don't parse headings inside them
-    if (/^(`{3,}|~{3,})/.test(line)) {
+    // Track fenced code blocks so we don't parse headings inside them.
+    // Markdown allows up to 3 leading spaces before the fence marker.
+    if (/^\s{0,3}(`{3,}|~{3,})/.test(line)) {
       inCodeBlock = !inCodeBlock
     }
     if (inCodeBlock) continue
@@ -96,7 +100,8 @@ export function extractHeadings(markdown) {
     const match = /^(#{1,6})\s+(.+)$/.exec(line)
     if (match) {
       const level = match[1].length
-      const text = inlineMarkdownToPlainText(match[2].trim()).trim()
+      const rawText = match[2].trim()
+      const text = inlineMarkdownToPlainText(rawText).trim()
       let slug = slugify(text)
 
       // Ensure unique slugs by appending a counter when there are collisions
@@ -107,7 +112,7 @@ export function extractHeadings(markdown) {
         slugCounts[slug] = 0
       }
 
-      headings.push({ level, text, slug })
+      headings.push({ level, text, rawText, slug })
     }
   }
 
@@ -205,5 +210,5 @@ export function injectToc(markdown) {
     tocBlock = buildTocMarkdown(headings)
   }
 
-  return markdown.replace(/\[TOC\]/gi, tocBlock)
+  return replaceTocMarkersOutsideCodeFences(markdown, tocBlock)
 }

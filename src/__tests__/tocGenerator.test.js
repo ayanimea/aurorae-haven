@@ -50,7 +50,7 @@ describe('extractHeadings', () => {
 
   test('extracts h1 heading', () => {
     const result = extractHeadings('# Hello')
-    expect(result).toEqual([{ level: 1, text: 'Hello', slug: 'hello' }])
+    expect(result).toEqual([{ level: 1, text: 'Hello', rawText: 'Hello', slug: 'hello' }])
   })
 
   test('extracts multiple headings at different levels', () => {
@@ -83,11 +83,13 @@ describe('extractHeadings', () => {
     expect(result[0]).toEqual({
       level: 2,
       text: 'Intro',
+      rawText: '[Intro](https://example.com)',
       slug: 'intro'
     })
     expect(result[1]).toEqual({
       level: 3,
       text: 'icon Bold text',
+      rawText: '![icon](icon.png) **Bold** _text_',
       slug: 'icon-bold-text'
     })
   })

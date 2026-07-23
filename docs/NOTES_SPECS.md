@@ -36,8 +36,9 @@ providing powerful functionality.
 **Template picker**:
 
 - Five built-in templates: Blank, Daily Journal, Meeting Notes, Project Planning, Brainstorm
-- The **Include Table of Contents** checkbox is only enabled for non-blank templates
-  (blank notes start without headings, so no TOC can be generated)
+- The **Include Table of Contents** checkbox is available for all templates, including Blank
+  (it prepends a `[TOC]` marker; in a blank note the TOC will show "No headings found" until
+  headings are added)
 
 **Files**:
 

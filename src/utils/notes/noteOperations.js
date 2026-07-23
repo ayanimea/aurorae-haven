@@ -200,7 +200,7 @@ function buildOdtToc(headings, tocName = 'TOC1') {
   const bodyEntries = headings
     .map(
       (h) =>
-        `<text:p text:style-name="Contents_${h.level}">${inlineToOdt(h.text)}</text:p>`
+        `<text:p text:style-name="Contents_${h.level}">${inlineToOdt(h.rawText ?? h.text)}</text:p>`
     )
     .join('')
 
