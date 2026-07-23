@@ -462,8 +462,8 @@ function Notes() {
     let noteContent = template?.content ?? ''
 
     // Prepend [TOC] marker when requested (only meaningful for non-blank templates)
-    if (includeToc && noteContent) {
-      noteContent = `[TOC]\n\n${noteContent}`
+    if (includeToc) {
+      noteContent = noteContent ? `[TOC]\n\n${noteContent}` : '[TOC]\n\n'
     }
 
     const newNote = createNote(noteContent)

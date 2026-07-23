@@ -87,8 +87,7 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
     onConfirm(selectedTemplateId, includeToc)
   }
 
-  // Only non-blank templates can have a TOC (blank has no headings)
-  const tocAvailable = selectedTemplateId !== 'blank'
+  const tocAvailable = true
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop closes dialog on click
@@ -160,7 +159,7 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
           >
             <input
               type='checkbox'
-              checked={tocAvailable && includeToc}
+              checked={includeToc}
               onChange={(e) => setIncludeToc(e.target.checked)}
               disabled={!tocAvailable}
               aria-describedby='toc-toggle-hint'
@@ -171,9 +170,7 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
             id='toc-toggle-hint'
             className='new-note-modal-hint'
           >
-            {tocAvailable
-              ? 'Inserts a [TOC] marker at the top of the note that auto-generates a linked TOC from your headings.'
-              : 'Select a template with headings to enable the TOC option.'}
+            Inserts a [TOC] marker at the top of the note that auto-generates a linked TOC from your headings.
           </p>
         </div>
 

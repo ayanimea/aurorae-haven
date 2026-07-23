@@ -454,7 +454,9 @@ describe('structural validation in handleSaveEvent', () => {
   afterEach(() => jest.useRealTimers())
 
   test('renders without crashing when events are loaded', async () => {
-    render(<Schedule />)
+    await act(async () => {
+      render(<Schedule />)
+    })
     await waitFor(() => {
       expect(EventService.getEventsForDate).toHaveBeenCalledWith('2025-09-16')
     })

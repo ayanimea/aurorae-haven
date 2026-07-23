@@ -3,7 +3,7 @@ import { vi } from 'vitest'
 // Use the shared manual mock from src/__mocks__/react-router-dom.js
 vi.mock('react-router-dom')
 
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Settings from '../pages/Settings'
 import * as autoSaveFS from '../utils/autoSaveFS'
@@ -237,9 +237,11 @@ describe('Settings Component', () => {
     const grantBtn = await findByRole('button', {
       name: /grant access to previously selected directory/i
     })
-    fireEvent.click(grantBtn)
+    await act(async () => {
+      fireEvent.click(grantBtn)
+    })
 
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(
         autoSaveFS.requestStoredDirectoryPermission
       ).toHaveBeenCalledTimes(1)
