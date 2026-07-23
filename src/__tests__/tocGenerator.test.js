@@ -77,6 +77,21 @@ describe('extractHeadings', () => {
     expect(result[2].slug).toBe('foo-2')
   })
 
+  test('extracts plain-text heading labels from inline markdown', () => {
+    const md = '## [Intro](https://example.com)\n### ![icon](icon.png) **Bold** _text_'
+    const result = extractHeadings(md)
+    expect(result[0]).toEqual({
+      level: 2,
+      text: 'Intro',
+      slug: 'intro'
+    })
+    expect(result[1]).toEqual({
+      level: 3,
+      text: 'icon Bold text',
+      slug: 'icon-bold-text'
+    })
+  })
+
   test('ignores lines that are not headings', () => {
     const md = 'Plain paragraph\n- list item\n# Real Heading'
     const result = extractHeadings(md)
@@ -247,5 +262,13 @@ describe('injectTocHtml', () => {
     expect(result.match(/\[TOC\]/gi)).toBeNull()
     const navCount = (result.match(/<nav /g) || []).length
     expect(navCount).toBe(2)
+  })
+
+  test('does not replace [TOC] markers inside fenced code blocks', () => {
+    const md = '```md\n[TOC]\n```\n\n[TOC]\n\n# Heading'
+    const result = injectTocHtml(md)
+    expect(result).toContain('```md\n[TOC]\n```')
+    const navCount = (result.match(/<nav /g) || []).length
+    expect(navCount).toBe(1)
   })
 })

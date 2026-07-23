@@ -6,8 +6,11 @@
  *  - name        {string}  Display name shown in the modal
  *  - description {string}  Short description shown under the name
  *  - emoji       {string}  Decorative emoji for the card
- *  - content     {string}  Default markdown content (no TOC marker — added on demand)
+ *  - content     {string|function}  Default markdown content (no TOC marker — added on demand)
  */
+
+const getIsoDate = () => new Date().toLocaleDateString('en-CA')
+const getLocaleDate = () => new Date().toLocaleDateString()
 
 export const NOTE_TEMPLATES = [
   {
@@ -22,7 +25,7 @@ export const NOTE_TEMPLATES = [
     name: 'Daily Journal',
     description: 'Capture your thoughts, moods and wins for the day',
     emoji: '📔',
-    content: `# ${new Date().toLocaleDateString('en-CA')} — Daily Journal
+    content: () => `# ${getIsoDate()} — Daily Journal
 
 ## Morning Check-in
 
@@ -49,9 +52,9 @@ export const NOTE_TEMPLATES = [
     name: 'Meeting Notes',
     description: 'Record agenda, attendees, decisions and action items',
     emoji: '🗓️',
-    content: `# Meeting Notes — ${new Date().toLocaleDateString('en-CA')}
+    content: () => `# Meeting Notes — ${getIsoDate()}
 
-**Date:** ${new Date().toLocaleDateString()}  
+**Date:** ${getLocaleDate()}  
 **Attendees:**  
 **Facilitator:**  
 
@@ -143,5 +146,16 @@ export const NOTE_TEMPLATES = [
  * @returns {Object|null}
  */
 export function getNoteTemplateById(id) {
-  return NOTE_TEMPLATES.find((t) => t.id === id) ?? null
+  const template = NOTE_TEMPLATES.find((t) => t.id === id)
+  if (!template) return null
+
+  const resolvedContent =
+    typeof template.content === 'function'
+      ? template.content()
+      : template.content
+
+  return {
+    ...template,
+    content: resolvedContent
+  }
 }

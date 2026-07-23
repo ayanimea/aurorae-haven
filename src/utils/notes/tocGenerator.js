@@ -4,6 +4,7 @@
  * Generates an in-page TOC from markdown headings and replaces the [TOC]
  * placeholder marker in markdown content.
  */
+import { marked } from 'marked'
 
 // Minimal HTML entity escaping for text inserted into HTML attributes / content.
 function escapeHtml(text) {
@@ -12,6 +13,48 @@ function escapeHtml(text) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+function tokensToPlainText(tokens) {
+  if (!Array.isArray(tokens)) return ''
+  return tokens
+    .map((token) => {
+      if (token.type === 'html') return ''
+      if (token.tokens) return tokensToPlainText(token.tokens)
+      return token.text ?? token.raw ?? ''
+    })
+    .join('')
+}
+
+function inlineMarkdownToPlainText(text) {
+  try {
+    if (marked?.Lexer?.lexInline) {
+      return tokensToPlainText(marked.Lexer.lexInline(text))
+    }
+  } catch {
+    // Fall through to regex fallback
+  }
+
+  return text
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[*_`~]/g, '')
+}
+
+function replaceTocMarkersOutsideCodeFences(markdown, replacement) {
+  const lines = markdown.split('\n')
+  let inCodeBlock = false
+
+  return lines
+    .map((line) => {
+      if (/^(`{3,}|~{3,})/.test(line)) {
+        inCodeBlock = !inCodeBlock
+        return line
+      }
+      if (inCodeBlock) return line
+      return line.replace(/\[TOC\]/gi, replacement)
+    })
+    .join('\n')
 }
 
 /**
@@ -53,7 +96,7 @@ export function extractHeadings(markdown) {
     const match = /^(#{1,6})\s+(.+)$/.exec(line)
     if (match) {
       const level = match[1].length
-      const text = match[2].trim()
+      const text = inlineMarkdownToPlainText(match[2].trim()).trim()
       let slug = slugify(text)
 
       // Ensure unique slugs by appending a counter when there are collisions
@@ -137,7 +180,7 @@ export function injectTocHtml(markdown) {
 
   const navBlock = `<nav class="note-toc" aria-label="Table of Contents">\n${inner}\n</nav>`
 
-  return markdown.replace(/\[TOC\]/gi, navBlock)
+  return replaceTocMarkersOutsideCodeFences(markdown, navBlock)
 }
 
 /**
@@ -164,4 +207,3 @@ export function injectToc(markdown) {
 
   return markdown.replace(/\[TOC\]/gi, tocBlock)
 }
-

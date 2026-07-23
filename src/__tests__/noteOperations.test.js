@@ -1141,6 +1141,54 @@ describe('ODT TOC export', () => {
     expect(contentXml).toContain('Details')
   })
 
+  test('uses inline rendering for TOC entry text', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'TOC Inline',
+      '[TOC]\n\n## [Intro](https://example.com) **Bold**'
+    )
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('<text:a')
+    expect(contentXml).toContain('xlink:href="https://example.com"')
+    expect(contentXml).toContain('text:style-name="Bold_Char"')
+  })
+
+  test('emits only one ODT TOC when multiple markers are present', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'TOC Duplicate Markers',
+      '[TOC]\n\n# Intro\n\n[TOC]\n\n## Details'
+    )
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    const tocCount = (contentXml.match(/<text:table-of-content text:name=/g) || [])
+      .length
+    expect(tocCount).toBe(1)
+    expect(contentXml).toContain('text:name="TOC1"')
+  })
+
+  test('recognizes [TOC] marker when embedded in a line', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'TOC Embedded',
+      'Before [TOC] after\n\n# Heading'
+    )
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:table-of-content')
+    expect(contentXml).toContain('>Before  after<')
+  })
+
   test('exports note without [TOC] without table-of-content element', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
 

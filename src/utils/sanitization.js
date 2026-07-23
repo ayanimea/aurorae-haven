@@ -93,6 +93,9 @@ export function configureSanitization(DOMPurifyInstance) {
       // KaTeX attributes
       'style',
       'aria-hidden',
+      'aria-label',
+      'aria-labelledby',
+      'aria-describedby',
       'focusable',
       'role',
       'xmlns',

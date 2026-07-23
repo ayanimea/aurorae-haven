@@ -173,9 +173,10 @@ function inlineToOdt(text) {
  * used and a pre-populated index body so the TOC is visible without updating.
  *
  * @param {Array<{level: number, text: string, slug: string}>} headings
+ * @param {string} tocName
  * @returns {string} ODT XML string
  */
-function buildOdtToc(headings) {
+function buildOdtToc(headings, tocName = 'TOC1') {
   if (!headings || headings.length === 0) {
     return '<text:p><text:span text:style-name="Italic_Char">No headings found.</text:span></text:p>'
   }
@@ -199,12 +200,12 @@ function buildOdtToc(headings) {
   const bodyEntries = headings
     .map(
       (h) =>
-        `<text:p text:style-name="Contents_${h.level}">${escapeXml(h.text)}</text:p>`
+        `<text:p text:style-name="Contents_${h.level}">${inlineToOdt(h.text)}</text:p>`
     )
     .join('')
 
   return (
-    `<text:table-of-content text:name="TOC1" text:protected="false">` +
+    `<text:table-of-content text:name="${escapeXml(tocName)}" text:protected="false">` +
     `<text:table-of-content-source text:outline-level="${maxLevel}">` +
     `<text:index-title-template text:style-name="Contents_Heading">Contents</text:index-title-template>` +
     entryTemplates +
@@ -220,12 +221,19 @@ function buildOdtToc(headings) {
 function markdownToOdtElements(markdown) {
   if (!markdown) return '<text:p></text:p>'
 
-  // Pre-scan headings so we can generate an accurate TOC if [TOC] appears
-  const headings = extractHeadings(markdown)
-
   const lines = markdown.split('\n')
+  let markerScanInCodeBlock = false
+  const hasTocMarker = lines.some((line) => {
+    if (/^(`{3,}|~{3,})/.test(line.trim())) {
+      markerScanInCodeBlock = !markerScanInCodeBlock
+      return false
+    }
+    return !markerScanInCodeBlock && /\[TOC\]/i.test(line)
+  })
+  const headings = hasTocMarker ? extractHeadings(markdown) : []
   const elements = []
   let inCodeBlock = false
+  let tocInserted = false
   const listStack = []
   let listIndentUnit = null
 
@@ -349,8 +357,9 @@ function markdownToOdtElements(markdown) {
 
   for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     const line = lines[lineIdx]
+    let currentLine = line
     const nextLine = lineIdx + 1 < lines.length ? lines[lineIdx + 1] : ''
-    if (/^```/.test(line.trim())) {
+    if (/^(`{3,}|~{3,})/.test(currentLine.trim())) {
       if (inTable) flushTable()
       closeAllLists()
       inCodeBlock = !inCodeBlock
@@ -359,23 +368,28 @@ function markdownToOdtElements(markdown) {
 
     if (inCodeBlock) {
       elements.push(
-        `<text:p text:style-name="Preformatted_Text">${escapeXml(line)}</text:p>`
+        `<text:p text:style-name="Preformatted_Text">${escapeXml(currentLine)}</text:p>`
       )
       continue
     }
 
-    if (!line.trim()) {
+    if (/\[TOC\]/i.test(currentLine)) {
+      if (inTable) flushTable()
+      closeAllLists()
+      if (!tocInserted) {
+        elements.push(buildOdtToc(headings))
+        tocInserted = true
+      }
+      currentLine = currentLine.replace(/\[TOC\]/gi, '')
+      if (!currentLine.trim()) {
+        continue
+      }
+    }
+
+    if (!currentLine.trim()) {
       if (inTable) flushTable()
       closeAllLists()
       elements.push('<text:p></text:p>')
-      continue
-    }
-
-    // [TOC] marker — emit a native ODT table-of-contents element
-    if (/^\[TOC\]$/i.test(line.trim())) {
-      if (inTable) flushTable()
-      closeAllLists()
-      elements.push(buildOdtToc(headings))
       continue
     }
 
@@ -390,19 +404,19 @@ function markdownToOdtElements(markdown) {
     // The prefix guard IS applied when deciding whether to START a table, so
     // "- | A | B |" at the top of a list still falls through to the list handler.
     if (
-      (inTable && line.includes('|')) ||
-      (!inTable && !hasBlockquoteOrListPrefix(line) && line.includes('|') && isTableSeparatorLine(nextLine))
+      (inTable && currentLine.includes('|')) ||
+      (!inTable && !hasBlockquoteOrListPrefix(currentLine) && currentLine.includes('|') && isTableSeparatorLine(nextLine))
     ) {
       closeAllLists()
       inTable = true
-      tableLines.push(line)
+      tableLines.push(currentLine)
       continue
     }
 
     // Flush any accumulated table before processing non-table content.
     if (inTable) flushTable()
 
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/)
+    const headingMatch = currentLine.match(/^(#{1,6})\s+(.+)$/)
     if (headingMatch) {
       closeAllLists()
       const level = headingMatch[1].length
@@ -414,14 +428,14 @@ function markdownToOdtElements(markdown) {
 
     // Horizontal rule: CommonMark allows up to 3 leading spaces; 4+ spaces is an
     // indented code block and must not be treated as an HR.
-    if (/^\s{0,3}([-*_]\s*){3,}$/.test(line)) {
+    if (/^\s{0,3}([-*_]\s*){3,}$/.test(currentLine)) {
       closeAllLists()
       elements.push('<text:p text:style-name="Horizontal_Line"></text:p>')
       continue
     }
 
     // Blockquote. Markdown allows up to 3 leading spaces before the > marker.
-    const blockquoteMatch = line.match(/^\s{0,3}>\s?(.*)$/)
+    const blockquoteMatch = currentLine.match(/^\s{0,3}>\s?(.*)$/)
     if (blockquoteMatch) {
       closeAllLists()
       elements.push(
@@ -430,7 +444,7 @@ function markdownToOdtElements(markdown) {
       continue
     }
 
-    const listMatch = line.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/)
+    const listMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/)
     if (listMatch) {
       const indentWidth = normalizeIndentWidth(listMatch[1])
       detectListIndentUnit(indentWidth)
@@ -466,7 +480,7 @@ function markdownToOdtElements(markdown) {
     }
 
     closeAllLists()
-    elements.push(`<text:p>${inlineToOdt(line)}</text:p>`)
+    elements.push(`<text:p>${inlineToOdt(currentLine)}</text:p>`)
   }
 
   if (inTable) flushTable()
@@ -494,7 +508,7 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
   const plain = markdown
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`([^`]+)`/g, '$1')
-    .replace(/^\s*\[TOC\]\s*$/gim, '') // strip [TOC] markers
+    .replace(/\[TOC\]/gi, '') // strip [TOC] markers
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
     .replace(/\*\*(.+?)\*\*/g, '$1')

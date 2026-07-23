@@ -81,6 +81,8 @@ function tokensToPlainText(tokens) {
     .join('')
 }
 
+let headingSlugCounts = {}
+
 // Add a custom heading renderer that injects id attributes so that [TOC]
 // anchor links (e.g. #introduction) resolve to the correct heading in-page.
 // The slug algorithm mirrors tocGenerator.slugify so IDs and href values match.
@@ -92,7 +94,11 @@ try {
         // Derive plain text directly from the token tree to get a clean string
         // for slug generation, avoiding incomplete regex-based HTML stripping.
         const plainText = tokensToPlainText(tokens)
-        const id = slugify(plainText)
+        const baseSlug = slugify(plainText)
+        const existingCount = headingSlugCounts[baseSlug] ?? 0
+        headingSlugCounts[baseSlug] = existingCount + 1
+        const id =
+          existingCount === 0 ? baseSlug : `${baseSlug}-${existingCount}`
         return `<h${depth} id="${id}">${rawText}</h${depth}>\n`
       }
     }
@@ -256,6 +262,8 @@ function Notes() {
       const preprocessedContent = preprocessLatex(contentWithToc)
       // Use enhanced sanitization configuration to prevent XSS
       const sanitizeConfig = configureSanitization(DOMPurify)
+      // Reset per-render to keep heading IDs deterministic for each note parse.
+      headingSlugCounts = {}
       // Parse markdown and sanitize HTML to remove any malicious content
       const html = DOMPurify.sanitize(
         marked.parse(preprocessedContent),

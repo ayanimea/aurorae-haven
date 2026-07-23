@@ -127,7 +127,7 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
 
           <div
             className='note-template-grid'
-            role='radiogroup'
+            role='group'
             aria-label='Note templates'
           >
             {NOTE_TEMPLATES.map((template) => (
