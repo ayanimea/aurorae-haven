@@ -237,7 +237,7 @@ describe('Settings Component', () => {
     const grantBtn = await findByRole('button', {
       name: /grant access to previously selected directory/i
     })
-    await act(async () => {
+    act(() => {
       fireEvent.click(grantBtn)
     })
 

@@ -87,8 +87,6 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
     onConfirm(selectedTemplateId, includeToc)
   }
 
-  const tocAvailable = true
-
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop closes dialog on click
     <div
@@ -152,16 +150,11 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
             ))}
           </div>
 
-          <label
-            className={clsx('note-toc-toggle', {
-              'note-toc-toggle--disabled': !tocAvailable
-            })}
-          >
+          <label className='note-toc-toggle'>
             <input
               type='checkbox'
               checked={includeToc}
               onChange={(e) => setIncludeToc(e.target.checked)}
-              disabled={!tocAvailable}
               aria-describedby='toc-toggle-hint'
             />
             <span>Include Table of Contents</span>
@@ -170,7 +163,7 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
             id='toc-toggle-hint'
             className='new-note-modal-hint'
           >
-            Inserts a [TOC] marker at the top of the note that auto-generates a linked TOC from your headings.
+            Inserts a [TOC] marker at the top of the note. The TOC appears after you add headings.
           </p>
         </div>
 

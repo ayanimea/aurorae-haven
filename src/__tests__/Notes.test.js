@@ -530,18 +530,26 @@ describe('Notes Component', () => {
     })
 
     test('creates blank note with [TOC] marker when TOC option is enabled', () => {
-      render(<Notes />)
+      act(() => {
+        render(<Notes />)
+      })
 
       const newButtons = screen.getAllByRole('button', { name: /new note/i })
-      fireEvent.click(newButtons[0])
+      act(() => {
+        fireEvent.click(newButtons[0])
+      })
 
       const tocCheckbox = screen.getByRole('checkbox', {
         name: /include table of contents/i
       })
-      fireEvent.click(tocCheckbox)
+      act(() => {
+        fireEvent.click(tocCheckbox)
+      })
 
       const createButton = screen.getByRole('button', { name: /create note/i })
-      fireEvent.click(createButton)
+      act(() => {
+        fireEvent.click(createButton)
+      })
 
       const entries = JSON.parse(
         localStorage.getItem('brainDumpEntries') || '[]'
