@@ -102,7 +102,7 @@ export function extractHeadings(markdown) {
       const level = match[1].length
       const rawText = match[2].trim()
       const text = inlineMarkdownToPlainText(rawText).trim()
-      let slug = slugify(text)
+      let slug = slugify(text) || 'heading'
 
       // Ensure unique slugs by appending a counter when there are collisions
       if (slugCounts[slug] !== undefined) {

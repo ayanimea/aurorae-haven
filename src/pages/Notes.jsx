@@ -94,7 +94,7 @@ try {
         // Derive plain text directly from the token tree to get a clean string
         // for slug generation, avoiding incomplete regex-based HTML stripping.
         const plainText = tokensToPlainText(tokens)
-        const baseSlug = slugify(plainText)
+        const baseSlug = slugify(plainText) || 'heading'
         const existingCount = headingSlugCounts[baseSlug] ?? 0
         headingSlugCounts[baseSlug] = existingCount + 1
         const id =
@@ -461,13 +461,13 @@ function Notes() {
     const template = getNoteTemplateById(templateId)
     let noteContent = template?.content ?? ''
 
-    // Prepend [TOC] marker when requested (only meaningful for non-blank templates)
+    // Prepend [TOC] marker when requested.
     if (includeToc) {
       noteContent = noteContent ? `[TOC]\n\n${noteContent}` : '[TOC]\n\n'
     }
 
     const newNote = createNote(noteContent)
-    // If the template provides a sensible title derived from a first heading, use it
+    // Use the template name as the starting title for non-blank templates.
     if (newNote && template && template.id !== 'blank') {
       setTitle(template.name)
     }

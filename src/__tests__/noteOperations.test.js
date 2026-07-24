@@ -1189,6 +1189,21 @@ describe('ODT TOC export', () => {
     expect(contentXml).toContain('>Before  after<')
   })
 
+  test('does not treat 4-space-indented fences as fenced code blocks when scanning for [TOC]', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'Indented Fence TOC',
+      '    ```\nnot a fence\n    ```\n\n[TOC]\n\n# Heading'
+    )
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:table-of-content')
+    expect(contentXml).toContain('Heading')
+  })
+
   test('exports note without [TOC] without table-of-content element', async () => {
     const { downloadedBlobs } = setupDownloadMocks()
 

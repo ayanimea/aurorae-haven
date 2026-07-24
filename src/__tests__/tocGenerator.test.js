@@ -94,6 +94,13 @@ describe('extractHeadings', () => {
     })
   })
 
+  test('uses fallback slugs when inline markdown strips to empty text', () => {
+    const md = '# **[]()**\n## __~~__'
+    const result = extractHeadings(md)
+    expect(result[0]).toMatchObject({ slug: 'heading' })
+    expect(result[1]).toMatchObject({ slug: 'heading-1' })
+  })
+
   test('ignores lines that are not headings', () => {
     const md = 'Plain paragraph\n- list item\n# Real Heading'
     const result = extractHeadings(md)

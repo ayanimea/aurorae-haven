@@ -12,6 +12,7 @@ const logger = createLogger('NoteOperations')
 const ODT_MIME_TYPE = 'application/vnd.oasis.opendocument.text'
 // Keeps bulk ZIP generation responsive while avoiding large in-memory spikes.
 const MAX_CONCURRENT_ODT_GENERATION = 4
+const FENCED_CODE_BLOCK_PATTERN = /^\s{0,3}(`{3,}|~{3,})/
 
 function filterInvalidXmlChars(text) {
   const validChars = []
@@ -224,7 +225,7 @@ function markdownToOdtElements(markdown) {
   const lines = markdown.split('\n')
   let markerScanInCodeBlock = false
   const hasTocMarker = lines.some((line) => {
-    if (/^(`{3,}|~{3,})/.test(line.trim())) {
+    if (FENCED_CODE_BLOCK_PATTERN.test(line)) {
       markerScanInCodeBlock = !markerScanInCodeBlock
       return false
     }
@@ -359,7 +360,7 @@ function markdownToOdtElements(markdown) {
     const line = lines[lineIdx]
     let currentLine = line
     const nextLine = lineIdx + 1 < lines.length ? lines[lineIdx + 1] : ''
-    if (/^(`{3,}|~{3,})/.test(currentLine.trim())) {
+    if (FENCED_CODE_BLOCK_PATTERN.test(currentLine)) {
       if (inTable) flushTable()
       closeAllLists()
       inCodeBlock = !inCodeBlock
