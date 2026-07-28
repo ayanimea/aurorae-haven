@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-07-28 14:39:29 UTC
-**Source Branch**: add-toc-choose-template
-**Source Commit**: ca616c0
+**Last Updated**: 2026-07-28 15:08:44 UTC
+**Source Branch**: main
+**Source Commit**: b861a86
 
 ---
 
