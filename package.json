@@ -95,12 +95,10 @@
     "workbox-build": {
       "source-map": "^0.7.4"
     },
-    "brace-expansion": "5.0.7",
+    "brace-expansion": "5.0.8",
     "body-parser": "1.20.6",
     "js-yaml": "5.2.2",
-    "react-router-dom": {
-      "react-router": "8.3.0"
-    }
+    "react-router": "^8.3.0"
   },
   "browserslist": {
     "production": [

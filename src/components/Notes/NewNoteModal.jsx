@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
+import FocusLock from 'react-focus-lock'
 import { NOTE_TEMPLATES } from '../../data/noteTemplates'
 
 /**
@@ -14,18 +15,12 @@ import { NOTE_TEMPLATES } from '../../data/noteTemplates'
 function NewNoteModal({ isOpen, onConfirm, onCancel }) {
   const [selectedTemplateId, setSelectedTemplateId] = useState('blank')
   const [includeToc, setIncludeToc] = useState(false)
-  const modalRef = useRef(null)
-  const firstFocusableRef = useRef(null)
 
   // Reset selections when the modal opens
   useEffect(() => {
     if (isOpen) {
       setSelectedTemplateId('blank')
       setIncludeToc(false)
-      // Delay focus so the modal has rendered
-      requestAnimationFrame(() => {
-        firstFocusableRef.current?.focus()
-      })
     }
   }, [isOpen])
 
@@ -42,34 +37,6 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onCancel])
-
-  // Focus trap
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleFocusTrap = (e) => {
-      if (!modalRef.current || e.key !== 'Tab') return
-
-      const focusable = modalRef.current.querySelectorAll(
-        'button:not([disabled]), [href]:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
-      )
-      if (focusable.length === 0) return
-
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-
-    document.addEventListener('keydown', handleFocusTrap)
-    return () => document.removeEventListener('keydown', handleFocusTrap)
-  }, [isOpen])
 
   // Prevent body scroll while open
   useEffect(() => {
@@ -96,13 +63,13 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
         if (e.target === e.currentTarget) onCancel()
       }}
     >
-      <div
-        ref={modalRef}
-        className='modal-content new-note-modal-content'
-        role='dialog'
-        aria-modal='true'
-        aria-labelledby='new-note-modal-title'
-      >
+      <FocusLock returnFocus>
+        <div
+          className='modal-content new-note-modal-content'
+          role='dialog'
+          aria-modal='true'
+          aria-labelledby='new-note-modal-title'
+        >
         <div className='modal-header'>
           <h2 id='new-note-modal-title'>New Note</h2>
           <button
@@ -110,7 +77,6 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
             className='btn btn-icon modal-close-btn'
             onClick={onCancel}
             aria-label='Close'
-            ref={firstFocusableRef}
           >
             <svg className='icon' viewBox='0 0 24 24' aria-hidden='true'>
               <line x1='18' y1='6' x2='6' y2='18' />
@@ -183,7 +149,8 @@ function NewNoteModal({ isOpen, onConfirm, onCancel }) {
             Create Note
           </button>
         </div>
-      </div>
+        </div>
+      </FocusLock>
     </div>
   )
 }
