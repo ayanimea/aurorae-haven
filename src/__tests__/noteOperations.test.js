@@ -1121,3 +1121,122 @@ describe('exportNotesToMarkdownDownloads', () => {
     expect(mdEntries.some((name) => name !== 'shared_title.md')).toBe(true)
   })
 })
+
+describe('ODT TOC export', () => {
+  test('exports note containing [TOC] with table-of-content element', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile('TOC Note', '[TOC]\n\n# Introduction\n\n## Background\n\n### Details')
+
+    expect(downloadedBlobs).toHaveLength(1)
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:table-of-content')
+    expect(contentXml).toContain('Contents_Heading')
+    expect(contentXml).toContain('Contents_1')
+    expect(contentXml).toContain('Contents_2')
+    expect(contentXml).toContain('Introduction')
+    expect(contentXml).toContain('Background')
+    expect(contentXml).toContain('Details')
+  })
+
+  test('uses inline rendering for TOC entry text', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'TOC Inline',
+      '[TOC]\n\n## [Intro](https://example.com) **Bold**'
+    )
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('<text:a')
+    expect(contentXml).toContain('xlink:href="https://example.com"')
+    expect(contentXml).toContain('text:style-name="Bold_Char"')
+  })
+
+  test('emits only one ODT TOC when multiple markers are present', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'TOC Duplicate Markers',
+      '[TOC]\n\n# Intro\n\n[TOC]\n\n## Details'
+    )
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    const tocCount = (contentXml.match(/<text:table-of-content text:name=/g) || [])
+      .length
+    expect(tocCount).toBe(1)
+    expect(contentXml).toContain('text:name="TOC1"')
+  })
+
+  test('recognizes [TOC] marker when embedded in a line', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'TOC Embedded',
+      'Before [TOC] after\n\n# Heading'
+    )
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:table-of-content')
+    expect(contentXml).toContain('>Before  after<')
+  })
+
+  test('does not treat 4-space-indented fences as fenced code blocks when scanning for [TOC]', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile(
+      'Indented Fence TOC',
+      '    ```\nnot a fence\n    ```\n\n[TOC]\n\n# Heading'
+    )
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    expect(contentXml).toContain('text:table-of-content')
+    expect(contentXml).toContain('Heading')
+  })
+
+  test('exports note without [TOC] without table-of-content element', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile('No TOC', '# Heading\n\nContent here.')
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const contentXml = await zip.file('content.xml').async('string')
+
+    expect(contentXml).not.toContain('text:table-of-content')
+  })
+
+  test('includes Contents_* styles in styles.xml', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile('Styles Check', '[TOC]\n\n# H1')
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const stylesXml = await zip.file('styles.xml').async('string')
+
+    expect(stylesXml).toContain('Contents_Heading')
+    expect(stylesXml).toContain('Contents_1')
+    expect(stylesXml).toContain('Contents_6')
+  })
+
+  test('[TOC] is not included in ODT meta description', async () => {
+    const { downloadedBlobs } = setupDownloadMocks()
+
+    await exportNoteToOdtFile('Meta Test', '[TOC]\n\n# Heading\n\nBody text here.')
+
+    const zip = await JSZip.loadAsync(downloadedBlobs[0])
+    const metaXml = await zip.file('meta.xml').async('string')
+
+    expect(metaXml).not.toContain('[TOC]')
+    expect(metaXml).toContain('Body text here')
+  })
+})

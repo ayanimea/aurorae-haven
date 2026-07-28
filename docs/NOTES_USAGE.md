@@ -313,6 +313,48 @@ Save your markdown as a file:
 - **Single note:** downloads one `.md` file directly
 - **Multiple notes:** downloads a `.zip` archive containing one `.md` file per note
 
+### 🗂️ Note Templates and Table of Contents
+
+When creating a new note, a **template picker** opens so you can choose a starting structure.
+
+**Built-in templates:**
+
+| Template | Description |
+|----------|-------------|
+| 📄 Blank | Empty note |
+| 📔 Daily Journal | Morning check-in, tasks, evening reflection |
+| 🗓️ Meeting Notes | Agenda, decisions, action items table |
+| 🗂️ Project Planning | Goals, milestones, resources |
+| 💡 Brainstorm | Free-flow ideas and next steps |
+
+**Include Table of Contents:**
+
+- Check **Include Table of Contents** in the template picker to prepend a `[TOC]` marker
+- You can also type `[TOC]` anywhere in any existing note
+- The live preview renders the TOC as a styled block with clickable anchor links
+- Clicking a link scrolls the preview to that heading
+- When exporting as ODT, the TOC becomes a native word-processor table of contents
+
+**Example:**
+
+```markdown
+[TOC]
+
+# My Document
+
+## Introduction
+
+Some text here.
+
+## Methods
+
+### Data Collection
+
+More details.
+```
+
+The preview will show a table of contents linking to **Introduction**, **Methods**, and **Data Collection** before the document body.
+
 ### 🖨️ Print Formatted Preview
 
 Print the rendered Markdown (or save as PDF):

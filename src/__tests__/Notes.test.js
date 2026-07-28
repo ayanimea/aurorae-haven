@@ -518,11 +518,44 @@ describe('Notes Component', () => {
       const newButtons = screen.getAllByRole('button', { name: /new note/i })
       fireEvent.click(newButtons[0])
 
+      // Confirm the template selection modal that now appears
+      const createButton = screen.getByRole('button', { name: /create note/i })
+      fireEvent.click(createButton)
+
       const entries = JSON.parse(
         localStorage.getItem('brainDumpEntries') || '[]'
       )
       expect(entries.length).toBe(1)
       expect(entries[0].title).toBe('Untitled Note')
+    })
+
+    test('creates blank note with [TOC] marker when TOC option is enabled', () => {
+      act(() => {
+        render(<Notes />)
+      })
+
+      const newButtons = screen.getAllByRole('button', { name: /new note/i })
+      act(() => {
+        fireEvent.click(newButtons[0])
+      })
+
+      const tocCheckbox = screen.getByRole('checkbox', {
+        name: /include table of contents/i
+      })
+      act(() => {
+        fireEvent.click(tocCheckbox)
+      })
+
+      const createButton = screen.getByRole('button', { name: /create note/i })
+      act(() => {
+        fireEvent.click(createButton)
+      })
+
+      const entries = JSON.parse(
+        localStorage.getItem('brainDumpEntries') || '[]'
+      )
+      expect(entries).toHaveLength(1)
+      expect(entries[0].content.startsWith('[TOC]')).toBe(true)
     })
 
     test('switches between notes', () => {
@@ -1319,6 +1352,10 @@ describe('Notes Component', () => {
       // Get all new note buttons (one in toolbar, one in notes list) and click the first one
       const newButtons = screen.getAllByRole('button', { name: /new note/i })
       fireEvent.click(newButtons[0])
+
+      // Confirm the template selection modal that now appears
+      const createButton = screen.getByRole('button', { name: /create note/i })
+      fireEvent.click(createButton)
 
       const entries = JSON.parse(
         localStorage.getItem('brainDumpEntries') || '[]'

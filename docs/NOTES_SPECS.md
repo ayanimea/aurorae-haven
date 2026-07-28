@@ -10,6 +10,42 @@ providing powerful functionality.
 
 ## Implemented Specifications
 
+### TAB-BDP-TOC-01: Table of Contents
+
+**Requirement**: Brain Dump notes shall support an auto-generated table of contents (TOC) that links to headings.
+
+**Implementation**:
+
+- Place a `[TOC]` marker anywhere in a note to have a TOC inserted at that position
+- The TOC is generated from all `#`–`######` headings in the note
+- In the live preview the TOC renders as a styled `<nav class="note-toc">` block with clickable anchor links
+- Each heading in the preview gets a matching `id` attribute so the links resolve correctly
+- When exporting to ODT, the `[TOC]` marker is converted to a native
+  `<text:table-of-content>` element that word processors (LibreOffice Writer, MS Word)
+  can update automatically
+- Duplicate heading slugs are disambiguated (e.g. `intro`, `intro-1`, `intro-2`)
+- Headings inside fenced code blocks are ignored
+
+**Usage**:
+
+1. When creating a new note, click **+** in the toolbar or sidebar
+2. Select a template (the template picker opens automatically)
+3. Enable **Include Table of Contents** — a `[TOC]` marker is prepended to the content
+4. Alternatively, type `[TOC]` anywhere in an existing note
+
+**Template picker**:
+
+- Five built-in templates: Blank, Daily Journal, Meeting Notes, Project Planning, Brainstorm
+- The **Include Table of Contents** checkbox is available for all templates, including Blank
+  (it prepends a `[TOC]` marker; in a blank note the TOC will show "No headings found" until
+  headings are added)
+
+**Files**:
+
+- `src/utils/notes/tocGenerator.js` — `slugify`, `extractHeadings`, `buildHtmlTocList`, `injectTocHtml`, `injectToc`
+- `src/data/noteTemplates.js` — built-in template definitions
+- `src/components/Notes/NewNoteModal.jsx` — template selection modal
+
 ### TAB-BDP-FIL-01: File Management
 
 **Requirement**: Brain Dump entries shall support local attachments stored in OPFS.

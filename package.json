@@ -45,7 +45,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.12",
     "express": "^4.18.2",
     "express-rate-limit": "^8.5.1",
     "jszip": "^3.10.1",
@@ -54,10 +54,9 @@
     "marked-katex-extension": "^5.1.5",
     "node-ical": "^0.23.1",
     "prop-types": "^15.8.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-focus-lock": "^2.13.7",
-    "react-router": "^7.18.1",
     "react-router-dom": "^7.18.1",
     "uuid": "^14.0.0",
     "zod": "^4.1.12"
@@ -75,7 +74,7 @@
     "cross-env": "^10.1.0",
     "fake-indexeddb": "^6.2.2",
     "jsdom": "^28.0.0",
-    "markdownlint-cli2": "^0.23.0",
+    "markdownlint-cli2": "^0.23.1",
     "prettier": "^3.8.0",
     "stylelint": "^17.0.0",
     "vite": "^7.3.2",
@@ -86,7 +85,7 @@
     "glob": "^13.0.6",
     "minimatch": "^10.2.4",
     "@rollup/plugin-terser": "^1.0.0",
-    "postcss": "^8.5.10",
+    "postcss": "8.5.23",
     "source-map": "^0.7.4",
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.5",
     "magic-string": "^0.30.19",
@@ -96,7 +95,10 @@
     "workbox-build": {
       "source-map": "^0.7.4"
     },
-    "brace-expansion": "5.0.6"
+    "brace-expansion": "5.0.8",
+    "body-parser": "1.20.6",
+    "js-yaml": "5.2.2",
+    "react-router": "^8.3.0"
   },
   "browserslist": {
     "production": [

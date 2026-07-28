@@ -6,11 +6,13 @@ import {
   sanitizeFilename
 } from '../fileHelpers'
 import { createLogger } from '../logger'
+import { extractHeadings } from './tocGenerator'
 
 const logger = createLogger('NoteOperations')
 const ODT_MIME_TYPE = 'application/vnd.oasis.opendocument.text'
 // Keeps bulk ZIP generation responsive while avoiding large in-memory spikes.
 const MAX_CONCURRENT_ODT_GENERATION = 4
+const FENCED_CODE_BLOCK_PATTERN = /^\s{0,3}(`{3,}|~{3,})/
 
 function filterInvalidXmlChars(text) {
   const validChars = []
@@ -166,12 +168,73 @@ function inlineToOdt(text) {
     .join('')
 }
 
+/**
+ * Build an ODT native table-of-contents element from an array of heading objects.
+ * Produces a <text:table-of-content> with entry templates for each heading level
+ * used and a pre-populated index body so the TOC is visible without updating.
+ *
+ * @param {Array<{level: number, text: string, slug: string}>} headings
+ * @param {string} tocName
+ * @returns {string} ODT XML string
+ */
+function buildOdtToc(headings, tocName = 'TOC1') {
+  if (!headings || headings.length === 0) {
+    return '<text:p><text:span text:style-name="Italic_Char">No headings found.</text:span></text:p>'
+  }
+
+  const maxLevel = Math.min(Math.max(...headings.map((h) => h.level)), 6)
+
+  // Build one entry template per level from 1 to maxLevel
+  const entryTemplates = Array.from({ length: maxLevel }, (_, i) => i + 1)
+    .map(
+      (level) =>
+        `<text:table-of-content-entry-template text:outline-level="${level}" text:style-name="Contents_${level}">` +
+        '<text:index-entry-chapter/>' +
+        '<text:index-entry-text/>' +
+        '<text:index-entry-tab-stop style:type="right" style:leader-char="."/>' +
+        '<text:index-entry-page-number/>' +
+        '</text:table-of-content-entry-template>'
+    )
+    .join('')
+
+  // Pre-populate the index body so it is visible without requiring an update
+  const bodyEntries = headings
+    .map(
+      (h) =>
+        `<text:p text:style-name="Contents_${h.level}">${inlineToOdt(h.rawText ?? h.text)}</text:p>`
+    )
+    .join('')
+
+  return (
+    `<text:table-of-content text:name="${escapeXml(tocName)}" text:protected="false">` +
+    `<text:table-of-content-source text:outline-level="${maxLevel}">` +
+    `<text:index-title-template text:style-name="Contents_Heading">Contents</text:index-title-template>` +
+    entryTemplates +
+    `</text:table-of-content-source>` +
+    `<text:index-body>` +
+    `<text:index-title><text:p text:style-name="Contents_Heading">Contents</text:p></text:index-title>` +
+    bodyEntries +
+    `</text:index-body>` +
+    `</text:table-of-content>`
+  )
+}
+
 function markdownToOdtElements(markdown) {
   if (!markdown) return '<text:p></text:p>'
 
   const lines = markdown.split('\n')
+  let markerScanInCodeBlock = false
+  const hasTocMarker = lines.some((line) => {
+    if (FENCED_CODE_BLOCK_PATTERN.test(line)) {
+      markerScanInCodeBlock = !markerScanInCodeBlock
+      return false
+    }
+    return !markerScanInCodeBlock && /\[TOC\]/i.test(line)
+  })
+  const headings = hasTocMarker ? extractHeadings(markdown) : []
   const elements = []
   let inCodeBlock = false
+  let tocInserted = false
   const listStack = []
   let listIndentUnit = null
 
@@ -295,8 +358,9 @@ function markdownToOdtElements(markdown) {
 
   for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     const line = lines[lineIdx]
+    let currentLine = line
     const nextLine = lineIdx + 1 < lines.length ? lines[lineIdx + 1] : ''
-    if (/^```/.test(line.trim())) {
+    if (FENCED_CODE_BLOCK_PATTERN.test(currentLine)) {
       if (inTable) flushTable()
       closeAllLists()
       inCodeBlock = !inCodeBlock
@@ -305,12 +369,25 @@ function markdownToOdtElements(markdown) {
 
     if (inCodeBlock) {
       elements.push(
-        `<text:p text:style-name="Preformatted_Text">${escapeXml(line)}</text:p>`
+        `<text:p text:style-name="Preformatted_Text">${escapeXml(currentLine)}</text:p>`
       )
       continue
     }
 
-    if (!line.trim()) {
+    if (/\[TOC\]/i.test(currentLine)) {
+      if (inTable) flushTable()
+      closeAllLists()
+      if (!tocInserted) {
+        elements.push(buildOdtToc(headings))
+        tocInserted = true
+      }
+      currentLine = currentLine.replace(/\[TOC\]/gi, '')
+      if (!currentLine.trim()) {
+        continue
+      }
+    }
+
+    if (!currentLine.trim()) {
       if (inTable) flushTable()
       closeAllLists()
       elements.push('<text:p></text:p>')
@@ -328,19 +405,19 @@ function markdownToOdtElements(markdown) {
     // The prefix guard IS applied when deciding whether to START a table, so
     // "- | A | B |" at the top of a list still falls through to the list handler.
     if (
-      (inTable && line.includes('|')) ||
-      (!inTable && !hasBlockquoteOrListPrefix(line) && line.includes('|') && isTableSeparatorLine(nextLine))
+      (inTable && currentLine.includes('|')) ||
+      (!inTable && !hasBlockquoteOrListPrefix(currentLine) && currentLine.includes('|') && isTableSeparatorLine(nextLine))
     ) {
       closeAllLists()
       inTable = true
-      tableLines.push(line)
+      tableLines.push(currentLine)
       continue
     }
 
     // Flush any accumulated table before processing non-table content.
     if (inTable) flushTable()
 
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/)
+    const headingMatch = currentLine.match(/^(#{1,6})\s+(.+)$/)
     if (headingMatch) {
       closeAllLists()
       const level = headingMatch[1].length
@@ -352,14 +429,14 @@ function markdownToOdtElements(markdown) {
 
     // Horizontal rule: CommonMark allows up to 3 leading spaces; 4+ spaces is an
     // indented code block and must not be treated as an HR.
-    if (/^\s{0,3}([-*_]\s*){3,}$/.test(line)) {
+    if (/^\s{0,3}([-*_]\s*){3,}$/.test(currentLine)) {
       closeAllLists()
       elements.push('<text:p text:style-name="Horizontal_Line"></text:p>')
       continue
     }
 
     // Blockquote. Markdown allows up to 3 leading spaces before the > marker.
-    const blockquoteMatch = line.match(/^\s{0,3}>\s?(.*)$/)
+    const blockquoteMatch = currentLine.match(/^\s{0,3}>\s?(.*)$/)
     if (blockquoteMatch) {
       closeAllLists()
       elements.push(
@@ -368,7 +445,7 @@ function markdownToOdtElements(markdown) {
       continue
     }
 
-    const listMatch = line.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/)
+    const listMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/)
     if (listMatch) {
       const indentWidth = normalizeIndentWidth(listMatch[1])
       detectListIndentUnit(indentWidth)
@@ -404,7 +481,7 @@ function markdownToOdtElements(markdown) {
     }
 
     closeAllLists()
-    elements.push(`<text:p>${inlineToOdt(line)}</text:p>`)
+    elements.push(`<text:p>${inlineToOdt(currentLine)}</text:p>`)
   }
 
   if (inTable) flushTable()
@@ -432,6 +509,7 @@ function extractTextSummary(markdown, maxLen = MAX_DESCRIPTION_LENGTH) {
   const plain = markdown
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[TOC\]/gi, '') // strip [TOC] markers
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
     .replace(/\*\*(.+?)\*\*/g, '$1')
@@ -581,6 +659,28 @@ const ODT_STYLES_XML = `<?xml version="1.0" encoding="UTF-8"?>
     <text:list-style style:name="Numbering_20_1">
       <text:list-level-style-number text:level="1" style:num-format="1"/>
     </text:list-style>
+    <style:style style:name="Contents_Heading" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.25cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Space Grotesk" fo:font-weight="bold" fo:font-size="13pt" fo:color="#0f1535"/>
+    </style:style>
+    <style:style style:name="Contents_1" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="0cm" fo:margin-bottom="0.1cm"/>
+    </style:style>
+    <style:style style:name="Contents_2" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="0.5cm" fo:margin-bottom="0.08cm"/>
+    </style:style>
+    <style:style style:name="Contents_3" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="1cm" fo:margin-bottom="0.06cm"/>
+    </style:style>
+    <style:style style:name="Contents_4" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="1.5cm" fo:margin-bottom="0.05cm"/>
+    </style:style>
+    <style:style style:name="Contents_5" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="2cm" fo:margin-bottom="0.05cm"/>
+    </style:style>
+    <style:style style:name="Contents_6" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="2.5cm" fo:margin-bottom="0.05cm"/>
+    </style:style>
   </office:styles>
 </office:document-styles>`
 

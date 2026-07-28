@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify'
 import 'katex/dist/katex.min.css'
 import { configureSanitization } from '../utils/sanitization'
 import { preprocessLatex } from '../utils/latexPreprocessor'
+import { injectTocHtml, slugify } from '../utils/notes/tocGenerator'
 import {
   createNewNote,
   createNoteFromImport,
@@ -19,6 +20,7 @@ import {
 } from '../utils/notes/noteOperations'
 import NoteDetailsModal from '../components/Notes/NoteDetailsModal'
 import HelpModal from '../components/Notes/HelpModal'
+import NewNoteModal from '../components/Notes/NewNoteModal'
 import NotesList from '../components/Notes/NotesList'
 import NoteEditor from '../components/Notes/NoteEditor'
 import FilterModal from '../components/Notes/FilterModal'
@@ -27,6 +29,7 @@ import ConfirmModal from '../components/common/ConfirmModal'
 import { useNotesState } from '../hooks/useNotesState'
 import { useToast } from '../hooks/useToast'
 import { createLogger } from '../utils/logger'
+import { getNoteTemplateById } from '../data/noteTemplates'
 
 const logger = createLogger('Notes')
 
@@ -62,6 +65,46 @@ try {
   }
 } catch (error) {
   logger.warn('Failed to configure marked options:', error)
+}
+
+// Extract plain text from a marked inline token array without regex-based
+// HTML tag stripping (which is incomplete for edge cases like nested angle
+// brackets). Recursing over the token tree is safe and complete.
+function tokensToPlainText(tokens) {
+  if (!Array.isArray(tokens)) return ''
+  return tokens
+    .map(t => {
+      if (t.type === 'html') return ''
+      if (t.tokens) return tokensToPlainText(t.tokens)
+      return t.text ?? t.raw ?? ''
+    })
+    .join('')
+}
+
+let headingSlugCounts = {}
+
+// Add a custom heading renderer that injects id attributes so that [TOC]
+// anchor links (e.g. #introduction) resolve to the correct heading in-page.
+// The slug algorithm mirrors tocGenerator.slugify so IDs and href values match.
+try {
+  marked.use({
+    renderer: {
+      heading({ tokens, depth }) {
+        const rawText = this.parser.parseInline(tokens)
+        // Derive plain text directly from the token tree to get a clean string
+        // for slug generation, avoiding incomplete regex-based HTML stripping.
+        const plainText = tokensToPlainText(tokens)
+        const baseSlug = slugify(plainText) || 'heading'
+        const existingCount = headingSlugCounts[baseSlug] ?? 0
+        headingSlugCounts[baseSlug] = existingCount + 1
+        const id =
+          existingCount === 0 ? baseSlug : `${baseSlug}-${existingCount}`
+        return `<h${depth} id="${id}">${rawText}</h${depth}>\n`
+      }
+    }
+  })
+} catch (error) {
+  logger.warn('Failed to configure marked heading renderer:', error)
 }
 
 function Notes() {
@@ -116,6 +159,7 @@ function Notes() {
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
+  const [showNewNoteModal, setShowNewNoteModal] = useState(false)
   const [contextMenu, setContextMenu] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState(null)
@@ -212,10 +256,14 @@ function Notes() {
   // Security: Content is sanitized with DOMPurify before rendering
   useEffect(() => {
     const renderPreview = () => {
+      // Replace [TOC] markers with a rendered HTML table of contents
+      const contentWithToc = injectTocHtml(content)
       // Preprocess LaTeX to handle newlines within math blocks
-      const preprocessedContent = preprocessLatex(content)
+      const preprocessedContent = preprocessLatex(contentWithToc)
       // Use enhanced sanitization configuration to prevent XSS
       const sanitizeConfig = configureSanitization(DOMPurify)
+      // Reset per-render to keep heading IDs deterministic for each note parse.
+      headingSlugCounts = {}
       // Parse markdown and sanitize HTML to remove any malicious content
       const html = DOMPurify.sanitize(
         marked.parse(preprocessedContent),
@@ -402,6 +450,29 @@ function Notes() {
     })
   }
 
+  // Open the new-note template chooser instead of immediately creating
+  const handleNewNote = () => {
+    setShowNewNoteModal(true)
+  }
+
+  // Called when user confirms template selection in the modal
+  const handleNewNoteConfirm = (templateId, includeToc) => {
+    setShowNewNoteModal(false)
+    const template = getNoteTemplateById(templateId)
+    let noteContent = template?.content ?? ''
+
+    // Prepend [TOC] marker when requested.
+    if (includeToc) {
+      noteContent = noteContent ? `[TOC]\n\n${noteContent}` : '[TOC]\n\n'
+    }
+
+    const newNote = createNote(noteContent)
+    // Use the template name as the starting title for non-blank templates.
+    if (newNote && template && template.id !== 'blank') {
+      setTitle(template.name)
+    }
+  }
+
   return (
     <div className='brain-dump-container'>
       {/* Note List Sidebar */}
@@ -417,7 +488,7 @@ function Notes() {
         onFilterClick={() => setShowFilterModal(true)}
         onNoteClick={loadNote}
         onNoteContextMenu={handleNoteContextMenu}
-        onNewNote={createNote}
+        onNewNote={handleNewNote}
       />
 
       {/* Main Editor Area */}
@@ -436,7 +507,7 @@ function Notes() {
             onCategoryChange={setCategory}
             onContentChange={setContent}
             onToggleNoteList={() => setShowNoteList(!showNoteList)}
-            onNewNote={createNote}
+            onNewNote={handleNewNote}
             onImport={handleImport}
             onExport={handleExport}
             onExportOdt={handleExportOdt}
@@ -490,6 +561,13 @@ function Notes() {
 
       {/* Help Modal */}
       {showHelpModal && <HelpModal onClose={() => setShowHelpModal(false)} />}
+
+      {/* New Note Template Modal */}
+      <NewNoteModal
+        isOpen={showNewNoteModal}
+        onConfirm={handleNewNoteConfirm}
+        onCancel={() => setShowNewNoteModal(false)}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
