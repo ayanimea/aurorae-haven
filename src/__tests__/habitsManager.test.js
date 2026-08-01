@@ -24,6 +24,12 @@ import {
 } from '../utils/habitsManager'
 import { clear, STORES } from '../utils/indexedDBManager'
 
+const SHORT_DELAY_MS = 10
+const waitForUniqueTimestamp = () =>
+  new Promise((resolve) => setTimeout(resolve, SHORT_DELAY_MS))
+const isoDateOffset = (days) =>
+  new Date(Date.now() - days * 86400000).toISOString().split('T')[0]
+
 describe('Habits Manager', () => {
   beforeEach(async () => {
     await clear(STORES.HABITS)
@@ -81,8 +87,7 @@ describe('Habits Manager', () => {
 
     test('should return all habits', async () => {
       await createHabit({ name: 'Habit 1' })
-      // Add small delay to ensure different IDs
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({ name: 'Habit 2' })
 
       const habits = await getHabits()
@@ -91,7 +96,7 @@ describe('Habits Manager', () => {
 
     test('should return habits sorted by title by default', async () => {
       await createHabit({ name: 'Zebra Habit' })
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({ name: 'Apple Habit' })
 
       const habits = await getHabits()
@@ -103,9 +108,9 @@ describe('Habits Manager', () => {
   describe('sortHabits', () => {
     beforeEach(async () => {
       await createHabit({ name: 'Habit C', streak: 5, longestStreak: 10 })
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({ name: 'Habit A', streak: 15, longestStreak: 20 })
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({ name: 'Habit B', streak: 10, longestStreak: 15 })
     })
 
@@ -144,13 +149,13 @@ describe('Habits Manager', () => {
         paused: false,
         category: 'blue'
       })
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({
         name: 'Paused Habit',
         paused: true,
         category: 'violet'
       })
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({
         name: 'Another Active',
         paused: false,
@@ -270,10 +275,8 @@ describe('Habits Manager', () => {
       // Manually set completion dates
       const habits = await getHabits()
       const habit = habits.find((h) => h.id === id)
-      const today = new Date().toISOString().split('T')[0]
-      const yesterday = new Date(Date.now() - 86400000)
-        .toISOString()
-        .split('T')[0]
+      const today = isoDateOffset(0)
+      const yesterday = isoDateOffset(1)
 
       habit.completions = [yesterday, today]
       habit.streak = 2
@@ -305,13 +308,9 @@ describe('Habits Manager', () => {
 
   describe('calculateStreak', () => {
     test('should calculate streak correctly for consecutive days', () => {
-      const today = new Date().toISOString().split('T')[0]
-      const yesterday = new Date(Date.now() - 86400000)
-        .toISOString()
-        .split('T')[0]
-      const twoDaysAgo = new Date(Date.now() - 172800000)
-        .toISOString()
-        .split('T')[0]
+      const today = isoDateOffset(0)
+      const yesterday = isoDateOffset(1)
+      const twoDaysAgo = isoDateOffset(2)
 
       const habit = {
         completions: [twoDaysAgo, yesterday, today],
@@ -323,10 +322,8 @@ describe('Habits Manager', () => {
     })
 
     test('should reset streak when day is skipped', () => {
-      const today = new Date().toISOString().split('T')[0]
-      const threeDaysAgo = new Date(Date.now() - 259200000)
-        .toISOString()
-        .split('T')[0]
+      const today = isoDateOffset(0)
+      const threeDaysAgo = isoDateOffset(3)
 
       const habit = {
         completions: [threeDaysAgo, today],
@@ -338,13 +335,9 @@ describe('Habits Manager', () => {
     })
 
     test('should preserve streak during vacation days', () => {
-      const today = new Date().toISOString().split('T')[0]
-      const yesterday = new Date(Date.now() - 86400000)
-        .toISOString()
-        .split('T')[0]
-      const twoDaysAgo = new Date(Date.now() - 172800000)
-        .toISOString()
-        .split('T')[0]
+      const today = isoDateOffset(0)
+      const yesterday = isoDateOffset(1)
+      const twoDaysAgo = isoDateOffset(2)
 
       const habit = {
         completions: [twoDaysAgo, today],
@@ -395,9 +388,9 @@ describe('Habits Manager', () => {
 
     test('should calculate today stats correctly', async () => {
       await createHabit({ name: 'Habit 1' })
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({ name: 'Habit 2' })
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({ name: 'Habit 3' })
 
       const habits = await getHabits()
@@ -415,7 +408,7 @@ describe('Habits Manager', () => {
   describe('exportHabits and importHabits', () => {
     test('should export habits to JSON', async () => {
       await createHabit({ name: 'Export Habit 1' })
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       await createHabit({ name: 'Export Habit 2' })
 
       const exported = await exportHabits()

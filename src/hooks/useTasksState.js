@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { v4 as generateSecureUUID } from 'uuid'
 import { createLogger } from '../utils/logger'
+import {
+  createDefaultTasksState,
+  loadTasksState,
+  saveTasksState
+} from '../utils/tasksStorage'
+import { useCrossTabSync } from './useCrossTabSync'
 
 const logger = createLogger('useTasksState')
 
@@ -10,33 +16,38 @@ const logger = createLogger('useTasksState')
  */
 export function useTasksState() {
   // Initialize tasks from localStorage with lazy initialization
-  const [tasks, setTasks] = useState(() => {
-    const savedTasks = localStorage.getItem('aurorae_tasks')
-    if (savedTasks) {
-      try {
-        return JSON.parse(savedTasks)
-      } catch (e) {
-        logger.error('Failed to parse saved tasks:', e)
-      }
-    }
-    return {
-      urgent_important: [],
-      not_urgent_important: [],
-      urgent_not_important: [],
-      not_urgent_not_important: []
-    }
-  })
+  const [tasks, setTasks] = useState(() => loadTasksState())
+  const skipPersistRef = useRef(false)
 
   // Save tasks to localStorage whenever they change
   useEffect(() => {
+    if (skipPersistRef.current) {
+      skipPersistRef.current = false
+      return
+    }
+
     try {
-      localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
+      saveTasksState(tasks, {
+        action: 'updated',
+        source: 'useTasksState'
+      })
     } catch (e) {
       logger.error('Failed to save tasks:', e)
       // Note: Errors are logged but don't throw to avoid breaking the component
       // The parent component should handle showing error messages to users
     }
   }, [tasks])
+
+  const syncFromStorage = useCallback(() => {
+    const storageTasks = loadTasksState()
+    skipPersistRef.current = true
+    setTasks(storageTasks)
+  }, [])
+
+  useCrossTabSync(syncFromStorage, {
+    filter: (event) => event.domain === 'tasks',
+    includeSelf: false
+  })
 
   // Add new task
   const addTask = (quadrant, text) => {
@@ -50,8 +61,8 @@ export function useTasksState() {
     }
 
     setTasks((prev) => ({
-      ...prev,
-      [quadrant]: [...prev[quadrant], task]
+      ...(prev || createDefaultTasksState()),
+      [quadrant]: [...(prev?.[quadrant] || []), task]
     }))
 
     return task
@@ -60,8 +71,8 @@ export function useTasksState() {
   // Toggle task completion
   const toggleTask = (quadrant, taskId) => {
     setTasks((prev) => ({
-      ...prev,
-      [quadrant]: prev[quadrant].map((task) =>
+      ...(prev || createDefaultTasksState()),
+      [quadrant]: (prev?.[quadrant] || []).map((task) =>
         task.id === taskId
           ? {
               ...task,
@@ -76,16 +87,16 @@ export function useTasksState() {
   // Delete task
   const deleteTask = (quadrant, taskId) => {
     setTasks((prev) => ({
-      ...prev,
-      [quadrant]: prev[quadrant].filter((task) => task.id !== taskId)
+      ...(prev || createDefaultTasksState()),
+      [quadrant]: (prev?.[quadrant] || []).filter((task) => task.id !== taskId)
     }))
   }
 
   // Edit task text
   const editTask = (quadrant, taskId, newText) => {
     setTasks((prev) => ({
-      ...prev,
-      [quadrant]: prev[quadrant].map((task) =>
+      ...(prev || createDefaultTasksState()),
+      [quadrant]: (prev?.[quadrant] || []).map((task) =>
         task.id === taskId ? { ...task, text: newText.trim() } : task
       )
     }))
@@ -96,9 +107,9 @@ export function useTasksState() {
     if (fromQuadrant === toQuadrant) return
 
     setTasks((prev) => ({
-      ...prev,
-      [fromQuadrant]: prev[fromQuadrant].filter((t) => t.id !== task.id),
-      [toQuadrant]: [...prev[toQuadrant], task]
+      ...(prev || createDefaultTasksState()),
+      [fromQuadrant]: (prev?.[fromQuadrant] || []).filter((t) => t.id !== task.id),
+      [toQuadrant]: [...(prev?.[toQuadrant] || []), task]
     }))
   }
 

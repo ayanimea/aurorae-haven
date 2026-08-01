@@ -7,8 +7,18 @@ import { put, getAll, getById, deleteById, STORES } from './indexedDBManager'
 import { normalizeEntity, updateMetadata } from './idGenerator'
 import { createLogger } from './logger'
 import dayjs from 'dayjs'
+import { publishCrossTabEvent } from './crossTabSync'
 
 const logger = createLogger('HabitsManager')
+const EMPTY_DATE = '0000-00-00'
+
+function notifyHabitsChanged(action) {
+  publishCrossTabEvent({
+    domain: 'habits',
+    action,
+    payload: { source: 'habitsManager' }
+  })
+}
 
 /**
  * Create a new habit
@@ -39,7 +49,9 @@ export async function createHabit(habitData) {
     paused: habitData.paused ?? false,
     lastCompleted: habitData.lastCompleted || null
   })
-  return await put(STORES.HABITS, newHabit)
+  const id = await put(STORES.HABITS, newHabit)
+  notifyHabitsChanged('created')
+  return id
 }
 
 /**
@@ -48,71 +60,8 @@ export async function createHabit(habitData) {
  * @returns {Promise<Array>} Array of habits
  */
 export async function getHabits(options = {}) {
-  let habits = await getAll(STORES.HABITS)
-
-  // TAB-HAB-04: Filter by Category, Tag, Status, Streak
-  if (options.category) {
-    habits = habits.filter((h) => h.category === options.category)
-  }
-  if (options.tag) {
-    habits = habits.filter((h) => h.tags && h.tags.includes(options.tag))
-  }
-  if (options.status === 'active') {
-    habits = habits.filter((h) => !h.paused)
-  } else if (options.status === 'paused') {
-    habits = habits.filter((h) => h.paused)
-  }
-  if (options.minStreak) {
-    habits = habits.filter((h) => h.streak >= options.minStreak)
-  }
-  if (options.missedToday) {
-    const today = dayjs().format('YYYY-MM-DD')
-    habits = habits.filter((h) => h.lastCompleted !== today)
-  }
-
-  // TAB-HAB-05: Sort options
-  if (options.sortBy) {
-    switch (options.sortBy) {
-      case 'title':
-        habits.sort((a, b) => a.name.localeCompare(b.name))
-        break
-      case 'longestStreak':
-        habits.sort((a, b) => (b.longestStreak || 0) - (a.longestStreak || 0))
-        break
-      case 'currentStreak':
-        habits.sort((a, b) => (b.streak || 0) - (a.streak || 0))
-        break
-      case 'lastCompleted':
-        habits.sort((a, b) => {
-          const dateA = a.lastCompleted || '0000-00-00'
-          const dateB = b.lastCompleted || '0000-00-00'
-          return dateB.localeCompare(dateA)
-        })
-        break
-      case 'createdAt':
-        habits.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-        break
-      default:
-        break
-    }
-  } else {
-    // Default sort by creation time (oldest first) for predictable ordering
-    habits.sort((a, b) => {
-      let timeA = Number.isFinite(a.timestamp)
-        ? a.timestamp
-        : Number.isFinite(new Date(a.createdAt).getTime())
-          ? new Date(a.createdAt).getTime()
-          : 0
-      let timeB = Number.isFinite(b.timestamp)
-        ? b.timestamp
-        : Number.isFinite(new Date(b.createdAt).getTime())
-          ? new Date(b.createdAt).getTime()
-          : 0
-      return timeA - timeB
-    })
-  }
-
-  return habits
+  const habits = filterHabits(await getAll(STORES.HABITS), options)
+  return options.sortBy ? sortHabits(habits, options.sortBy) : sortByCreatedTime(habits)
 }
 
 /**
@@ -131,7 +80,9 @@ export async function getHabit(id) {
  */
 export async function updateHabit(habit) {
   const updatedHabit = updateMetadata(habit)
-  return await put(STORES.HABITS, updatedHabit)
+  const id = await put(STORES.HABITS, updatedHabit)
+  notifyHabitsChanged('updated')
+  return id
 }
 
 /**
@@ -140,7 +91,8 @@ export async function updateHabit(habit) {
  * @returns {Promise<void>}
  */
 export async function deleteHabit(id) {
-  return await deleteById(STORES.HABITS, id)
+  await deleteById(STORES.HABITS, id)
+  notifyHabitsChanged('deleted')
 }
 
 /**
@@ -150,10 +102,7 @@ export async function deleteHabit(id) {
  * @returns {Promise<object>} Result with XP and streak
  */
 export async function toggleHabitToday(id) {
-  const habit = await getById(STORES.HABITS, id)
-  if (!habit) {
-    throw new Error('Habit not found')
-  }
+  const habit = await getHabitOrThrow(id)
 
   const today = dayjs().format('YYYY-MM-DD')
   const isCompletedToday = habit.lastCompleted === today
@@ -174,10 +123,7 @@ export async function toggleHabitToday(id) {
  * @returns {Promise<object>} Updated habit with XP and streak info
  */
 export async function completeHabit(id) {
-  const habit = await getById(STORES.HABITS, id)
-  if (!habit) {
-    throw new Error('Habit not found')
-  }
+  const habit = await getHabitOrThrow(id)
 
   const today = dayjs().format('YYYY-MM-DD')
 
@@ -205,15 +151,13 @@ export async function completeHabit(id) {
   const xpData = calculateXP(newStreak, habit.streak || 0)
 
   // Update habit
-  const updatedHabit = updateMetadata({
+  const updatedHabit = await saveHabit({
     ...habit,
     streak: newStreak,
     longestStreak: Math.max(newStreak, habit.longestStreak || 0),
     lastCompleted: today,
     completions
   })
-
-  await put(STORES.HABITS, updatedHabit)
 
   return {
     ...updatedHabit,
@@ -231,10 +175,7 @@ export async function completeHabit(id) {
  * @returns {Promise<object>} Updated habit
  */
 export async function uncompleteHabit(id) {
-  const habit = await getById(STORES.HABITS, id)
-  if (!habit) {
-    throw new Error('Habit not found')
-  }
+  const habit = await getHabitOrThrow(id)
 
   const today = dayjs().format('YYYY-MM-DD')
 
@@ -250,7 +191,7 @@ export async function uncompleteHabit(id) {
   // Recalculate streak
   const newStreak = calculateStreak(habitForCalc, null, false)
 
-  const updatedHabit = updateMetadata({
+  const updatedHabit = await saveHabit({
     ...habit,
     streak: newStreak,
     lastCompleted:
@@ -261,8 +202,6 @@ export async function uncompleteHabit(id) {
         : null,
     completions
   })
-
-  await put(STORES.HABITS, updatedHabit)
 
   return {
     ...updatedHabit,
@@ -372,18 +311,10 @@ export function calculateXP(newStreak, oldStreak) {
  * @returns {Promise<object>} Updated habit
  */
 export async function pauseHabit(id, paused) {
-  const habit = await getById(STORES.HABITS, id)
-  if (!habit) {
-    throw new Error('Habit not found')
-  }
-
-  const updatedHabit = updateMetadata({
-    ...habit,
+  return await saveHabit({
+    ...(await getHabitOrThrow(id)),
     paused
   })
-
-  await put(STORES.HABITS, updatedHabit)
-  return updatedHabit
 }
 
 /**
@@ -415,11 +346,7 @@ export async function getTodayStats() {
  * @returns {Promise<object>} Habit statistics
  */
 export async function getHabitStats(id) {
-  const habit = await getById(STORES.HABITS, id)
-  if (!habit) {
-    throw new Error('Habit not found')
-  }
-
+  const habit = await getHabitOrThrow(id)
   const completions = habit.completions || []
   const totalCompletions = completions.length
 
@@ -524,6 +451,7 @@ export function sortHabits(habits, sortBy) {
     case 'title':
       sorted.sort((a, b) => a.name.localeCompare(b.name))
       break
+    case 'currentStreak':
     case 'streak':
       sorted.sort((a, b) => (b.streak || 0) - (a.streak || 0))
       break
@@ -532,8 +460,8 @@ export function sortHabits(habits, sortBy) {
       break
     case 'lastCompleted':
       sorted.sort((a, b) => {
-        const dateA = a.lastCompleted || '0000-00-00'
-        const dateB = b.lastCompleted || '0000-00-00'
+        const dateA = a.lastCompleted || EMPTY_DATE
+        const dateB = b.lastCompleted || EMPTY_DATE
         return dateB.localeCompare(dateA)
       })
       break
@@ -555,6 +483,7 @@ export function sortHabits(habits, sortBy) {
  */
 export function filterHabits(habits, filters = {}) {
   let filtered = [...habits]
+  const today = filters.missedToday ? dayjs().format('YYYY-MM-DD') : null
 
   if (filters.category) {
     filtered = filtered.filter((h) => h.category === filters.category)
@@ -574,6 +503,10 @@ export function filterHabits(habits, filters = {}) {
     filtered = filtered.filter((h) => h.streak >= filters.minStreak)
   }
 
+  if (today) {
+    filtered = filtered.filter((h) => h.lastCompleted !== today)
+  }
+
   return filtered
 }
 
@@ -584,4 +517,31 @@ export function filterHabits(habits, filters = {}) {
  */
 export function toggleCompletion(id) {
   return toggleHabitToday(id)
+}
+
+async function getHabitOrThrow(id) {
+  const habit = await getById(STORES.HABITS, id)
+  if (!habit) {
+    throw new Error('Habit not found')
+  }
+  return habit
+}
+
+async function saveHabit(habit) {
+  const updatedHabit = updateMetadata(habit)
+  await put(STORES.HABITS, updatedHabit)
+  notifyHabitsChanged('updated')
+  return updatedHabit
+}
+
+function getHabitTime(habit) {
+  if (Number.isFinite(habit.timestamp)) {
+    return habit.timestamp
+  }
+  const createdTime = new Date(habit.createdAt).getTime()
+  return Number.isFinite(createdTime) ? createdTime : 0
+}
+
+function sortByCreatedTime(habits) {
+  return [...habits].sort((a, b) => getHabitTime(a) - getHabitTime(b))
 }

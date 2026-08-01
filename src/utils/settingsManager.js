@@ -1,6 +1,7 @@
 // Settings Manager - Feature stub for app configuration
 // TODO: Implement full settings management with validation
 import { tryCatch } from './errorHandler'
+import { publishCrossTabEvent, subscribeCrossTabEvents } from './crossTabSync'
 
 /** Allowed values for schedulingGuidanceLevel */
 export const VALID_GUIDANCE_LEVELS = ['full', 'header-only', 'off']
@@ -149,6 +150,12 @@ export function updateSettings(updates) {
     }
   )
 
+  publishCrossTabEvent({
+    domain: 'settings',
+    action: 'updated',
+    payload: { source: 'settingsManager' }
+  })
+
   return updated
 }
 
@@ -185,6 +192,18 @@ export function updateSetting(key, value) {
   return updateSettings(settings)
 }
 
+export function subscribeToSettingsChanges(handler, options = {}) {
+  return subscribeCrossTabEvents(handler, {
+    ...options,
+    filter: (event) => {
+      if (typeof options.filter === 'function' && !options.filter(event)) {
+        return false
+      }
+      return event.domain === 'settings'
+    }
+  })
+}
+
 /**
  * Reset settings to defaults
  * @returns {object} Default settings
@@ -201,6 +220,12 @@ export function resetSettings() {
       rethrow: true
     }
   )
+
+  publishCrossTabEvent({
+    domain: 'settings',
+    action: 'reset',
+    payload: { source: 'settingsManager' }
+  })
 
   return { ...DEFAULT_SETTINGS }
 }

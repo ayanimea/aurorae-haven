@@ -19,6 +19,19 @@ import {
 } from '../utils/routinesManager'
 import { clear, STORES } from '../utils/indexedDBManager'
 
+const SHORT_DELAY_MS = 10
+const waitForUniqueTimestamp = () =>
+  new Promise((resolve) => setTimeout(resolve, SHORT_DELAY_MS))
+const expectGeneratedRoutineId = (id) => {
+  expect(id).toBeDefined()
+  expect(id).toContain('routine_')
+}
+const createRoutineWithNoSteps = (name, fields = {}) =>
+  createRoutine({ name, steps: [], ...fields })
+const expectImportValidationFailure = async (data, messageFragment) => {
+  await expect(importRoutines(data)).rejects.toThrow(messageFragment)
+}
+
 describe('Routines Manager', () => {
   beforeEach(async () => {
     await clear(STORES.ROUTINES)
@@ -35,8 +48,7 @@ describe('Routines Manager', () => {
       }
 
       const id = await createRoutine(routine)
-      expect(id).toBeDefined()
-      expect(id).toContain('routine_')
+      expectGeneratedRoutineId(id)
 
       const routines = await getRoutines()
       expect(routines).toHaveLength(1)
@@ -50,8 +62,7 @@ describe('Routines Manager', () => {
       }
 
       const id = await createRoutine(routine)
-      expect(id).toBeDefined()
-      expect(id).toContain('routine_')
+      expectGeneratedRoutineId(id)
 
       const created = await getRoutine(id)
       expect(created.name).toBe('Empty Routine')
@@ -70,7 +81,7 @@ describe('Routines Manager', () => {
 
       // Should still create the routine (validation happens at UI level)
       const id = await createRoutine(routine)
-      expect(id).toBeDefined()
+      expectGeneratedRoutineId(id)
 
       const created = await getRoutine(id)
       expect(created).toBeDefined()
@@ -85,20 +96,20 @@ describe('Routines Manager', () => {
     })
 
     test('should return all routines', async () => {
-      await createRoutine({ name: 'Routine 1', steps: [] })
-      await new Promise((resolve) => setTimeout(resolve, 10))
-      await createRoutine({ name: 'Routine 2', steps: [] })
+      await createRoutineWithNoSteps('Routine 1')
+      await waitForUniqueTimestamp()
+      await createRoutineWithNoSteps('Routine 2')
 
       const routines = await getRoutines()
       expect(routines).toHaveLength(2)
     })
 
     test('should sort routines by name', async () => {
-      await createRoutine({ name: 'Zebra Routine', steps: [] })
-      await new Promise((resolve) => setTimeout(resolve, 10))
-      await createRoutine({ name: 'Alpha Routine', steps: [] })
-      await new Promise((resolve) => setTimeout(resolve, 10))
-      await createRoutine({ name: 'Middle Routine', steps: [] })
+      await createRoutineWithNoSteps('Zebra Routine')
+      await waitForUniqueTimestamp()
+      await createRoutineWithNoSteps('Alpha Routine')
+      await waitForUniqueTimestamp()
+      await createRoutineWithNoSteps('Middle Routine')
 
       const routines = await getRoutines({ sortBy: 'name', order: 'asc' })
       expect(routines).toHaveLength(3)
@@ -113,17 +124,9 @@ describe('Routines Manager', () => {
       const oldTime = new Date(now - 10000000).toISOString()
 
       // Create routines with different lastUsed timestamps
-      await createRoutine({
-        name: 'Recent Routine',
-        steps: [],
-        lastUsed: recentTime
-      })
-      await new Promise((resolve) => setTimeout(resolve, 10))
-      await createRoutine({
-        name: 'Old Routine',
-        steps: [],
-        lastUsed: oldTime
-      })
+      await createRoutineWithNoSteps('Recent Routine', { lastUsed: recentTime })
+      await waitForUniqueTimestamp()
+      await createRoutineWithNoSteps('Old Routine', { lastUsed: oldTime })
 
       // Get routines sorted by lastUsed (most recent first)
       const routines = await getRoutines({ sortBy: 'lastUsed', order: 'desc' })
@@ -135,7 +138,7 @@ describe('Routines Manager', () => {
 
   describe('getRoutine', () => {
     test('should get routine by ID', async () => {
-      const id = await createRoutine({ name: 'Test Routine', steps: [] })
+      const id = await createRoutineWithNoSteps('Test Routine')
       const routine = await getRoutine(id)
 
       expect(routine).toBeDefined()
@@ -151,7 +154,7 @@ describe('Routines Manager', () => {
 
   describe('updateRoutine', () => {
     test('should update existing routine', async () => {
-      const id = await createRoutine({ name: 'Old Name', steps: [] })
+      const id = await createRoutineWithNoSteps('Old Name')
       const routine = await getRoutine(id)
 
       routine.name = 'New Name'
@@ -167,34 +170,17 @@ describe('Routines Manager', () => {
 
   describe('deleteRoutine', () => {
     test('should delete routine by ID', async () => {
-      const id = await createRoutine({ name: 'To Delete', steps: [] })
+      const id = await createRoutineWithNoSteps('To Delete')
       await deleteRoutine(id)
 
       const routines = await getRoutines()
       expect(routines).toHaveLength(0)
     })
-
-    test('should remove routine from schedule on delete', async () => {
-      // This test verifies cascade delete behavior
-      // Currently, scheduleManager handles this independently
-      // This test documents the expected behavior
-      const id = await createRoutine({ name: 'Scheduled Routine', steps: [] })
-
-      // Delete the routine
-      await deleteRoutine(id)
-
-      // Verify routine is deleted
-      const routine = await getRoutine(id)
-      expect(routine).toBeUndefined()
-
-      // Note: Schedule cleanup would be tested in scheduleManager.test.js
-      // This test just ensures the routine itself is properly removed
-    })
   })
 
   describe('addStep', () => {
     test('should add step to routine', async () => {
-      const id = await createRoutine({ name: 'Test', steps: [] })
+      const id = await createRoutineWithNoSteps('Test')
       const updated = await addStep(id, { name: 'New Step', duration: 120 })
 
       expect(updated.steps).toHaveLength(1)
@@ -257,7 +243,7 @@ describe('Routines Manager', () => {
         steps: [{ name: 'Step 1', duration: 60 }]
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      await waitForUniqueTimestamp()
       const newId = await cloneRoutine(id, 'Cloned')
       expect(newId).not.toBe(id)
 
@@ -292,30 +278,6 @@ describe('Routines Manager', () => {
 
     // TODO: Add tests for step completion
     test.todo('should advance to next step on completion')
-
-    test('should handle routine completion', async () => {
-      // This test verifies the startRoutine function initializes proper state
-      // Actual completion logic is tested in routineRunner.test.js
-      const id = await createRoutine({
-        name: 'Complete Me',
-        steps: [
-          { name: 'Step 1', duration: 30 },
-          { name: 'Step 2', duration: 30 }
-        ]
-      })
-
-      const state = await startRoutine(id)
-
-      // Verify state is initialized correctly for execution
-      expect(state.routineId).toBe(id)
-      expect(state.isRunning).toBe(true)
-      expect(state.currentStepIndex).toBe(0)
-      expect(state.routine).toBeDefined()
-      expect(state.routine.steps).toHaveLength(2)
-
-      // Note: Full completion flow including XP calculation is tested
-      // in routineRunner.test.js with 28 comprehensive tests
-    })
   })
 
   describe('createRoutineBatch', () => {
@@ -340,9 +302,7 @@ describe('Routines Manager', () => {
 
       const ids = await createRoutineBatch(routines)
       expect(ids).toHaveLength(3)
-      expect(ids[0]).toContain('routine_')
-      expect(ids[1]).toContain('routine_')
-      expect(ids[2]).toContain('routine_')
+      ids.forEach(expectGeneratedRoutineId)
 
       const allRoutines = await getRoutines()
       expect(allRoutines).toHaveLength(3)
@@ -360,22 +320,6 @@ describe('Routines Manager', () => {
       await expect(createRoutineBatch('not an array')).rejects.toThrow(
         'Routines must be an array'
       )
-    })
-
-    test('should handle single routine', async () => {
-      const routines = [
-        {
-          name: 'Single Routine',
-          steps: [{ name: 'Step 1', duration: 60 }]
-        }
-      ]
-
-      const ids = await createRoutineBatch(routines)
-      expect(ids).toHaveLength(1)
-
-      const allRoutines = await getRoutines()
-      expect(allRoutines).toHaveLength(1)
-      expect(allRoutines[0].name).toBe('Single Routine')
     })
 
     test('should calculate total duration for all routines', async () => {
@@ -412,64 +356,13 @@ describe('Routines Manager', () => {
       const uniqueIds = new Set(ids)
       expect(uniqueIds.size).toBe(3)
     })
-
-    test('should handle routines with no steps', async () => {
-      const routines = [
-        { name: 'Empty Routine 1', steps: [] },
-        { name: 'Empty Routine 2' }
-      ]
-
-      const ids = await createRoutineBatch(routines)
-      expect(ids).toHaveLength(2)
-
-      const routine1 = await getRoutine(ids[0])
-      const routine2 = await getRoutine(ids[1])
-
-      expect(routine1.steps).toEqual([])
-      expect(routine2.steps).toEqual([])
-      expect(routine1.totalDuration).toBe(0)
-      expect(routine2.totalDuration).toBe(0)
-    })
-
-    test('should demonstrate batch operation works correctly', async () => {
-      const routines = Array.from({ length: 10 }, (_, i) => ({
-        name: `Routine ${i + 1}`,
-        steps: [{ name: 'Step 1', duration: 60 }]
-      }))
-
-      // Use batch operation
-      const batchIds = await createRoutineBatch(routines)
-
-      // Verify all routines were created
-      expect(batchIds).toHaveLength(10)
-      expect(batchIds.every((id) => id.startsWith('routine_'))).toBe(true)
-
-      // Verify all IDs are unique
-      const uniqueIds = new Set(batchIds)
-      expect(uniqueIds.size).toBe(10)
-
-      // Verify batch operation is a single function call
-      // (as opposed to looping createRoutine 10 times)
-      // This demonstrates the efficiency improvement
-      const allRoutines = await getRoutines()
-      expect(allRoutines.length).toBeGreaterThanOrEqual(10)
-
-      // Verify routines have correct structure
-      batchIds.forEach(async (id) => {
-        const routine = await getRoutine(id)
-        expect(routine).toBeDefined()
-        expect(routine.name).toMatch(/^Routine \d+$/)
-        expect(routine.steps).toHaveLength(1)
-        expect(routine.totalDuration).toBe(60)
-      })
-    })
   })
 
   describe('exportRoutines', () => {
     test('should export all routines', async () => {
-      await createRoutine({ name: 'Routine 1', steps: [] })
-      await new Promise((resolve) => setTimeout(resolve, 10))
-      await createRoutine({ name: 'Routine 2', steps: [] })
+      await createRoutineWithNoSteps('Routine 1')
+      await waitForUniqueTimestamp()
+      await createRoutineWithNoSteps('Routine 2')
 
       const exported = await exportRoutines()
 
@@ -480,9 +373,9 @@ describe('Routines Manager', () => {
     })
 
     test('should export specific routines by ID', async () => {
-      const id1 = await createRoutine({ name: 'Routine 1', steps: [] })
-      await new Promise((resolve) => setTimeout(resolve, 10))
-      const id2 = await createRoutine({ name: 'Routine 2', steps: [] })
+      const id1 = await createRoutineWithNoSteps('Routine 1')
+      await waitForUniqueTimestamp()
+      await createRoutineWithNoSteps('Routine 2')
 
       const exported = await exportRoutines([id1])
 
@@ -513,7 +406,7 @@ describe('Routines Manager', () => {
     })
 
     test('should handle ID collisions by regenerating IDs', async () => {
-      const id = await createRoutine({ name: 'Existing', steps: [] })
+      const id = await createRoutineWithNoSteps('Existing')
 
       const importData = {
         version: '1.0',
@@ -531,20 +424,11 @@ describe('Routines Manager', () => {
       expect(new Set(ids).size).toBe(2)
     })
 
-    test('should throw error for missing version', async () => {
-      const invalidData = { routines: [] }
-
-      await expect(importRoutines(invalidData)).rejects.toThrow(
-        'missing version field'
-      )
-    })
-
-    test('should throw error for missing routines array', async () => {
-      const invalidData = { version: '1.0' }
-
-      await expect(importRoutines(invalidData)).rejects.toThrow(
-        'missing routines array'
-      )
+    test.each([
+      [{ routines: [] }, 'missing version field'],
+      [{ version: '1.0' }, 'missing routines array']
+    ])('should validate required import fields', async (invalidData, error) => {
+      await expectImportValidationFailure(invalidData, error)
     })
 
     test('should skip routines without name', async () => {

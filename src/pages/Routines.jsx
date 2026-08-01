@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
+import { useToast } from '../hooks/useToast'
+import { useCrossTabSync } from '../hooks/useCrossTabSync'
 import { formatTime } from '../utils/routineRunner'
 import {
   exportRoutines,
@@ -34,8 +36,7 @@ function Routines() {
   const [selectedRoutine, setSelectedRoutine] = useState(null)
   const [availableRoutines, setAvailableRoutines] = useState([])
   const [loadingRoutines, setLoadingRoutines] = useState(true)
-  const [toastMessage, setToastMessage] = useState('')
-  const [showToast, setShowToast] = useState(false)
+  const { toastMessage, showToast, showToastNotification } = useToast()
   const fileInputRef = useRef(null)
 
   // TAB-RTN-18: Cancel confirmation modal state
@@ -93,30 +94,6 @@ function Routines() {
 
   const runner = useRoutineRunner(selectedRoutine)
 
-  // Toast timeout ref to prevent race conditions
-  const toastTimeoutRef = useRef(null)
-
-  // Show toast notification
-  const showToastNotification = useCallback((message) => {
-    // Clear any existing timeout to prevent race conditions
-    if (toastTimeoutRef.current) {
-      clearTimeout(toastTimeoutRef.current)
-      toastTimeoutRef.current = null
-    }
-    setToastMessage(message)
-    setShowToast(true)
-    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 3000)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current)
-        toastTimeoutRef.current = null
-      }
-    }
-  }, [])
-
   const loadAvailableRoutines = useCallback(async () => {
     try {
       setLoadingRoutines(true)
@@ -135,6 +112,13 @@ function Routines() {
       setLoadingRoutines(false)
     }
   }, [showToastNotification])
+
+  useCrossTabSync(() => {
+    void loadAvailableRoutines()
+  }, {
+    filter: (event) => event.domain === 'routines',
+    includeSelf: false
+  })
 
   // Load available routines on mount
   useEffect(() => {
