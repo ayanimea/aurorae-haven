@@ -63,6 +63,7 @@ Ask for clarification or preserve the existing structure.
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { format, startOfWeek, addDays, subDays, addMonths, subMonths } from 'date-fns'
+import { useToast } from '../hooks/useToast'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -128,8 +129,6 @@ function checkStructural(candidate, allEvents, excludeId) {
 // See commit 511b225 for the migration from custom logger to console methods.
 
 function Schedule() {
-  // Success message timeout ref for cleanup on unmount
-  const successMessageTimeoutRef = useRef(null)
   // Ref that always points to the latest loadEvents callback so storage event
   // handlers (defined before loadEvents) can call it without stale closures.
   const loadEventsRef = useRef(null)
@@ -141,7 +140,12 @@ function Schedule() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [suggestions, setSuggestions] = useState([])
-  const [successMessage, setSuccessMessage] = useState('')
+  const {
+    toastMessage: successMessage,
+    showToast: showSuccessMessage,
+    showToastNotification: showSuccessMessageToast,
+    hideToast: hideSuccessMessage
+  } = useToast()
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -277,16 +281,6 @@ function Schedule() {
     }
     return 'ok'
   }, [expandedEvents, date, view])
-
-  // Cleanup success message timeout on unmount to prevent setState on unmounted component
-  useEffect(() => {
-    return () => {
-      if (successMessageTimeoutRef.current) {
-        clearTimeout(successMessageTimeoutRef.current)
-        successMessageTimeoutRef.current = null
-      }
-    }
-  }, [])
 
   // ── Navigation ──────────────────────────────────────────────────────────
   const handleNavigate = useCallback(
@@ -557,7 +551,7 @@ function Schedule() {
     try {
       setIsLoading(true)
       setError('')
-      setSuccessMessage('')
+      hideSuccessMessage()
       // Dynamic import reduces initial bundle size but doesn't eliminate code from production
       // (runtime guard still allows bundler to create a separate chunk)
       const { generateFakeEvents } = await import('../utils/fakeDataGenerator')
@@ -582,23 +576,14 @@ function Schedule() {
           `⚠️ Created ${successCount} fake events, but ${errorCount} failed.`
         )
       } else {
-        if (successMessageTimeoutRef.current) {
-          clearTimeout(successMessageTimeoutRef.current)
-        }
-        setSuccessMessage(
-          `✅ Created ${successCount} fake events successfully!`
-        )
-        successMessageTimeoutRef.current = window.setTimeout(() => {
-          setSuccessMessage('')
-          successMessageTimeoutRef.current = null
-        }, 3000)
+        showSuccessMessageToast(`✅ Created ${successCount} fake events successfully!`)
       }
     } catch (_err) {
       setError('Failed to populate fake data. Please try again.')
     } finally {
       setIsLoading(false)
     }
-  }, [loadEvents])
+  }, [hideSuccessMessage, loadEvents, showSuccessMessageToast])
 
   /**
    * Development-only: Clear all events from calendar
@@ -638,23 +623,9 @@ function Schedule() {
       await loadEvents()
 
       if (successCount > 0) {
-        if (successMessageTimeoutRef.current) {
-          clearTimeout(successMessageTimeoutRef.current)
-        }
-        setSuccessMessage(`✅ Cleared ${successCount} events successfully!`)
-        successMessageTimeoutRef.current = window.setTimeout(() => {
-          setSuccessMessage('')
-          successMessageTimeoutRef.current = null
-        }, 3000)
+        showSuccessMessageToast(`✅ Cleared ${successCount} events successfully!`)
       } else {
-        if (successMessageTimeoutRef.current) {
-          clearTimeout(successMessageTimeoutRef.current)
-        }
-        setSuccessMessage('ℹ️ No events to clear')
-        successMessageTimeoutRef.current = window.setTimeout(() => {
-          setSuccessMessage('')
-          successMessageTimeoutRef.current = null
-        }, 3000)
+        showSuccessMessageToast('ℹ️ No events to clear')
       }
     } catch (_err) {
       setError('Failed to clear events. Please try again.')
@@ -836,12 +807,12 @@ function Schedule() {
         )}
 
         {/* ── Success toast ─────────────────────────────────────────────────── */}
-        {successMessage && (
+        {showSuccessMessage && (
           <div className='success-message' role='status'>
             {successMessage}
             <button
               type='button'
-              onClick={() => setSuccessMessage('')}
+              onClick={hideSuccessMessage}
               className='success-dismiss'
               aria-label='Dismiss message'
             >

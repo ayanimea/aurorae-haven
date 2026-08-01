@@ -8,30 +8,31 @@ export function useToast() {
   const [showToast, setShowToast] = useState(false)
   const timeoutRef = useRef(null)
 
-  const showToastNotification = useCallback((message, duration = 3000) => {
+  const hideToast = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
+    setShowToast(false)
+  }, [])
+
+  const showToastNotification = useCallback((message, duration = 3000) => {
+    hideToast()
     setToastMessage(message)
     setShowToast(true)
     timeoutRef.current = setTimeout(() => {
-      setShowToast(false)
-      timeoutRef.current = null
+      hideToast()
     }, duration)
-  }, [])
+  }, [hideToast])
 
   useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [])
+    return hideToast
+  }, [hideToast])
 
   return {
     toastMessage,
     showToast,
-    showToastNotification
+    showToastNotification,
+    hideToast
   }
 }
