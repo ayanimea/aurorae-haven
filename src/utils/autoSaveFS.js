@@ -60,9 +60,11 @@ function openHandleDB() {
 }
 
 /**
- * Persist a FileSystemDirectoryHandle to IndexedDB so it survives page reloads.
- * @param {FileSystemDirectoryHandle} handle
- * @returns {Promise<void>}
+ * Run a transaction against the persisted directory-handle store.
+ * @param {'readonly'|'readwrite'} mode
+ * @param {(store: IDBObjectStore, setResult: (value: unknown) => void) => void} operation
+ * @param {unknown} initialValue
+ * @returns {Promise<unknown>}
  */
 async function runHandleTransaction(mode, operation, initialValue) {
   const db = await openHandleDB()
@@ -71,19 +73,41 @@ async function runHandleTransaction(mode, operation, initialValue) {
       const tx = db.transaction(HANDLE_IDB_STORE, mode)
       const store = tx.objectStore(HANDLE_IDB_STORE)
       let result = initialValue
+      let abortReason = null
+      let settled = false
       const setResult = (value) => {
         result = value
       }
+      const resolveOnce = (value) => {
+        if (settled) return
+        settled = true
+        resolve(value)
+      }
+      const rejectOnce = (error) => {
+        if (settled) return
+        settled = true
+        reject(error)
+      }
+
+      tx.oncomplete = () => resolveOnce(result)
+      tx.onerror = (e) => rejectOnce(e.target.error)
+      tx.onabort = () =>
+        rejectOnce(
+          tx.error ??
+            abortReason ??
+            new Error('IndexedDB transaction aborted')
+        )
 
       try {
         operation(store, setResult)
       } catch (error) {
-        reject(error)
-        return
+        abortReason = error
+        try {
+          tx.abort()
+        } catch {
+          rejectOnce(error)
+        }
       }
-
-      tx.oncomplete = () => resolve(result)
-      tx.onerror = (e) => reject(e.target.error)
     })
   } finally {
     db.close()
@@ -110,7 +134,7 @@ export async function getStoredDirectoryHandle() {
     return await runHandleTransaction(
       'readonly',
       (store, setResult) => {
-      const req = store.get(HANDLE_IDB_KEY)
+        const req = store.get(HANDLE_IDB_KEY)
         req.onsuccess = (e) => setResult(e.target.result ?? null)
       },
       null

@@ -293,7 +293,8 @@ async function getRoutineOrThrow(routineId) {
 }
 
 function getStepIndexOrThrow(routine, stepId) {
-  const stepIndex = routine.steps.findIndex((step) => step.id === stepId)
+  const steps = routine.steps || []
+  const stepIndex = steps.findIndex((step) => step.id === stepId)
   if (stepIndex === -1) {
     throw new Error('Step not found')
   }
