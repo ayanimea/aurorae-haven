@@ -26,6 +26,11 @@ const expectGeneratedRoutineId = (id) => {
   expect(id).toBeDefined()
   expect(id).toContain('routine_')
 }
+const createRoutineWithNoSteps = (name, fields = {}) =>
+  createRoutine({ name, steps: [], ...fields })
+const expectImportValidationFailure = async (data, messageFragment) => {
+  await expect(importRoutines(data)).rejects.toThrow(messageFragment)
+}
 
 describe('Routines Manager', () => {
   beforeEach(async () => {
@@ -91,20 +96,20 @@ describe('Routines Manager', () => {
     })
 
     test('should return all routines', async () => {
-      await createRoutine({ name: 'Routine 1', steps: [] })
+      await createRoutineWithNoSteps('Routine 1')
       await waitForUniqueTimestamp()
-      await createRoutine({ name: 'Routine 2', steps: [] })
+      await createRoutineWithNoSteps('Routine 2')
 
       const routines = await getRoutines()
       expect(routines).toHaveLength(2)
     })
 
     test('should sort routines by name', async () => {
-      await createRoutine({ name: 'Zebra Routine', steps: [] })
+      await createRoutineWithNoSteps('Zebra Routine')
       await waitForUniqueTimestamp()
-      await createRoutine({ name: 'Alpha Routine', steps: [] })
+      await createRoutineWithNoSteps('Alpha Routine')
       await waitForUniqueTimestamp()
-      await createRoutine({ name: 'Middle Routine', steps: [] })
+      await createRoutineWithNoSteps('Middle Routine')
 
       const routines = await getRoutines({ sortBy: 'name', order: 'asc' })
       expect(routines).toHaveLength(3)
@@ -119,17 +124,9 @@ describe('Routines Manager', () => {
       const oldTime = new Date(now - 10000000).toISOString()
 
       // Create routines with different lastUsed timestamps
-      await createRoutine({
-        name: 'Recent Routine',
-        steps: [],
-        lastUsed: recentTime
-      })
+      await createRoutineWithNoSteps('Recent Routine', { lastUsed: recentTime })
       await waitForUniqueTimestamp()
-      await createRoutine({
-        name: 'Old Routine',
-        steps: [],
-        lastUsed: oldTime
-      })
+      await createRoutineWithNoSteps('Old Routine', { lastUsed: oldTime })
 
       // Get routines sorted by lastUsed (most recent first)
       const routines = await getRoutines({ sortBy: 'lastUsed', order: 'desc' })
@@ -141,7 +138,7 @@ describe('Routines Manager', () => {
 
   describe('getRoutine', () => {
     test('should get routine by ID', async () => {
-      const id = await createRoutine({ name: 'Test Routine', steps: [] })
+      const id = await createRoutineWithNoSteps('Test Routine')
       const routine = await getRoutine(id)
 
       expect(routine).toBeDefined()
@@ -157,7 +154,7 @@ describe('Routines Manager', () => {
 
   describe('updateRoutine', () => {
     test('should update existing routine', async () => {
-      const id = await createRoutine({ name: 'Old Name', steps: [] })
+      const id = await createRoutineWithNoSteps('Old Name')
       const routine = await getRoutine(id)
 
       routine.name = 'New Name'
@@ -173,7 +170,7 @@ describe('Routines Manager', () => {
 
   describe('deleteRoutine', () => {
     test('should delete routine by ID', async () => {
-      const id = await createRoutine({ name: 'To Delete', steps: [] })
+      const id = await createRoutineWithNoSteps('To Delete')
       await deleteRoutine(id)
 
       const routines = await getRoutines()
@@ -183,7 +180,7 @@ describe('Routines Manager', () => {
 
   describe('addStep', () => {
     test('should add step to routine', async () => {
-      const id = await createRoutine({ name: 'Test', steps: [] })
+      const id = await createRoutineWithNoSteps('Test')
       const updated = await addStep(id, { name: 'New Step', duration: 120 })
 
       expect(updated.steps).toHaveLength(1)
@@ -359,14 +356,13 @@ describe('Routines Manager', () => {
       const uniqueIds = new Set(ids)
       expect(uniqueIds.size).toBe(3)
     })
-
   })
 
   describe('exportRoutines', () => {
     test('should export all routines', async () => {
-      await createRoutine({ name: 'Routine 1', steps: [] })
+      await createRoutineWithNoSteps('Routine 1')
       await waitForUniqueTimestamp()
-      await createRoutine({ name: 'Routine 2', steps: [] })
+      await createRoutineWithNoSteps('Routine 2')
 
       const exported = await exportRoutines()
 
@@ -377,9 +373,9 @@ describe('Routines Manager', () => {
     })
 
     test('should export specific routines by ID', async () => {
-      const id1 = await createRoutine({ name: 'Routine 1', steps: [] })
+      const id1 = await createRoutineWithNoSteps('Routine 1')
       await waitForUniqueTimestamp()
-      await createRoutine({ name: 'Routine 2', steps: [] })
+      await createRoutineWithNoSteps('Routine 2')
 
       const exported = await exportRoutines([id1])
 
@@ -410,7 +406,7 @@ describe('Routines Manager', () => {
     })
 
     test('should handle ID collisions by regenerating IDs', async () => {
-      const id = await createRoutine({ name: 'Existing', steps: [] })
+      const id = await createRoutineWithNoSteps('Existing')
 
       const importData = {
         version: '1.0',
@@ -428,20 +424,11 @@ describe('Routines Manager', () => {
       expect(new Set(ids).size).toBe(2)
     })
 
-    test('should throw error for missing version', async () => {
-      const invalidData = { routines: [] }
-
-      await expect(importRoutines(invalidData)).rejects.toThrow(
-        'missing version field'
-      )
-    })
-
-    test('should throw error for missing routines array', async () => {
-      const invalidData = { version: '1.0' }
-
-      await expect(importRoutines(invalidData)).rejects.toThrow(
-        'missing routines array'
-      )
+    test.each([
+      [{ routines: [] }, 'missing version field'],
+      [{ version: '1.0' }, 'missing routines array']
+    ])('should validate required import fields', async (invalidData, error) => {
+      await expectImportValidationFailure(invalidData, error)
     })
 
     test('should skip routines without name', async () => {

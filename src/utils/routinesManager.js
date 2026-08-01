@@ -11,6 +11,9 @@ import {
 } from './indexedDBManager'
 import { normalizeEntity, updateMetadata, generateStepId } from './idGenerator'
 
+const VALID_ENERGY_TAGS = ['low', 'medium', 'high']
+const ENERGY_TAG_ERROR = 'Energy tag must be: low, medium, or high'
+
 /**
  * Create a new routine
  * @param {object} routine - Routine data with steps
@@ -18,14 +21,9 @@ import { normalizeEntity, updateMetadata, generateStepId } from './idGenerator'
  */
 export async function createRoutine(routine) {
   // TODO: Implement routine validation and step validation
-  const newRoutine = normalizeEntity(
-    {
-      ...routine,
-      steps: routine.steps || [],
-      totalDuration: calculateTotalDuration(routine.steps || [])
-    },
-    { idPrefix: 'routine' }
-  )
+  const newRoutine = normalizeEntity(normalizeRoutineStructure(routine), {
+    idPrefix: 'routine'
+  })
   await put(STORES.ROUTINES, newRoutine)
   return newRoutine.id
 }
@@ -49,12 +47,7 @@ export async function createRoutineBatch(routines) {
   // For batch operations, we need to ensure unique IDs when routines don't have them
   const baseTimestamp = Date.now()
   const newRoutines = routines.map((routine, index) => {
-    // Prepare common fields for normalization
-    const routineData = {
-      ...routine,
-      steps: routine.steps || [],
-      totalDuration: calculateTotalDuration(routine.steps || [])
-    }
+    const routineData = normalizeRoutineStructure(routine)
 
     // If routine lacks an ID, generate unique ID with index suffix to prevent collisions
     if (!routine.id) {
@@ -272,6 +265,15 @@ export async function reorderStep(routineId, stepId, newOrder) {
  */
 function calculateTotalDuration(steps) {
   return steps.reduce((total, step) => total + (step.duration || 0), 0)
+}
+
+function normalizeRoutineStructure(routine) {
+  const steps = Array.isArray(routine.steps) ? routine.steps : []
+  return {
+    ...routine,
+    steps,
+    totalDuration: calculateTotalDuration(steps)
+  }
 }
 
 async function saveRoutine(routine, { recalculateTotalDuration = false } = {}) {
@@ -535,9 +537,7 @@ export async function importRoutines(data) {
 
       // Ensure routine has required structure
       const normalizedRoutine = {
-        ...routineToSave,
-        steps: routineToSave.steps || [],
-        totalDuration: calculateTotalDuration(routineToSave.steps || []),
+        ...normalizeRoutineStructure(routineToSave),
         timestamp: routineToSave.timestamp || new Date().toISOString(),
         createdAt: routineToSave.createdAt || new Date().toISOString()
       }
@@ -580,11 +580,8 @@ export function validateStep(step) {
   }
 
   // Energy tag validation (optional but if present, must be valid)
-  if (step.energyTag) {
-    const validEnergyTags = ['low', 'medium', 'high']
-    if (!validEnergyTags.includes(step.energyTag)) {
-      errors.push('Energy tag must be: low, medium, or high')
-    }
+  if (step.energyTag && !VALID_ENERGY_TAGS.includes(step.energyTag)) {
+    errors.push(ENERGY_TAG_ERROR)
   }
 
   return {
@@ -603,9 +600,8 @@ export function validateStep(step) {
 export async function setEnergyTag(routineId, energyTag) {
   const routine = await getRoutineOrThrow(routineId)
 
-  const validTags = ['low', 'medium', 'high']
-  if (!validTags.includes(energyTag)) {
-    throw new Error('Energy tag must be: low, medium, or high')
+  if (!VALID_ENERGY_TAGS.includes(energyTag)) {
+    throw new Error(ENERGY_TAG_ERROR)
   }
 
   routine.energyTag = energyTag
