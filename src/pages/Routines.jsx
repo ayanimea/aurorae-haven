@@ -572,7 +572,7 @@ function Routines() {
                         setRoutineToEdit(routine)
                         setShowEditModal(true)
                       }}
-                      aria-label={`Edit ${routine.name || routine.title}`}
+                      aria-label={`Edit ${routine.name || routine.title || 'routine'}`}
                       title='Edit routine'
                     >
                       <Icon name='edit' />

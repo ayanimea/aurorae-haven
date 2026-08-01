@@ -27,7 +27,6 @@ vi.mock('../components/common/Modal', () => ({
 }))
 
 // Mock RoutineEditor component
-const mockRoutineEditorSave = vi.fn()
 vi.mock('../components/Routines/RoutineEditor', () => ({
   default: function MockRoutineEditor({ routine, onSave, onCancel, isSaving }) {
     return (
