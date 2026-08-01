@@ -64,12 +64,29 @@ vi.mock('../components/Routines/SequenceRunner', () => ({
   default: () => null
 }))
 
+vi.mock('../components/Routines/RoutineContextMenu', () => ({
+  default: () => null
+}))
+
 vi.mock('../components/Routines/RoutineCreationModal', () => ({
   default: () => null
 }))
 
 vi.mock('../components/common/ConfirmModal', () => ({
-  default: () => null
+  default: function MockConfirmModal({ isOpen, onConfirm, onCancel, title }) {
+    if (!isOpen) return null
+    return (
+      <div data-testid='confirm-modal'>
+        <span data-testid='confirm-modal-title'>{title}</span>
+        <button data-testid='confirm-modal-confirm' onClick={onConfirm}>
+          Confirm
+        </button>
+        <button data-testid='confirm-modal-cancel' onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    )
+  }
 }))
 
 // getRoutines returns two routines by default; override per test as needed
@@ -178,18 +195,24 @@ describe('Routines — Schedule routine', () => {
     ).toBeInTheDocument()
   })
 
-  it('deletes a routine after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-
+  it('deletes a routine after confirmation via ConfirmModal', async () => {
     await renderWithRoutines()
 
+    // Click the Delete button – should open ConfirmModal, not call window.confirm
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Delete Morning Routine/i }))
     })
 
+    // ConfirmModal should now be visible
+    expect(screen.getByTestId('confirm-modal')).toBeInTheDocument()
+
+    // Confirm the deletion
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('confirm-modal-confirm'))
+    })
+
     expect(mockDeleteRoutine).toHaveBeenCalledTimes(1)
     expect(mockDeleteRoutine).toHaveBeenCalledWith('r1')
-    expect(window.confirm).toHaveBeenCalledTimes(1)
   })
 
   it('opens EventModal with pre-filled routine data when Schedule is clicked', async () => {
