@@ -192,15 +192,8 @@ export async function addStep(routineId, step) {
  * @returns {Promise<object>} Updated routine
  */
 export async function updateStep(routineId, stepId, updates) {
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
-
-  const stepIndex = routine.steps.findIndex((s) => s.id === stepId)
-  if (stepIndex === -1) {
-    throw new Error('Step not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
+  const stepIndex = getStepIndexOrThrow(routine, stepId)
 
   // Validate step updates
   const validation = validateStep({ ...routine.steps[stepIndex], ...updates })
@@ -227,15 +220,10 @@ export async function updateStep(routineId, stepId, updates) {
  * @returns {Promise<object>} Updated routine
  */
 export async function removeStep(routineId, stepId) {
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
 
   routine.steps = routine.steps.filter((s) => s.id !== stepId)
-  routine.steps.forEach((step, index) => {
-    step.order = index
-  })
+  reindexSteps(routine.steps)
   routine.totalDuration = calculateTotalDuration(routine.steps)
 
   const updated = updateMetadata(routine)
@@ -251,15 +239,8 @@ export async function removeStep(routineId, stepId) {
  * @returns {Promise<object>} Updated routine
  */
 export async function duplicateStep(routineId, stepId) {
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
-
-  const stepIndex = routine.steps.findIndex((s) => s.id === stepId)
-  if (stepIndex === -1) {
-    throw new Error('Step not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
+  const stepIndex = getStepIndexOrThrow(routine, stepId)
 
   const stepToDuplicate = routine.steps[stepIndex]
   const newStep = {
@@ -273,9 +254,7 @@ export async function duplicateStep(routineId, stepId) {
   routine.steps.splice(stepIndex + 1, 0, newStep)
 
   // Reorder all steps
-  routine.steps.forEach((step, index) => {
-    step.order = index
-  })
+  reindexSteps(routine.steps)
 
   routine.totalDuration = calculateTotalDuration(routine.steps)
   const updated = updateMetadata(routine)
@@ -292,22 +271,13 @@ export async function duplicateStep(routineId, stepId) {
  */
 export async function reorderStep(routineId, stepId, newOrder) {
   // TODO: Implement drag-and-drop reordering logic
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
-
-  const stepIndex = routine.steps.findIndex((s) => s.id === stepId)
-  if (stepIndex === -1) {
-    throw new Error('Step not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
+  const stepIndex = getStepIndexOrThrow(routine, stepId)
 
   const [step] = routine.steps.splice(stepIndex, 1)
   routine.steps.splice(newOrder, 0, step)
 
-  routine.steps.forEach((s, index) => {
-    s.order = index
-  })
+  reindexSteps(routine.steps)
 
   const updated = updateMetadata(routine)
   await put(STORES.ROUTINES, updated)
@@ -321,6 +291,28 @@ export async function reorderStep(routineId, stepId, newOrder) {
  */
 function calculateTotalDuration(steps) {
   return steps.reduce((total, step) => total + (step.duration || 0), 0)
+}
+
+async function getRoutineOrThrow(routineId) {
+  const routine = await getById(STORES.ROUTINES, routineId)
+  if (!routine) {
+    throw new Error('Routine not found')
+  }
+  return routine
+}
+
+function getStepIndexOrThrow(routine, stepId) {
+  const stepIndex = routine.steps.findIndex((step) => step.id === stepId)
+  if (stepIndex === -1) {
+    throw new Error('Step not found')
+  }
+  return stepIndex
+}
+
+function reindexSteps(steps) {
+  steps.forEach((step, index) => {
+    step.order = index
+  })
 }
 
 /**
