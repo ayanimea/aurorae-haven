@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
  * Custom hook for managing toast notifications
@@ -6,14 +6,28 @@ import { useState } from 'react'
 export function useToast() {
   const [toastMessage, setToastMessage] = useState('')
   const [showToast, setShowToast] = useState(false)
+  const timeoutRef = useRef(null)
 
-  const showToastNotification = (message) => {
+  const showToastNotification = useCallback((message, duration = 3000) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
     setToastMessage(message)
     setShowToast(true)
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setShowToast(false)
-    }, 3000)
-  }
+      timeoutRef.current = null
+    }, duration)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
 
   return {
     toastMessage,

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
+import { useToast } from '../hooks/useToast'
 import { formatTime } from '../utils/routineRunner'
 import {
   exportRoutines,
@@ -34,8 +35,7 @@ function Routines() {
   const [selectedRoutine, setSelectedRoutine] = useState(null)
   const [availableRoutines, setAvailableRoutines] = useState([])
   const [loadingRoutines, setLoadingRoutines] = useState(true)
-  const [toastMessage, setToastMessage] = useState('')
-  const [showToast, setShowToast] = useState(false)
+  const { toastMessage, showToast, showToastNotification } = useToast()
   const fileInputRef = useRef(null)
 
   // TAB-RTN-18: Cancel confirmation modal state
@@ -92,30 +92,6 @@ function Routines() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   const runner = useRoutineRunner(selectedRoutine)
-
-  // Toast timeout ref to prevent race conditions
-  const toastTimeoutRef = useRef(null)
-
-  // Show toast notification
-  const showToastNotification = useCallback((message) => {
-    // Clear any existing timeout to prevent race conditions
-    if (toastTimeoutRef.current) {
-      clearTimeout(toastTimeoutRef.current)
-      toastTimeoutRef.current = null
-    }
-    setToastMessage(message)
-    setShowToast(true)
-    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 3000)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current)
-        toastTimeoutRef.current = null
-      }
-    }
-  }, [])
 
   const loadAvailableRoutines = useCallback(async () => {
     try {

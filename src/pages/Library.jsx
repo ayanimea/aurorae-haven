@@ -3,7 +3,8 @@
  * Manages reusable Task and Routine templates
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useToast } from '../hooks/useToast'
 import {
   getAllTemplates,
   saveTemplate,
@@ -40,6 +41,7 @@ function Library() {
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
   const [useIndexedDB, setUseIndexedDB] = useState(false)
+  const { toastMessage, showToast, showToastNotification } = useToast()
 
   // UI state
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
@@ -54,21 +56,9 @@ function Library() {
     durationMin: null,
     durationMax: null
   })
-
-  // Toast state
-  const [toastMessage, setToastMessage] = useState('')
-  const [showToast, setShowToast] = useState(false)
-
   // Delete confirmation modal state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState(null)
-
-  // Toast notification helper — stable via useCallback so mount-only effect dep array is accurate
-  const showToastNotification = useCallback((message) => {
-    setToastMessage(message)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }, [])
 
   // Load templates on mount
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect; logger and setState functions are stable references
