@@ -21,6 +21,9 @@
   - [Browser Compatibility](#browser-compatibility)
   - [Troubleshooting](#troubleshooting)
   - [Security & Privacy](#security--privacy)
+- [Managing Routines](#managing-routines)
+  - [Right-Click Management Menu](#right-click-management-menu)
+  - [Deleting a Routine](#deleting-a-routine)
 
 ---
 
@@ -842,6 +845,46 @@ The files are standard JSON format and can be:
 - **GitHub Issues**: Tag with `documentation` or `brain-dump` label
 - **Contributing**: See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines
 - **Community**: Join discussions in GitHub Discussions
+
+---
+
+## Managing Routines
+
+The Routines page lets you create, run, modify, and remove timed routines. Routine execution (running a timer) and management (editing or deleting) are intentionally kept separate to reduce accidental changes while a routine is active.
+
+### Right-Click Management Menu
+
+Each routine row has a **management context menu** accessible via right-click (or the keyboard Context Menu key / Shift+F10 when the row is focused).
+
+The menu offers two actions:
+
+| Action | Description |
+|---|---|
+| **Modify routine** | Opens the edit form pre-filled with the routine's current settings. |
+| **Remove routine** | Begins the delete confirmation flow (see below). |
+
+**Keyboard access:**
+
+- Focus a routine row using <kbd>Tab</kbd>.
+- Press the **Context Menu** key or <kbd>Shift</kbd>+<kbd>F10</kbd> to open the management menu.
+- The first menu item receives focus automatically.
+- Navigate items with <kbd>Tab</kbd> / <kbd>Shift+Tab</kbd>, activate with <kbd>Enter</kbd> or <kbd>Space</kbd>.
+- Press <kbd>Escape</kbd>, or click outside the menu, to dismiss it without taking action.
+
+The menu positions itself near the cursor or the focused row, and is automatically kept within the viewport so no action is ever off-screen.
+
+### Deleting a Routine
+
+Selecting **Remove routine** from the context menu does **not** delete the routine immediately. Instead, a confirmation dialog appears:
+
+> **Remove Routine**
+> Remove "*Routine name*"? This cannot be undone.
+> [ Cancel ] [ Remove ]
+
+- Click **Remove** (or press <kbd>Enter</kbd> when the button is focused) to permanently delete the routine.
+- Click **Cancel** (or press <kbd>Escape</kbd>) to go back without deleting anything.
+
+This two-step flow prevents accidental deletions and is fully keyboard- and screen-reader-accessible.
 
 ---
 

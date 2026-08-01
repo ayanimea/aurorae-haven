@@ -4,7 +4,7 @@
  * without triggering routine execution side effects.
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -13,6 +13,9 @@ import Icon from '../common/Icon'
  *
  * Renders a positioned context menu with management actions for a routine.
  * Closes on outside click, Escape key, or when an action is selected.
+ * Document-level listeners are only active while the menu is open.
+ * The first menu item receives focus when the menu opens.
+ * Position is clamped to viewport bounds to prevent off-screen rendering.
  *
  * @param {object}   contextMenu        - Menu state: { x, y, routine }
  * @param {function} onModify           - Called when "Modify routine" is selected
@@ -22,7 +25,10 @@ import Icon from '../common/Icon'
 function RoutineContextMenu({ contextMenu, onModify, onRemove, onClose }) {
   const menuRef = useRef(null)
 
+  // Only register document-level listeners while the menu is open
   useEffect(() => {
+    if (!contextMenu) return
+
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         onClose()
@@ -42,7 +48,27 @@ function RoutineContextMenu({ contextMenu, onModify, onRemove, onClose }) {
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [onClose])
+  }, [contextMenu, onClose])
+
+  // Move focus to the first menu item when the menu opens
+  useEffect(() => {
+    if (!contextMenu || !menuRef.current) return
+    const firstItem = menuRef.current.querySelector('[role="menuitem"]')
+    firstItem?.focus()
+  }, [contextMenu])
+
+  // Clamp menu position to viewport bounds so it never renders off-screen
+  useLayoutEffect(() => {
+    if (!contextMenu || !menuRef.current) return
+    const menu = menuRef.current
+    const { width, height } = menu.getBoundingClientRect()
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const x = Math.min(contextMenu.x, Math.max(0, vw - width - 8))
+    const y = Math.min(contextMenu.y, Math.max(0, vh - height - 8))
+    menu.style.left = `${x}px`
+    menu.style.top = `${y}px`
+  }, [contextMenu])
 
   if (!contextMenu) return null
 

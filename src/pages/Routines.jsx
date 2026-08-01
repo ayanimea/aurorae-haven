@@ -403,7 +403,17 @@ function Routines() {
   // Handle right-click on a routine row – opens context menu (management only)
   const handleRoutineContextMenu = useCallback((e, routine) => {
     e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY, routine })
+    // Keyboard-triggered contextmenu (Context Menu key / Shift+F10) reports
+    // clientX/Y as 0. In that case use the element's bounding rect so the
+    // menu opens near the focused row instead of the viewport top-left.
+    let x = e.clientX
+    let y = e.clientY
+    if (x === 0 && y === 0) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      x = rect.left
+      y = rect.bottom
+    }
+    setContextMenu({ x, y, routine })
   }, [])
 
   // Open delete confirmation modal (management – no execution side effects)
