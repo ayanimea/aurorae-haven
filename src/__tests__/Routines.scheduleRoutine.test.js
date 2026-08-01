@@ -98,7 +98,8 @@ vi.mock('../utils/routinesManager', () => ({
   importRoutines: vi.fn().mockResolvedValue([]),
   createRoutine: vi.fn(),
   updateRoutine: vi.fn(),
-  deleteRoutine: (...args) => mockDeleteRoutine(...args)
+  deleteRoutine: (...args) => mockDeleteRoutine(...args),
+  cloneRoutine: vi.fn().mockResolvedValue('new-id')
 }))
 
 vi.mock('../utils/templatesManager', () => ({
@@ -138,20 +139,24 @@ vi.mock('../utils/timeUtils', async (importOriginal) => {
   }
 })
 
-vi.mock('../hooks/useRoutineRunner', () => ({
-  useRoutineRunner: () => ({
+// Mock the global RoutineRunnerContext so tests run without a real provider
+vi.mock('../contexts/RoutineRunnerContext', () => ({
+  useRoutineRunnerContext: () => ({
+    runningRoutine: null,
     state: null,
     isComplete: false,
     summary: null,
-    reset: vi.fn(),
+    currentStep: null,
+    previousStep: null,
+    nextStep: null,
+    progress: 0,
+    remainingTime: '00:00',
     start: vi.fn(),
-    pause: vi.fn(),
-    resume: vi.fn(),
+    togglePause: vi.fn(),
     complete: vi.fn(),
     skip: vi.fn(),
-    completedSteps: [],
-    skippedSteps: [],
-    currentStepIndex: 0
+    cancel: vi.fn(),
+    reset: vi.fn()
   })
 }))
 

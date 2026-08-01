@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { useRoutineRunner } from '../hooks/useRoutineRunner'
+import { useRoutineRunnerContext } from '../contexts/RoutineRunnerContext'
 import { useToast } from '../hooks/useToast'
 import { useCrossTabSync } from '../hooks/useCrossTabSync'
 import { formatTime } from '../utils/routineRunner'
@@ -9,7 +9,8 @@ import {
   getRoutines,
   createRoutine,
   updateRoutine,
-  deleteRoutine
+  deleteRoutine,
+  cloneRoutine
 } from '../utils/routinesManager'
 import { saveTemplate } from '../utils/templatesManager'
 import { instantiateTemplate } from '../utils/templateInstantiation'
@@ -34,7 +35,8 @@ const logger = createLogger('Routines')
 const MIN_ROUTINE_DURATION_MINUTES = 15
 
 function Routines() {
-  const [selectedRoutine, setSelectedRoutine] = useState(null)
+  // Routine being previewed (left-click, no auto-start)
+  const [previewRoutine, setPreviewRoutine] = useState(null)
   const [availableRoutines, setAvailableRoutines] = useState([])
   const [loadingRoutines, setLoadingRoutines] = useState(true)
   const { toastMessage, showToast, showToastNotification } = useToast()
@@ -100,7 +102,8 @@ function Routines() {
   // TAB-RTN-45: Reduced motion detection
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
-  const runner = useRoutineRunner(selectedRoutine)
+  // Global routine runner (persists across route changes)
+  const runner = useRoutineRunnerContext()
 
   const loadAvailableRoutines = useCallback(async () => {
     try {
@@ -203,12 +206,10 @@ function Routines() {
         // Keep partial progress - logs and XP are preserved in runner state
         logger.log('Routine cancelled - progress preserved')
       } else {
-        // Discard progress
-        if (runner.reset) runner.reset()
         logger.log('Routine cancelled - progress discarded')
       }
       if (runner.cancel) runner.cancel()
-      setSelectedRoutine(null)
+      setPreviewRoutine(null)
       setShowCancelConfirm(false)
     },
     [runner]
@@ -249,19 +250,6 @@ function Routines() {
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [runner, handleCancelRoutine])
-
-  // Start runner when selectedRoutine and runner are ready
-  React.useEffect(() => {
-    if (
-      selectedRoutine &&
-      runner &&
-      runner.start &&
-      runner.state &&
-      !runner.state.isRunning
-    ) {
-      runner.start()
-    }
-  }, [selectedRoutine, runner])
 
   // Handle routine data export - TAB-RTN-47
   const handleExportRoutines = async () => {
@@ -427,8 +415,12 @@ function Routines() {
     if (!routineToDelete) return
     try {
       await deleteRoutine(routineToDelete.id)
-      if (selectedRoutine?.id === routineToDelete.id) {
-        setSelectedRoutine(null)
+      // If the deleted routine is currently running or being previewed, clear those states
+      if (runner.runningRoutine?.id === routineToDelete.id) {
+        runner.cancel()
+      }
+      if (previewRoutine?.id === routineToDelete.id) {
+        setPreviewRoutine(null)
       }
       showToastNotification('Routine deleted successfully')
       await loadAvailableRoutines()
@@ -439,7 +431,7 @@ function Routines() {
       setShowDeleteConfirm(false)
       setRoutineToDelete(null)
     }
-  }, [routineToDelete, selectedRoutine, showToastNotification, loadAvailableRoutines])
+  }, [routineToDelete, runner, previewRoutine, showToastNotification, loadAvailableRoutines])
 
   // Cancel deletion
   const handleCancelDeleteRoutine = useCallback(() => {
@@ -447,11 +439,30 @@ function Routines() {
     setRoutineToDelete(null)
   }, [])
 
+  // Duplicate a routine via cloneRoutine
+  const handleDuplicateRoutine = useCallback(async (routine) => {
+    try {
+      await cloneRoutine(routine.id)
+      showToastNotification(`"${routine.name || routine.title}" duplicated`)
+      await loadAvailableRoutines()
+    } catch (error) {
+      logger.error('Failed to duplicate routine:', error)
+      showToastNotification('Failed to duplicate routine: ' + error.message)
+    }
+  }, [showToastNotification, loadAvailableRoutines])
+
   // Open schedule modal pre-filled with the selected routine
   const handleOpenScheduleModal = (routine) => {
     setRoutineToSchedule(routine)
     setShowScheduleModal(true)
   }
+
+  // Left-click on a routine row: preview first step without auto-starting
+  const handleRoutineLeftClick = useCallback((routine) => {
+    // If this routine is already running, just show the runner (don't open preview)
+    if (runner.runningRoutine?.id === routine.id) return
+    setPreviewRoutine(routine)
+  }, [runner.runningRoutine])
 
   // Save the routine as a schedule event.
   // On success: toast + close modal.
@@ -512,8 +523,76 @@ function Routines() {
         />
       )}
 
-      {/* No routine running - show available routines list */}
-      {(!runner.state || !runner.state.isRunning) && (
+      {/* Preview: left-click on routine shows first step without auto-starting */}
+      {previewRoutine && !runner.state?.isRunning && (
+        <div className='card'>
+          <div className='card-h'>
+            <strong>{previewRoutine.name || previewRoutine.title}</strong>
+            <button
+              type='button'
+              className='btn'
+              onClick={() => setPreviewRoutine(null)}
+              aria-label='Back to routine list'
+            >
+              <Icon name='x' />
+              Close
+            </button>
+          </div>
+          <div className='card-b'>
+            {/* First step preview */}
+            {previewRoutine.steps && previewRoutine.steps.length > 0 ? (
+              <>
+                <div style={{ marginBottom: '12px' }}>
+                  <div className='small dim'>First step</div>
+                  <div style={{ fontWeight: 600, marginTop: '4px' }}>
+                    {previewRoutine.steps[0].label}
+                  </div>
+                  {previewRoutine.steps[0].duration > 0 && (
+                    <div className='small dim'>
+                      {formatTime(previewRoutine.steps[0].duration)}
+                    </div>
+                  )}
+                </div>
+                {previewRoutine.steps.length > 1 && (
+                  <div className='small dim' style={{ marginBottom: '16px' }}>
+                    + {previewRoutine.steps.length - 1} more step
+                    {previewRoutine.steps.length - 1 !== 1 ? 's' : ''}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className='small dim' style={{ marginBottom: '16px' }}>
+                No steps defined
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type='button'
+                className='btn'
+                onClick={() => setPreviewRoutine(null)}
+                aria-label='Cancel preview'
+              >
+                Cancel
+              </button>
+              <button
+                type='button'
+                className='btn btn-primary'
+                onClick={() => {
+                  runner.start(previewRoutine)
+                  setPreviewRoutine(null)
+                }}
+                aria-label={`Start routine: ${previewRoutine.name || previewRoutine.title}`}
+              >
+                <Icon name='play' />
+                Start Routine
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No routine running and no preview - show available routines list */}
+      {!runner.state?.isRunning && !previewRoutine && (
         <div className='card'>
           <div className='card-h'>
             <strong>Available Routines</strong>
@@ -571,8 +650,8 @@ function Routines() {
                     <button
                       type='button'
                       className='rseq-routine-row-info'
-                      onClick={() => setSelectedRoutine(routine)}
-                      aria-label={`Start routine: ${routine.name || routine.title}`}
+                      onClick={() => handleRoutineLeftClick(routine)}
+                      aria-label={`Preview routine: ${routine.name || routine.title}`}
                     >
                       <div className='rseq-routine-row-title'>
                         {routine.name || routine.title}
@@ -641,7 +720,7 @@ function Routines() {
                       className='btn btn-primary'
                       onClick={(e) => {
                         e.stopPropagation()
-                        setSelectedRoutine(routine)
+                        runner.start(routine)
                       }}
                       aria-label={`Start ${routine.name || routine.title}`}
                     >
@@ -662,14 +741,12 @@ function Routines() {
           className='modal-overlay'
           onClick={(e) => {
             if (e.target === e.currentTarget) {
-              runner.reset()
-              setSelectedRoutine(null)
+              runner.cancel()
             }
           }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
-              runner.reset()
-              setSelectedRoutine(null)
+              runner.cancel()
             }
           }}
           role='button'
@@ -693,10 +770,7 @@ function Routines() {
               </h2>
               <button type="button"
                 className='btn'
-                onClick={() => {
-                  runner.reset()
-                  setSelectedRoutine(null)
-                }}
+                onClick={() => runner.cancel()}
                 aria-label='Close summary'
               >
                 <Icon name='x' />
@@ -820,18 +894,15 @@ function Routines() {
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button type="button"
                     className='btn'
-                    onClick={() => {
-                      runner.reset()
-                      setSelectedRoutine(null)
-                    }}
+                    onClick={() => runner.cancel()}
                   >
                     Close
                   </button>
                   <button type="button"
                     className='btn btn-primary'
                     onClick={() => {
-                      runner.reset()
-                      // Keep routine selected for another run
+                      const routineToRestart = runner.runningRoutine
+                      if (routineToRestart) runner.start(routineToRestart)
                     }}
                   >
                     Run Again
@@ -912,11 +983,13 @@ function Routines() {
       {/* Right-click context menu for routine management */}
       <RoutineContextMenu
         contextMenu={contextMenu}
-        onModify={(routine) => {
+        onEdit={(routine) => {
           setRoutineToEdit(routine)
           setShowEditModal(true)
         }}
-        onRemove={handleRequestDeleteRoutine}
+        onDuplicate={handleDuplicateRoutine}
+        onSchedule={handleOpenScheduleModal}
+        onDelete={handleRequestDeleteRoutine}
         onClose={() => setContextMenu(null)}
       />
 
