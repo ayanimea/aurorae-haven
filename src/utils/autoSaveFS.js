@@ -64,15 +64,36 @@ function openHandleDB() {
  * @param {FileSystemDirectoryHandle} handle
  * @returns {Promise<void>}
  */
+async function runHandleTransaction(mode, operation, initialValue) {
+  const db = await openHandleDB()
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(HANDLE_IDB_STORE, mode)
+      const store = tx.objectStore(HANDLE_IDB_STORE)
+      let result = initialValue
+      const setResult = (value) => {
+        result = value
+      }
+
+      try {
+        operation(store, setResult)
+      } catch (error) {
+        reject(error)
+        return
+      }
+
+      tx.oncomplete = () => resolve(result)
+      tx.onerror = (e) => reject(e.target.error)
+    })
+  } finally {
+    db.close()
+  }
+}
+
 async function storeHandleInIDB(handle) {
   try {
-    const db = await openHandleDB()
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction(HANDLE_IDB_STORE, 'readwrite')
-      const store = tx.objectStore(HANDLE_IDB_STORE)
+    await runHandleTransaction('readwrite', (store) => {
       store.put(handle, HANDLE_IDB_KEY)
-      tx.oncomplete = () => { db.close(); resolve() }
-      tx.onerror = (e) => { db.close(); reject(e.target.error) }
     })
   } catch (error) {
     logger.warn('Failed to persist directory handle to IndexedDB:', error)
@@ -86,16 +107,14 @@ async function storeHandleInIDB(handle) {
  */
 export async function getStoredDirectoryHandle() {
   try {
-    const db = await openHandleDB()
-    return await new Promise((resolve, reject) => {
-      const tx = db.transaction(HANDLE_IDB_STORE, 'readonly')
-      const store = tx.objectStore(HANDLE_IDB_STORE)
+    return await runHandleTransaction(
+      'readonly',
+      (store, setResult) => {
       const req = store.get(HANDLE_IDB_KEY)
-      let result = null
-      req.onsuccess = (e) => { result = e.target.result ?? null }
-      tx.oncomplete = () => { db.close(); resolve(result) }
-      tx.onerror = (e) => { db.close(); reject(e.target.error) }
-    })
+        req.onsuccess = (e) => setResult(e.target.result ?? null)
+      },
+      null
+    )
   } catch (error) {
     logger.warn('Failed to load directory handle from IndexedDB:', error)
     return null
@@ -108,13 +127,8 @@ export async function getStoredDirectoryHandle() {
  */
 async function clearHandleFromIDB() {
   try {
-    const db = await openHandleDB()
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction(HANDLE_IDB_STORE, 'readwrite')
-      const store = tx.objectStore(HANDLE_IDB_STORE)
+    await runHandleTransaction('readwrite', (store) => {
       store.delete(HANDLE_IDB_KEY)
-      tx.oncomplete = () => { db.close(); resolve() }
-      tx.onerror = (e) => { db.close(); reject(e.target.error) }
     })
   } catch (error) {
     logger.warn('Failed to clear directory handle from IndexedDB:', error)
