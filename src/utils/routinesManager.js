@@ -163,10 +163,7 @@ export async function deleteRoutine(id) {
  */
 export async function addStep(routineId, step) {
   // TODO: Implement step validation
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
 
   const newStep = {
     ...step,
@@ -176,11 +173,7 @@ export async function addStep(routineId, step) {
   }
 
   routine.steps.push(newStep)
-  routine.totalDuration = calculateTotalDuration(routine.steps)
-
-  const updated = updateMetadata(routine)
-  await put(STORES.ROUTINES, updated)
-  return updated
+  return await saveRoutine(routine, { recalculateTotalDuration: true })
 }
 
 /**
@@ -207,10 +200,7 @@ export async function updateStep(routineId, stepId, updates) {
     ...updates
   }
 
-  routine.totalDuration = calculateTotalDuration(routine.steps)
-  const updated = updateMetadata(routine)
-  await put(STORES.ROUTINES, updated)
-  return updated
+  return await saveRoutine(routine, { recalculateTotalDuration: true })
 }
 
 /**
@@ -224,11 +214,7 @@ export async function removeStep(routineId, stepId) {
 
   routine.steps = routine.steps.filter((s) => s.id !== stepId)
   reindexSteps(routine.steps)
-  routine.totalDuration = calculateTotalDuration(routine.steps)
-
-  const updated = updateMetadata(routine)
-  await put(STORES.ROUTINES, updated)
-  return updated
+  return await saveRoutine(routine, { recalculateTotalDuration: true })
 }
 
 /**
@@ -256,10 +242,7 @@ export async function duplicateStep(routineId, stepId) {
   // Reorder all steps
   reindexSteps(routine.steps)
 
-  routine.totalDuration = calculateTotalDuration(routine.steps)
-  const updated = updateMetadata(routine)
-  await put(STORES.ROUTINES, updated)
-  return updated
+  return await saveRoutine(routine, { recalculateTotalDuration: true })
 }
 
 /**
@@ -279,9 +262,7 @@ export async function reorderStep(routineId, stepId, newOrder) {
 
   reindexSteps(routine.steps)
 
-  const updated = updateMetadata(routine)
-  await put(STORES.ROUTINES, updated)
-  return updated
+  return await saveRoutine(routine)
 }
 
 /**
@@ -291,6 +272,16 @@ export async function reorderStep(routineId, stepId, newOrder) {
  */
 function calculateTotalDuration(steps) {
   return steps.reduce((total, step) => total + (step.duration || 0), 0)
+}
+
+async function saveRoutine(routine, { recalculateTotalDuration = false } = {}) {
+  if (recalculateTotalDuration) {
+    routine.totalDuration = calculateTotalDuration(routine.steps || [])
+  }
+
+  const updated = updateMetadata(routine)
+  await put(STORES.ROUTINES, updated)
+  return updated
 }
 
 async function getRoutineOrThrow(routineId) {
@@ -323,10 +314,7 @@ function reindexSteps(steps) {
  */
 export async function cloneRoutine(routineId, newName) {
   // TODO: Implement routine cloning for templates
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
 
   // Create a copy excluding metadata fields that should be regenerated
   const routineData = { ...routine }
@@ -433,10 +421,7 @@ export function filterRoutines(routines, filters = {}) {
  */
 export async function startRoutine(routineId) {
   // TODO: Implement routine execution with timer
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
 
   return {
     routineId,
@@ -612,10 +597,7 @@ export function validateStep(step) {
  * @returns {Promise<object>} Updated routine
  */
 export async function setEnergyTag(routineId, energyTag) {
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
 
   const validTags = ['low', 'medium', 'high']
   if (!validTags.includes(energyTag)) {
@@ -623,9 +605,7 @@ export async function setEnergyTag(routineId, energyTag) {
   }
 
   routine.energyTag = energyTag
-  const updated = updateMetadata(routine)
-  await put(STORES.ROUTINES, updated)
-  return updated
+  return await saveRoutine(routine)
 }
 
 /**
@@ -635,15 +615,10 @@ export async function setEnergyTag(routineId, energyTag) {
  * @returns {Promise<object>} Updated routine
  */
 export async function updateLastUsed(routineId) {
-  const routine = await getById(STORES.ROUTINES, routineId)
-  if (!routine) {
-    throw new Error('Routine not found')
-  }
+  const routine = await getRoutineOrThrow(routineId)
 
   routine.lastUsed = Date.now()
   routine.usageCount = (routine.usageCount || 0) + 1
 
-  const updated = updateMetadata(routine)
-  await put(STORES.ROUTINES, updated)
-  return updated
+  return await saveRoutine(routine)
 }

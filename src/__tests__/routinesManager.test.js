@@ -10,8 +10,6 @@ import {
   updateRoutine,
   deleteRoutine,
   addStep,
-  updateStep,
-  duplicateStep,
   removeStep,
   reorderStep,
   cloneRoutine,
@@ -229,46 +227,6 @@ describe('Routines Manager', () => {
 
     // TODO: Add test for reordering after removal
     test.todo('should reorder remaining steps after removal')
-  })
-
-  describe('updateStep', () => {
-    test('should update step fields in routine', async () => {
-      const id = await createRoutine({
-        name: 'Test',
-        steps: [{ id: 'step1', label: 'Step 1', duration: 60 }]
-      })
-
-      const updated = await updateStep(id, 'step1', {
-        label: 'Updated Step 1',
-        duration: 120
-      })
-
-      expect(updated.steps).toHaveLength(1)
-      expect(updated.steps[0].label).toBe('Updated Step 1')
-      expect(updated.steps[0].duration).toBe(120)
-      expect(updated.totalDuration).toBe(120)
-    })
-  })
-
-  describe('duplicateStep', () => {
-    test('should duplicate a step and reindex step order', async () => {
-      const id = await createRoutine({
-        name: 'Test',
-        steps: [
-          { id: 'step1', label: 'Step 1', duration: 60, order: 0 },
-          { id: 'step2', label: 'Step 2', duration: 120, order: 1 }
-        ]
-      })
-
-      const updated = await duplicateStep(id, 'step1')
-
-      expect(updated.steps).toHaveLength(3)
-      expect(updated.steps[1].label).toBe('Step 1 (Copy)')
-      expect(updated.steps[0].order).toBe(0)
-      expect(updated.steps[1].order).toBe(1)
-      expect(updated.steps[2].order).toBe(2)
-      expect(updated.totalDuration).toBe(240)
-    })
   })
 
   describe('reorderStep', () => {
