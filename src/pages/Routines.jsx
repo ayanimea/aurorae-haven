@@ -17,6 +17,7 @@ import { createLogger } from '../utils/logger'
 import ConfirmModal from '../components/common/ConfirmModal'
 import Icon from '../components/common/Icon'
 import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
+import RoutineContextMenu from '../components/Routines/RoutineContextMenu'
 import RoutineEditModal from '../components/Routines/RoutineEditModal'
 import SequenceRunner from '../components/Routines/SequenceRunner'
 import EventModal from '../components/Schedule/EventModal'
@@ -52,6 +53,13 @@ function Routines() {
   // Schedule routine modal state
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [routineToSchedule, setRoutineToSchedule] = useState(null)
+
+  // Right-click context menu state (management actions only)
+  const [contextMenu, setContextMenu] = useState(null)
+
+  // Delete confirmation modal state (management – separate from execution)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [routineToDelete, setRoutineToDelete] = useState(null)
 
   // Pre-compute initialData for the schedule modal whenever the selected routine changes
   const scheduleInitialData = useMemo(() => {
@@ -392,16 +400,24 @@ function Routines() {
     }
   }
 
-  // Handle deleting an existing routine from the Available routines section
-  const handleDeleteRoutine = async (routine) => {
-    const routineLabel = routine.name || routine.title || 'this routine'
-    if (!window.confirm(`Delete "${routineLabel}"? This cannot be undone.`)) {
-      return
-    }
+  // Handle right-click on a routine row – opens context menu (management only)
+  const handleRoutineContextMenu = useCallback((e, routine) => {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY, routine })
+  }, [])
 
+  // Open delete confirmation modal (management – no execution side effects)
+  const handleRequestDeleteRoutine = useCallback((routine) => {
+    setRoutineToDelete(routine)
+    setShowDeleteConfirm(true)
+  }, [])
+
+  // Confirm and execute deletion
+  const handleConfirmDeleteRoutine = useCallback(async () => {
+    if (!routineToDelete) return
     try {
-      await deleteRoutine(routine.id)
-      if (selectedRoutine?.id === routine.id) {
+      await deleteRoutine(routineToDelete.id)
+      if (selectedRoutine?.id === routineToDelete.id) {
         setSelectedRoutine(null)
       }
       showToastNotification('Routine deleted successfully')
@@ -409,8 +425,17 @@ function Routines() {
     } catch (error) {
       logger.error('Failed to delete routine:', error)
       showToastNotification('Failed to delete routine: ' + error.message)
+    } finally {
+      setShowDeleteConfirm(false)
+      setRoutineToDelete(null)
     }
-  }
+  }, [routineToDelete, selectedRoutine, showToastNotification, loadAvailableRoutines])
+
+  // Cancel deletion
+  const handleCancelDeleteRoutine = useCallback(() => {
+    setShowDeleteConfirm(false)
+    setRoutineToDelete(null)
+  }, [])
 
   // Open schedule modal pre-filled with the selected routine
   const handleOpenScheduleModal = (routine) => {
@@ -527,7 +552,12 @@ function Routines() {
             ) : (
               <div className='rseq-routines-list'>
                 {availableRoutines.map((routine) => (
-                  <div key={routine.id} className='rseq-routine-row'>
+                  // biome-ignore lint/a11y/noStaticElementInteractions: onContextMenu is a supplementary shortcut; primary management actions are the accessible Edit/Delete buttons
+                  <div
+                    key={routine.id}
+                    className='rseq-routine-row'
+                    onContextMenu={(e) => handleRoutineContextMenu(e, routine)}
+                  >
                     <button
                       type='button'
                       className='rseq-routine-row-info'
@@ -588,7 +618,7 @@ function Routines() {
                       className='btn btn-danger'
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleDeleteRoutine(routine)
+                        handleRequestDeleteRoutine(routine)
                       }}
                       aria-label={`Delete ${routine.name || routine.title || 'routine'}`}
                       title='Delete routine'
@@ -868,6 +898,29 @@ function Routines() {
           initialData={scheduleInitialData}
         />
       )}
+
+      {/* Right-click context menu for routine management */}
+      <RoutineContextMenu
+        contextMenu={contextMenu}
+        onModify={(routine) => {
+          setRoutineToEdit(routine)
+          setShowEditModal(true)
+        }}
+        onRemove={handleRequestDeleteRoutine}
+        onClose={() => setContextMenu(null)}
+      />
+
+      {/* Delete confirmation modal (management – no execution side effects) */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title='Remove Routine'
+        message={`Remove "${routineToDelete?.name || routineToDelete?.title || 'this routine'}"? This cannot be undone.`}
+        confirmText='Remove'
+        cancelText='Cancel'
+        onConfirm={handleConfirmDeleteRoutine}
+        onCancel={handleCancelDeleteRoutine}
+        isDestructive
+      />
     </>
   )
 }
