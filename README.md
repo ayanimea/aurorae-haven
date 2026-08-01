@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1213 KB compressed
+- ✅ Total size: 1219 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-08-01 15:14:45 UTC
+**Last Updated**: 2026-08-01 15:28:04 UTC
 **Source Branch**: refactor-remove-duplicated-code
-**Source Commit**: f2fcbc6
+**Source Commit**: 06eda5b
 
 ---
 
