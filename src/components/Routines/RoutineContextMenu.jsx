@@ -1,6 +1,6 @@
 /**
  * Context menu for routine management (right-click menu)
- * Provides keyboard-accessible Modify and Remove actions
+ * Provides keyboard-accessible Edit, Duplicate, Schedule and Delete actions
  * without triggering routine execution side effects.
  */
 
@@ -18,11 +18,13 @@ import Icon from '../common/Icon'
  * Position is clamped to viewport bounds to prevent off-screen rendering.
  *
  * @param {object}   contextMenu        - Menu state: { x, y, routine }
- * @param {function} onModify           - Called when "Modify routine" is selected
- * @param {function} onRemove           - Called when "Remove routine" is selected
+ * @param {function} onEdit             - Called when "Edit" is selected
+ * @param {function} onDuplicate        - Called when "Duplicate" is selected
+ * @param {function} onSchedule        - Called when "Schedule" is selected
+ * @param {function} onDelete           - Called when "Delete" is selected
  * @param {function} onClose            - Called to close the menu
  */
-function RoutineContextMenu({ contextMenu, onModify, onRemove, onClose }) {
+function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDelete, onClose }) {
   const menuRef = useRef(null)
 
   // Only register document-level listeners while the menu is open
@@ -87,25 +89,49 @@ function RoutineContextMenu({ contextMenu, onModify, onRemove, onClose }) {
         type='button'
         className='context-menu-item'
         onClick={() => {
-          onModify(contextMenu.routine)
+          onEdit(contextMenu.routine)
           onClose()
         }}
         role='menuitem'
       >
         <Icon name='edit' />
-        Modify routine
+        Edit
+      </button>
+      <button
+        type='button'
+        className='context-menu-item'
+        onClick={() => {
+          onDuplicate(contextMenu.routine)
+          onClose()
+        }}
+        role='menuitem'
+      >
+        <Icon name='copy' />
+        Duplicate
+      </button>
+      <button
+        type='button'
+        className='context-menu-item'
+        onClick={() => {
+          onSchedule(contextMenu.routine)
+          onClose()
+        }}
+        role='menuitem'
+      >
+        <Icon name='calendar' />
+        Schedule
       </button>
       <button
         type='button'
         className='context-menu-item context-menu-item-danger'
         onClick={() => {
-          onRemove(contextMenu.routine)
+          onDelete(contextMenu.routine)
           onClose()
         }}
         role='menuitem'
       >
         <Icon name='trash' />
-        Remove routine
+        Delete
       </button>
     </div>
   )
@@ -121,8 +147,10 @@ RoutineContextMenu.propTypes = {
       title: PropTypes.string
     })
   }),
-  onModify: PropTypes.func.isRequired,
-  onRemove: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDuplicate: PropTypes.func.isRequired,
+  onSchedule: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired
 }
 
