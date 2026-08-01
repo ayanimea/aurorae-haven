@@ -64,6 +64,7 @@ Ask for clarification or preserve the existing structure.
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { format, startOfWeek, addDays, subDays, addMonths, subMonths } from 'date-fns'
 import { useToast } from '../hooks/useToast'
+import { useCrossTabSync } from '../hooks/useCrossTabSync'
 import EventModal from '../components/Schedule/EventModal'
 import ItemActionModal from '../components/ItemActionModal'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -166,47 +167,27 @@ function Schedule() {
     () => getSettings().schedule?.use24HourFormat !== false
   )
 
-  useEffect(() => {
-    // Handle cross-tab updates via 'storage' event (fires when localStorage changes in another tab)
-    const handleStorage = (event) => {
-      try {
-        const scheduleSettings = getSettings().schedule
-        const level = scheduleSettings?.schedulingGuidanceLevel
-        if (VALID_GUIDANCE_LEVELS.includes(level)) {
-          setSchedulingGuidanceLevel(level)
-        }
-        setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
-      } catch (_err) {}
-
-      // Reload schedule events when tasks are modified in another tab so the
-      // Schedule view stays in sync without requiring a page refresh.
-      // Routines are stored in IndexedDB (not localStorage), so no 'aurorae_routines'
-      // key will ever fire here — cross-tab routine sync would require BroadcastChannel.
-      if (event?.key === 'aurorae_tasks') {
-        loadEventsRef.current?.()
+  const refreshScheduleSettings = useCallback(() => {
+    try {
+      const scheduleSettings = getSettings().schedule
+      const level = scheduleSettings?.schedulingGuidanceLevel
+      if (VALID_GUIDANCE_LEVELS.includes(level)) {
+        setSchedulingGuidanceLevel(level)
       }
-    }
-
-    // Handle same-tab updates via custom 'settingsUpdated' event
-    // Settings page should dispatch: window.dispatchEvent(new CustomEvent('settingsUpdated'))
-    const handleSettingsUpdated = () => {
-      try {
-        const scheduleSettings = getSettings().schedule
-        const level = scheduleSettings?.schedulingGuidanceLevel
-        if (VALID_GUIDANCE_LEVELS.includes(level)) {
-          setSchedulingGuidanceLevel(level)
-        }
-        setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
-      } catch (_err) {}
-    }
-
-    window.addEventListener('storage', handleStorage)
-    window.addEventListener('settingsUpdated', handleSettingsUpdated)
-    return () => {
-      window.removeEventListener('storage', handleStorage)
-      window.removeEventListener('settingsUpdated', handleSettingsUpdated)
-    }
+      setUse24HourFormat(scheduleSettings?.use24HourFormat !== false)
+    } catch (_err) {}
   }, [])
+
+  useCrossTabSync((event) => {
+    if (event.domain === 'settings') {
+      refreshScheduleSettings()
+    }
+    if (event.domain === 'tasks') {
+      loadEventsRef.current?.()
+    }
+  }, {
+    filter: (event) => event.domain === 'settings' || event.domain === 'tasks'
+  })
 
   // Dev-only: Dynamically load FloatingDevButtons to prevent bundling in production
   useEffect(() => {

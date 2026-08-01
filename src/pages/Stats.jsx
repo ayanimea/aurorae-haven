@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getStatsByType, isIndexedDBAvailable } from '../utils/indexedDBManager'
 import { createLogger } from '../utils/logger'
+import { useCrossTabSync } from '../hooks/useCrossTabSync'
 
 const logger = createLogger('Stats')
 
@@ -13,38 +14,48 @@ function Stats() {
   const [loading, setLoading] = useState(true)
   const [useIndexedDB, setUseIndexedDB] = useState(false)
 
-  useEffect(() => {
-    const loadStats = async () => {
-      if (!isIndexedDBAvailable()) {
-        setLoading(false)
-        setUseIndexedDB(false)
-        return
-      }
-
-      setUseIndexedDB(true)
-
-      try {
-        // Get statistics
-        const [taskStats, habitStats, routineStats] = await Promise.all([
-          getStatsByType('task_completion'),
-          getStatsByType('habit_streak'),
-          getStatsByType('routine_time')
-        ])
-
-        setStats({
-          taskCompletions: taskStats,
-          habitStreaks: habitStats,
-          routineTimes: routineStats
-        })
-      } catch (e) {
-        logger.error('Failed to load stats:', e)
-      } finally {
-        setLoading(false)
-      }
+  const loadStats = useCallback(async () => {
+    if (!isIndexedDBAvailable()) {
+      setLoading(false)
+      setUseIndexedDB(false)
+      return
     }
 
-    loadStats()
+    setUseIndexedDB(true)
+
+    try {
+      // Get statistics
+      const [taskStats, habitStats, routineStats] = await Promise.all([
+        getStatsByType('task_completion'),
+        getStatsByType('habit_streak'),
+        getStatsByType('routine_time')
+      ])
+
+      setStats({
+        taskCompletions: taskStats,
+        habitStreaks: habitStats,
+        routineTimes: routineStats
+      })
+    } catch (e) {
+      logger.error('Failed to load stats:', e)
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void loadStats()
+  }, [loadStats])
+
+  useCrossTabSync(() => {
+    void loadStats()
+  }, {
+    filter: (event) =>
+      event.domain === 'habits' ||
+      event.domain === 'routines' ||
+      event.domain === 'tasks',
+    includeSelf: false
+  })
 
   if (loading) {
     return (

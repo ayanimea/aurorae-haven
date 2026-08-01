@@ -7,9 +7,18 @@ import { put, getAll, getById, deleteById, STORES } from './indexedDBManager'
 import { normalizeEntity, updateMetadata } from './idGenerator'
 import { createLogger } from './logger'
 import dayjs from 'dayjs'
+import { publishCrossTabEvent } from './crossTabSync'
 
 const logger = createLogger('HabitsManager')
 const EMPTY_DATE = '0000-00-00'
+
+function notifyHabitsChanged(action) {
+  publishCrossTabEvent({
+    domain: 'habits',
+    action,
+    payload: { source: 'habitsManager' }
+  })
+}
 
 /**
  * Create a new habit
@@ -40,7 +49,9 @@ export async function createHabit(habitData) {
     paused: habitData.paused ?? false,
     lastCompleted: habitData.lastCompleted || null
   })
-  return await put(STORES.HABITS, newHabit)
+  const id = await put(STORES.HABITS, newHabit)
+  notifyHabitsChanged('created')
+  return id
 }
 
 /**
@@ -69,7 +80,9 @@ export async function getHabit(id) {
  */
 export async function updateHabit(habit) {
   const updatedHabit = updateMetadata(habit)
-  return await put(STORES.HABITS, updatedHabit)
+  const id = await put(STORES.HABITS, updatedHabit)
+  notifyHabitsChanged('updated')
+  return id
 }
 
 /**
@@ -78,7 +91,8 @@ export async function updateHabit(habit) {
  * @returns {Promise<void>}
  */
 export async function deleteHabit(id) {
-  return await deleteById(STORES.HABITS, id)
+  await deleteById(STORES.HABITS, id)
+  notifyHabitsChanged('deleted')
 }
 
 /**
@@ -516,6 +530,7 @@ async function getHabitOrThrow(id) {
 async function saveHabit(habit) {
   const updatedHabit = updateMetadata(habit)
   await put(STORES.HABITS, updatedHabit)
+  notifyHabitsChanged('updated')
   return updatedHabit
 }
 

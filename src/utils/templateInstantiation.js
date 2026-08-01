@@ -9,17 +9,13 @@ import { validateTemplateData } from './validation'
 import { MS_PER_DAY } from './timeConstants'
 import { createLogger } from './logger'
 import { tryCatch, isQuotaExceededError } from './errorHandler'
+import {
+  createDefaultTasksState,
+  loadTasksState,
+  saveTasksState
+} from './tasksStorage'
 
 const logger = createLogger('TemplateInstantiation')
-
-// Default Eisenhower tasks structure
-// Factory function for default Eisenhower tasks structure to prevent mutation
-const createDefaultEisenhowerTasks = () => ({
-  urgent_important: [],
-  not_urgent_important: [],
-  urgent_not_important: [],
-  not_urgent_not_important: []
-})
 
 /**
  * Create a task object from template data
@@ -97,16 +93,13 @@ export function instantiateTaskFromTemplate(template) {
   const tasks =
     tryCatch(
       () => {
-        const savedTasks = localStorage.getItem('aurorae_tasks')
-        return savedTasks
-          ? JSON.parse(savedTasks)
-          : createDefaultEisenhowerTasks()
+        return loadTasksState()
       },
       `Loading tasks for template "${template.title || '[unknown title]'}"`,
       {
         showToast: false
       }
-    ) || createDefaultEisenhowerTasks()
+    ) || createDefaultTasksState()
 
   // Add task to appropriate quadrant
   if (!tasks[quadrant]) {
@@ -116,7 +109,11 @@ export function instantiateTaskFromTemplate(template) {
 
   // Save back to localStorage
   try {
-    localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
+    saveTasksState(tasks, {
+      action: 'created',
+      changedQuadrants: [quadrant],
+      source: 'templateInstantiation.instantiateTaskFromTemplate'
+    })
     logger.log(
       `Task saved successfully to localStorage: ID ${task.id} in ${quadrant} quadrant`
     )
@@ -337,16 +334,13 @@ export async function instantiateTemplatesBatch(templates) {
     const tasks =
       tryCatch(
         () => {
-          const savedTasks = localStorage.getItem('aurorae_tasks')
-          return savedTasks
-            ? JSON.parse(savedTasks)
-            : createDefaultEisenhowerTasks()
+          return loadTasksState()
         },
         'Loading tasks for batch template instantiation',
         {
           showToast: false
         }
-      ) || createDefaultEisenhowerTasks()
+      ) || createDefaultTasksState()
 
     // Create all tasks after validation passes
     for (const template of taskTemplates) {
@@ -368,7 +362,13 @@ export async function instantiateTemplatesBatch(templates) {
 
     // Save all tasks once
     try {
-      localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
+      saveTasksState(tasks, {
+        action: 'batch-created',
+        changedQuadrants: taskTemplates.map(
+          (template) => template.quadrant || 'urgent_important'
+        ),
+        source: 'templateInstantiation.instantiateTemplatesBatch'
+      })
     } catch (err) {
       logger.error('Failed to save tasks:', err)
       if (isQuotaExceededError(err)) {

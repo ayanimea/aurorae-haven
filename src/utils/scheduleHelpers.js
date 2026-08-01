@@ -14,15 +14,12 @@ import { getRoutines, createRoutine } from './routinesManager'
 import { getAllTemplates } from './templatesManager'
 import { getPredefinedTemplates } from './predefinedTemplates'
 import { createLogger } from './logger'
+import {
+  loadTasksState,
+  mutateTasksState
+} from './tasksStorage'
 
 const logger = createLogger('ScheduleHelpers')
-const TASK_STORAGE_QUADRANTS = [
-  'urgent_important',
-  'not_urgent_important',
-  'urgent_not_important',
-  'not_urgent_not_important'
-]
-
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
@@ -50,38 +47,15 @@ export function addTaskToStorage(title) {
     dueDate: null,
     completedAt: null
   }
-  const defaultStructure = () => ({
-    urgent_important: [],
-    not_urgent_important: [],
-    urgent_not_important: [],
-    not_urgent_not_important: []
-  })
-
-  let tasks
   try {
-    const savedStr = localStorage.getItem('aurorae_tasks')
-    const parsedTasks = savedStr ? JSON.parse(savedStr) : defaultStructure()
-    if (!isPlainObject(parsedTasks)) {
-      logger.warn('aurorae_tasks had invalid shape; resetting to empty structure.')
-      tasks = defaultStructure()
-    } else {
-      tasks = parsedTasks
-      TASK_STORAGE_QUADRANTS.forEach((quadrant) => {
-        if (!Array.isArray(tasks[quadrant])) {
-          tasks[quadrant] = []
-        }
-      })
-    }
-  } catch (_parseErr) {
-    // Corrupted or invalid JSON — start fresh rather than failing the whole save.
-    logger.warn('aurorae_tasks contained invalid JSON; resetting to empty structure.')
-    tasks = defaultStructure()
-  }
-
-  tasks.not_urgent_not_important.push(task)
-
-  try {
-    localStorage.setItem('aurorae_tasks', JSON.stringify(tasks))
+    mutateTasksState((tasks) => {
+      tasks.not_urgent_not_important.push(task)
+      return tasks
+    }, {
+      action: 'created',
+      changedQuadrants: ['not_urgent_not_important'],
+      source: 'scheduleHelpers.addTaskToStorage'
+    })
   } catch (e) {
     logger.error('Failed to write aurorae_tasks to localStorage:', e)
     throw e
@@ -155,10 +129,10 @@ export function getAllTasks(options = {}) {
   const { includeCompleted = false } = options
 
   try {
-    const tasksStr = localStorage.getItem('aurorae_tasks')
-    if (!tasksStr) return []
-
-    const tasksData = JSON.parse(tasksStr)
+    const tasksData = loadTasksState()
+    if (!isPlainObject(tasksData)) {
+      return []
+    }
     const allTasks = []
 
     // Define quadrant priorities and labels

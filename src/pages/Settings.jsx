@@ -575,10 +575,6 @@ function Settings({ onExport, onImport }) {
                   }
                   setSettingsState(newSettings)
                   updateSetting('schedule', newSettings.schedule)
-                  // Dispatch custom event for same-tab reactivity in Schedule component
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('settingsUpdated'))
-                  }
                   showMessage('Time format updated successfully')
                 }}
                 className='settings-checkbox'
@@ -616,9 +612,6 @@ function Settings({ onExport, onImport }) {
                 }
                 setSettingsState(newSettings)
                 updateSetting('schedule.schedulingGuidanceLevel', level)
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('settingsUpdated'))
-                }
                 showMessage('Load awareness level updated')
               }}
               aria-describedby='guidance-level-hint'

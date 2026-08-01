@@ -10,9 +10,18 @@ import {
   STORES
 } from './indexedDBManager'
 import { normalizeEntity, updateMetadata, generateStepId } from './idGenerator'
+import { publishCrossTabEvent } from './crossTabSync'
 
 const VALID_ENERGY_TAGS = ['low', 'medium', 'high']
 const ENERGY_TAG_ERROR = 'Energy tag must be: low, medium, or high'
+
+function notifyRoutinesChanged(action) {
+  publishCrossTabEvent({
+    domain: 'routines',
+    action,
+    payload: { source: 'routinesManager' }
+  })
+}
 
 /**
  * Create a new routine
@@ -25,6 +34,7 @@ export async function createRoutine(routine) {
     idPrefix: 'routine'
   })
   await put(STORES.ROUTINES, newRoutine)
+  notifyRoutinesChanged('created')
   return newRoutine.id
 }
 
@@ -59,6 +69,7 @@ export async function createRoutineBatch(routines) {
 
   // Use batch operation for efficiency
   await putBatch(STORES.ROUTINES, newRoutines)
+  notifyRoutinesChanged('batch-created')
 
   // Return array of IDs
   return newRoutines.map((r) => r.id)
@@ -130,11 +141,13 @@ export async function getRoutine(id) {
  */
 export async function updateRoutine(routine) {
   // TODO: Add validation and recalculate total duration
-  const updated = updateMetadata({
-    ...routine,
-    totalDuration: calculateTotalDuration(routine.steps || [])
-  })
-  await put(STORES.ROUTINES, updated)
+  const updated = await saveRoutine(
+    {
+      ...routine,
+      totalDuration: calculateTotalDuration(routine.steps || [])
+    },
+    { recalculateTotalDuration: true, action: 'updated' }
+  )
   return updated.id
 }
 
@@ -145,7 +158,8 @@ export async function updateRoutine(routine) {
  */
 export async function deleteRoutine(id) {
   // TODO: Add confirmation and cascade delete from schedule
-  return await deleteById(STORES.ROUTINES, id)
+  await deleteById(STORES.ROUTINES, id)
+  notifyRoutinesChanged('deleted')
 }
 
 /**
@@ -276,13 +290,17 @@ function normalizeRoutineStructure(routine) {
   }
 }
 
-async function saveRoutine(routine, { recalculateTotalDuration = false } = {}) {
+async function saveRoutine(
+  routine,
+  { recalculateTotalDuration = false, action = 'updated' } = {}
+) {
   if (recalculateTotalDuration) {
     routine.totalDuration = calculateTotalDuration(routine.steps || [])
   }
 
   const updated = updateMetadata(routine)
   await put(STORES.ROUTINES, updated)
+  notifyRoutinesChanged(action)
   return updated
 }
 
@@ -338,6 +356,7 @@ export async function cloneRoutine(routineId, newName) {
   )
 
   await put(STORES.ROUTINES, cloned)
+  notifyRoutinesChanged('cloned')
   return cloned.id
 }
 
@@ -551,6 +570,10 @@ export async function importRoutines(data) {
       })
       results.skipped++
     }
+  }
+
+  if (results.imported > 0) {
+    notifyRoutinesChanged('imported')
   }
 
   return results

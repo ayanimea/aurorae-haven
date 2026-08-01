@@ -15,6 +15,7 @@ import HabitDetailDrawer from '../components/Habits/HabitDetailDrawer'
 import { createLogger } from '../utils/logger'
 import { getCategoryColor, CATEGORY_OPTIONS } from '../utils/habitCategories'
 import { triggerConfetti } from '../utils/confetti'
+import { useCrossTabSync } from '../hooks/useCrossTabSync'
 
 const logger = createLogger('Habits')
 
@@ -83,6 +84,13 @@ function Habits() {
   useEffect(() => {
     loadHabits()
   }, [loadHabits])
+
+  useCrossTabSync(() => {
+    void loadHabits()
+  }, {
+    filter: (event) => event.domain === 'habits',
+    includeSelf: false
+  })
 
   // Handle Escape key to close modals
   useEffect(() => {

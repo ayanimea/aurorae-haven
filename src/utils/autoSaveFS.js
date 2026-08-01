@@ -1,7 +1,6 @@
 // Auto-save utility for saving data to File System Access API
 // Implements automatic periodic saves to a user-configured directory
 import { getDataTemplate } from './exportData'
-import { generateUniqueId as generateSecureUUID } from './idGenerator'
 import { createLogger } from './logger'
 import { validateImportData } from './validation'
 import {
@@ -10,6 +9,11 @@ import {
 } from './indexedDBManager'
 import { importToLocalStorage } from './importData'
 import { getSetting, updateSetting, updateSettings } from './settingsManager'
+import {
+  getCrossTabSyncTabId,
+  publishCrossTabEvent,
+  subscribeCrossTabEvents
+} from './crossTabSync'
 
 const logger = createLogger('AutoSave')
 
@@ -197,8 +201,7 @@ const SAVE_FILE_EXTENSION = '.json'
 // Multi-tab coordination
 let autoSaveTimer = null
 let currentDirectoryHandle = null
-let autoSaveChannel = null
-let autoSaveTabId = null
+let autoSaveUnsubscribe = null
 let isAutoSaveLeader = true
 let lastAutoSaveInterval = null
 let visibilityListenerAttached = false
@@ -613,48 +616,42 @@ export async function loadAndImportLastSave() {
  * Ensure auto-save tab ID exists
  */
 function ensureAutoSaveTabId() {
-  if (!autoSaveTabId) {
-    autoSaveTabId = generateSecureUUID()
-  }
+  return getCrossTabSyncTabId()
 }
 
 /**
- * Initialize BroadcastChannel for multi-tab coordination
+ * Initialize cross-tab coordination listener for auto-save leadership
  */
 function initAutoSaveChannel() {
-  if (
-    typeof window === 'undefined' ||
-    typeof BroadcastChannel === 'undefined'
-  ) {
+  if (typeof window === 'undefined') {
     return
   }
 
-  if (autoSaveChannel) {
+  if (autoSaveUnsubscribe) {
     return
   }
 
-  ensureAutoSaveTabId()
+  const tabId = ensureAutoSaveTabId()
 
-  autoSaveChannel = new window.BroadcastChannel('aurorae_autosave')
-  autoSaveChannel.onmessage = (event) => {
-    const data = event?.data
-    if (!data || typeof data.type !== 'string') {
+  autoSaveUnsubscribe = subscribeCrossTabEvents((event) => {
+    if (event.domain !== 'autosave') {
       return
     }
 
-    if (data.type === 'autosave-leader' && data.tabId !== autoSaveTabId) {
+    if (event.action === 'leader' && event.sourceTabId !== tabId) {
       if (isAutoSaveLeader) {
         isAutoSaveLeader = false
         internalStopAutoSaveTimer()
         logger.log('Auto-save leadership transferred to another tab')
       }
-    } else if (data.type === 'autosave-request-leader' && isAutoSaveLeader) {
-      autoSaveChannel.postMessage({
-        type: 'autosave-leader',
-        tabId: autoSaveTabId
+    } else if (event.action === 'request-leader' && isAutoSaveLeader) {
+      publishCrossTabEvent({
+        domain: 'autosave',
+        action: 'leader',
+        payload: { source: 'autoSaveFS' }
       })
     }
-  }
+  })
 }
 
 /**
@@ -760,12 +757,11 @@ export function startAutoSave(intervalMs = DEFAULT_SAVE_INTERVAL) {
 
   // This tab becomes the leader and informs other tabs, if coordination is available
   isAutoSaveLeader = true
-  if (autoSaveChannel) {
-    autoSaveChannel.postMessage({
-      type: 'autosave-leader',
-      tabId: autoSaveTabId
-    })
-  }
+  publishCrossTabEvent({
+    domain: 'autosave',
+    action: 'leader',
+    payload: { source: 'autoSaveFS' }
+  })
 
   internalStartAutoSaveTimer(intervalMs)
 

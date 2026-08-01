@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRoutineRunner } from '../hooks/useRoutineRunner'
 import { useToast } from '../hooks/useToast'
+import { useCrossTabSync } from '../hooks/useCrossTabSync'
 import { formatTime } from '../utils/routineRunner'
 import {
   exportRoutines,
@@ -111,6 +112,13 @@ function Routines() {
       setLoadingRoutines(false)
     }
   }, [showToastNotification])
+
+  useCrossTabSync(() => {
+    void loadAvailableRoutines()
+  }, {
+    filter: (event) => event.domain === 'routines',
+    includeSelf: false
+  })
 
   // Load available routines on mount
   useEffect(() => {
