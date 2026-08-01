@@ -74,11 +74,14 @@ vi.mock('../components/common/ConfirmModal', () => ({
 
 // getRoutines returns two routines by default; override per test as needed
 const mockGetRoutines = vi.fn()
+const mockDeleteRoutine = vi.fn()
 vi.mock('../utils/routinesManager', () => ({
   getRoutines: (...args) => mockGetRoutines(...args),
   exportRoutines: vi.fn().mockResolvedValue('[]'),
   importRoutines: vi.fn().mockResolvedValue([]),
-  createRoutine: vi.fn()
+  createRoutine: vi.fn(),
+  updateRoutine: vi.fn(),
+  deleteRoutine: (...args) => mockDeleteRoutine(...args)
 }))
 
 vi.mock('../utils/templatesManager', () => ({
@@ -165,6 +168,7 @@ describe('Routines — Schedule routine', () => {
     vi.clearAllMocks()
     eventModalSpy.mockClear()
     EventService.createEvent.mockResolvedValue({ id: 'ev1' })
+    mockDeleteRoutine.mockResolvedValue(undefined)
   })
 
   it('renders a Schedule button for each routine', async () => {
@@ -172,6 +176,20 @@ describe('Routines — Schedule routine', () => {
     expect(
       screen.getByRole('button', { name: /Schedule Morning Routine/i })
     ).toBeInTheDocument()
+  })
+
+  it('deletes a routine after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    await renderWithRoutines()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Delete Morning Routine/i }))
+    })
+
+    expect(mockDeleteRoutine).toHaveBeenCalledTimes(1)
+    expect(mockDeleteRoutine).toHaveBeenCalledWith('r1')
+    expect(window.confirm).toHaveBeenCalledTimes(1)
   })
 
   it('opens EventModal with pre-filled routine data when Schedule is clicked', async () => {

@@ -6,7 +6,8 @@ import {
   importRoutines,
   getRoutines,
   createRoutine,
-  updateRoutine
+  updateRoutine,
+  deleteRoutine
 } from '../utils/routinesManager'
 import { saveTemplate } from '../utils/templatesManager'
 import { instantiateTemplate } from '../utils/templateInstantiation'
@@ -407,6 +408,26 @@ function Routines() {
     }
   }
 
+  // Handle deleting an existing routine from the Available routines section
+  const handleDeleteRoutine = async (routine) => {
+    const routineLabel = routine.name || routine.title || 'this routine'
+    if (!window.confirm(`Delete "${routineLabel}"? This cannot be undone.`)) {
+      return
+    }
+
+    try {
+      await deleteRoutine(routine.id)
+      if (selectedRoutine?.id === routine.id) {
+        setSelectedRoutine(null)
+      }
+      showToastNotification('Routine deleted successfully')
+      await loadAvailableRoutines()
+    } catch (error) {
+      logger.error('Failed to delete routine:', error)
+      showToastNotification('Failed to delete routine: ' + error.message)
+    }
+  }
+
   // Open schedule modal pre-filled with the selected routine
   const handleOpenScheduleModal = (routine) => {
     setRoutineToSchedule(routine)
@@ -577,6 +598,19 @@ function Routines() {
                     >
                       <Icon name='edit' />
                       Edit
+                    </button>
+                    <button
+                      type='button'
+                      className='btn btn-danger'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteRoutine(routine)
+                      }}
+                      aria-label={`Delete ${routine.name || routine.title || 'routine'}`}
+                      title='Delete routine'
+                    >
+                      <Icon name='trash' />
+                      Delete
                     </button>
                     <button
                       type='button'
