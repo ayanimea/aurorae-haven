@@ -5,7 +5,8 @@ import {
   exportRoutines,
   importRoutines,
   getRoutines,
-  createRoutine
+  createRoutine,
+  updateRoutine
 } from '../utils/routinesManager'
 import { saveTemplate } from '../utils/templatesManager'
 import { instantiateTemplate } from '../utils/templateInstantiation'
@@ -13,6 +14,7 @@ import { createLogger } from '../utils/logger'
 import ConfirmModal from '../components/common/ConfirmModal'
 import Icon from '../components/common/Icon'
 import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
+import RoutineEditModal from '../components/Routines/RoutineEditModal'
 import SequenceRunner from '../components/Routines/SequenceRunner'
 import EventModal from '../components/Schedule/EventModal'
 import EventService from '../services/EventService'
@@ -40,6 +42,10 @@ function Routines() {
 
   // Routine creation modal state
   const [showCreationModal, setShowCreationModal] = useState(false)
+
+  // Routine edit modal state
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [routineToEdit, setRoutineToEdit] = useState(null)
 
   // Schedule routine modal state
   const [showScheduleModal, setShowScheduleModal] = useState(false)
@@ -382,6 +388,25 @@ function Routines() {
     }
   }
 
+  // Handle updating an existing routine from the Available routines section
+  const handleUpdateRoutine = async (routineData) => {
+    try {
+      logger.log('Updating routine:', routineData.name)
+
+      await updateRoutine(routineData)
+      logger.log('Routine updated:', routineData.id)
+
+      showToastNotification('Routine updated successfully')
+
+      // Reload the routine list to reflect changes
+      await loadAvailableRoutines()
+    } catch (error) {
+      logger.error('Failed to update routine:', error)
+      showToastNotification('Failed to update routine: ' + error.message)
+      throw error
+    }
+  }
+
   // Open schedule modal pre-filled with the selected routine
   const handleOpenScheduleModal = (routine) => {
     setRoutineToSchedule(routine)
@@ -538,6 +563,20 @@ function Routines() {
                     >
                       <Icon name='calendar' />
                       Schedule
+                    </button>
+                    <button
+                      type='button'
+                      className='btn'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setRoutineToEdit(routine)
+                        setShowEditModal(true)
+                      }}
+                      aria-label={`Edit ${routine.name || routine.title}`}
+                      title='Edit routine'
+                    >
+                      <Icon name='edit' />
+                      Edit
                     </button>
                     <button
                       type='button'
@@ -785,6 +824,17 @@ function Routines() {
         onClose={() => setShowCreationModal(false)}
         onSelectTemplate={handleSelectTemplate}
         onCreateRoutine={handleCreateRoutine}
+      />
+
+      {/* Routine Edit Modal */}
+      <RoutineEditModal
+        isOpen={showEditModal}
+        routine={routineToEdit}
+        onClose={() => {
+          setShowEditModal(false)
+          setRoutineToEdit(null)
+        }}
+        onUpdateRoutine={handleUpdateRoutine}
       />
 
       {/* Schedule Routine Modal */}
