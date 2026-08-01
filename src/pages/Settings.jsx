@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import { useToast } from '../hooks/useToast'
 import {
   getSettings,
   updateSetting,
@@ -41,25 +42,20 @@ function Settings({ onExport, onImport }) {
   const [directoryHandleLost, setDirectoryHandleLost] = useState(false)
   const [storedHandleAvailable, setStoredHandleAvailable] = useState(false)
   const [lastSaveTime, setLastSaveTime] = useState(null)
-  const [message, setMessage] = useState({ text: '', isError: false })
+  const [messageIsError, setMessageIsError] = useState(false)
   const [isConfiguring, setIsConfiguring] = useState(false)
+  const {
+    toastMessage: message,
+    showToast,
+    showToastNotification
+  } = useToast()
 
   // Use refs to avoid stale closures
   const settingsRef = useRef(settings)
-  const messageTimeoutRef = useRef(null)
 
   useEffect(() => {
     settingsRef.current = settings
   }, [settings])
-
-  // Cleanup message timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (messageTimeoutRef.current) {
-        clearTimeout(messageTimeoutRef.current)
-      }
-    }
-  }, [])
 
   // Check if File System Access API is supported
   const fsSupported = isFileSystemAccessSupported()
@@ -112,64 +108,48 @@ function Settings({ onExport, onImport }) {
   }, [])
 
   const showMessage = useCallback((text, isError = false, duration = 3000) => {
-    // Clear any existing timeout
-    if (messageTimeoutRef.current) {
-      clearTimeout(messageTimeoutRef.current)
-    }
+    setMessageIsError(isError)
+    showToastNotification(text, duration)
+  }, [showToastNotification])
 
-    setMessage({ text, isError })
-    messageTimeoutRef.current = setTimeout(() => {
-      setMessage({ text: '', isError: false })
-      messageTimeoutRef.current = null
-    }, duration)
+  const restartAutoSaveIfEnabled = useCallback((autoSaveSettings) => {
+    if (autoSaveSettings.enabled) {
+      stopAutoSave()
+      startAutoSave(autoSaveSettings.intervalMinutes * MS_PER_MINUTE)
+    }
   }, [])
+
+  const applyConfiguredDirectory = useCallback((handle, successMessage) => {
+    setDirectoryName(handle.name)
+    setDirectoryHandleLost(false)
+    setStoredHandleAvailable(false)
+
+    const newSettings = updateSetting('autoSave.directoryConfigured', true)
+    setSettingsState(newSettings)
+    showMessage(successMessage)
+    restartAutoSaveIfEnabled(newSettings.autoSave)
+  }, [restartAutoSaveIfEnabled, showMessage])
 
   const handleSelectDirectory = useCallback(async () => {
     setIsConfiguring(true)
     try {
       const handle = await requestDirectoryAccess()
       if (handle) {
-        setDirectoryName(handle.name)
-        setDirectoryHandleLost(false)
-        setStoredHandleAvailable(false)
-
-        // Update settings and get fresh settings
-        const newSettings = updateSetting('autoSave.directoryConfigured', true)
-        setSettingsState(newSettings)
-
-        showMessage(`Directory selected: ${handle.name}`)
-
-        // If auto-save is enabled, restart it with current settings
-        if (newSettings.autoSave.enabled) {
-          stopAutoSave()
-          startAutoSave(newSettings.autoSave.intervalMinutes * MS_PER_MINUTE)
-        }
+        applyConfiguredDirectory(handle, `Directory selected: ${handle.name}`)
       }
     } catch (error) {
       showMessage('Failed to select directory: ' + error.message, true)
     } finally {
       setIsConfiguring(false)
     }
-  }, [showMessage])
+  }, [applyConfiguredDirectory, showMessage])
 
   const handleGrantAccess = useCallback(async () => {
     setIsConfiguring(true)
     try {
       const handle = await requestStoredDirectoryPermission()
       if (handle) {
-        setDirectoryName(handle.name)
-        setDirectoryHandleLost(false)
-        setStoredHandleAvailable(false)
-
-        const newSettings = updateSetting('autoSave.directoryConfigured', true)
-        setSettingsState(newSettings)
-
-        showMessage(`Access granted to: ${handle.name}`)
-
-        if (newSettings.autoSave.enabled) {
-          stopAutoSave()
-          startAutoSave(newSettings.autoSave.intervalMinutes * MS_PER_MINUTE)
-        }
+        applyConfiguredDirectory(handle, `Access granted to: ${handle.name}`)
       } else {
         showMessage('Access was not granted to the directory', true)
       }
@@ -178,7 +158,7 @@ function Settings({ onExport, onImport }) {
     } finally {
       setIsConfiguring(false)
     }
-  }, [showMessage])
+  }, [applyConfiguredDirectory, showMessage])
 
   const handleToggleAutoSave = useCallback(
     async (enabled) => {
@@ -226,13 +206,15 @@ function Settings({ onExport, onImport }) {
 
       // Restart auto-save if enabled with new interval
       if (newSettings.autoSave.enabled) {
-        stopAutoSave()
-        startAutoSave(intervalMinutes * MS_PER_MINUTE)
+        restartAutoSaveIfEnabled({
+          ...newSettings.autoSave,
+          intervalMinutes
+        })
       }
 
       showMessage(`Save interval updated to ${intervalMinutes} minutes`)
     },
-    [showMessage]
+    [restartAutoSaveIfEnabled, showMessage]
   )
 
   const handleKeepCountChange = useCallback(
@@ -563,13 +545,13 @@ function Settings({ onExport, onImport }) {
         )} {/* end IS_OFFLINE_MODE auto-save section */}
 
         {/* Message Display */}
-        {message.text && (
+        {showToast && (
           <div
-            className={`settings-message ${message.isError ? 'settings-message-error' : ''}`}
+            className={`settings-message ${messageIsError ? 'settings-message-error' : ''}`}
             role='status'
             aria-live='polite'
           >
-            {message.text}
+            {message}
           </div>
         )}
 
