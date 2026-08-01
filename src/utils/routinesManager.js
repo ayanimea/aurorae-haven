@@ -289,6 +289,9 @@ async function getRoutineOrThrow(routineId) {
   if (!routine) {
     throw new Error('Routine not found')
   }
+  if (!Array.isArray(routine.steps)) {
+    routine.steps = []
+  }
   return routine
 }
 

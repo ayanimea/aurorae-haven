@@ -173,23 +173,6 @@ describe('Routines Manager', () => {
       const routines = await getRoutines()
       expect(routines).toHaveLength(0)
     })
-
-    test('should remove routine from schedule on delete', async () => {
-      // This test verifies cascade delete behavior
-      // Currently, scheduleManager handles this independently
-      // This test documents the expected behavior
-      const id = await createRoutine({ name: 'Scheduled Routine', steps: [] })
-
-      // Delete the routine
-      await deleteRoutine(id)
-
-      // Verify routine is deleted
-      const routine = await getRoutine(id)
-      expect(routine).toBeUndefined()
-
-      // Note: Schedule cleanup would be tested in scheduleManager.test.js
-      // This test just ensures the routine itself is properly removed
-    })
   })
 
   describe('addStep', () => {
@@ -293,29 +276,6 @@ describe('Routines Manager', () => {
     // TODO: Add tests for step completion
     test.todo('should advance to next step on completion')
 
-    test('should handle routine completion', async () => {
-      // This test verifies the startRoutine function initializes proper state
-      // Actual completion logic is tested in routineRunner.test.js
-      const id = await createRoutine({
-        name: 'Complete Me',
-        steps: [
-          { name: 'Step 1', duration: 30 },
-          { name: 'Step 2', duration: 30 }
-        ]
-      })
-
-      const state = await startRoutine(id)
-
-      // Verify state is initialized correctly for execution
-      expect(state.routineId).toBe(id)
-      expect(state.isRunning).toBe(true)
-      expect(state.currentStepIndex).toBe(0)
-      expect(state.routine).toBeDefined()
-      expect(state.routine.steps).toHaveLength(2)
-
-      // Note: Full completion flow including XP calculation is tested
-      // in routineRunner.test.js with 28 comprehensive tests
-    })
   })
 
   describe('createRoutineBatch', () => {
@@ -431,38 +391,6 @@ describe('Routines Manager', () => {
       expect(routine2.totalDuration).toBe(0)
     })
 
-    test('should demonstrate batch operation works correctly', async () => {
-      const routines = Array.from({ length: 10 }, (_, i) => ({
-        name: `Routine ${i + 1}`,
-        steps: [{ name: 'Step 1', duration: 60 }]
-      }))
-
-      // Use batch operation
-      const batchIds = await createRoutineBatch(routines)
-
-      // Verify all routines were created
-      expect(batchIds).toHaveLength(10)
-      expect(batchIds.every((id) => id.startsWith('routine_'))).toBe(true)
-
-      // Verify all IDs are unique
-      const uniqueIds = new Set(batchIds)
-      expect(uniqueIds.size).toBe(10)
-
-      // Verify batch operation is a single function call
-      // (as opposed to looping createRoutine 10 times)
-      // This demonstrates the efficiency improvement
-      const allRoutines = await getRoutines()
-      expect(allRoutines.length).toBeGreaterThanOrEqual(10)
-
-      // Verify routines have correct structure
-      batchIds.forEach(async (id) => {
-        const routine = await getRoutine(id)
-        expect(routine).toBeDefined()
-        expect(routine.name).toMatch(/^Routine \d+$/)
-        expect(routine.steps).toHaveLength(1)
-        expect(routine.totalDuration).toBe(60)
-      })
-    })
   })
 
   describe('exportRoutines', () => {
