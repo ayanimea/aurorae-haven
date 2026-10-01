@@ -61,7 +61,9 @@ vi.mock('../components/Schedule/EventModal', () => ({
 }))
 
 vi.mock('../components/Routines/SequenceRunner', () => ({
-  default: () => null
+  default: ({ runner }) => (
+    <div data-testid='sequence-runner'>{runner.currentStep?.label}</div>
+  )
 }))
 
 vi.mock('../components/Routines/RoutineContextMenu', () => ({
@@ -92,6 +94,23 @@ vi.mock('../components/common/ConfirmModal', () => ({
 // getRoutines returns two routines by default; override per test as needed
 const mockGetRoutines = vi.fn()
 const mockDeleteRoutine = vi.fn()
+const mockRunner = {
+  runningRoutine: null,
+  state: null,
+  isComplete: false,
+  summary: null,
+  currentStep: null,
+  previousStep: null,
+  nextStep: null,
+  progress: 0,
+  remainingTime: '00:00',
+  start: vi.fn(),
+  togglePause: vi.fn(),
+  complete: vi.fn(),
+  skip: vi.fn(),
+  cancel: vi.fn(),
+  reset: vi.fn()
+}
 vi.mock('../utils/routinesManager', () => ({
   getRoutines: (...args) => mockGetRoutines(...args),
   exportRoutines: vi.fn().mockResolvedValue('[]'),
@@ -141,23 +160,7 @@ vi.mock('../utils/timeUtils', async (importOriginal) => {
 
 // Mock the global RoutineRunnerContext so tests run without a real provider
 vi.mock('../contexts/RoutineRunnerContext', () => ({
-  useRoutineRunnerContext: () => ({
-    runningRoutine: null,
-    state: null,
-    isComplete: false,
-    summary: null,
-    currentStep: null,
-    previousStep: null,
-    nextStep: null,
-    progress: 0,
-    remainingTime: '00:00',
-    start: vi.fn(),
-    togglePause: vi.fn(),
-    complete: vi.fn(),
-    skip: vi.fn(),
-    cancel: vi.fn(),
-    reset: vi.fn()
-  })
+  useRoutineRunnerContext: () => mockRunner
 }))
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -188,6 +191,17 @@ async function renderWithRoutines(routines = [MORNING_ROUTINE]) {
 describe('Routines — Schedule routine', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    Object.assign(mockRunner, {
+      runningRoutine: null,
+      state: null,
+      isComplete: false,
+      summary: null,
+      currentStep: null,
+      previousStep: null,
+      nextStep: null,
+      progress: 0,
+      remainingTime: '00:00'
+    })
     eventModalSpy.mockClear()
     EventService.createEvent.mockResolvedValue({ id: 'ev1' })
     mockDeleteRoutine.mockResolvedValue(undefined)
@@ -198,6 +212,45 @@ describe('Routines — Schedule routine', () => {
     expect(
       screen.getByRole('button', { name: /Schedule Morning Routine/i })
     ).toBeInTheDocument()
+  })
+
+  it('previews a routine without starting it until Start Routine is clicked', async () => {
+    await renderWithRoutines()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Preview routine: Morning Routine' })
+    )
+
+    expect(screen.getByText('First step')).toBeInTheDocument()
+    expect(screen.getByText('Stretch')).toBeInTheDocument()
+    expect(mockRunner.start).not.toHaveBeenCalled()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start routine: Morning Routine' })
+    )
+
+    expect(mockRunner.start).toHaveBeenCalledWith(MORNING_ROUTINE)
+  })
+
+  it('shows the persisted active step after Routines is remounted', async () => {
+    Object.assign(mockRunner, {
+      runningRoutine: MORNING_ROUTINE,
+      state: { isRunning: true, currentStepIndex: 1 },
+      currentStep: { label: 'Persisted step' }
+    })
+
+    const { unmount } = await renderWithRoutines()
+    expect(screen.getByTestId('sequence-runner')).toHaveTextContent(
+      'Persisted step'
+    )
+
+    unmount()
+    await renderWithRoutines()
+
+    expect(screen.getByTestId('sequence-runner')).toHaveTextContent(
+      'Persisted step'
+    )
+    expect(mockRunner.start).not.toHaveBeenCalled()
   })
 
   it('deletes a routine after confirmation via ConfirmModal', async () => {

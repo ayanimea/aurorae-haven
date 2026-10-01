@@ -109,11 +109,26 @@ describe('RoutineRunnerProvider', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start' }))
     fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
 
-    advanceClock(3000)
+    vi.setSystemTime(Date.now() + 3000)
     expect(getRunnerState().state.remainingSeconds).toBe(10)
 
     fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
     advanceClock(1000)
+    expect(getRunnerState().state.remainingSeconds).toBe(9)
+  })
+
+  it('does not count time spent paused between animation frames', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    vi.setSystemTime(Date.now() + 100)
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
+    vi.setSystemTime(Date.now() + 800)
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
+
+    advanceClock(900)
+    expect(getRunnerState().state.remainingSeconds).toBe(10)
+    advanceClock(100)
     expect(getRunnerState().state.remainingSeconds).toBe(9)
   })
 
@@ -140,6 +155,12 @@ describe('RoutineRunnerProvider', () => {
     expect(runner.state.isRunning).toBe(false)
     expect(runner.isComplete).toBe(true)
     expect(runner.summary.completedCount).toBe(1)
+    expect(runner.summary.xpBreakdown).toEqual({
+      stepXP: 2,
+      routineBonus: 0,
+      perfectBonus: 0,
+      total: 2
+    })
   })
 
   it('clears runner state and summary when cancelled with keep disabled', () => {
