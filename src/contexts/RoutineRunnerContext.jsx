@@ -43,9 +43,18 @@ export function RoutineRunnerProvider({ children }) {
   // ── Timer loop ──────────────────────────────────────────────────────────
   // Runs via requestAnimationFrame so the countdown continues even when the
   // Routines page is not rendered. The effect restarts when running or pause
-  // status changes so each active interval has its own timing baseline.
+  // status or active step changes so each interval has its own timing baseline.
+  const routine = state?.routine
+  const currentStepIndex = state?.currentStepIndex
   useEffect(() => {
-    if (!state?.isRunning || state.isPaused) return
+    if (
+      !state?.isRunning ||
+      state.isPaused ||
+      !routine ||
+      currentStepIndex == null
+    ) {
+      return
+    }
 
     let lastTick = Date.now()
     let animationId
@@ -78,7 +87,7 @@ export function RoutineRunnerProvider({ children }) {
     animationId = window.requestAnimationFrame(tick)
     return () => window.cancelAnimationFrame(animationId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.isRunning, state?.isPaused])
+  }, [state?.isRunning, state?.isPaused, routine, currentStepIndex])
 
   // ── Controls ────────────────────────────────────────────────────────────
 
@@ -133,8 +142,11 @@ export function RoutineRunnerProvider({ children }) {
     if (keepProgress) {
       setState((prev) => {
         if (!prev) return prev
-        setIsComplete(true)
-        setSummary(getRoutineSummary(prev, { includeCompletionBonuses: false }))
+        setIsComplete(false)
+        setSummary({
+          ...getRoutineSummary(prev, { includeCompletionBonuses: false }),
+          status: 'cancelled'
+        })
         return { ...prev, isRunning: false }
       })
       return

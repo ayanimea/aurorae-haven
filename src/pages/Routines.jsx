@@ -543,9 +543,9 @@ function Routines() {
             {/* First step preview */}
             {previewRoutine.steps && previewRoutine.steps.length > 0 ? (
               <>
-                <div style={{ marginBottom: '12px' }}>
+                <div className='routine-preview-step'>
                   <div className='small dim'>First step</div>
-                  <div style={{ fontWeight: 600, marginTop: '4px' }}>
+                  <div className='routine-preview-step-label'>
                     {previewRoutine.steps[0].label}
                   </div>
                   {previewRoutine.steps[0].duration > 0 && (
@@ -555,18 +555,18 @@ function Routines() {
                   )}
                 </div>
                 {previewRoutine.steps.length > 1 && (
-                  <div className='small dim' style={{ marginBottom: '16px' }}>
+                  <div className='small dim routine-preview-more'>
                     + {previewRoutine.steps.length - 1} more step
                     {previewRoutine.steps.length - 1 !== 1 ? 's' : ''}
                   </div>
                 )}
               </>
             ) : (
-              <div className='small dim' style={{ marginBottom: '16px' }}>
+              <div className='small dim routine-preview-more'>
                 No steps defined
               </div>
             )}
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className='routine-preview-actions'>
               <button
                 type='button'
                 className='btn'
@@ -737,7 +737,8 @@ function Routines() {
       )}
 
       {/* TAB-RTN-31: Completion Summary Modal */}
-      {runner.isComplete && runner.summary && (
+      {(runner.isComplete || runner.summary?.status === 'cancelled') &&
+        runner.summary && (
         <div
           className='modal-overlay'
           onClick={(e) => {
@@ -767,7 +768,9 @@ function Routines() {
                   animation: prefersReducedMotion ? 'none' : undefined
                 }}
               >
-                🎉 Routine Complete!
+                {runner.summary.status === 'cancelled'
+                  ? 'Routine Cancelled — Progress Saved'
+                  : '🎉 Routine Complete!'}
               </h2>
               <button type="button"
                 className='btn'

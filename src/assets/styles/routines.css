@@ -91,6 +91,24 @@
   flex-direction: column;
   gap: 10px;
 }
+
+.routine-preview-step {
+  margin-bottom: 12px;
+}
+
+.routine-preview-step-label {
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.routine-preview-more {
+  margin-bottom: 16px;
+}
+
+.routine-preview-actions {
+  display: flex;
+  gap: 8px;
+}
 .routine-card-header {
   display: flex;
   justify-content: space-between;

@@ -132,6 +132,18 @@ describe('RoutineRunnerProvider', () => {
     expect(getRunnerState().state.remainingSeconds).toBe(9)
   })
 
+  it('starts a fresh timer baseline when advancing to the next step', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    advanceClock(900)
+    fireEvent.click(screen.getByRole('button', { name: 'Complete step' }))
+    advanceClock(100)
+    expect(getRunnerState().state.remainingSeconds).toBe(20)
+    advanceClock(900)
+    expect(getRunnerState().state.remainingSeconds).toBe(19)
+  })
+
   it('records a completion summary after all steps are completed', () => {
     render(<RunnerHarness />)
     fireEvent.click(screen.getByRole('button', { name: 'Start' }))
@@ -153,8 +165,9 @@ describe('RoutineRunnerProvider', () => {
     const runner = getRunnerState()
     expect(runner.state.completedSteps).toHaveLength(1)
     expect(runner.state.isRunning).toBe(false)
-    expect(runner.isComplete).toBe(true)
+    expect(runner.isComplete).toBe(false)
     expect(runner.summary.completedCount).toBe(1)
+    expect(runner.summary.status).toBe('cancelled')
     expect(runner.summary.xpBreakdown).toEqual({
       stepXP: 2,
       routineBonus: 0,
