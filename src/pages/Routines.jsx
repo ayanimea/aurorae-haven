@@ -442,8 +442,9 @@ function Routines() {
   // Duplicate a routine via cloneRoutine
   const handleDuplicateRoutine = useCallback(async (routine) => {
     try {
-      await cloneRoutine(routine.id)
-      showToastNotification(`"${routine.name || routine.title}" duplicated`)
+      const baseName = routine.name || routine.title || 'Routine'
+      await cloneRoutine(routine.id, `${baseName} (Copy)`)
+      showToastNotification(`"${baseName}" duplicated`)
       await loadAvailableRoutines()
     } catch (error) {
       logger.error('Failed to duplicate routine:', error)
