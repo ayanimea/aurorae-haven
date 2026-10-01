@@ -52,18 +52,25 @@ export function RoutineRunnerProvider({ children }) {
 
     const tick = () => {
       const now = Date.now()
-      if (now - lastTick >= TIMER_TICK_INTERVAL_MS) {
+      const elapsedTicks = Math.floor(
+        (now - lastTick) / TIMER_TICK_INTERVAL_MS
+      )
+      if (elapsedTicks > 0) {
         setState((prev) => {
           if (!prev?.isRunning) return prev
-          const next = tickTimer(prev)
-          if (isRoutineComplete(next)) {
-            setIsComplete(true)
-            setSummary(getRoutineSummary(next))
-            return { ...next, isRunning: false }
+          let next = prev
+          const ticksToApply = Math.min(elapsedTicks, prev.remainingSeconds)
+          for (let tickCount = 0; tickCount < ticksToApply; tickCount += 1) {
+            next = tickTimer(next)
+            if (isRoutineComplete(next)) {
+              setIsComplete(true)
+              setSummary(getRoutineSummary(next))
+              return { ...next, isRunning: false }
+            }
           }
           return next
         })
-        lastTick = now
+        lastTick += elapsedTicks * TIMER_TICK_INTERVAL_MS
       }
       animationId = window.requestAnimationFrame(tick)
     }
