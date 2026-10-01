@@ -208,7 +208,7 @@ function Routines() {
       } else {
         logger.log('Routine cancelled - progress discarded')
       }
-      if (runner.cancel) runner.cancel()
+      if (runner.cancel) runner.cancel(keepProgress)
       setPreviewRoutine(null)
       setShowCancelConfirm(false)
     },

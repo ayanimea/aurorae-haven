@@ -116,8 +116,22 @@ export function RoutineRunnerProvider({ children }) {
     })
   }, [])
 
-  /** Cancel the running routine and clear all state. */
-  const cancel = useCallback(() => {
+  /**
+   * Stop the running routine.
+   * @param {boolean} [keepProgress] - When true, the partial progress (logs
+   *   and XP earned so far) is preserved and surfaced via the completion
+   *   summary instead of being discarded immediately.
+   */
+  const cancel = useCallback((keepProgress = false) => {
+    if (keepProgress) {
+      setState((prev) => {
+        if (!prev) return prev
+        setIsComplete(true)
+        setSummary(getRoutineSummary(prev))
+        return { ...prev, isRunning: false }
+      })
+      return
+    }
     setState(null)
     setRunningRoutine(null)
     setIsComplete(false)
