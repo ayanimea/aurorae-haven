@@ -55,6 +55,7 @@ function Routines() {
   const [loadingRoutines, setLoadingRoutines] = useState(true)
   const { toastMessage, showToast, showToastNotification } = useToast()
   const fileInputRef = useRef(null)
+  const runnerHeadingRef = useRef(null)
 
   // TAB-RTN-18: Cancel confirmation modal state
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
@@ -515,12 +516,20 @@ function Routines() {
 
   // Left-click on a routine row: preview first step without auto-starting
   const handleRoutineLeftClick = useCallback((routine) => {
-    // If this routine is already running, just show the runner (don't open preview)
-    if (runner.runningRoutine?.id === routine.id) return
+    if (runner.state?.isRunning) {
+      if (runner.runningRoutine?.id === routine.id) {
+        runnerHeadingRef.current?.scrollIntoView?.({
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+          block: 'start'
+        })
+        runnerHeadingRef.current?.focus({ preventScroll: true })
+      }
+      return
+    }
     previewTriggerRoutineIdRef.current = routine.id
     restorePreviewFocusRef.current = false
     setPreviewRoutine(routine)
-  }, [runner.runningRoutine])
+  }, [runner.runningRoutine, runner.state?.isRunning, prefersReducedMotion])
 
   const handleClosePreview = useCallback(() => {
     restorePreviewFocusRef.current = true
@@ -583,6 +592,7 @@ function Routines() {
           runner={runner}
           prefersReducedMotion={prefersReducedMotion}
           onCancel={handleCancelRoutine}
+          headingRef={runnerHeadingRef}
         />
       )}
 
@@ -662,8 +672,8 @@ function Routines() {
         </div>
       )}
 
-      {/* No routine running and no preview - show available routines list */}
-      {!runner.state?.isRunning && !previewRoutine && (
+      {/* Keep the routine list available while a routine is running. */}
+      {!previewRoutine && (
         <div className='card'>
           <div className='card-h'>
             <strong ref={summaryReturnFocusRef} tabIndex={-1}>
@@ -796,7 +806,11 @@ function Routines() {
                         e.stopPropagation()
                         runner.start(routine)
                       }}
-                      disabled={!Array.isArray(routine.steps) || routine.steps.length === 0}
+                      disabled={
+                        !Array.isArray(routine.steps) ||
+                        routine.steps.length === 0 ||
+                        runner.state?.isRunning
+                      }
                       aria-label={`Start ${routine.name || routine.title}`}
                     >
                       <Icon name='play' />

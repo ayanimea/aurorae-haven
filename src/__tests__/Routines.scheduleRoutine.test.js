@@ -61,8 +61,13 @@ vi.mock('../components/Schedule/EventModal', () => ({
 }))
 
 vi.mock('../components/Routines/SequenceRunner', () => ({
-  default: ({ runner }) => (
-    <div data-testid='sequence-runner'>{runner.currentStep?.label}</div>
+  default: ({ runner, headingRef }) => (
+    <div data-testid='sequence-runner'>
+      <h2 ref={headingRef} tabIndex={-1}>
+        Active sequence
+      </h2>
+      {runner.currentStep?.label}
+    </div>
   )
 }))
 
@@ -285,6 +290,31 @@ describe('Routines — Schedule routine', () => {
     expect(screen.getByTestId('sequence-runner')).toHaveTextContent(
       'Persisted step'
     )
+    expect(mockRunner.start).not.toHaveBeenCalled()
+  })
+
+  it('keeps the active routine accessible and focuses its runner when selected', async () => {
+    Object.assign(mockRunner, {
+      runningRoutine: MORNING_ROUTINE,
+      state: { isRunning: true, currentStepIndex: 0 },
+      currentStep: { label: 'Persisted step' }
+    })
+
+    await renderWithRoutines()
+
+    expect(screen.getByText('Available Routines')).toBeInTheDocument()
+    expect(screen.getByTestId('sequence-runner')).toHaveTextContent(
+      'Persisted step'
+    )
+    expect(
+      screen.getByRole('button', { name: 'Start Morning Routine' })
+    ).toBeDisabled()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Preview routine: Morning Routine' })
+    )
+
+    expect(screen.getByRole('heading', { name: 'Active sequence' })).toHaveFocus()
     expect(mockRunner.start).not.toHaveBeenCalled()
   })
 

@@ -24,12 +24,18 @@ const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS // ≈ 553
  *  prefersReducedMotion - boolean, respects prefers-reduced-motion
  *  onCancel            - callback to trigger cancel confirmation
  */
-export default function SequenceRunner({ runner, prefersReducedMotion, onCancel }) {
-  const headingRef = useRef(null)
+export default function SequenceRunner({
+  runner,
+  prefersReducedMotion,
+  onCancel,
+  headingRef: externalHeadingRef
+}) {
+  const internalHeadingRef = useRef(null)
+  const headingRef = externalHeadingRef ?? internalHeadingRef
 
   useEffect(() => {
     headingRef.current?.focus()
-  }, [])
+  }, [headingRef])
 
   // Derived stats for the stats bar
   const completedCount =
