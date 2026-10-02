@@ -89,6 +89,12 @@
     "source-map": "^0.7.4",
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.5",
     "magic-string": "^0.30.19",
+    "vitest": {
+      "magic-string": "^1.2.3"
+    },
+    "@vitest/mocker": {
+      "magic-string": "^1.2.3"
+    },
     "filelist": {
       "minimatch": "^10.2.4"
     },

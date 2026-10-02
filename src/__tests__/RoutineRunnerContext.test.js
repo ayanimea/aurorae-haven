@@ -36,10 +36,17 @@ function RunnerConsumer() {
       </button>
       <button onClick={runner.togglePause}>Toggle pause</button>
       <button onClick={runner.complete}>Complete step</button>
+      <button onClick={() => runner.skip('too hard')}>Skip step</button>
+      <button onClick={runner.reset}>Reset routine</button>
       <button onClick={() => runner.cancel(true)}>Keep progress</button>
       <button onClick={() => runner.cancel(false)}>Discard progress</button>
     </div>
   )
+}
+
+function UnboundConsumer() {
+  useRoutineRunnerContext()
+  return null
 }
 
 function RunnerHarness() {
@@ -203,5 +210,58 @@ describe('RoutineRunnerProvider', () => {
       isComplete: false,
       summary: null
     })
+  })
+
+  it('advances to the next step and records the reason when a step is skipped', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Skip step' }))
+
+    const runner = getRunnerState()
+    expect(runner.state.currentStepIndex).toBe(1)
+    expect(runner.state.skippedSteps).toHaveLength(1)
+    expect(runner.state.skippedSteps[0].status).toBe('skipped')
+    expect(runner.state.skippedSteps[0].reason).toBe('too hard')
+  })
+
+  it('completes the routine when the last step is skipped', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Skip step' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Skip step' }))
+
+    const runner = getRunnerState()
+    expect(runner.isComplete).toBe(true)
+    expect(runner.state.isRunning).toBe(false)
+  })
+
+  it('restarts the same routine from the beginning on reset', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete step' }))
+    advanceClock(1000)
+    fireEvent.click(screen.getByRole('button', { name: 'Reset routine' }))
+
+    const runner = getRunnerState()
+    expect(runner.state.currentStepIndex).toBe(0)
+    expect(runner.state.completedSteps).toHaveLength(0)
+    expect(runner.state.remainingSeconds).toBe(10)
+    expect(runner.isComplete).toBe(false)
+    expect(runner.summary).toBeNull()
+  })
+
+  it('does nothing when reset is called without an active routine', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Reset routine' }))
+
+    expect(getRunnerState().state).toBeNull()
+  })
+
+  it('throws when the hook is used outside a RoutineRunnerProvider', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() => render(<UnboundConsumer />)).toThrow(
+      'useRoutineRunnerContext must be used inside <RoutineRunnerProvider>'
+    )
+    consoleError.mockRestore()
   })
 })
