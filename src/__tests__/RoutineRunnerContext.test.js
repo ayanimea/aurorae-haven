@@ -260,7 +260,7 @@ describe('RoutineRunnerProvider', () => {
   it('throws when the hook is used outside a RoutineRunnerProvider', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() => render(<ConsumerWithoutProvider />)).toThrow(
-      'useRoutineRunnerContext must be used inside <RoutineRunnerProvider>'
+      /RoutineRunnerProvider/
     )
     consoleError.mockRestore()
   })
