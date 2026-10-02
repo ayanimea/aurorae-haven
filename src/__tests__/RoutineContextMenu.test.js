@@ -170,9 +170,14 @@ describe('RoutineContextMenu', () => {
 
   describe('Dismiss behaviour', () => {
     it('calls onClose when Escape key is pressed', () => {
+      const trigger = document.createElement('button')
+      document.body.appendChild(trigger)
+      trigger.focus()
       render(<RoutineContextMenu {...defaultProps} />)
       fireEvent.keyDown(document, { key: 'Escape' })
       expect(mockOnClose).toHaveBeenCalledTimes(1)
+      expect(trigger).toHaveFocus()
+      trigger.remove()
     })
 
     it('calls onClose when clicking outside the menu', () => {

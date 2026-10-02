@@ -4,7 +4,7 @@
  * without triggering routine execution side effects.
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -26,6 +26,17 @@ import Icon from '../common/Icon'
  */
 function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDelete, onClose }) {
   const menuRef = useRef(null)
+  const returnFocusRef = useRef(null)
+
+  const closeMenu = useCallback(
+    (restoreFocus = false) => {
+      if (restoreFocus && returnFocusRef.current?.isConnected) {
+        returnFocusRef.current.focus()
+      }
+      onClose()
+    },
+    [onClose]
+  )
 
   // Only register document-level listeners while the menu is open
   useEffect(() => {
@@ -39,7 +50,7 @@ function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDe
 
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
-        onClose()
+        closeMenu(true)
       }
     }
 
@@ -50,11 +61,12 @@ function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDe
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [contextMenu, onClose])
+  }, [contextMenu, closeMenu, onClose])
 
-  // Move focus to the first menu item when the menu opens
-  useEffect(() => {
+  // Move focus into the menu and retain the trigger for dismissal/action focus.
+  useLayoutEffect(() => {
     if (!contextMenu || !menuRef.current) return
+    returnFocusRef.current = document.activeElement
     const firstItem = menuRef.current.querySelector('[role="menuitem"]')
     firstItem?.focus()
   }, [contextMenu])
@@ -90,7 +102,7 @@ function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDe
         className='context-menu-item'
         onClick={() => {
           onEdit(contextMenu.routine)
-          onClose()
+          closeMenu(true)
         }}
         role='menuitem'
       >
@@ -102,7 +114,7 @@ function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDe
         className='context-menu-item'
         onClick={() => {
           onDuplicate(contextMenu.routine)
-          onClose()
+          closeMenu(true)
         }}
         role='menuitem'
       >
@@ -114,7 +126,7 @@ function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDe
         className='context-menu-item'
         onClick={() => {
           onSchedule(contextMenu.routine)
-          onClose()
+          closeMenu(true)
         }}
         role='menuitem'
       >
@@ -126,7 +138,7 @@ function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDe
         className='context-menu-item context-menu-item-danger'
         onClick={() => {
           onDelete(contextMenu.routine)
-          onClose()
+          closeMenu(true)
         }}
         role='menuitem'
       >

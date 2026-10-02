@@ -84,7 +84,7 @@ export function useRoutineRunner(routine) {
 
   // Start routine
   const start = useCallback(() => {
-    if (state) {
+    if (state?.routine?.steps?.length > 0) {
       setState((prev) => ({ ...prev, isRunning: true }))
     }
   }, [state])
@@ -154,14 +154,15 @@ export function useRoutineRunner(routine) {
   }, [routine])
 
   // Get current step data
-  const currentStep = state?.routine?.steps[state.currentStepIndex]
+  const currentStep = state?.routine?.steps?.[state.currentStepIndex]
   const previousStep =
     state && state.currentStepIndex > 0
-      ? state.routine.steps[state.currentStepIndex - 1]
+      ? state.routine.steps?.[state.currentStepIndex - 1]
       : null
   const nextStep =
-    state && state.currentStepIndex < state.routine.steps.length - 1
-      ? state.routine.steps[state.currentStepIndex + 1]
+    state &&
+    state.currentStepIndex < (state.routine.steps?.length ?? 0) - 1
+      ? state.routine.steps?.[state.currentStepIndex + 1]
       : null
 
   // Calculate progress

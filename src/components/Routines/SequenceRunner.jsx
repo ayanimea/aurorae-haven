@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { formatTime } from '../../utils/routineRunner'
 import Icon from '../common/Icon'
 import StepCard from './StepCard'
@@ -24,6 +25,12 @@ const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS // ≈ 553
  *  onCancel            - callback to trigger cancel confirmation
  */
 export default function SequenceRunner({ runner, prefersReducedMotion, onCancel }) {
+  const headingRef = useRef(null)
+
+  useEffect(() => {
+    headingRef.current?.focus()
+  }, [])
+
   // Derived stats for the stats bar
   const completedCount =
     (runner.state?.completedSteps?.length ?? 0) +
@@ -50,7 +57,7 @@ export default function SequenceRunner({ runner, prefersReducedMotion, onCancel 
       {/* Stats Bar */}
       <div className='rseq-stats-bar'>
         <div className='rseq-stats-bar-info'>
-          <h2 className='rseq-routine-title'>
+          <h2 ref={headingRef} className='rseq-routine-title' tabIndex={-1}>
             {runner.state.routine.title || runner.state.routine.name}
           </h2>
           <p className='rseq-routine-subtitle'>

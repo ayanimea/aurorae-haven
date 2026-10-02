@@ -28,6 +28,12 @@ function RunnerConsumer() {
         })}
       </output>
       <button onClick={() => runner.start(ROUTINE)}>Start</button>
+      <button onClick={() => runner.start({ ...ROUTINE, steps: [] })}>
+        Start empty
+      </button>
+      <button onClick={() => runner.start({ ...ROUTINE, steps: undefined })}>
+        Start missing steps
+      </button>
       <button onClick={runner.togglePause}>Toggle pause</button>
       <button onClick={runner.complete}>Complete step</button>
       <button onClick={() => runner.cancel(true)}>Keep progress</button>
@@ -155,6 +161,16 @@ describe('RoutineRunnerProvider', () => {
     expect(runner.summary.completedCount).toBe(2)
     expect(runner.state.isRunning).toBe(false)
   })
+
+  it.each(['Start empty', 'Start missing steps'])(
+    'ignores a routine with %s',
+    (buttonName) => {
+      render(<RunnerHarness />)
+      fireEvent.click(screen.getByRole('button', { name: buttonName }))
+
+      expect(getRunnerState().state).toBeNull()
+    }
+  )
 
   it('preserves completed progress and exposes a summary when cancelled with keep enabled', () => {
     render(<RunnerHarness />)

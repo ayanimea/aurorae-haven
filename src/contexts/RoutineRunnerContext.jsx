@@ -93,6 +93,7 @@ export function RoutineRunnerProvider({ children }) {
 
   /** Start (or restart) a routine.  Creates fresh runner state and begins the timer. */
   const start = useCallback((routine) => {
+    if (!Array.isArray(routine?.steps) || routine.steps.length === 0) return
     setRunningRoutine(routine)
     setState({ ...createRunnerState(routine), isRunning: true })
     setIsComplete(false)
@@ -171,14 +172,15 @@ export function RoutineRunnerProvider({ children }) {
 
   // ── Derived values ──────────────────────────────────────────────────────
 
-  const currentStep = state?.routine?.steps[state.currentStepIndex]
+  const currentStep = state?.routine?.steps?.[state.currentStepIndex]
   const previousStep =
     state && state.currentStepIndex > 0
-      ? state.routine.steps[state.currentStepIndex - 1]
+      ? state.routine.steps?.[state.currentStepIndex - 1]
       : null
   const nextStep =
-    state && state.currentStepIndex < state.routine.steps.length - 1
-      ? state.routine.steps[state.currentStepIndex + 1]
+    state &&
+    state.currentStepIndex < (state.routine.steps?.length ?? 0) - 1
+      ? state.routine.steps?.[state.currentStepIndex + 1]
       : null
   const progress = state ? calculateProgress(state) : 0
   const remainingTime = state ? formatTime(state.remainingSeconds) : '00:00'

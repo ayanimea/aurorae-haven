@@ -37,6 +37,9 @@ const MIN_ROUTINE_DURATION_MINUTES = 15
 function Routines() {
   // Routine being previewed (left-click, no auto-start)
   const [previewRoutine, setPreviewRoutine] = useState(null)
+  const previewTriggerRoutineIdRef = useRef(null)
+  const previewHeadingRef = useRef(null)
+  const restorePreviewFocusRef = useRef(false)
   const [availableRoutines, setAvailableRoutines] = useState([])
   const [loadingRoutines, setLoadingRoutines] = useState(true)
   const { toastMessage, showToast, showToastNotification } = useToast()
@@ -135,6 +138,22 @@ function Routines() {
   useEffect(() => {
     loadAvailableRoutines()
   }, [loadAvailableRoutines])
+
+  useEffect(() => {
+    if (previewRoutine) {
+      previewHeadingRef.current?.focus()
+    } else if (restorePreviewFocusRef.current) {
+      restorePreviewFocusRef.current = false
+      const trigger = Array.from(
+        document.querySelectorAll('[data-routine-preview]')
+      ).find(
+        (button) =>
+          button.dataset.routinePreview ===
+          String(previewTriggerRoutineIdRef.current)
+      )
+      trigger?.focus()
+    }
+  }, [previewRoutine])
 
   // TAB-RTN-45: Detect reduced motion preference
   useEffect(() => {
@@ -462,8 +481,15 @@ function Routines() {
   const handleRoutineLeftClick = useCallback((routine) => {
     // If this routine is already running, just show the runner (don't open preview)
     if (runner.runningRoutine?.id === routine.id) return
+    previewTriggerRoutineIdRef.current = routine.id
+    restorePreviewFocusRef.current = false
     setPreviewRoutine(routine)
   }, [runner.runningRoutine])
+
+  const handleClosePreview = useCallback(() => {
+    restorePreviewFocusRef.current = true
+    setPreviewRoutine(null)
+  }, [])
 
   // Save the routine as a schedule event.
   // On success: toast + close modal.
@@ -528,11 +554,18 @@ function Routines() {
       {previewRoutine && !runner.state?.isRunning && (
         <div className='card'>
           <div className='card-h'>
-            <strong>{previewRoutine.name || previewRoutine.title}</strong>
+            <strong
+              ref={previewHeadingRef}
+              tabIndex={-1}
+              role='heading'
+              aria-level={2}
+            >
+              {previewRoutine.name || previewRoutine.title}
+            </strong>
             <button
               type='button'
               className='btn'
-              onClick={() => setPreviewRoutine(null)}
+              onClick={handleClosePreview}
               aria-label='Back to routine list'
             >
               <Icon name='x' />
@@ -570,7 +603,7 @@ function Routines() {
               <button
                 type='button'
                 className='btn'
-                onClick={() => setPreviewRoutine(null)}
+                onClick={handleClosePreview}
                 aria-label='Cancel preview'
               >
                 Cancel
@@ -582,6 +615,7 @@ function Routines() {
                   runner.start(previewRoutine)
                   setPreviewRoutine(null)
                 }}
+                disabled={!Array.isArray(previewRoutine.steps) || previewRoutine.steps.length === 0}
                 aria-label={`Start routine: ${previewRoutine.name || previewRoutine.title}`}
               >
                 <Icon name='play' />
@@ -652,6 +686,7 @@ function Routines() {
                       type='button'
                       className='rseq-routine-row-info'
                       onClick={() => handleRoutineLeftClick(routine)}
+                      data-routine-preview={routine.id}
                       aria-label={`Preview routine: ${routine.name || routine.title}`}
                     >
                       <div className='rseq-routine-row-title'>
@@ -723,6 +758,7 @@ function Routines() {
                         e.stopPropagation()
                         runner.start(routine)
                       }}
+                      disabled={!Array.isArray(routine.steps) || routine.steps.length === 0}
                       aria-label={`Start ${routine.name || routine.title}`}
                     >
                       <Icon name='play' />

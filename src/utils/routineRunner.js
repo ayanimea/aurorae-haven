@@ -90,7 +90,7 @@ export function createRunnerState(routine) {
     currentStepIndex: 0,
     isRunning: false,
     isPaused: false,
-    remainingSeconds: routine.steps[0]?.duration || 0,
+    remainingSeconds: routine.steps?.[0]?.duration || 0,
     startedAt: Date.now(),
     pausedAt: null,
     totalPausedTime: 0,
@@ -240,9 +240,9 @@ export function tickTimer(state) {
  * @returns {number} Progress percentage (0-100)
  */
 export function calculateProgress(state) {
-  const totalSteps = state.routine.steps.length
+  const totalSteps = state.routine.steps?.length ?? 0
   const completedCount = state.completedSteps.length + state.skippedSteps.length
-  return Math.round((completedCount / totalSteps) * 100)
+  return totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0
 }
 
 /**

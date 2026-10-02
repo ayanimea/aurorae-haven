@@ -232,6 +232,41 @@ describe('Routines — Schedule routine', () => {
     expect(mockRunner.start).toHaveBeenCalledWith(MORNING_ROUTINE)
   })
 
+  it('moves focus into preview and restores it to the routine after closing', async () => {
+    await renderWithRoutines()
+    const previewButton = screen.getByRole('button', {
+      name: 'Preview routine: Morning Routine'
+    })
+    previewButton.focus()
+
+    fireEvent.click(previewButton)
+
+    expect(
+      screen.getByRole('heading', { name: 'Morning Routine' })
+    ).toHaveFocus()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel preview' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Preview routine: Morning Routine' })
+    ).toHaveFocus()
+  })
+
+  it('disables starting a routine without steps in the list and preview', async () => {
+    const emptyRoutine = { id: 'empty', name: 'Empty Routine', steps: [] }
+    await renderWithRoutines([emptyRoutine])
+
+    expect(
+      screen.getByRole('button', { name: 'Start Empty Routine' })
+    ).toBeDisabled()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Preview routine: Empty Routine' })
+    )
+    expect(
+      screen.getByRole('button', { name: 'Start routine: Empty Routine' })
+    ).toBeDisabled()
+  })
+
   it('shows the persisted active step after Routines is remounted', async () => {
     Object.assign(mockRunner, {
       runningRoutine: MORNING_ROUTINE,
