@@ -66,21 +66,24 @@ function getRunnerState() {
 }
 
 describe('RoutineRunnerProvider', () => {
-  let animationFrames
-  let nextAnimationFrameId
+  let scheduledTimeouts
+  let nextTimeoutId
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2025-01-01T00:00:00Z'))
-    animationFrames = new Map()
-    nextAnimationFrameId = 0
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      const id = ++nextAnimationFrameId
-      animationFrames.set(id, callback)
+    scheduledTimeouts = new Map()
+    nextTimeoutId = 0
+    vi.spyOn(window, 'setTimeout').mockImplementation((callback, delay) => {
+      const id = ++nextTimeoutId
+      scheduledTimeouts.set(id, {
+        callback,
+        dueAt: Date.now() + delay
+      })
       return id
     })
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
-      animationFrames.delete(id)
+    vi.spyOn(window, 'clearTimeout').mockImplementation((id) => {
+      scheduledTimeouts.delete(id)
     })
   })
 
@@ -90,11 +93,14 @@ describe('RoutineRunnerProvider', () => {
   })
 
   function advanceClock(milliseconds) {
-    vi.setSystemTime(Date.now() + milliseconds)
-    const nextFrame = animationFrames.entries().next().value
-    if (!nextFrame) throw new Error('Expected a scheduled animation frame')
-    const [id, callback] = nextFrame
-    animationFrames.delete(id)
+    const targetTime = Date.now() + milliseconds
+    vi.setSystemTime(targetTime)
+    const nextTimeout = [...scheduledTimeouts.entries()]
+      .filter(([, timeout]) => timeout.dueAt <= targetTime)
+      .sort(([, first], [, second]) => first.dueAt - second.dueAt)[0]
+    if (!nextTimeout) return
+    const [id, { callback }] = nextTimeout
+    scheduledTimeouts.delete(id)
     act(() => callback())
   }
 
@@ -115,6 +121,17 @@ describe('RoutineRunnerProvider', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Navigate' }))
     expect(getRunnerState().state.remainingSeconds).toBe(2)
+  })
+
+  it('schedules one-second boundaries and stops scheduling at zero', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    expect([...scheduledTimeouts.values()][0].dueAt - Date.now()).toBe(1000)
+    advanceClock(10000)
+
+    expect(getRunnerState().state.remainingSeconds).toBe(0)
+    expect(scheduledTimeouts.size).toBe(0)
   })
 
   it('does not decrement while paused and resumes the timer', () => {

@@ -2,9 +2,9 @@
  * RoutineRunnerContext
  *
  * Provides a persistent routine-runner state that survives React route
- * changes.  The RAF timer loop continues running even when the Routines page
- * is unmounted, so the countdown advances correctly when the user navigates
- * away and returns.
+ * changes. The timer continues running even when the Routines page is
+ * unmounted, so the countdown advances correctly when the user navigates away
+ * and returns.
  *
  * Usage:
  *   - Wrap the app with <RoutineRunnerProvider>
@@ -51,9 +51,8 @@ export function RoutineRunnerProvider({ children }) {
   latestStateRef.current = state
 
   // ── Timer loop ──────────────────────────────────────────────────────────
-  // Runs via requestAnimationFrame so the countdown continues even when the
-  // Routines page is not rendered. The effect restarts when running or pause
-  // status or active step changes so each interval has its own timing baseline.
+  // Schedule only the next countdown boundary. Elapsed-time catch-up keeps the
+  // timer accurate when the browser delays a timeout or the page is backgrounded.
   const routine = state?.routine
   const currentStepIndex = state?.currentStepIndex
   useEffect(() => {
@@ -61,25 +60,26 @@ export function RoutineRunnerProvider({ children }) {
       !state?.isRunning ||
       state.isPaused ||
       !routine ||
-      currentStepIndex == null
+      currentStepIndex == null ||
+      latestStateRef.current?.remainingSeconds <= 0
     ) {
       return
     }
 
     let lastTick = Date.now() - fractionalTickMsRef.current
     fractionalTickMsRef.current = 0
-    let animationId
+    let timeoutId
+    let remainingSeconds = latestStateRef.current.remainingSeconds
 
     const tick = () => {
       const now = Date.now()
-      const elapsedTicks = Math.floor(
-        (now - lastTick) / TIMER_TICK_INTERVAL_MS
-      )
+      const elapsedTicks = Math.floor((now - lastTick) / TIMER_TICK_INTERVAL_MS)
       if (elapsedTicks > 0) {
+        const ticksToApply = Math.min(elapsedTicks, remainingSeconds)
+        remainingSeconds -= ticksToApply
         setState((prev) => {
           if (!prev?.isRunning) return prev
           let next = prev
-          const ticksToApply = Math.min(elapsedTicks, prev.remainingSeconds)
           for (let tickCount = 0; tickCount < ticksToApply; tickCount += 1) {
             next = tickTimer(next)
             if (isRoutineComplete(next)) {
@@ -92,12 +92,21 @@ export function RoutineRunnerProvider({ children }) {
         })
         lastTick += elapsedTicks * TIMER_TICK_INTERVAL_MS
       }
-      animationId = window.requestAnimationFrame(tick)
+      if (remainingSeconds > 0) {
+        const elapsedSinceLastTick = Date.now() - lastTick
+        const delay =
+          TIMER_TICK_INTERVAL_MS -
+          (elapsedSinceLastTick % TIMER_TICK_INTERVAL_MS)
+        timeoutId = window.setTimeout(tick, delay)
+      }
     }
 
-    animationId = window.requestAnimationFrame(tick)
+    const elapsedSinceLastTick = Date.now() - lastTick
+    const delay =
+      TIMER_TICK_INTERVAL_MS - (elapsedSinceLastTick % TIMER_TICK_INTERVAL_MS)
+    timeoutId = window.setTimeout(tick, delay)
     return () => {
-      window.cancelAnimationFrame(animationId)
+      window.clearTimeout(timeoutId)
       const latestState = latestStateRef.current
       if (
         latestState?.isPaused &&
@@ -212,7 +221,7 @@ export function RoutineRunnerProvider({ children }) {
   const value = {
     /** The routine that is currently running (or null). */
     runningRoutine,
-    /** Full runner state (mirrors useRoutineRunner's `state`). */
+    /** Full runner state. */
     state,
     isComplete,
     summary,

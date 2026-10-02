@@ -20,7 +20,7 @@ const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS // ≈ 553
  * Figma gamified sequence runner.
  *
  * Props:
- *  runner              - result of useRoutineRunner()
+ *  runner              - result of useRoutineRunnerContext()
  *  prefersReducedMotion - boolean, respects prefers-reduced-motion
  *  onCancel            - callback to trigger cancel confirmation
  */
