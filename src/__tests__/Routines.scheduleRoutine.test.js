@@ -288,6 +288,55 @@ describe('Routines — Schedule routine', () => {
     expect(mockRunner.start).not.toHaveBeenCalled()
   })
 
+  it('focuses and traps focus in the summary, then restores focus to the routine list', async () => {
+    Object.assign(mockRunner, {
+      isComplete: true,
+      summary: {
+        routineTitle: 'Morning Routine',
+        actualDuration: 30,
+        plannedDuration: 60,
+        completedCount: 1,
+        skippedCount: 0,
+        onTimePercentage: 100,
+        xpBreakdown: {
+          total: 2,
+          stepXP: 2,
+          routineBonus: 0,
+          perfectBonus: 0
+        },
+        steps: [{ status: 'completed', stepLabel: 'Stretch' }]
+      }
+    })
+
+    const { rerender } = await renderWithRoutines()
+    const heading = screen.getByRole('heading', { name: '🎉 Routine Complete!' })
+    const closeButton = screen.getByRole('button', { name: 'Close summary' })
+    const runAgainButton = screen.getByRole('button', { name: 'Run Again' })
+    const routineHeading = screen.getByText('Available Routines')
+
+    expect(heading).toHaveFocus()
+    runAgainButton.focus()
+    routineHeading.focus()
+    await waitFor(() => {
+      expect(routineHeading).not.toHaveFocus()
+      expect(screen.getByRole('dialog')).toContainElement(document.activeElement)
+    })
+
+    fireEvent.click(closeButton)
+    expect(mockRunner.cancel).toHaveBeenCalled()
+
+    Object.assign(mockRunner, {
+      isComplete: false,
+      summary: null,
+      state: null
+    })
+    await act(async () => {
+      rerender(<Routines />)
+    })
+
+    expect(screen.getByText('Available Routines')).toHaveFocus()
+  })
+
   it('deletes a routine after confirmation via ConfirmModal', async () => {
     await renderWithRoutines()
 

@@ -1,4 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useMemo
+} from 'react'
+import FocusLock from 'react-focus-lock'
 import { useRoutineRunnerContext } from '../contexts/RoutineRunnerContext'
 import { useToast } from '../hooks/useToast'
 import { useCrossTabSync } from '../hooks/useCrossTabSync'
@@ -40,6 +48,9 @@ function Routines() {
   const previewTriggerRoutineIdRef = useRef(null)
   const previewHeadingRef = useRef(null)
   const restorePreviewFocusRef = useRef(false)
+  const summaryHeadingRef = useRef(null)
+  const summaryReturnFocusRef = useRef(null)
+  const summaryWasOpenRef = useRef(false)
   const [availableRoutines, setAvailableRoutines] = useState([])
   const [loadingRoutines, setLoadingRoutines] = useState(true)
   const { toastMessage, showToast, showToastNotification } = useToast()
@@ -107,6 +118,31 @@ function Routines() {
 
   // Global routine runner (persists across route changes)
   const runner = useRoutineRunnerContext()
+  const isSummaryOpen = Boolean(
+    (runner.isComplete || runner.summary?.status === 'cancelled') &&
+      runner.summary
+  )
+
+  useLayoutEffect(() => {
+    if (isSummaryOpen) {
+      summaryWasOpenRef.current = true
+      summaryHeadingRef.current?.focus()
+    } else if (summaryWasOpenRef.current) {
+      summaryWasOpenRef.current = false
+      if (!runner.state?.isRunning) summaryReturnFocusRef.current?.focus()
+    }
+  }, [isSummaryOpen, runner.state?.isRunning])
+
+  useEffect(() => {
+    if (!isSummaryOpen) return
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') runner.cancel()
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isSummaryOpen, runner.cancel])
 
   const loadAvailableRoutines = useCallback(async () => {
     try {
@@ -630,7 +666,9 @@ function Routines() {
       {!runner.state?.isRunning && !previewRoutine && (
         <div className='card'>
           <div className='card-h'>
-            <strong>Available Routines</strong>
+            <strong ref={summaryReturnFocusRef} tabIndex={-1}>
+              Available Routines
+            </strong>
             <button
               type='button'
               className='btn btn-primary'
@@ -773,8 +811,8 @@ function Routines() {
       )}
 
       {/* TAB-RTN-31: Completion Summary Modal */}
-      {(runner.isComplete || runner.summary?.status === 'cancelled') &&
-        runner.summary && (
+      {isSummaryOpen && (
+        // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click is a pointer-only convenience
         <div
           className='modal-overlay'
           onClick={(e) => {
@@ -782,23 +820,23 @@ function Routines() {
               runner.cancel()
             }
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              runner.cancel()
-            }
-          }}
-          role='button'
-          tabIndex={0}
+          role='presentation'
         >
-          <div
+          <FocusLock
+            returnFocus={false}
+            autoFocus={false}
             className='modal-content'
-            role='dialog'
-            aria-modal='true'
-            aria-labelledby='summary-title'
+            lockProps={{
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-labelledby': 'summary-title'
+            }}
           >
             <div className='modal-header'>
               <h2
+                ref={summaryHeadingRef}
                 id='summary-title'
+                tabIndex={-1}
                 style={{
                   // TAB-RTN-45: Reduced motion - disable text animations
                   animation: prefersReducedMotion ? 'none' : undefined
@@ -950,7 +988,7 @@ function Routines() {
                 </div>
               </div>
             </div>
-          </div>
+          </FocusLock>
         </div>
       )}
 

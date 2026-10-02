@@ -11,7 +11,14 @@
  *   - Call useRoutineRunnerContext() inside any component
  */
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef
+} from 'react'
 import PropTypes from 'prop-types'
 import {
   createRunnerState,
@@ -39,6 +46,9 @@ export function RoutineRunnerProvider({ children }) {
   const [state, setState] = useState(null)
   const [isComplete, setIsComplete] = useState(false)
   const [summary, setSummary] = useState(null)
+  const latestStateRef = useRef(state)
+  const fractionalTickMsRef = useRef(0)
+  latestStateRef.current = state
 
   // ── Timer loop ──────────────────────────────────────────────────────────
   // Runs via requestAnimationFrame so the countdown continues even when the
@@ -56,7 +66,8 @@ export function RoutineRunnerProvider({ children }) {
       return
     }
 
-    let lastTick = Date.now()
+    let lastTick = Date.now() - fractionalTickMsRef.current
+    fractionalTickMsRef.current = 0
     let animationId
 
     const tick = () => {
@@ -85,7 +96,20 @@ export function RoutineRunnerProvider({ children }) {
     }
 
     animationId = window.requestAnimationFrame(tick)
-    return () => window.cancelAnimationFrame(animationId)
+    return () => {
+      window.cancelAnimationFrame(animationId)
+      const latestState = latestStateRef.current
+      if (
+        latestState?.isPaused &&
+        latestState.routine === routine &&
+        latestState.currentStepIndex === currentStepIndex
+      ) {
+        fractionalTickMsRef.current =
+          (Date.now() - lastTick) % TIMER_TICK_INTERVAL_MS
+      } else {
+        fractionalTickMsRef.current = 0
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.isRunning, state?.isPaused, routine, currentStepIndex])
 

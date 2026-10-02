@@ -123,18 +123,18 @@ describe('RoutineRunnerProvider', () => {
     expect(getRunnerState().state.remainingSeconds).toBe(9)
   })
 
-  it('does not count time spent paused between animation frames', () => {
+  it('preserves the fractional timer remainder across a pause', () => {
     render(<RunnerHarness />)
     fireEvent.click(screen.getByRole('button', { name: 'Start' }))
 
     vi.setSystemTime(Date.now() + 100)
     fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
-    vi.setSystemTime(Date.now() + 800)
+    vi.setSystemTime(Date.now() + 5000)
     fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
 
-    advanceClock(900)
+    advanceClock(899)
     expect(getRunnerState().state.remainingSeconds).toBe(10)
-    advanceClock(100)
+    advanceClock(1)
     expect(getRunnerState().state.remainingSeconds).toBe(9)
   })
 
