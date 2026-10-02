@@ -44,7 +44,7 @@ function RunnerConsumer() {
   )
 }
 
-function UnboundConsumer() {
+function ConsumerWithoutProvider() {
   useRoutineRunnerContext()
   return null
 }
@@ -259,7 +259,7 @@ describe('RoutineRunnerProvider', () => {
 
   it('throws when the hook is used outside a RoutineRunnerProvider', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
-    expect(() => render(<UnboundConsumer />)).toThrow(
+    expect(() => render(<ConsumerWithoutProvider />)).toThrow(
       'useRoutineRunnerContext must be used inside <RoutineRunnerProvider>'
     )
     consoleError.mockRestore()
