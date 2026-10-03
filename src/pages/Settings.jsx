@@ -326,14 +326,13 @@ function Settings({ onExport, onImport }) {
   }
 
   return (
-    <div className='card'>
-      <div className='card-h'>
-        <strong>Settings</strong>
-        <span className='small'>Customize your experience</span>
-      </div>
-      <div className='card-b'>
-        <div className='settings-section'>
-          <h3 className='settings-section-title'>Task &amp; Note Categories</h3>
+    <div className='settings-page'>
+      <section className='card settings-category-card' aria-labelledby='category-settings-title'>
+        <div className='card-h'>
+          <h2 id='category-settings-title'>Task &amp; Note Categories</h2>
+          <span className='small'>Shared across Tasks and Brain Dump</span>
+        </div>
+        <div className='card-b'>
           <p className='settings-hint'>
             Create up to {MAX_CATEGORY_COUNT} shared categories for organizing
             tasks and notes.
@@ -400,6 +399,13 @@ function Settings({ onExport, onImport }) {
             </button>
           )}
         </div>
+      </section>
+      <div className='card'>
+        <div className='card-h'>
+          <strong>Settings</strong>
+          <span className='small'>Customize your experience</span>
+        </div>
+        <div className='card-b'>
         {/* Data Management — Export / Import at the top */}
         <div className='settings-section'>
           <h3 className='settings-section-title'>Data Management</h3>
@@ -770,6 +776,7 @@ function Settings({ onExport, onImport }) {
           </p>
         </div>
       </div>
+    </div>
     </div>
   )
 }

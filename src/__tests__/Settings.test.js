@@ -105,6 +105,22 @@ describe('Settings Component', () => {
     expect(screen.getByText('Customize your experience')).toBeInTheDocument()
   })
 
+  test('shows the category manager as a separate Settings card', () => {
+    const { container } = render(
+      <Settings onExport={mockOnExport} onImport={mockOnImport} />
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Task & Note Categories' })
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Add category' })
+    ).toBeVisible()
+    expect(
+      container.querySelector('.settings-category-card')
+    ).toBeInTheDocument()
+  })
+
   test('creates at most six shared categories in Settings', async () => {
     localStorage.clear()
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)

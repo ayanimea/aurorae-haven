@@ -1,6 +1,16 @@
 /* Settings page styles */
 /* Auto-save configuration UI */
 
+.settings-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-category-card .card-h h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
 .settings-section {
   margin-bottom: 2rem;
 }
