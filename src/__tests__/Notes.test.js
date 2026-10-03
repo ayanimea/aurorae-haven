@@ -1440,5 +1440,67 @@ describe('Notes Component', () => {
 
       expect(screen.getByText('Personal')).toBeInTheDocument()
     })
+
+    test('creates a sub-note linked to the current note', async () => {
+      localStorage.setItem(
+        'brainDumpEntries',
+        JSON.stringify([
+          {
+            id: 'parent-note',
+            title: 'Parent note',
+            content: 'Parent content',
+            category: 'Work',
+            locked: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ])
+      )
+      render(<Notes />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'New sub-note' }))
+
+      expect(
+        screen.getByPlaceholderText('Note title...')
+      ).toHaveValue('Untitled Sub-note')
+      await waitFor(() => {
+        const entries = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(entries).toHaveLength(2)
+        expect(entries[1].parentNoteId).toBe('parent-note')
+        expect(entries[1].category).toBe('Work')
+      })
+    })
+
+    test('sorts notes by category', () => {
+      localStorage.setItem(
+        'brainDumpEntries',
+        JSON.stringify([
+          {
+            id: 'personal-note',
+            title: 'Personal entry',
+            content: '',
+            category: 'Personal',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'work-note',
+            title: 'Work entry',
+            content: '',
+            category: 'Work',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ])
+      )
+      const { container } = render(<Notes />)
+      fireEvent.change(screen.getByLabelText('Sort notes'), {
+        target: { value: 'category' }
+      })
+
+      const titles = container.querySelectorAll('.note-item-title')
+      expect(titles[0]).toHaveTextContent('Personal entry')
+      expect(titles[1]).toHaveTextContent('Work entry')
+    })
   })
 })

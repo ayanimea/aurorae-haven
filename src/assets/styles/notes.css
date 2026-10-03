@@ -142,6 +142,25 @@
   margin-bottom: 12px;
 }
 
+.note-sort {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.note-sort select {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--ink);
+}
+
 .note-search-input {
   width: 100%;
   padding: 8px 32px 8px 10px;
@@ -190,6 +209,16 @@
     background var(--dur) var(--ease),
     border-color var(--dur) var(--ease),
     transform var(--dur) var(--ease);
+}
+
+.note-item.sub-note {
+  margin-left: 12px;
+  border-left: 2px solid var(--mint);
+}
+
+.note-item-parent {
+  color: var(--dim);
+  font-size: 11px;
 }
 
 .note-item:hover {
@@ -877,4 +906,3 @@ textarea:focus {
   color: var(--mint);
   border-bottom-color: var(--mint);
 }
-

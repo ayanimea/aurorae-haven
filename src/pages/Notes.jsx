@@ -160,6 +160,7 @@ function Notes() {
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
   const [showNewNoteModal, setShowNewNoteModal] = useState(false)
+  const [noteSort, setNoteSort] = useState('original')
   const [contextMenu, setContextMenu] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState(null)
@@ -473,6 +474,20 @@ function Notes() {
     }
   }
 
+  const handleCreateSubNote = () => {
+    if (!currentNote || currentNote.locked) return
+
+    const subNote = {
+      ...createNewNote(),
+      title: 'Untitled Sub-note',
+      category: category || '',
+      parentNoteId: currentNote.id
+    }
+    const updatedNotes = [...notes, subNote]
+    updateNotes(updatedNotes)
+    loadNote(subNote)
+  }
+
   return (
     <div className='brain-dump-container'>
       {/* Note List Sidebar */}
@@ -481,6 +496,8 @@ function Notes() {
         filteredNotes={filteredNotes}
         currentNoteId={currentNoteId}
         searchQuery={searchQuery}
+        sortMode={noteSort}
+        onSortModeChange={setNoteSort}
         showNoteList={showNoteList}
         onSearchChange={setSearchQuery}
         onClearSearch={() => setSearchQuery('')}
@@ -508,6 +525,7 @@ function Notes() {
             onContentChange={setContent}
             onToggleNoteList={() => setShowNoteList(!showNoteList)}
             onNewNote={handleNewNote}
+            onCreateSubNote={handleCreateSubNote}
             onImport={handleImport}
             onExport={handleExport}
             onExportOdt={handleExportOdt}

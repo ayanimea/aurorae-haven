@@ -10,6 +10,13 @@ providing powerful functionality.
 
 ## Implemented Specifications
 
+### TAB-BDP-SUB-01: Sub-notes and Category Ordering
+
+- Create a sub-note from the currently selected note using **New sub-note**
+- Sub-notes retain a parent-note link and inherit the parent's category
+- The note list identifies sub-notes and can be sorted by category A–Z
+- Deleting a parent note moves its direct sub-notes up to the parent's parent, or to the top level
+
 ### TAB-BDP-TOC-01: Table of Contents
 
 **Requirement**: Brain Dump notes shall support an auto-generated table of contents (TOC) that links to headings.

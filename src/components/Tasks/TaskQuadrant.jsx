@@ -16,6 +16,9 @@ function TaskQuadrant({
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  onAddSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
   onDragStart,
   onDragOver,
   onDrop
@@ -54,6 +57,9 @@ function TaskQuadrant({
               onSaveEdit={onSaveEdit}
               onCancelEdit={onCancelEdit}
               onDelete={onDelete}
+              onAddSubtask={onAddSubtask}
+              onToggleSubtask={onToggleSubtask}
+              onDeleteSubtask={onDeleteSubtask}
               onDragStart={onDragStart}
             />
           ))
@@ -82,6 +88,9 @@ TaskQuadrant.propTypes = {
   onSaveEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onAddSubtask: PropTypes.func.isRequired,
+  onToggleSubtask: PropTypes.func.isRequired,
+  onDeleteSubtask: PropTypes.func.isRequired,
   onDragStart: PropTypes.func.isRequired,
   onDragOver: PropTypes.func.isRequired,
   onDrop: PropTypes.func.isRequired

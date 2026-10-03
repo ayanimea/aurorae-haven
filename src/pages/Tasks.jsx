@@ -5,12 +5,22 @@ import TaskForm from '../components/Tasks/TaskForm'
 import TaskQuadrant from '../components/Tasks/TaskQuadrant'
 
 function Tasks() {
-  const { tasks, addTask, toggleTask, deleteTask, editTask, moveTask } =
-    useTasksState()
+  const {
+    tasks,
+    addTask,
+    toggleTask,
+    deleteTask,
+    editTask,
+    addSubtask,
+    toggleSubtask,
+    deleteSubtask,
+    moveTask
+  } = useTasksState()
 
   // Form state
   const [newTask, setNewTask] = useState('')
   const [selectedQuadrant, setSelectedQuadrant] = useState('urgent_important')
+  const [categorySort, setCategorySort] = useState('priority')
 
   // Editing state
   const [editingTask, setEditingTask] = useState(null)
@@ -75,6 +85,10 @@ function Tasks() {
       colorClass: 'quadrant-green'
     }
   ]
+  const sortedQuadrants =
+    categorySort === 'category'
+      ? [...quadrants].sort((a, b) => a.title.localeCompare(b.title))
+      : quadrants
 
   return (
     <div className='tasks-container'>
@@ -93,8 +107,21 @@ function Tasks() {
         </div>
       </div>
 
+      <div className='task-category-sort'>
+        <label htmlFor='task-category-sort'>Sort categories:</label>
+        <select
+          id='task-category-sort'
+          value={categorySort}
+          onChange={(e) => setCategorySort(e.target.value)}
+          className='quadrant-select'
+        >
+          <option value='priority'>Priority order</option>
+          <option value='category'>Category A–Z</option>
+        </select>
+      </div>
+
       <div className='eisenhower-matrix'>
-        {quadrants.map((quadrant) => (
+        {sortedQuadrants.map((quadrant) => (
           <TaskQuadrant
             key={quadrant.key}
             quadrant={quadrant}
@@ -107,6 +134,9 @@ function Tasks() {
             onSaveEdit={saveEditTask}
             onCancelEdit={cancelEditTask}
             onDelete={deleteTask}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask}
+            onDeleteSubtask={deleteSubtask}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDrop}

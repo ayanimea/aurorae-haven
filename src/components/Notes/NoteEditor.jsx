@@ -27,6 +27,7 @@ function NoteEditor({
   onContentChange,
   onToggleNoteList,
   onNewNote,
+  onCreateSubNote,
   onImport,
   onExport,
   onExportOdt,
@@ -219,6 +220,16 @@ function NoteEditor({
           >
             <Icon name='plus' />
           </button>
+          <button
+            type='button'
+            className='btn'
+            onClick={onCreateSubNote}
+            aria-label='New sub-note'
+            title='New sub-note'
+            disabled={!currentNoteId || currentNote?.locked}
+          >
+            <Icon name='list' />
+          </button>
           <button type='button'
             className='btn'
             onClick={onLockToggle}
@@ -342,6 +353,7 @@ NoteEditor.propTypes = {
   onContentChange: PropTypes.func.isRequired,
   onToggleNoteList: PropTypes.func.isRequired,
   onNewNote: PropTypes.func.isRequired,
+  onCreateSubNote: PropTypes.func.isRequired,
   onImport: PropTypes.func.isRequired,
   onExport: PropTypes.func.isRequired,
   onExportOdt: PropTypes.func.isRequired,

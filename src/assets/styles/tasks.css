@@ -65,6 +65,13 @@
   gap: 14px;
 }
 
+.task-category-sort {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .matrix-quadrant {
   background: linear-gradient(180deg, var(--glass-lo), rgba(18, 22, 52, 0.22));
   border: 1px solid var(--line);
@@ -215,6 +222,58 @@
   display: flex;
   gap: 4px;
   align-items: center;
+}
+
+.task-subtasks {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  padding-left: 28px;
+}
+
+.task-subtask,
+.task-subtask-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.task-subtask span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.task-subtask span.completed {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+.task-subtask-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--ink);
+}
+
+.task-add-subtask {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--mint);
+  cursor: pointer;
+}
+
+.task-add-subtask:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
 }
 
 .btn-edit,

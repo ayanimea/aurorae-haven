@@ -11,6 +11,8 @@ function NotesList({
   filteredNotes,
   currentNoteId,
   searchQuery,
+  sortMode,
+  onSortModeChange,
   showNoteList,
   onSearchChange,
   onClearSearch,
@@ -21,6 +23,15 @@ function NotesList({
   onNewNote
 }) {
   if (!showNoteList) return null
+
+  const orderedNotes =
+    sortMode === 'category'
+      ? [...filteredNotes].sort(
+          (a, b) =>
+            (a.category || '').localeCompare(b.category || '') ||
+            (a.title || '').localeCompare(b.title || '')
+        )
+      : filteredNotes
 
   return (
     <div className='note-list-sidebar'>
@@ -73,11 +84,28 @@ function NotesList({
           </button>
         )}
       </div>
+      <label className='note-sort'>
+        <span>Sort notes:</span>
+        <select
+          value={sortMode}
+          onChange={(e) => onSortModeChange(e.target.value)}
+          aria-label='Sort notes'
+        >
+          <option value='original'>Original order</option>
+          <option value='category'>Category A–Z</option>
+        </select>
+      </label>
       <div className='note-list'>
-        {filteredNotes.map((note) => (
-          <div
+        {orderedNotes.map((note) => {
+          const parentNote = note.parentNoteId
+            ? notes.find((item) => item.id === note.parentNoteId)
+            : null
+          return <div
             key={note.id}
-            className={clsx('note-item', { active: note.id === currentNoteId })}
+            className={clsx('note-item', {
+              active: note.id === currentNoteId,
+              'sub-note': Boolean(note.parentNoteId)
+            })}
             onClick={() => onNoteClick(note)}
             onContextMenu={(e) => onNoteContextMenu(e, note)}
             role='button'
@@ -109,9 +137,14 @@ function NotesList({
               {note.category && (
                 <div className='note-item-category'>{note.category}</div>
               )}
+              {note.parentNoteId && (
+                <div className='note-item-parent'>
+                  Sub-note of {parentNote?.title || 'Untitled'}
+                </div>
+              )}
             </div>
           </div>
-        ))}
+        })}
         {filteredNotes.length === 0 && notes.length > 0 && (
           <div className='note-list-empty'>
             No notes found matching &quot;{searchQuery}&quot;
@@ -132,6 +165,8 @@ NotesList.propTypes = {
   filteredNotes: PropTypes.array.isRequired,
   currentNoteId: PropTypes.string,
   searchQuery: PropTypes.string.isRequired,
+  sortMode: PropTypes.string.isRequired,
+  onSortModeChange: PropTypes.func.isRequired,
   showNoteList: PropTypes.bool.isRequired,
   onSearchChange: PropTypes.func.isRequired,
   onClearSearch: PropTypes.func.isRequired,

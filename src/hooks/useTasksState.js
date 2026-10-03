@@ -55,6 +55,7 @@ export function useTasksState() {
       id: generateSecureUUID(),
       text: text.trim(),
       completed: false,
+      subtasks: [],
       createdAt: new Date().toISOString(),
       dueDate: null,
       completedAt: null
@@ -102,6 +103,66 @@ export function useTasksState() {
     }))
   }
 
+  const addSubtask = (quadrant, taskId, text) => {
+    const subtask = {
+      id: generateSecureUUID(),
+      text: text.trim(),
+      completed: false
+    }
+
+    setTasks((prev) => ({
+      ...(prev || createDefaultTasksState()),
+      [quadrant]: (prev?.[quadrant] || []).map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              subtasks: [
+                ...(Array.isArray(task.subtasks) ? task.subtasks : []),
+                subtask
+              ]
+            }
+          : task
+      )
+    }))
+
+    return subtask
+  }
+
+  const toggleSubtask = (quadrant, taskId, subtaskId) => {
+    setTasks((prev) => ({
+      ...(prev || createDefaultTasksState()),
+      [quadrant]: (prev?.[quadrant] || []).map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              subtasks: (Array.isArray(task.subtasks) ? task.subtasks : []).map(
+                (subtask) =>
+                subtask.id === subtaskId
+                  ? { ...subtask, completed: !subtask.completed }
+                  : subtask
+              )
+            }
+          : task
+      )
+    }))
+  }
+
+  const deleteSubtask = (quadrant, taskId, subtaskId) => {
+    setTasks((prev) => ({
+      ...(prev || createDefaultTasksState()),
+      [quadrant]: (prev?.[quadrant] || []).map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              subtasks: (Array.isArray(task.subtasks) ? task.subtasks : []).filter(
+                (subtask) => subtask.id !== subtaskId
+              )
+            }
+          : task
+      )
+    }))
+  }
+
   // Move task between quadrants
   const moveTask = (fromQuadrant, toQuadrant, task) => {
     if (fromQuadrant === toQuadrant) return
@@ -120,6 +181,9 @@ export function useTasksState() {
     toggleTask,
     deleteTask,
     editTask,
+    addSubtask,
+    toggleSubtask,
+    deleteSubtask,
     moveTask
   }
 }

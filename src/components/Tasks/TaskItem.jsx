@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -16,16 +16,26 @@ function TaskItem({
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  onAddSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
   onDragStart
 }) {
   const editInputRef = useRef(null)
+  const subtaskInputRef = useRef(null)
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false)
+  const [subtaskText, setSubtaskText] = useState('')
+  const subtasks = Array.isArray(task.subtasks) ? task.subtasks : []
 
   // Focus edit input when editing starts
   useEffect(() => {
     if (isEditing && editInputRef.current) {
       editInputRef.current.focus()
     }
-  }, [isEditing])
+    if (isAddingSubtask && subtaskInputRef.current) {
+      subtaskInputRef.current.focus()
+    }
+  }, [isEditing, isAddingSubtask])
 
   const handleKeyDown = (e) => {
     // Keyboard shortcuts for moving tasks between quadrants
@@ -52,6 +62,14 @@ function TaskItem({
     }
   }
 
+  const handleAddSubtask = (e) => {
+    e.preventDefault()
+    if (!subtaskText.trim()) return
+    onAddSubtask(quadrant, task.id, subtaskText)
+    setSubtaskText('')
+    setIsAddingSubtask(false)
+  }
+
   return (
     <div
       className={`task-item ${task.completed ? 'completed' : ''}`}
@@ -59,7 +77,7 @@ function TaskItem({
       onDragStart={() => onDragStart(quadrant, task)}
       onKeyDown={handleKeyDown}
       tabIndex={isEditing ? -1 : 0}
-      role='button'
+      role='group'
       aria-label={`Task: ${task.text}. Press Alt + Arrow keys to move between quadrants.`}
       onClick={(e) => {
         // Allow click to propagate to child elements (checkbox, edit, delete)
@@ -139,6 +157,66 @@ function TaskItem({
           </>
         )}
       </div>
+      <div className='task-subtasks'>
+        {subtasks.map((subtask) => (
+          <div className='task-subtask' key={subtask.id}>
+            <input
+              type='checkbox'
+              checked={subtask.completed}
+              onChange={() =>
+                onToggleSubtask(quadrant, task.id, subtask.id)
+              }
+              aria-label={`Mark "${subtask.text}" as ${subtask.completed ? 'incomplete' : 'complete'}`}
+            />
+            <span className={subtask.completed ? 'completed' : ''}>
+              {subtask.text}
+            </span>
+            <button
+              type='button'
+              className='btn-delete'
+              onClick={() => onDeleteSubtask(quadrant, task.id, subtask.id)}
+              aria-label={`Delete subtask "${subtask.text}"`}
+            >
+              <Icon name='trash' />
+            </button>
+          </div>
+        ))}
+        {isAddingSubtask ? (
+          <form className='task-subtask-form' onSubmit={handleAddSubtask}>
+            <input
+              ref={subtaskInputRef}
+              type='text'
+              value={subtaskText}
+              onChange={(e) => setSubtaskText(e.target.value)}
+              aria-label={`New subtask for ${task.text}`}
+            />
+            <button type='submit' className='btn' aria-label='Save subtask'>
+              <Icon name='check' />
+            </button>
+            <button
+              type='button'
+              className='btn'
+              onClick={() => {
+                setSubtaskText('')
+                setIsAddingSubtask(false)
+              }}
+              aria-label='Cancel subtask'
+            >
+              <Icon name='x' />
+            </button>
+          </form>
+        ) : (
+          <button
+            type='button'
+            className='task-add-subtask'
+            onClick={() => setIsAddingSubtask(true)}
+            aria-label={`Add subtask to ${task.text}`}
+          >
+            <Icon name='plus' />
+            Add subtask
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -158,6 +236,9 @@ TaskItem.propTypes = {
   onSaveEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onAddSubtask: PropTypes.func.isRequired,
+  onToggleSubtask: PropTypes.func.isRequired,
+  onDeleteSubtask: PropTypes.func.isRequired,
   onDragStart: PropTypes.func.isRequired
 }
 

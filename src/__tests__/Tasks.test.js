@@ -92,6 +92,47 @@ describe('Tasks Component', () => {
     expect(select.value).toBe('not_urgent_important')
   })
 
+  test('can create and complete subtasks', async () => {
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Parent task' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add subtask to Parent task' }))
+    const subtaskInput = screen.getByRole('textbox', {
+      name: 'New subtask for Parent task'
+    })
+    fireEvent.change(subtaskInput, { target: { value: 'Child task' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save subtask' }))
+
+    const checkbox = await screen.findByRole('checkbox', {
+      name: 'Mark "Child task" as complete'
+    })
+    fireEvent.click(checkbox)
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('checkbox', { name: 'Mark "Child task" as incomplete' })
+      ).toBeChecked()
+      const savedTask = JSON.parse(localStorage.getItem('aurorae_tasks'))
+        .urgent_important[0]
+      expect(savedTask.subtasks[0].text).toBe('Child task')
+      expect(savedTask.subtasks[0].completed).toBe(true)
+    })
+  })
+
+  test('sorts task categories alphabetically', () => {
+    const { container } = render(<Tasks />)
+    fireEvent.change(screen.getByLabelText('Sort categories:'), {
+      target: { value: 'category' }
+    })
+
+    const headers = container.querySelectorAll('.quadrant-header h3')
+    expect(headers[0]).toHaveTextContent('Not Urgent & Important')
+  })
+
   test('toggles task completion', async () => {
     render(<Tasks />)
 
