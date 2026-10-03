@@ -54,7 +54,7 @@ export function useTasksState() {
     const task = {
       id: generateSecureUUID(),
       text: text.trim(),
-      category,
+      category: typeof category === 'string' ? category.trim() : '',
       completed: false,
       subtasks: [],
       createdAt: new Date().toISOString(),
@@ -164,6 +164,42 @@ export function useTasksState() {
     }))
   }
 
+  const nestTask = (fromQuadrant, parentQuadrant, parentId, task) => {
+    if (task.id === parentId || (task.subtasks || []).length > 0) return false
+    let moved = false
+
+    setTasks((prev) => {
+      const state = prev || createDefaultTasksState()
+      const parentTasks = state[parentQuadrant] || []
+      const parentExists = parentTasks.some((item) => item.id === parentId)
+      const sourceTasks = state[fromQuadrant] || []
+      const sourceExists = sourceTasks.some((item) => item.id === task.id)
+      if (!parentExists || !sourceExists) return state
+      moved = true
+
+      return {
+        ...state,
+        [fromQuadrant]: sourceTasks.filter((item) => item.id !== task.id),
+        [parentQuadrant]: parentTasks.map((item) =>
+          item.id === parentId
+            ? {
+                ...item,
+                subtasks: [
+                  ...(Array.isArray(item.subtasks) ? item.subtasks : []),
+                  {
+                    id: task.id,
+                    text: task.text,
+                    completed: task.completed
+                  }
+                ]
+              }
+            : item
+        )
+      }
+    })
+    return moved
+  }
+
   // Move task between quadrants
   const moveTask = (fromQuadrant, toQuadrant, task) => {
     if (fromQuadrant === toQuadrant) return
@@ -185,6 +221,7 @@ export function useTasksState() {
     addSubtask,
     toggleSubtask,
     deleteSubtask,
+    nestTask,
     moveTask
   }
 }

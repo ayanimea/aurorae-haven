@@ -13,6 +13,19 @@
   align-items: center;
 }
 
+.task-template-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.task-template-picker select {
+  flex: 1;
+  min-width: 180px;
+}
+
 .quadrant-select {
   padding: 10px 12px;
   border: 1px solid var(--line);
@@ -364,6 +377,10 @@
   .add-task-form {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .task-template-picker {
+    align-items: stretch;
   }
 
   /* Card header layout - ensure proper wrapping */

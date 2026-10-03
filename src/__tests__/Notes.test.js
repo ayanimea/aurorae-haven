@@ -1471,6 +1471,49 @@ describe('Notes Component', () => {
       })
     })
 
+    test('dragging a note onto another nests it', async () => {
+      const notes = [
+        {
+          id: 'parent-note',
+          title: 'Parent note',
+          content: '',
+          category: 'Work',
+          locked: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'child-note',
+          title: 'Child note',
+          content: '',
+          category: 'Personal',
+          locked: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(notes))
+      const { container } = render(<Notes />)
+      const noteItems = container.querySelectorAll('.note-item')
+      fireEvent.dragStart(noteItems[1], {
+        dataTransfer: { setData: vi.fn() }
+      })
+      fireEvent.dragOver(noteItems[0])
+      fireEvent.drop(noteItems[0], {
+        dataTransfer: { getData: () => 'child-note' }
+      })
+
+      await waitFor(() => {
+        const saved = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(saved.find((note) => note.id === 'child-note').parentNoteId).toBe(
+          'parent-note'
+        )
+        expect(saved.find((note) => note.id === 'child-note').category).toBe(
+          'Work'
+        )
+      })
+    })
+
     test('category tabs filter notes by their shared category', () => {
       localStorage.setItem(
         'brainDumpEntries',

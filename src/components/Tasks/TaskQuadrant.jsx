@@ -20,7 +20,11 @@ function TaskQuadrant({
   onToggleSubtask,
   onDeleteSubtask,
   onDragStart,
+  onNestDrop,
   onDragOver,
+  onDragEnd,
+  savedTasks,
+  onSaveTask,
   onDrop
 }) {
   const isEditing = (task) => {
@@ -61,6 +65,16 @@ function TaskQuadrant({
               onToggleSubtask={onToggleSubtask}
               onDeleteSubtask={onDeleteSubtask}
               onDragStart={onDragStart}
+              onNestDrop={onNestDrop}
+              onDragOver={onDragOver}
+              onDragEnd={onDragEnd}
+              isSaved={savedTasks.some(
+                (saved) =>
+                  saved.text === task.text &&
+                  saved.quadrant === quadrant.key &&
+                  saved.category === (task.category || '')
+              )}
+              onSaveTask={onSaveTask}
             />
           ))
         )}
@@ -92,7 +106,11 @@ TaskQuadrant.propTypes = {
   onToggleSubtask: PropTypes.func.isRequired,
   onDeleteSubtask: PropTypes.func.isRequired,
   onDragStart: PropTypes.func.isRequired,
+  onNestDrop: PropTypes.func.isRequired,
   onDragOver: PropTypes.func.isRequired,
+  onDragEnd: PropTypes.func.isRequired,
+  savedTasks: PropTypes.array.isRequired,
+  onSaveTask: PropTypes.func.isRequired,
   onDrop: PropTypes.func.isRequired
 }
 

@@ -16,6 +16,7 @@ providing powerful functionality.
 - Tasks and notes share persistent category tabs, including an All tab
 - Selecting a category shows only notes assigned to that category
 - Sub-notes retain a parent-note link and inherit the parent's category
+- Drag an unlocked note onto another unlocked note to nest it
 - Deleting a parent note moves its direct sub-notes up to the parent's parent, or to the top level
 
 ### TAB-BDP-TOC-01: Table of Contents

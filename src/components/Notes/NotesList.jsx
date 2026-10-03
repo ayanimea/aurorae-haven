@@ -1,4 +1,5 @@
 
+import { useState } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import Icon from '../common/Icon'
@@ -22,9 +23,11 @@ function NotesList({
   onToggleNoteList,
   onFilterClick,
   onNoteClick,
+  onNestNote,
   onNoteContextMenu,
   onNewNote
 }) {
+  const [draggedNoteId, setDraggedNoteId] = useState(null)
   if (!showNoteList) return null
 
   const visibleNotes = filteredNotes.filter(
@@ -92,6 +95,7 @@ function NotesList({
         onSelect={onCategorySelect}
         onAddCategory={onAddCategory}
       />
+      <p className='note-list-hint'>Drag a note onto another to nest it.</p>
       <div className='note-list'>
         {visibleNotes.map((note) => {
           const parentNote = note.parentNoteId
@@ -99,10 +103,35 @@ function NotesList({
             : null
           return <div
             key={note.id}
+            draggable={!note.locked}
             className={clsx('note-item', {
               active: note.id === currentNoteId,
               'sub-note': Boolean(note.parentNoteId)
             })}
+            onDragStart={(event) => {
+              if (note.locked) {
+                event.preventDefault()
+                return
+              }
+              setDraggedNoteId(note.id)
+              event.dataTransfer?.setData('text/plain', note.id)
+            }}
+            onDragOver={(event) => {
+              if (draggedNoteId && draggedNoteId !== note.id && !note.locked) {
+                event.preventDefault()
+              }
+            }}
+            onDrop={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              const sourceId =
+                draggedNoteId || event.dataTransfer?.getData('text/plain')
+              if (sourceId && sourceId !== note.id && !note.locked) {
+                onNestNote(sourceId, note.id)
+              }
+              setDraggedNoteId(null)
+            }}
+            onDragEnd={() => setDraggedNoteId(null)}
             onClick={() => onNoteClick(note)}
             onContextMenu={(e) => onNoteContextMenu(e, note)}
             role='button'
@@ -172,6 +201,7 @@ NotesList.propTypes = {
   onToggleNoteList: PropTypes.func.isRequired,
   onFilterClick: PropTypes.func.isRequired,
   onNoteClick: PropTypes.func.isRequired,
+  onNestNote: PropTypes.func.isRequired,
   onNoteContextMenu: PropTypes.func.isRequired,
   onNewNote: PropTypes.func.isRequired
 }

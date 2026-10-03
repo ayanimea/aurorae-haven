@@ -19,7 +19,12 @@ function TaskItem({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
-  onDragStart
+  onDragStart,
+  onNestDrop,
+  onDragOver,
+  onDragEnd,
+  isSaved,
+  onSaveTask
 }) {
   const editInputRef = useRef(null)
   const subtaskInputRef = useRef(null)
@@ -75,6 +80,13 @@ function TaskItem({
       className={`task-item ${task.completed ? 'completed' : ''}`}
       draggable={!isEditing}
       onDragStart={() => onDragStart(quadrant, task)}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+      onDrop={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onNestDrop(quadrant, task.id)
+      }}
       onKeyDown={handleKeyDown}
       tabIndex={isEditing ? -1 : 0}
       role='group'
@@ -146,6 +158,16 @@ function TaskItem({
               aria-label={`Edit task "${task.text}"`}
             >
               <Icon name='edit' />
+            </button>
+            <button
+              type='button'
+              className='btn-edit'
+              onClick={() => onSaveTask(task)}
+              aria-label={isSaved ? `Task "${task.text}" is saved` : `Save task "${task.text}" for later`}
+              title={isSaved ? 'Saved for reuse' : 'Save for reuse'}
+              disabled={isSaved}
+            >
+              <Icon name='check' />
             </button>
             <button type="button"
               className='btn-delete'
@@ -239,7 +261,12 @@ TaskItem.propTypes = {
   onAddSubtask: PropTypes.func.isRequired,
   onToggleSubtask: PropTypes.func.isRequired,
   onDeleteSubtask: PropTypes.func.isRequired,
-  onDragStart: PropTypes.func.isRequired
+  onDragStart: PropTypes.func.isRequired,
+  onNestDrop: PropTypes.func.isRequired,
+  onDragOver: PropTypes.func.isRequired,
+  onDragEnd: PropTypes.func.isRequired,
+  isSaved: PropTypes.bool.isRequired,
+  onSaveTask: PropTypes.func.isRequired
 }
 
 export default TaskItem

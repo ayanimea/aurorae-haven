@@ -15,6 +15,8 @@ The Tasks feature provides an Eisenhower Matrix-based task management interface 
 - ✅ Standard 2×2 Eisenhower Matrix layout
 - ✅ Full CRUD operations (Create, Read, Update, Delete)
 - ✅ Nested subtasks with independent completion and deletion
+- ✅ Drag tasks onto one another to nest them
+- ✅ Save tasks for reuse and create tasks from saved or built-in templates
 - ✅ Shared category tabs with an All tab and per-category Eisenhower quadrants
 - ✅ Drag-and-drop between quadrants (desktop)
 - ✅ Inline editing with accessible focus management

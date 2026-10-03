@@ -500,6 +500,36 @@ function Notes() {
     loadNote(subNote)
   }
 
+  const handleNestNote = (noteId, parentId) => {
+    if (noteId === parentId) return
+    const note = notes.find((item) => item.id === noteId)
+    const parent = notes.find((item) => item.id === parentId)
+    if (!note || !parent || note.locked || parent.locked) return
+
+    let ancestor = parent
+    const visited = new Set()
+    while (ancestor) {
+      if (ancestor.id === noteId || visited.has(ancestor.id)) return
+      visited.add(ancestor.id)
+      ancestor = notes.find((item) => item.id === ancestor.parentNoteId)
+    }
+
+    updateNotes(
+      notes.map((item) =>
+        item.id === noteId
+          ? {
+              ...item,
+              parentNoteId: parentId,
+              category: parent.category || ''
+            }
+          : item
+      )
+    )
+    if (noteId === currentNoteId) {
+      setCategory(parent.category || '')
+    }
+  }
+
   return (
     <div className='brain-dump-container'>
       {/* Note List Sidebar */}
@@ -518,6 +548,7 @@ function Notes() {
         onToggleNoteList={() => setShowNoteList(!showNoteList)}
         onFilterClick={() => setShowFilterModal(true)}
         onNoteClick={loadNote}
+        onNestNote={handleNestNote}
         onNoteContextMenu={handleNoteContextMenu}
         onNewNote={handleNewNote}
       />

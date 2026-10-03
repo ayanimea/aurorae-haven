@@ -48,6 +48,17 @@ describe('Data Manager', () => {
       expect(data.categories).toEqual(['Personal', 'Work'])
     })
 
+    it('should include saved tasks in exported data', async () => {
+      const savedTasks = [
+        { id: 'saved-1', text: 'Recurring', quadrant: 'urgent_important' }
+      ]
+      localStorage.setItem('aurorae_saved_tasks', JSON.stringify(savedTasks))
+
+      const data = await getDataTemplate()
+
+      expect(data.savedTasks).toEqual(savedTasks)
+    })
+
     it('should collect dumps (Brain Dump notes) from localStorage', async () => {
       const dumps = [
         {
