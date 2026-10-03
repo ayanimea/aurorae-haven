@@ -90,7 +90,7 @@ export function createRunnerState(routine) {
     currentStepIndex: 0,
     isRunning: false,
     isPaused: false,
-    remainingSeconds: routine.steps[0]?.duration || 0,
+    remainingSeconds: routine.steps?.[0]?.duration || 0,
     startedAt: Date.now(),
     pausedAt: null,
     totalPausedTime: 0,
@@ -240,9 +240,9 @@ export function tickTimer(state) {
  * @returns {number} Progress percentage (0-100)
  */
 export function calculateProgress(state) {
-  const totalSteps = state.routine.steps.length
+  const totalSteps = state.routine.steps?.length ?? 0
   const completedCount = state.completedSteps.length + state.skippedSteps.length
-  return Math.round((completedCount / totalSteps) * 100)
+  return totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0
 }
 
 /**
@@ -262,7 +262,10 @@ export function isRoutineComplete(state) {
  * @param {Object} state - Final runner state
  * @returns {Object} Summary data
  */
-export function getRoutineSummary(state) {
+export function getRoutineSummary(
+  state,
+  { includeCompletionBonuses = true } = {}
+) {
   const totalSteps = state.routine.steps.length
   const completedCount = state.completedSteps.length
   const skippedCount = state.skippedSteps.length
@@ -273,6 +276,11 @@ export function getRoutineSummary(state) {
     completedCount > 0 ? Math.round((onTimeCount / completedCount) * 100) : 0
 
   const xpBreakdown = calculateTotalXP(state.completedSteps, totalSteps)
+  if (!includeCompletionBonuses) {
+    xpBreakdown.routineBonus = 0
+    xpBreakdown.perfectBonus = 0
+    xpBreakdown.total = xpBreakdown.stepXP
+  }
 
   const plannedDuration = state.routine.steps.reduce(
     (sum, step) => sum + step.duration,

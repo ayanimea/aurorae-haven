@@ -1,0 +1,264 @@
+/**
+ * RoutineRunnerContext
+ *
+ * Provides a persistent routine-runner state that survives React route
+ * changes. The timer continues running even when the Routines page is
+ * unmounted, so the countdown advances correctly when the user navigates away
+ * and returns.
+ *
+ * Usage:
+ *   - Wrap the app with <RoutineRunnerProvider>
+ *   - Call useRoutineRunnerContext() inside any component
+ */
+
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef
+} from 'react'
+import PropTypes from 'prop-types'
+import {
+  createRunnerState,
+  completeStep,
+  skipStep,
+  togglePause as togglePauseUtil,
+  tickTimer,
+  calculateProgress,
+  isRoutineComplete,
+  getRoutineSummary,
+  formatTime
+} from '../utils/routineRunner'
+
+// Timer tick resolution (1 s countdown)
+const TIMER_TICK_INTERVAL_MS = 1000
+
+export const RoutineRunnerContext = createContext(null)
+
+/**
+ * Provider component.  Mount once above your <Routes> so the timer persists
+ * across route changes.
+ */
+export function RoutineRunnerProvider({ children }) {
+  const [runningRoutine, setRunningRoutine] = useState(null)
+  const [state, setState] = useState(null)
+  const [isComplete, setIsComplete] = useState(false)
+  const [summary, setSummary] = useState(null)
+  const latestStateRef = useRef(state)
+  const fractionalTickMsRef = useRef(0)
+  latestStateRef.current = state
+
+  // ── Timer loop ──────────────────────────────────────────────────────────
+  // Schedule only the next countdown boundary. Elapsed-time catch-up keeps the
+  // timer accurate when the browser delays a timeout or the page is backgrounded.
+  const routine = state?.routine
+  const currentStepIndex = state?.currentStepIndex
+  useEffect(() => {
+    if (
+      !state?.isRunning ||
+      state.isPaused ||
+      !routine ||
+      currentStepIndex == null ||
+      latestStateRef.current?.remainingSeconds <= 0
+    ) {
+      return
+    }
+
+    let lastTick = Date.now() - fractionalTickMsRef.current
+    fractionalTickMsRef.current = 0
+    let timeoutId
+    let remainingSeconds = latestStateRef.current.remainingSeconds
+
+    const tick = () => {
+      const now = Date.now()
+      const elapsedTicks = Math.floor((now - lastTick) / TIMER_TICK_INTERVAL_MS)
+      if (elapsedTicks > 0) {
+        const ticksToApply = Math.min(elapsedTicks, remainingSeconds)
+        remainingSeconds -= ticksToApply
+        setState((prev) => {
+          if (!prev?.isRunning) return prev
+          let next = prev
+          for (let tickCount = 0; tickCount < ticksToApply; tickCount += 1) {
+            next = tickTimer(next)
+            if (isRoutineComplete(next)) {
+              setIsComplete(true)
+              setSummary(getRoutineSummary(next))
+              return { ...next, isRunning: false }
+            }
+          }
+          return next
+        })
+        lastTick += elapsedTicks * TIMER_TICK_INTERVAL_MS
+      }
+      if (remainingSeconds > 0) {
+        const elapsedSinceLastTick = Date.now() - lastTick
+        const delay =
+          TIMER_TICK_INTERVAL_MS -
+          (elapsedSinceLastTick % TIMER_TICK_INTERVAL_MS)
+        timeoutId = window.setTimeout(tick, delay)
+      }
+    }
+
+    const elapsedSinceLastTick = Date.now() - lastTick
+    const delay =
+      TIMER_TICK_INTERVAL_MS - (elapsedSinceLastTick % TIMER_TICK_INTERVAL_MS)
+    timeoutId = window.setTimeout(tick, delay)
+    return () => {
+      window.clearTimeout(timeoutId)
+      const latestState = latestStateRef.current
+      if (
+        latestState?.isPaused &&
+        latestState.routine === routine &&
+        latestState.currentStepIndex === currentStepIndex
+      ) {
+        fractionalTickMsRef.current =
+          (Date.now() - lastTick) % TIMER_TICK_INTERVAL_MS
+      } else {
+        fractionalTickMsRef.current = 0
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.isRunning, state?.isPaused, routine, currentStepIndex])
+
+  // ── Controls ────────────────────────────────────────────────────────────
+
+  /** Start (or restart) a routine.  Creates fresh runner state and begins the timer. */
+  const start = useCallback((routine) => {
+    if (!Array.isArray(routine?.steps) || routine.steps.length === 0) return
+    setRunningRoutine(routine)
+    setState({ ...createRunnerState(routine), isRunning: true })
+    setIsComplete(false)
+    setSummary(null)
+  }, [])
+
+  /** Toggle between paused and running. */
+  const togglePause = useCallback(() => {
+    setState((prev) => (prev ? togglePauseUtil(prev) : null))
+  }, [])
+
+  /** Mark the current step as completed and advance. */
+  const complete = useCallback(() => {
+    setState((prev) => {
+      if (!prev?.isRunning) return prev
+      const next = completeStep(prev)
+      if (isRoutineComplete(next)) {
+        setIsComplete(true)
+        setSummary(getRoutineSummary(next))
+        return { ...next, isRunning: false }
+      }
+      return next
+    })
+  }, [])
+
+  /** Skip the current step with an optional reason. */
+  const skip = useCallback((reason = '') => {
+    setState((prev) => {
+      if (!prev?.isRunning) return prev
+      const next = skipStep(prev, reason)
+      if (isRoutineComplete(next)) {
+        setIsComplete(true)
+        setSummary(getRoutineSummary(next))
+        return { ...next, isRunning: false }
+      }
+      return next
+    })
+  }, [])
+
+  /**
+   * Stop the running routine.
+   * @param {boolean} [keepProgress] - When true, the partial progress (logs
+   *   and XP earned so far) is preserved and surfaced via the completion
+   *   summary instead of being discarded immediately.
+   */
+  const cancel = useCallback((keepProgress = false) => {
+    if (keepProgress) {
+      setState((prev) => {
+        if (!prev) return prev
+        setIsComplete(false)
+        setSummary({
+          ...getRoutineSummary(prev, { includeCompletionBonuses: false }),
+          status: 'cancelled'
+        })
+        return { ...prev, isRunning: false }
+      })
+      return
+    }
+    setState(null)
+    setRunningRoutine(null)
+    setIsComplete(false)
+    setSummary(null)
+  }, [])
+
+  /** Reset the running routine back to its initial state (for Run Again). */
+  const reset = useCallback(() => {
+    setRunningRoutine((prevRoutine) => {
+      if (prevRoutine) {
+        setState(createRunnerState(prevRoutine))
+        setIsComplete(false)
+        setSummary(null)
+      }
+      return prevRoutine
+    })
+  }, [])
+
+  // ── Derived values ──────────────────────────────────────────────────────
+
+  const currentStep = state?.routine?.steps?.[state.currentStepIndex]
+  const previousStep =
+    state && state.currentStepIndex > 0
+      ? state.routine.steps?.[state.currentStepIndex - 1]
+      : null
+  const nextStep =
+    state &&
+    state.currentStepIndex < (state.routine.steps?.length ?? 0) - 1
+      ? state.routine.steps?.[state.currentStepIndex + 1]
+      : null
+  const progress = state ? calculateProgress(state) : 0
+  const remainingTime = state ? formatTime(state.remainingSeconds) : '00:00'
+
+  const value = {
+    /** The routine that is currently running (or null). */
+    runningRoutine,
+    /** Full runner state. */
+    state,
+    isComplete,
+    summary,
+    currentStep,
+    previousStep,
+    nextStep,
+    progress,
+    remainingTime,
+    start,
+    togglePause,
+    complete,
+    skip,
+    cancel,
+    reset
+  }
+
+  return (
+    <RoutineRunnerContext.Provider value={value}>
+      {children}
+    </RoutineRunnerContext.Provider>
+  )
+}
+
+RoutineRunnerProvider.propTypes = {
+  children: PropTypes.node.isRequired
+}
+
+/**
+ * Consume the global routine-runner state.
+ * Must be used inside a <RoutineRunnerProvider>.
+ */
+export function useRoutineRunnerContext() {
+  const ctx = useContext(RoutineRunnerContext)
+  if (!ctx) {
+    throw new Error(
+      'useRoutineRunnerContext must be used inside <RoutineRunnerProvider>'
+    )
+  }
+  return ctx
+}

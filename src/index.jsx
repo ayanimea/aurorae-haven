@@ -26,6 +26,9 @@ import Stats from './pages/Stats.jsx'
 import Library from './pages/Library.jsx'
 import Settings from './pages/Settings.jsx'
 
+// Contexts
+import { RoutineRunnerProvider } from './contexts/RoutineRunnerContext.jsx'
+
 // Utils
 import {
   exportJSON,
@@ -147,6 +150,7 @@ function RouterApp() {
 
   return (
     <BrowserRouter basename={basename}>
+      <RoutineRunnerProvider>
       <RedirectHandler />
       <Layout onExport={handleExport}>
         <Routes>
@@ -185,6 +189,7 @@ function RouterApp() {
         visible={toast.visible}
         onClose={hideToast}
       />
+      </RoutineRunnerProvider>
     </BrowserRouter>
   )
 }

@@ -121,6 +121,16 @@ describe('ConfirmModal', () => {
       expect(mockOnCancel).not.toHaveBeenCalled()
     })
 
+    it('does not dismiss on Escape or backdrop when dismissal is disabled', () => {
+      render(<ConfirmModal {...defaultProps} allowDismiss={false} />)
+      fireEvent.keyDown(document, { key: 'Escape' })
+      fireEvent.click(screen.getByRole('presentation'))
+      expect(mockOnCancel).not.toHaveBeenCalled()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+      expect(mockOnCancel).toHaveBeenCalledTimes(1)
+    })
+
     it('supports Tab navigation between buttons', () => {
       render(<ConfirmModal {...defaultProps} />)
       const cancelButton = screen.getByText('Cancel')

@@ -61,7 +61,14 @@ vi.mock('../components/Schedule/EventModal', () => ({
 }))
 
 vi.mock('../components/Routines/SequenceRunner', () => ({
-  default: () => null
+  default: ({ runner, headingRef }) => (
+    <div data-testid='sequence-runner'>
+      <h2 ref={headingRef} tabIndex={-1}>
+        Active sequence
+      </h2>
+      {runner.currentStep?.label}
+    </div>
+  )
 }))
 
 vi.mock('../components/Routines/RoutineContextMenu', () => ({
@@ -73,10 +80,21 @@ vi.mock('../components/Routines/RoutineCreationModal', () => ({
 }))
 
 vi.mock('../components/common/ConfirmModal', () => ({
-  default: function MockConfirmModal({ isOpen, onConfirm, onCancel, title }) {
+  default: function MockConfirmModal({
+    isOpen,
+    onConfirm,
+    onCancel,
+    title,
+    allowDismiss
+  }) {
     if (!isOpen) return null
     return (
-      <div data-testid='confirm-modal'>
+      <div
+        data-testid='confirm-modal'
+        role='alertdialog'
+        aria-modal='true'
+        data-allow-dismiss={String(allowDismiss)}
+      >
         <span data-testid='confirm-modal-title'>{title}</span>
         <button data-testid='confirm-modal-confirm' onClick={onConfirm}>
           Confirm
@@ -92,13 +110,31 @@ vi.mock('../components/common/ConfirmModal', () => ({
 // getRoutines returns two routines by default; override per test as needed
 const mockGetRoutines = vi.fn()
 const mockDeleteRoutine = vi.fn()
+const mockRunner = {
+  runningRoutine: null,
+  state: null,
+  isComplete: false,
+  summary: null,
+  currentStep: null,
+  previousStep: null,
+  nextStep: null,
+  progress: 0,
+  remainingTime: '00:00',
+  start: vi.fn(),
+  togglePause: vi.fn(),
+  complete: vi.fn(),
+  skip: vi.fn(),
+  cancel: vi.fn(),
+  reset: vi.fn()
+}
 vi.mock('../utils/routinesManager', () => ({
   getRoutines: (...args) => mockGetRoutines(...args),
   exportRoutines: vi.fn().mockResolvedValue('[]'),
   importRoutines: vi.fn().mockResolvedValue([]),
   createRoutine: vi.fn(),
   updateRoutine: vi.fn(),
-  deleteRoutine: (...args) => mockDeleteRoutine(...args)
+  deleteRoutine: (...args) => mockDeleteRoutine(...args),
+  cloneRoutine: vi.fn().mockResolvedValue('new-id')
 }))
 
 vi.mock('../utils/templatesManager', () => ({
@@ -138,21 +174,9 @@ vi.mock('../utils/timeUtils', async (importOriginal) => {
   }
 })
 
-vi.mock('../hooks/useRoutineRunner', () => ({
-  useRoutineRunner: () => ({
-    state: null,
-    isComplete: false,
-    summary: null,
-    reset: vi.fn(),
-    start: vi.fn(),
-    pause: vi.fn(),
-    resume: vi.fn(),
-    complete: vi.fn(),
-    skip: vi.fn(),
-    completedSteps: [],
-    skippedSteps: [],
-    currentStepIndex: 0
-  })
+// Mock the global RoutineRunnerContext so tests run without a real provider
+vi.mock('../contexts/RoutineRunnerContext', () => ({
+  useRoutineRunnerContext: () => mockRunner
 }))
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -183,6 +207,17 @@ async function renderWithRoutines(routines = [MORNING_ROUTINE]) {
 describe('Routines — Schedule routine', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    Object.assign(mockRunner, {
+      runningRoutine: null,
+      state: null,
+      isComplete: false,
+      summary: null,
+      currentStep: null,
+      previousStep: null,
+      nextStep: null,
+      progress: 0,
+      remainingTime: '00:00'
+    })
     eventModalSpy.mockClear()
     EventService.createEvent.mockResolvedValue({ id: 'ev1' })
     mockDeleteRoutine.mockResolvedValue(undefined)
@@ -193,6 +228,154 @@ describe('Routines — Schedule routine', () => {
     expect(
       screen.getByRole('button', { name: /Schedule Morning Routine/i })
     ).toBeInTheDocument()
+  })
+
+  it('previews a routine without starting it until Start Routine is clicked', async () => {
+    await renderWithRoutines()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Preview routine: Morning Routine' })
+    )
+
+    expect(screen.getByText('First step')).toBeInTheDocument()
+    expect(screen.getByText('Stretch')).toBeInTheDocument()
+    expect(mockRunner.start).not.toHaveBeenCalled()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start routine: Morning Routine' })
+    )
+
+    expect(mockRunner.start).toHaveBeenCalledWith(MORNING_ROUTINE)
+  })
+
+  it('moves focus into preview and restores it to the routine after closing', async () => {
+    await renderWithRoutines()
+    const previewButton = screen.getByRole('button', {
+      name: 'Preview routine: Morning Routine'
+    })
+    previewButton.focus()
+
+    fireEvent.click(previewButton)
+
+    expect(
+      screen.getByRole('heading', { name: 'Morning Routine' })
+    ).toHaveFocus()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel preview' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Preview routine: Morning Routine' })
+    ).toHaveFocus()
+  })
+
+  it('disables starting a routine without steps in the list and preview', async () => {
+    const emptyRoutine = { id: 'empty', name: 'Empty Routine', steps: [] }
+    await renderWithRoutines([emptyRoutine])
+
+    expect(
+      screen.getByRole('button', { name: 'Start Empty Routine' })
+    ).toBeDisabled()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Preview routine: Empty Routine' })
+    )
+    expect(
+      screen.getByRole('button', { name: 'Start routine: Empty Routine' })
+    ).toBeDisabled()
+  })
+
+  it('shows the persisted active step after Routines is remounted', async () => {
+    Object.assign(mockRunner, {
+      runningRoutine: MORNING_ROUTINE,
+      state: { isRunning: true, currentStepIndex: 1 },
+      currentStep: { label: 'Persisted step' }
+    })
+
+    const { unmount } = await renderWithRoutines()
+    expect(screen.getByTestId('sequence-runner')).toHaveTextContent(
+      'Persisted step'
+    )
+
+    unmount()
+    await renderWithRoutines()
+
+    expect(screen.getByTestId('sequence-runner')).toHaveTextContent(
+      'Persisted step'
+    )
+    expect(mockRunner.start).not.toHaveBeenCalled()
+  })
+
+  it('keeps the active routine accessible and focuses its runner when selected', async () => {
+    Object.assign(mockRunner, {
+      runningRoutine: MORNING_ROUTINE,
+      state: { isRunning: true, currentStepIndex: 0 },
+      currentStep: { label: 'Persisted step' }
+    })
+
+    await renderWithRoutines()
+
+    expect(screen.getByText('Available Routines')).toBeInTheDocument()
+    expect(screen.getByTestId('sequence-runner')).toHaveTextContent(
+      'Persisted step'
+    )
+    expect(
+      screen.getByRole('button', { name: 'Start Morning Routine' })
+    ).toBeDisabled()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Preview routine: Morning Routine' })
+    )
+
+    expect(screen.getByRole('heading', { name: 'Active sequence' })).toHaveFocus()
+    expect(mockRunner.start).not.toHaveBeenCalled()
+  })
+
+  it('focuses and traps focus in the summary, then restores focus to the routine list', async () => {
+    Object.assign(mockRunner, {
+      isComplete: true,
+      summary: {
+        routineTitle: 'Morning Routine',
+        actualDuration: 30,
+        plannedDuration: 60,
+        completedCount: 1,
+        skippedCount: 0,
+        onTimePercentage: 100,
+        xpBreakdown: {
+          total: 2,
+          stepXP: 2,
+          routineBonus: 0,
+          perfectBonus: 0
+        },
+        steps: [{ status: 'completed', stepLabel: 'Stretch' }]
+      }
+    })
+
+    const { rerender } = await renderWithRoutines()
+    const heading = screen.getByRole('heading', { name: '🎉 Routine Complete!' })
+    const closeButton = screen.getByRole('button', { name: 'Close summary' })
+    const runAgainButton = screen.getByRole('button', { name: 'Run Again' })
+    const routineHeading = screen.getByText('Available Routines')
+
+    expect(heading).toHaveFocus()
+    runAgainButton.focus()
+    routineHeading.focus()
+    await waitFor(() => {
+      expect(routineHeading).not.toHaveFocus()
+      expect(screen.getByRole('dialog')).toContainElement(document.activeElement)
+    })
+
+    fireEvent.click(closeButton)
+    expect(mockRunner.cancel).toHaveBeenCalled()
+
+    Object.assign(mockRunner, {
+      isComplete: false,
+      summary: null,
+      state: null
+    })
+    await act(async () => {
+      rerender(<Routines />)
+    })
+
+    expect(screen.getByText('Available Routines')).toHaveFocus()
   })
 
   it('deletes a routine after confirmation via ConfirmModal', async () => {
@@ -213,6 +396,44 @@ describe('Routines — Schedule routine', () => {
 
     expect(mockDeleteRoutine).toHaveBeenCalledTimes(1)
     expect(mockDeleteRoutine).toHaveBeenCalledWith('r1')
+  })
+
+  it('requires explicit discard and ignores runner shortcuts while confirming cancellation', async () => {
+    mockRunner.runningRoutine = MORNING_ROUTINE
+    mockRunner.state = { isRunning: true, isPaused: false }
+    await renderWithRoutines()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    const confirmation = screen.getByTestId('confirm-modal')
+    expect(confirmation).toHaveAttribute('data-allow-dismiss', 'false')
+
+    fireEvent.keyDown(window, { key: 'p' })
+    expect(mockRunner.togglePause).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('confirm-modal-cancel'))
+    expect(mockRunner.cancel).toHaveBeenCalledWith(false)
+  })
+
+  it('ignores runner shortcuts from interactive controls and dialogs', async () => {
+    mockRunner.runningRoutine = MORNING_ROUTINE
+    mockRunner.state = { isRunning: true, isPaused: false }
+    await renderWithRoutines()
+
+    const previewButton = screen.getByRole('button', {
+      name: 'Preview routine: Morning Routine'
+    })
+    fireEvent.keyDown(previewButton, { key: ' ' })
+    fireEvent.keyDown(previewButton, { key: 'p' })
+    fireEvent.keyDown(previewButton, { key: 's' })
+
+    expect(mockRunner.complete).not.toHaveBeenCalled()
+    expect(mockRunner.togglePause).not.toHaveBeenCalled()
+    expect(mockRunner.skip).not.toHaveBeenCalled()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    fireEvent.keyDown(screen.getByTestId('confirm-modal'), { key: 'p' })
+
+    expect(mockRunner.togglePause).not.toHaveBeenCalled()
   })
 
   it('opens EventModal with pre-filled routine data when Schedule is clicked', async () => {

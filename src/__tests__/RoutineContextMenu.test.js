@@ -30,14 +30,18 @@ const SAMPLE_CONTEXT_MENU = {
 }
 
 describe('RoutineContextMenu', () => {
-  const mockOnModify = vi.fn()
-  const mockOnRemove = vi.fn()
+  const mockOnEdit = vi.fn()
+  const mockOnDuplicate = vi.fn()
+  const mockOnSchedule = vi.fn()
+  const mockOnDelete = vi.fn()
   const mockOnClose = vi.fn()
 
   const defaultProps = {
     contextMenu: SAMPLE_CONTEXT_MENU,
-    onModify: mockOnModify,
-    onRemove: mockOnRemove,
+    onEdit: mockOnEdit,
+    onDuplicate: mockOnDuplicate,
+    onSchedule: mockOnSchedule,
+    onDelete: mockOnDelete,
     onClose: mockOnClose
   }
 
@@ -63,14 +67,24 @@ describe('RoutineContextMenu', () => {
       expect(menu.style.left).toBe('100px')
     })
 
-    it('renders Modify routine menu item', () => {
+    it('renders Edit menu item', () => {
       render(<RoutineContextMenu {...defaultProps} />)
-      expect(screen.getByRole('menuitem', { name: /modify routine/i })).toBeInTheDocument()
+      expect(screen.getByRole('menuitem', { name: /edit/i })).toBeInTheDocument()
     })
 
-    it('renders Remove routine menu item', () => {
+    it('renders Duplicate menu item', () => {
       render(<RoutineContextMenu {...defaultProps} />)
-      expect(screen.getByRole('menuitem', { name: /remove routine/i })).toBeInTheDocument()
+      expect(screen.getByRole('menuitem', { name: /duplicate/i })).toBeInTheDocument()
+    })
+
+    it('renders Schedule menu item', () => {
+      render(<RoutineContextMenu {...defaultProps} />)
+      expect(screen.getByRole('menuitem', { name: /schedule/i })).toBeInTheDocument()
+    })
+
+    it('renders Delete menu item', () => {
+      render(<RoutineContextMenu {...defaultProps} />)
+      expect(screen.getByRole('menuitem', { name: /delete/i })).toBeInTheDocument()
     })
 
     it('includes routine name in aria-label', () => {
@@ -94,41 +108,76 @@ describe('RoutineContextMenu', () => {
     })
   })
 
-  describe('Modify action', () => {
-    it('calls onModify with the routine when Modify is clicked', () => {
+  describe('Edit action', () => {
+    it('calls onEdit with the routine when Edit is clicked', () => {
       render(<RoutineContextMenu {...defaultProps} />)
-      fireEvent.click(screen.getByRole('menuitem', { name: /modify routine/i }))
-      expect(mockOnModify).toHaveBeenCalledTimes(1)
-      expect(mockOnModify).toHaveBeenCalledWith(SAMPLE_ROUTINE)
+      fireEvent.click(screen.getByRole('menuitem', { name: /edit/i }))
+      expect(mockOnEdit).toHaveBeenCalledTimes(1)
+      expect(mockOnEdit).toHaveBeenCalledWith(SAMPLE_ROUTINE)
     })
 
-    it('calls onClose after Modify is clicked', () => {
+    it('calls onClose after Edit is clicked', () => {
       render(<RoutineContextMenu {...defaultProps} />)
-      fireEvent.click(screen.getByRole('menuitem', { name: /modify routine/i }))
+      fireEvent.click(screen.getByRole('menuitem', { name: /edit/i }))
       expect(mockOnClose).toHaveBeenCalledTimes(1)
     })
   })
 
-  describe('Remove action', () => {
-    it('calls onRemove with the routine when Remove is clicked', () => {
+  describe('Duplicate action', () => {
+    it('calls onDuplicate with the routine when Duplicate is clicked', () => {
       render(<RoutineContextMenu {...defaultProps} />)
-      fireEvent.click(screen.getByRole('menuitem', { name: /remove routine/i }))
-      expect(mockOnRemove).toHaveBeenCalledTimes(1)
-      expect(mockOnRemove).toHaveBeenCalledWith(SAMPLE_ROUTINE)
+      fireEvent.click(screen.getByRole('menuitem', { name: /duplicate/i }))
+      expect(mockOnDuplicate).toHaveBeenCalledTimes(1)
+      expect(mockOnDuplicate).toHaveBeenCalledWith(SAMPLE_ROUTINE)
     })
 
-    it('calls onClose after Remove is clicked', () => {
+    it('calls onClose after Duplicate is clicked', () => {
       render(<RoutineContextMenu {...defaultProps} />)
-      fireEvent.click(screen.getByRole('menuitem', { name: /remove routine/i }))
+      fireEvent.click(screen.getByRole('menuitem', { name: /duplicate/i }))
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('Schedule action', () => {
+    it('calls onSchedule with the routine when Schedule is clicked', () => {
+      render(<RoutineContextMenu {...defaultProps} />)
+      fireEvent.click(screen.getByRole('menuitem', { name: /schedule/i }))
+      expect(mockOnSchedule).toHaveBeenCalledTimes(1)
+      expect(mockOnSchedule).toHaveBeenCalledWith(SAMPLE_ROUTINE)
+    })
+
+    it('calls onClose after Schedule is clicked', () => {
+      render(<RoutineContextMenu {...defaultProps} />)
+      fireEvent.click(screen.getByRole('menuitem', { name: /schedule/i }))
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('Delete action', () => {
+    it('calls onDelete with the routine when Delete is clicked', () => {
+      render(<RoutineContextMenu {...defaultProps} />)
+      fireEvent.click(screen.getByRole('menuitem', { name: /delete/i }))
+      expect(mockOnDelete).toHaveBeenCalledTimes(1)
+      expect(mockOnDelete).toHaveBeenCalledWith(SAMPLE_ROUTINE)
+    })
+
+    it('calls onClose after Delete is clicked', () => {
+      render(<RoutineContextMenu {...defaultProps} />)
+      fireEvent.click(screen.getByRole('menuitem', { name: /delete/i }))
       expect(mockOnClose).toHaveBeenCalledTimes(1)
     })
   })
 
   describe('Dismiss behaviour', () => {
     it('calls onClose when Escape key is pressed', () => {
+      const trigger = document.createElement('button')
+      document.body.appendChild(trigger)
+      trigger.focus()
       render(<RoutineContextMenu {...defaultProps} />)
       fireEvent.keyDown(document, { key: 'Escape' })
       expect(mockOnClose).toHaveBeenCalledTimes(1)
+      expect(trigger).toHaveFocus()
+      trigger.remove()
     })
 
     it('calls onClose when clicking outside the menu', () => {
@@ -146,6 +195,54 @@ describe('RoutineContextMenu', () => {
       render(<RoutineContextMenu {...defaultProps} />)
       fireEvent.mouseDown(screen.getByRole('menu'))
       expect(mockOnClose).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Keyboard navigation', () => {
+    it('moves through menu items with arrows and Home/End', () => {
+      render(<RoutineContextMenu {...defaultProps} />)
+      const items = screen.getAllByRole('menuitem')
+
+      expect(items[0]).toHaveFocus()
+      fireEvent.keyDown(items[0], { key: 'ArrowDown' })
+      expect(items[1]).toHaveFocus()
+      fireEvent.keyDown(items[1], { key: 'ArrowUp' })
+      expect(items[0]).toHaveFocus()
+      fireEvent.keyDown(items[0], { key: 'End' })
+      expect(items[3]).toHaveFocus()
+      fireEvent.keyDown(items[3], { key: 'Home' })
+      expect(items[0]).toHaveFocus()
+
+      fireEvent.keyDown(items[0], { key: 'ArrowUp' })
+      expect(items[3]).toHaveFocus()
+
+      const windowKeyDown = vi.fn()
+      window.addEventListener('keydown', windowKeyDown)
+      fireEvent.keyDown(items[3], { key: 'Escape' })
+      expect(mockOnClose).toHaveBeenCalled()
+      expect(windowKeyDown).not.toHaveBeenCalled()
+      window.removeEventListener('keydown', windowKeyDown)
+    })
+
+    it('does not intercept navigation keys when focus is outside the menu', () => {
+      render(
+        <div>
+          <RoutineContextMenu {...defaultProps} />
+          <button type='button'>Outside</button>
+        </div>
+      )
+      const outsideButton = screen.getByRole('button', { name: 'Outside' })
+      outsideButton.focus()
+
+      const arrowDown = new KeyboardEvent('keydown', {
+        key: 'ArrowDown',
+        bubbles: true,
+        cancelable: true
+      })
+      fireEvent(outsideButton, arrowDown)
+
+      expect(arrowDown.defaultPrevented).toBe(false)
+      expect(outsideButton).toHaveFocus()
     })
   })
 })

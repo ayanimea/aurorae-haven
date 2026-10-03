@@ -21,7 +21,8 @@ function ConfirmModal({
   cancelText = 'Cancel',
   onConfirm,
   onCancel,
-  isDestructive = false
+  isDestructive = false,
+  allowDismiss = true
 }) {
   const modalRef = useRef(null)
   const cancelButtonRef = useRef(null)
@@ -46,14 +47,14 @@ function ConfirmModal({
 
     const handleKeyDown = (e) => {
       // TAB-POP-18: Escape closes non-destructive dialogs only
-      if (e.key === 'Escape' && !isDestructive) {
+      if (e.key === 'Escape' && !isDestructive && allowDismiss) {
         onCancel()
       }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, isDestructive, onCancel])
+  }, [isOpen, isDestructive, allowDismiss, onCancel])
 
   // Focus trap - Tab/Shift+Tab cycles within modal
   useEffect(() => {
@@ -105,7 +106,7 @@ function ConfirmModal({
       role='presentation'
       onClick={(e) => {
         // Click outside only works for non-destructive modals
-        if (e.target === e.currentTarget && !isDestructive) {
+        if (e.target === e.currentTarget && !isDestructive && allowDismiss) {
           onCancel()
         }
       }}
@@ -158,7 +159,8 @@ ConfirmModal.propTypes = {
   cancelText: PropTypes.string,
   onConfirm: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
-  isDestructive: PropTypes.bool
+  isDestructive: PropTypes.bool,
+  allowDismiss: PropTypes.bool
 }
 
 export default ConfirmModal

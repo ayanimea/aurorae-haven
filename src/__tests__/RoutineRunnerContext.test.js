@@ -1,0 +1,284 @@
+import React, { useState } from 'react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  RoutineRunnerProvider,
+  useRoutineRunnerContext
+} from '../contexts/RoutineRunnerContext'
+
+const ROUTINE = {
+  id: 'routine-1',
+  title: 'Test routine',
+  steps: [
+    { label: 'First step', duration: 10 },
+    { label: 'Second step', duration: 20 }
+  ]
+}
+
+function RunnerConsumer() {
+  const runner = useRoutineRunnerContext()
+  return (
+    <div>
+      <output data-testid='runner-state'>
+        {JSON.stringify({
+          state: runner.state,
+          isComplete: runner.isComplete,
+          summary: runner.summary
+        })}
+      </output>
+      <button onClick={() => runner.start(ROUTINE)}>Start</button>
+      <button onClick={() => runner.start({ ...ROUTINE, steps: [] })}>
+        Start empty
+      </button>
+      <button onClick={() => runner.start({ ...ROUTINE, steps: undefined })}>
+        Start missing steps
+      </button>
+      <button onClick={runner.togglePause}>Toggle pause</button>
+      <button onClick={runner.complete}>Complete step</button>
+      <button onClick={() => runner.skip('too hard')}>Skip step</button>
+      <button onClick={runner.reset}>Reset routine</button>
+      <button onClick={() => runner.cancel(true)}>Keep progress</button>
+      <button onClick={() => runner.cancel(false)}>Discard progress</button>
+    </div>
+  )
+}
+
+function ConsumerWithoutProvider() {
+  useRoutineRunnerContext()
+  return null
+}
+
+function RunnerHarness() {
+  const [showConsumer, setShowConsumer] = useState(true)
+  return (
+    <RoutineRunnerProvider>
+      <button onClick={() => setShowConsumer((visible) => !visible)}>
+        Navigate
+      </button>
+      {showConsumer && <RunnerConsumer />}
+    </RoutineRunnerProvider>
+  )
+}
+
+function getRunnerState() {
+  return JSON.parse(screen.getByTestId('runner-state').textContent)
+}
+
+describe('RoutineRunnerProvider', () => {
+  let scheduledTimeouts
+  let nextTimeoutId
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2025-01-01T00:00:00Z'))
+    scheduledTimeouts = new Map()
+    nextTimeoutId = 0
+    vi.spyOn(window, 'setTimeout').mockImplementation((callback, delay) => {
+      const id = ++nextTimeoutId
+      scheduledTimeouts.set(id, {
+        callback,
+        dueAt: Date.now() + delay
+      })
+      return id
+    })
+    vi.spyOn(window, 'clearTimeout').mockImplementation((id) => {
+      scheduledTimeouts.delete(id)
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
+
+  function advanceClock(milliseconds) {
+    const targetTime = Date.now() + milliseconds
+    vi.setSystemTime(targetTime)
+    const nextTimeout = [...scheduledTimeouts.entries()]
+      .filter(([, timeout]) => timeout.dueAt <= targetTime)
+      .sort(([, first], [, second]) => first.dueAt - second.dueAt)[0]
+    if (!nextTimeout) return
+    const [id, { callback }] = nextTimeout
+    scheduledTimeouts.delete(id)
+    act(() => callback())
+  }
+
+  it('catches up elapsed seconds, preserves fractional time, and runs after consumer unmount', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    advanceClock(500)
+    expect(getRunnerState().state.remainingSeconds).toBe(10)
+    advanceClock(500)
+    expect(getRunnerState().state.remainingSeconds).toBe(9)
+    advanceClock(5000)
+    expect(getRunnerState().state.remainingSeconds).toBe(4)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Navigate' }))
+    expect(screen.queryByTestId('runner-state')).not.toBeInTheDocument()
+    advanceClock(2000)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Navigate' }))
+    expect(getRunnerState().state.remainingSeconds).toBe(2)
+  })
+
+  it('schedules one-second boundaries and stops scheduling at zero', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    expect([...scheduledTimeouts.values()][0].dueAt - Date.now()).toBe(1000)
+    advanceClock(10000)
+
+    expect(getRunnerState().state.remainingSeconds).toBe(0)
+    expect(scheduledTimeouts.size).toBe(0)
+  })
+
+  it('does not decrement while paused and resumes the timer', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
+
+    vi.setSystemTime(Date.now() + 3000)
+    expect(getRunnerState().state.remainingSeconds).toBe(10)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
+    advanceClock(1000)
+    expect(getRunnerState().state.remainingSeconds).toBe(9)
+  })
+
+  it('preserves the fractional timer remainder across a pause', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    vi.setSystemTime(Date.now() + 100)
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
+    vi.setSystemTime(Date.now() + 5000)
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle pause' }))
+
+    advanceClock(899)
+    expect(getRunnerState().state.remainingSeconds).toBe(10)
+    advanceClock(1)
+    expect(getRunnerState().state.remainingSeconds).toBe(9)
+  })
+
+  it('starts a fresh timer baseline when advancing to the next step', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    advanceClock(900)
+    fireEvent.click(screen.getByRole('button', { name: 'Complete step' }))
+    advanceClock(100)
+    expect(getRunnerState().state.remainingSeconds).toBe(20)
+    advanceClock(900)
+    expect(getRunnerState().state.remainingSeconds).toBe(19)
+  })
+
+  it('records a completion summary after all steps are completed', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete step' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete step' }))
+
+    const runner = getRunnerState()
+    expect(runner.isComplete).toBe(true)
+    expect(runner.summary.completedCount).toBe(2)
+    expect(runner.state.isRunning).toBe(false)
+  })
+
+  it.each(['Start empty', 'Start missing steps'])(
+    'ignores a routine with %s',
+    (buttonName) => {
+      render(<RunnerHarness />)
+      fireEvent.click(screen.getByRole('button', { name: buttonName }))
+
+      expect(getRunnerState().state).toBeNull()
+    }
+  )
+
+  it('preserves completed progress and exposes a summary when cancelled with keep enabled', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete step' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Keep progress' }))
+
+    const runner = getRunnerState()
+    expect(runner.state.completedSteps).toHaveLength(1)
+    expect(runner.state.isRunning).toBe(false)
+    expect(runner.isComplete).toBe(false)
+    expect(runner.summary.completedCount).toBe(1)
+    expect(runner.summary.status).toBe('cancelled')
+    expect(runner.summary.xpBreakdown).toEqual({
+      stepXP: 2,
+      routineBonus: 0,
+      perfectBonus: 0,
+      total: 2
+    })
+  })
+
+  it('clears runner state and summary when cancelled with keep disabled', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete step' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard progress' }))
+
+    expect(getRunnerState()).toEqual({
+      state: null,
+      isComplete: false,
+      summary: null
+    })
+  })
+
+  it('advances to the next step and records the reason when a step is skipped', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Skip step' }))
+
+    const runner = getRunnerState()
+    expect(runner.state.currentStepIndex).toBe(1)
+    expect(runner.state.skippedSteps).toHaveLength(1)
+    expect(runner.state.skippedSteps[0].status).toBe('skipped')
+    expect(runner.state.skippedSteps[0].reason).toBe('too hard')
+  })
+
+  it('completes the routine when the last step is skipped', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Skip step' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Skip step' }))
+
+    const runner = getRunnerState()
+    expect(runner.isComplete).toBe(true)
+    expect(runner.state.isRunning).toBe(false)
+  })
+
+  it('restarts the same routine from the beginning on reset', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete step' }))
+    advanceClock(1000)
+    fireEvent.click(screen.getByRole('button', { name: 'Reset routine' }))
+
+    const runner = getRunnerState()
+    expect(runner.state.currentStepIndex).toBe(0)
+    expect(runner.state.completedSteps).toHaveLength(0)
+    expect(runner.state.remainingSeconds).toBe(10)
+    expect(runner.isComplete).toBe(false)
+    expect(runner.summary).toBeNull()
+  })
+
+  it('does nothing when reset is called without an active routine', () => {
+    render(<RunnerHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Reset routine' }))
+
+    expect(getRunnerState().state).toBeNull()
+  })
+
+  it('throws when the hook is used outside a RoutineRunnerProvider', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() => render(<ConsumerWithoutProvider />)).toThrow(
+      /RoutineRunnerProvider/
+    )
+    consoleError.mockRestore()
+  })
+})

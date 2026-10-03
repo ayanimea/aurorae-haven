@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.22.0"
   },
   "scripts": {
     "dev": "vite",
@@ -17,8 +17,6 @@
     "test": "vitest run",
     "test:export": "vitest run src/__tests__/dataManager.test.js -t 'should export aurorae_tasks|should export brainDumpEntries'",
     "lint": "biome lint .",
-    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#package-lock.json'",
-    "lint:css": "stylelint \"**/*.{css,scss}\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "vite build",
@@ -57,7 +55,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-focus-lock": "^2.13.7",
-    "react-router-dom": "^7.18.1",
+    "react-router-dom": "^7.18.4",
     "uuid": "^14.0.0",
     "zod": "^4.1.12"
   },
@@ -68,18 +66,16 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/coverage-v8": "^4.1.8",
-    "adm-zip": "^0.6.0",
+    "@vitest/coverage-v8": "^5.0.3",
+    "adm-zip": "^0.6.1",
     "ajv": "^8.18.0",
     "cross-env": "^10.1.0",
     "fake-indexeddb": "^6.2.2",
     "jsdom": "^28.0.0",
-    "markdownlint-cli2": "^0.23.1",
     "prettier": "^3.8.0",
-    "stylelint": "^17.0.0",
     "vite": "^7.3.2",
     "vite-plugin-pwa": "^1.0.3",
-    "vitest": "^4.1.8"
+    "vitest": "^5.0.3"
   },
   "overrides": {
     "glob": "^13.0.6",
@@ -89,16 +85,30 @@
     "source-map": "^0.7.4",
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.5",
     "magic-string": "^0.30.19",
+    "vitest": {
+      "magic-string": "^1.2.3"
+    },
+    "@vitest/mocker": {
+      "magic-string": "^1.2.3"
+    },
     "filelist": {
       "minimatch": "^10.2.4"
     },
     "workbox-build": {
       "source-map": "^0.7.4"
     },
-    "brace-expansion": "5.0.8",
-    "body-parser": "1.20.6",
-    "js-yaml": "5.2.2",
-    "react-router": "^8.3.0"
+    "brace-expansion": "^5.0.12",
+    "body-parser": "1.20.8",
+    "js-yaml": "5.4.2",
+    "fast-uri": "^3.1.8",
+    "nanoid": "^3.3.18",
+    "markdown-it": "^14.3.1",
+    "postcss-selector-parser": "^7.1.3",
+    "smol-toml": "^1.7.1",
+    "undici": "^7.30.0",
+    "baseline-browser-mapping": "^2.11.26",
+    "browserslist": "^4.28.8",
+    "colord": "^2.9.7"
   },
   "browserslist": {
     "production": [

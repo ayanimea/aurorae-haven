@@ -1,10 +1,10 @@
 /**
  * Context menu for routine management (right-click menu)
- * Provides keyboard-accessible Modify and Remove actions
+ * Provides keyboard-accessible Edit, Duplicate, Schedule and Delete actions
  * without triggering routine execution side effects.
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 
@@ -18,12 +18,25 @@ import Icon from '../common/Icon'
  * Position is clamped to viewport bounds to prevent off-screen rendering.
  *
  * @param {object}   contextMenu        - Menu state: { x, y, routine }
- * @param {function} onModify           - Called when "Modify routine" is selected
- * @param {function} onRemove           - Called when "Remove routine" is selected
+ * @param {function} onEdit             - Called when "Edit" is selected
+ * @param {function} onDuplicate        - Called when "Duplicate" is selected
+ * @param {function} onSchedule        - Called when "Schedule" is selected
+ * @param {function} onDelete           - Called when "Delete" is selected
  * @param {function} onClose            - Called to close the menu
  */
-function RoutineContextMenu({ contextMenu, onModify, onRemove, onClose }) {
+function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDelete, onClose }) {
   const menuRef = useRef(null)
+  const returnFocusRef = useRef(null)
+
+  const closeMenu = useCallback(
+    (restoreFocus = false) => {
+      if (restoreFocus && returnFocusRef.current?.isConnected) {
+        returnFocusRef.current.focus()
+      }
+      onClose()
+    },
+    [onClose]
+  )
 
   // Only register document-level listeners while the menu is open
   useEffect(() => {
@@ -35,24 +48,59 @@ function RoutineContextMenu({ contextMenu, onModify, onRemove, onClose }) {
       }
     }
 
-    const handleEscape = (e) => {
+    const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose()
+        e.preventDefault()
+        e.stopPropagation()
+        closeMenu(true)
+        return
       }
+
+      const menuItems = Array.from(
+        menuRef.current?.querySelectorAll('[role="menuitem"]') || []
+      )
+      if (menuItems.length === 0) return
+
+      const currentIndex = menuItems.indexOf(document.activeElement)
+      if (currentIndex === -1) return
+
+      let nextIndex
+
+      switch (e.key) {
+        case 'ArrowDown':
+          nextIndex = (currentIndex + 1) % menuItems.length
+          break
+        case 'ArrowUp':
+          nextIndex =
+            currentIndex <= 0 ? menuItems.length - 1 : currentIndex - 1
+          break
+        case 'Home':
+          nextIndex = 0
+          break
+        case 'End':
+          nextIndex = menuItems.length - 1
+          break
+        default:
+          return
+      }
+
+      e.preventDefault()
+      menuItems[nextIndex].focus()
     }
 
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', handleKeyDown)
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleEscape)
+      document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [contextMenu, onClose])
+  }, [contextMenu, closeMenu, onClose])
 
-  // Move focus to the first menu item when the menu opens
-  useEffect(() => {
+  // Move focus into the menu and retain the trigger for dismissal/action focus.
+  useLayoutEffect(() => {
     if (!contextMenu || !menuRef.current) return
+    returnFocusRef.current = document.activeElement
     const firstItem = menuRef.current.querySelector('[role="menuitem"]')
     firstItem?.focus()
   }, [contextMenu])
@@ -87,25 +135,49 @@ function RoutineContextMenu({ contextMenu, onModify, onRemove, onClose }) {
         type='button'
         className='context-menu-item'
         onClick={() => {
-          onModify(contextMenu.routine)
-          onClose()
+          onEdit(contextMenu.routine)
+          closeMenu(true)
         }}
         role='menuitem'
       >
         <Icon name='edit' />
-        Modify routine
+        Edit
+      </button>
+      <button
+        type='button'
+        className='context-menu-item'
+        onClick={() => {
+          onDuplicate(contextMenu.routine)
+          closeMenu(true)
+        }}
+        role='menuitem'
+      >
+        <Icon name='copy' />
+        Duplicate
+      </button>
+      <button
+        type='button'
+        className='context-menu-item'
+        onClick={() => {
+          onSchedule(contextMenu.routine)
+          closeMenu(true)
+        }}
+        role='menuitem'
+      >
+        <Icon name='calendar' />
+        Schedule
       </button>
       <button
         type='button'
         className='context-menu-item context-menu-item-danger'
         onClick={() => {
-          onRemove(contextMenu.routine)
-          onClose()
+          onDelete(contextMenu.routine)
+          closeMenu(true)
         }}
         role='menuitem'
       >
         <Icon name='trash' />
-        Remove routine
+        Delete
       </button>
     </div>
   )
@@ -121,8 +193,10 @@ RoutineContextMenu.propTypes = {
       title: PropTypes.string
     })
   }),
-  onModify: PropTypes.func.isRequired,
-  onRemove: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDuplicate: PropTypes.func.isRequired,
+  onSchedule: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired
 }
 
