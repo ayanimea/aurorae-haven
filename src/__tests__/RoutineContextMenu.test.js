@@ -197,4 +197,31 @@ describe('RoutineContextMenu', () => {
       expect(mockOnClose).not.toHaveBeenCalled()
     })
   })
+
+  describe('Keyboard navigation', () => {
+    it('moves through menu items with arrows and Home/End', () => {
+      render(<RoutineContextMenu {...defaultProps} />)
+      const items = screen.getAllByRole('menuitem')
+
+      expect(items[0]).toHaveFocus()
+      fireEvent.keyDown(items[0], { key: 'ArrowDown' })
+      expect(items[1]).toHaveFocus()
+      fireEvent.keyDown(items[1], { key: 'ArrowUp' })
+      expect(items[0]).toHaveFocus()
+      fireEvent.keyDown(items[0], { key: 'End' })
+      expect(items[3]).toHaveFocus()
+      fireEvent.keyDown(items[3], { key: 'Home' })
+      expect(items[0]).toHaveFocus()
+
+      fireEvent.keyDown(items[0], { key: 'ArrowUp' })
+      expect(items[3]).toHaveFocus()
+
+      const windowKeyDown = vi.fn()
+      window.addEventListener('keydown', windowKeyDown)
+      fireEvent.keyDown(items[3], { key: 'Escape' })
+      expect(mockOnClose).toHaveBeenCalled()
+      expect(windowKeyDown).not.toHaveBeenCalled()
+      window.removeEventListener('keydown', windowKeyDown)
+    })
+  })
 })

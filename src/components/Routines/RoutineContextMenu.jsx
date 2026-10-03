@@ -48,18 +48,50 @@ function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDe
       }
     }
 
-    const handleEscape = (e) => {
+    const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
         closeMenu(true)
+        return
       }
+
+      const menuItems = Array.from(
+        menuRef.current?.querySelectorAll('[role="menuitem"]') || []
+      )
+      if (menuItems.length === 0) return
+
+      const currentIndex = menuItems.indexOf(document.activeElement)
+      let nextIndex
+
+      switch (e.key) {
+        case 'ArrowDown':
+          nextIndex = (currentIndex + 1) % menuItems.length
+          break
+        case 'ArrowUp':
+          nextIndex =
+            currentIndex <= 0 ? menuItems.length - 1 : currentIndex - 1
+          break
+        case 'Home':
+          nextIndex = 0
+          break
+        case 'End':
+          nextIndex = menuItems.length - 1
+          break
+        default:
+          return
+      }
+
+      e.preventDefault()
+      menuItems[nextIndex].focus()
     }
 
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', handleKeyDown)
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleEscape)
+      document.removeEventListener('keydown', handleKeyDown)
     }
   }, [contextMenu, closeMenu, onClose])
 

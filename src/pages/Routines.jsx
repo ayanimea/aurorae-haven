@@ -273,7 +273,7 @@ function Routines() {
 
   // TAB-RTN-44: Keyboard shortcuts
   useEffect(() => {
-    if (!runner.state || !runner.state.isRunning) return
+    if (!runner.state || !runner.state.isRunning || showCancelConfirm) return
 
     const handleKeyPress = (e) => {
       // Ignore if user is typing in an input
@@ -305,7 +305,7 @@ function Routines() {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [runner, handleCancelRoutine])
+  }, [runner, handleCancelRoutine, showCancelConfirm])
 
   // Handle routine data export - TAB-RTN-47
   const handleExportRoutines = async () => {
@@ -1034,6 +1034,7 @@ function Routines() {
           message='Would you like to keep your partial progress (logs and XP)?'
           confirmText='Keep Progress'
           cancelText='Discard All'
+          allowDismiss={false}
           onConfirm={() => confirmCancel(true)}
           onCancel={() => confirmCancel(false)}
         />

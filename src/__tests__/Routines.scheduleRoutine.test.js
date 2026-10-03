@@ -80,10 +80,19 @@ vi.mock('../components/Routines/RoutineCreationModal', () => ({
 }))
 
 vi.mock('../components/common/ConfirmModal', () => ({
-  default: function MockConfirmModal({ isOpen, onConfirm, onCancel, title }) {
+  default: function MockConfirmModal({
+    isOpen,
+    onConfirm,
+    onCancel,
+    title,
+    allowDismiss
+  }) {
     if (!isOpen) return null
     return (
-      <div data-testid='confirm-modal'>
+      <div
+        data-testid='confirm-modal'
+        data-allow-dismiss={String(allowDismiss)}
+      >
         <span data-testid='confirm-modal-title'>{title}</span>
         <button data-testid='confirm-modal-confirm' onClick={onConfirm}>
           Confirm
@@ -385,6 +394,22 @@ describe('Routines — Schedule routine', () => {
 
     expect(mockDeleteRoutine).toHaveBeenCalledTimes(1)
     expect(mockDeleteRoutine).toHaveBeenCalledWith('r1')
+  })
+
+  it('requires explicit discard and ignores runner shortcuts while confirming cancellation', async () => {
+    mockRunner.runningRoutine = MORNING_ROUTINE
+    mockRunner.state = { isRunning: true, isPaused: false }
+    await renderWithRoutines()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    const confirmation = screen.getByTestId('confirm-modal')
+    expect(confirmation).toHaveAttribute('data-allow-dismiss', 'false')
+
+    fireEvent.keyDown(window, { key: 'p' })
+    expect(mockRunner.togglePause).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('confirm-modal-cancel'))
+    expect(mockRunner.cancel).toHaveBeenCalledWith(false)
   })
 
   it('opens EventModal with pre-filled routine data when Schedule is clicked', async () => {
