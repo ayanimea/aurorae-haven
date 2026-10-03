@@ -18,6 +18,7 @@ The Tasks feature provides an Eisenhower Matrix-based task management interface 
 - ✅ Drag tasks onto one another to nest them
 - ✅ Save tasks for reuse and create tasks from saved or built-in templates
 - ✅ Shared category tabs with an All tab and per-category Eisenhower quadrants
+- ✅ Assign shared categories when creating or editing tasks; create up to six categories in Settings
 - ✅ Drag-and-drop between quadrants (desktop)
 - ✅ Inline editing with accessible focus management
 - ✅ WCAG 2.2 AA accessibility compliance

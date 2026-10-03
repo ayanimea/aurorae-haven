@@ -104,6 +104,15 @@ export function useTasksState() {
     }))
   }
 
+  const updateTaskCategory = (quadrant, taskId, category) => {
+    setTasks((prev) => ({
+      ...(prev || createDefaultTasksState()),
+      [quadrant]: (prev?.[quadrant] || []).map((task) =>
+        task.id === taskId ? { ...task, category } : task
+      )
+    }))
+  }
+
   const addSubtask = (quadrant, taskId, text) => {
     const subtask = {
       id: generateSecureUUID(),
@@ -218,6 +227,7 @@ export function useTasksState() {
     toggleTask,
     deleteTask,
     editTask,
+    updateTaskCategory,
     addSubtask,
     toggleSubtask,
     deleteSubtask,

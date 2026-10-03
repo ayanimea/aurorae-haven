@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { loadCategories, saveCategories } from '../utils/categoryStorage'
+import {
+  loadCategories,
+  MAX_CATEGORY_COUNT,
+  saveCategories
+} from '../utils/categoryStorage'
 
 export function useCategories() {
   const [categories, setCategories] = useState(() => loadCategories())
@@ -11,6 +15,7 @@ export function useCategories() {
       if (current.some((item) => item.toLowerCase() === value.toLowerCase())) {
         return current
       }
+      if (current.length >= MAX_CATEGORY_COUNT) return current
       return [...current, value].sort((a, b) => a.localeCompare(b))
     })
   }, [])

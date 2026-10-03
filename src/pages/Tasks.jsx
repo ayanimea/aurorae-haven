@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTasksState } from '../hooks/useTasksState'
 import { useCategories } from '../hooks/useCategories'
 import { useSavedTasks } from '../hooks/useSavedTasks'
@@ -16,13 +16,14 @@ function Tasks() {
     toggleTask,
     deleteTask,
     editTask,
+    updateTaskCategory,
     addSubtask,
     toggleSubtask,
     deleteSubtask,
     nestTask,
     moveTask
   } = useTasksState()
-  const { categories, addCategory } = useCategories()
+  const { categories } = useCategories()
   const { savedTasks, saveTask } = useSavedTasks()
 
   // Form state
@@ -49,17 +50,6 @@ function Tasks() {
       nestTask(fromQuadrant, toQuadrant, parentId, task)
   )
 
-  const existingCategories = Object.values(tasks)
-    .flat()
-    .map((task) => task.category)
-    .filter(Boolean)
-  const existingCategoryKey = existingCategories.join('\u0000')
-  useEffect(() => {
-    existingCategoryKey.split('\u0000').forEach((category) => {
-      addCategory(category)
-    })
-  }, [existingCategoryKey, addCategory])
-
   const handleAddTask = (e) => {
     e.preventDefault()
     if (!newTask.trim()) return
@@ -75,15 +65,21 @@ function Tasks() {
 
   const handleAddFromTemplate = () => {
     if (!selectedTemplate) return
-    const templateCategory = selectedTemplate.category || ''
+    const templateCategory =
+      categories.find(
+        (category) =>
+          category.toLowerCase() ===
+          (selectedTemplate.category || '').trim().toLowerCase()
+      ) || ''
     const quadrant =
       selectedTemplate.quadrant || selectedQuadrant || 'urgent_important'
     addTask(quadrant, selectedTemplate.title || selectedTemplate.text, templateCategory)
     if (templateCategory) {
-      addCategory(templateCategory)
       setSelectedCategory(templateCategory)
-      setTaskCategory(templateCategory)
+    } else {
+      setSelectedCategory(null)
     }
+    setTaskCategory(templateCategory)
     setSelectedQuadrant(quadrant)
   }
 
@@ -199,7 +195,6 @@ function Tasks() {
         categories={categories}
         selectedCategory={selectedCategory}
         onSelect={handleCategorySelect}
-        onAddCategory={addCategory}
       />
 
       <div className='eisenhower-matrix'>
@@ -217,6 +212,8 @@ function Tasks() {
             )}
             editingTask={editingTask}
             editText={editText}
+            categories={categories}
+            onCategoryChange={updateTaskCategory}
             onToggle={toggleTask}
             onEdit={startEditTask}
             onEditTextChange={setEditText}

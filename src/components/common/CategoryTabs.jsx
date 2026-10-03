@@ -1,21 +1,6 @@
-import { useState } from 'react'
 import PropTypes from 'prop-types'
-import Icon from './Icon'
 
-function CategoryTabs({ categories, selectedCategory, onSelect, onAddCategory }) {
-  const [isAdding, setIsAdding] = useState(false)
-  const [newCategory, setNewCategory] = useState('')
-
-  const handleAdd = (event) => {
-    event.preventDefault()
-    const category = newCategory.trim()
-    if (!category) return
-    onAddCategory(category)
-    onSelect(category)
-    setNewCategory('')
-    setIsAdding(false)
-  }
-
+function CategoryTabs({ categories, selectedCategory, onSelect }) {
   const handleTabKeyDown = (event, index) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
     event.preventDefault()
@@ -55,39 +40,6 @@ function CategoryTabs({ categories, selectedCategory, onSelect, onAddCategory })
           </button>
         ))}
       </div>
-      {isAdding ? (
-        <form className='category-tab-form' onSubmit={handleAdd}>
-          <input
-            type='text'
-            value={newCategory}
-            onChange={(event) => setNewCategory(event.target.value)}
-            aria-label='New category name'
-            autoComplete='off'
-          />
-          <button type='submit' aria-label='Save category'>
-            <Icon name='check' />
-          </button>
-          <button
-            type='button'
-            onClick={() => {
-              setNewCategory('')
-              setIsAdding(false)
-            }}
-            aria-label='Cancel adding category'
-          >
-            <Icon name='x' />
-          </button>
-        </form>
-      ) : (
-        <button
-          type='button'
-          className='category-add-button'
-          onClick={() => setIsAdding(true)}
-          aria-label='Add category'
-        >
-          <Icon name='plus' />
-        </button>
-      )}
     </div>
   )
 }
@@ -95,8 +47,7 @@ function CategoryTabs({ categories, selectedCategory, onSelect, onAddCategory })
 CategoryTabs.propTypes = {
   categories: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedCategory: PropTypes.string,
-  onSelect: PropTypes.func.isRequired,
-  onAddCategory: PropTypes.func.isRequired
+  onSelect: PropTypes.func.isRequired
 }
 
 export default CategoryTabs

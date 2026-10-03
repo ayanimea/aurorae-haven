@@ -16,7 +16,6 @@ function NotesList({
   categories,
   selectedCategory,
   onCategorySelect,
-  onAddCategory,
   showNoteList,
   onSearchChange,
   onClearSearch,
@@ -93,7 +92,6 @@ function NotesList({
         categories={categories}
         selectedCategory={selectedCategory}
         onSelect={onCategorySelect}
-        onAddCategory={onAddCategory}
       />
       <p className='note-list-hint'>
         Drag a note onto a top-level note to nest it (two levels maximum).
@@ -208,7 +206,6 @@ NotesList.propTypes = {
   categories: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedCategory: PropTypes.string,
   onCategorySelect: PropTypes.func.isRequired,
-  onAddCategory: PropTypes.func.isRequired,
   showNoteList: PropTypes.bool.isRequired,
   onSearchChange: PropTypes.func.isRequired,
   onClearSearch: PropTypes.func.isRequired,

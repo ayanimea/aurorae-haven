@@ -14,6 +14,7 @@ providing powerful functionality.
 
 - Create a sub-note from the currently selected note using **New sub-note**
 - Tasks and notes share persistent category tabs, including an All tab
+- Create up to six shared categories in Settings and assign them to notes in the editor
 - Selecting a category shows only notes assigned to that category
 - Sub-notes retain a parent-note link and inherit the parent's category
 - Drag an unlocked note onto another unlocked note to nest it

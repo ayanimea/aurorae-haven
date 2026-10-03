@@ -1,4 +1,5 @@
 export const CATEGORY_STORAGE_KEY = 'aurorae_categories'
+export const MAX_CATEGORY_COUNT = 6
 
 export function normalizeCategory(category) {
   return typeof category === 'string' ? category.trim() : ''

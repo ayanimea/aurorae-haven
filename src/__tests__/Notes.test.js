@@ -1386,6 +1386,7 @@ describe('Notes Component', () => {
     })
 
     test('saves category when editing note', async () => {
+      localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
       const mockEntries = [
         {
           id: 'test-id',
@@ -1400,8 +1401,8 @@ describe('Notes Component', () => {
 
       render(<Notes />)
 
-      const categoryInput = screen.getByPlaceholderText('Category...')
-      fireEvent.change(categoryInput, { target: { value: 'Work' } })
+      const categorySelect = screen.getByLabelText('Note category')
+      fireEvent.change(categorySelect, { target: { value: 'Work' } })
 
       await waitFor(
         () => {

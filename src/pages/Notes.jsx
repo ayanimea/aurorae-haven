@@ -133,17 +133,7 @@ function Notes() {
     updateNotes,
     clearAutosaveTimeout
   } = useNotesState()
-  const { categories, addCategory } = useCategories()
-  const existingCategoriesKey = notes
-    .map((note) => note.category || '')
-    .filter(Boolean)
-    .join('\u0000')
-
-  useEffect(() => {
-    existingCategoriesKey.split('\u0000').forEach((value) => {
-      addCategory(value)
-    })
-  }, [existingCategoriesKey, addCategory])
+  const { categories } = useCategories()
 
   const { toastMessage, showToast, showToastNotification } = useToast()
 
@@ -547,7 +537,6 @@ function Notes() {
         categories={categories}
         selectedCategory={selectedCategory}
         onCategorySelect={setSelectedCategory}
-        onAddCategory={addCategory}
         showNoteList={showNoteList}
         onSearchChange={setSearchQuery}
         onClearSearch={() => setSearchQuery('')}
@@ -574,7 +563,6 @@ function Notes() {
             showNoteList={showNoteList}
             onTitleChange={setTitle}
             onCategoryChange={setCategory}
-            onCategoryCommit={addCategory}
             onContentChange={setContent}
             onToggleNoteList={() => setShowNoteList(!showNoteList)}
             onNewNote={handleNewNote}

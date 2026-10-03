@@ -13,6 +13,8 @@ function TaskQuadrant({
   onToggle,
   onEdit,
   onEditTextChange,
+  categories,
+  onCategoryChange,
   onSaveEdit,
   onCancelEdit,
   onDelete,
@@ -58,6 +60,8 @@ function TaskQuadrant({
               onToggle={onToggle}
               onEdit={onEdit}
               onEditTextChange={onEditTextChange}
+              categories={categories}
+              onCategoryChange={onCategoryChange}
               onSaveEdit={onSaveEdit}
               onCancelEdit={onCancelEdit}
               onDelete={onDelete}
@@ -99,6 +103,8 @@ TaskQuadrant.propTypes = {
   onToggle: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onEditTextChange: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onCategoryChange: PropTypes.func.isRequired,
   onSaveEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,

@@ -24,7 +24,6 @@ function NoteEditor({
   showNoteList,
   onTitleChange,
   onCategoryChange,
-  onCategoryCommit,
   onContentChange,
   onToggleNoteList,
   onNewNote,
@@ -132,22 +131,20 @@ function NoteEditor({
             disabled={!currentNoteId || currentNote?.locked}
             aria-label='Note title'
           />
-          <input
-            type='text'
+          <select
             className='note-category-input'
-            placeholder='Category...'
             value={category}
             onChange={(e) => onCategoryChange(e.target.value)}
-            onBlur={() => onCategoryCommit(category)}
             disabled={!currentNoteId || currentNote?.locked}
-            list='category-suggestions'
             aria-label='Note category'
-          />
-          <datalist id='category-suggestions'>
+          >
+            <option value=''>No category</option>
             {categories.map((cat) => (
-              <option key={cat} value={cat} />
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
             ))}
-          </datalist>
+          </select>
         </div>
         <div className='toolbar'>
           <label className='btn' aria-label='Import' title='Import'>
@@ -357,7 +354,6 @@ NoteEditor.propTypes = {
   showNoteList: PropTypes.bool.isRequired,
   onTitleChange: PropTypes.func.isRequired,
   onCategoryChange: PropTypes.func.isRequired,
-  onCategoryCommit: PropTypes.func.isRequired,
   onContentChange: PropTypes.func.isRequired,
   onToggleNoteList: PropTypes.func.isRequired,
   onNewNote: PropTypes.func.isRequired,

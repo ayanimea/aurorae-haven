@@ -71,6 +71,20 @@ describe('Tasks Component', () => {
     })
   })
 
+  test('does not create a category while creating a task', async () => {
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Uncategorized task' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([])
+    })
+  })
+
   test('does not add empty task', () => {
     render(<Tasks />)
 
@@ -124,12 +138,8 @@ describe('Tasks Component', () => {
   })
 
   test('category tabs filter tasks in each Eisenhower quadrant', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
     render(<Tasks />)
-    fireEvent.click(screen.getByRole('button', { name: 'Add category' }))
-    fireEvent.change(screen.getByRole('textbox', { name: 'New category name' }), {
-      target: { value: 'Work' }
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Save category' }))
 
     fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
       target: { value: 'Work task' }
@@ -153,6 +163,31 @@ describe('Tasks Component', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'All' }))
     expect(screen.getByText('Work task')).toBeInTheDocument()
     expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
+  })
+
+  test('assigns an existing category to a task after creation', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Categorize later' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Category for task "Categorize later"'
+      }),
+      { target: { value: 'Work' } }
+    )
+
+    await waitFor(() => {
+      const task = JSON.parse(localStorage.getItem('aurorae_tasks'))
+        .urgent_important[0]
+      expect(task.category).toBe('Work')
+    })
+    expect(
+      screen.queryByRole('button', { name: 'Add category' })
+    ).not.toBeInTheDocument()
   })
 
   test('dragging a task onto another nests and removes it from its quadrant', async () => {
@@ -215,6 +250,7 @@ describe('Tasks Component', () => {
       expect(
         container.querySelector('.task-item .task-text')
       ).toHaveTextContent('Water Indoor Plants')
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([])
     })
   })
 

@@ -13,6 +13,8 @@ function TaskItem({
   onToggle,
   onEdit,
   onEditTextChange,
+  categories,
+  onCategoryChange,
   onSaveEdit,
   onCancelEdit,
   onDelete,
@@ -179,6 +181,23 @@ function TaskItem({
           </>
         )}
       </div>
+      {!isEditing && (
+        <select
+          className='task-category-select quadrant-select'
+          value={task.category || ''}
+          onChange={(event) =>
+            onCategoryChange(quadrant, task.id, event.target.value)
+          }
+          aria-label={`Category for task "${task.text}"`}
+        >
+          <option value=''>No category</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+      )}
       <div className='task-subtasks'>
         {subtasks.map((subtask) => (
           <div className='task-subtask' key={subtask.id}>
@@ -247,7 +266,8 @@ TaskItem.propTypes = {
   task: PropTypes.shape({
     id: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
-    completed: PropTypes.bool.isRequired
+    completed: PropTypes.bool.isRequired,
+    category: PropTypes.string
   }).isRequired,
   quadrant: PropTypes.string.isRequired,
   isEditing: PropTypes.bool.isRequired,
@@ -255,6 +275,8 @@ TaskItem.propTypes = {
   onToggle: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onEditTextChange: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onCategoryChange: PropTypes.func.isRequired,
   onSaveEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
