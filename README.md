@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1213 KB compressed
+- ✅ Total size: 1214 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-10-02 12:14:18 UTC
+**Last Updated**: 2026-10-03 09:59:19 UTC
 **Source Branch**: implement-routine-tab-workflow
-**Source Commit**: 5e068ea
+**Source Commit**: 2fde73b
 
 ---
 
