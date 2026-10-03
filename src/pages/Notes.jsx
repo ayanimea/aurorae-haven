@@ -487,7 +487,7 @@ function Notes() {
   }
 
   const handleCreateSubNote = () => {
-    if (!currentNote || currentNote.locked) return
+    if (!currentNote || currentNote.locked || currentNote.parentNoteId) return
 
     const subNote = {
       ...createNewNote(),
@@ -505,6 +505,12 @@ function Notes() {
     const note = notes.find((item) => item.id === noteId)
     const parent = notes.find((item) => item.id === parentId)
     if (!note || !parent || note.locked || parent.locked) return
+    if (
+      parent.parentNoteId ||
+      notes.some((item) => item.parentNoteId === noteId)
+    ) {
+      return
+    }
 
     let ancestor = parent
     const visited = new Set()

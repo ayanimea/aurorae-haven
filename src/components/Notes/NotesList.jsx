@@ -95,7 +95,9 @@ function NotesList({
         onSelect={onCategorySelect}
         onAddCategory={onAddCategory}
       />
-      <p className='note-list-hint'>Drag a note onto another to nest it.</p>
+      <p className='note-list-hint'>
+        Drag a note onto a top-level note to nest it (two levels maximum).
+      </p>
       <div className='note-list'>
         {visibleNotes.map((note) => {
           const parentNote = note.parentNoteId
@@ -117,7 +119,13 @@ function NotesList({
               event.dataTransfer?.setData('text/plain', note.id)
             }}
             onDragOver={(event) => {
-              if (draggedNoteId && draggedNoteId !== note.id && !note.locked) {
+              if (
+                draggedNoteId &&
+                draggedNoteId !== note.id &&
+                !note.locked &&
+                !note.parentNoteId &&
+                !notes.some((item) => item.parentNoteId === draggedNoteId)
+              ) {
                 event.preventDefault()
               }
             }}
@@ -126,7 +134,13 @@ function NotesList({
               event.stopPropagation()
               const sourceId =
                 draggedNoteId || event.dataTransfer?.getData('text/plain')
-              if (sourceId && sourceId !== note.id && !note.locked) {
+              if (
+                sourceId &&
+                sourceId !== note.id &&
+                !note.locked &&
+                !note.parentNoteId &&
+                !notes.some((item) => item.parentNoteId === sourceId)
+              ) {
                 onNestNote(sourceId, note.id)
               }
               setDraggedNoteId(null)

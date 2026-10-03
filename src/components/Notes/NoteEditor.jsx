@@ -228,7 +228,11 @@ function NoteEditor({
             onClick={onCreateSubNote}
             aria-label='New sub-note'
             title='New sub-note'
-            disabled={!currentNoteId || currentNote?.locked}
+            disabled={
+              !currentNoteId ||
+              currentNote?.locked ||
+              Boolean(currentNote?.parentNoteId)
+            }
           >
             <Icon name='list' />
           </button>

@@ -1471,6 +1471,61 @@ describe('Notes Component', () => {
       })
     })
 
+    test('prevents creating or nesting notes beyond two levels', async () => {
+      const notes = [
+        {
+          id: 'parent-note',
+          title: 'Parent note',
+          content: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'child-note',
+          title: 'Child note',
+          content: '',
+          parentNoteId: 'parent-note',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'other-note',
+          title: 'Other note',
+          content: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(notes))
+      const { container } = render(<Notes />)
+
+      fireEvent.click(screen.getByText('Child note', { exact: true }))
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Note title...')).toHaveValue(
+          'Child note'
+        )
+        expect(
+          screen.getByRole('button', { name: 'New sub-note' })
+        ).toBeDisabled()
+      })
+
+      const childNote = screen.getByText('Child note').closest('.note-item')
+      const otherNote = screen.getByText('Other note').closest('.note-item')
+      fireEvent.dragStart(otherNote, {
+        dataTransfer: { setData: vi.fn() }
+      })
+      fireEvent.drop(childNote, {
+        dataTransfer: { getData: () => 'other-note' }
+      })
+
+      await waitFor(() => {
+        const saved = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(
+          saved.find((note) => note.id === 'other-note').parentNoteId
+        ).toBeNull()
+      })
+    })
+
     test('dragging a note onto another nests it', async () => {
       const notes = [
         {
