@@ -178,6 +178,7 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_CSS: true
           VALIDATE_MARKDOWN: true
+          LINTER_RULES_PATH: .
           CSS_FILE_NAME: .stylelintrc.json
           MARKDOWN_CONFIG_FILE: .markdownlint.json
           FILTER_REGEX_EXCLUDE: '.*node_modules.*|.*\.git.*|.*build.*|.*dist.*|.*coverage.*'
