@@ -8,7 +8,7 @@
 
 .add-task-form {
   display: grid;
-  grid-template-columns: 1fr 200px auto;
+  grid-template-columns: minmax(0, 1fr) 200px 160px auto;
   gap: 10px;
   align-items: center;
 }
@@ -63,13 +63,6 @@
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: 14px;
-}
-
-.task-category-sort {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
 .matrix-quadrant {
@@ -355,7 +348,7 @@
   }
 
   .add-task-form {
-    grid-template-columns: 1fr 180px auto;
+    grid-template-columns: minmax(0, 1fr) 170px 140px auto;
     gap: 8px;
   }
 }

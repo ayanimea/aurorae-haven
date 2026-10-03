@@ -15,7 +15,7 @@ The Tasks feature provides an Eisenhower Matrix-based task management interface 
 - ✅ Standard 2×2 Eisenhower Matrix layout
 - ✅ Full CRUD operations (Create, Read, Update, Delete)
 - ✅ Nested subtasks with independent completion and deletion
-- ✅ Switchable priority and category-alphabetical quadrant ordering
+- ✅ Shared category tabs with an All tab and per-category Eisenhower quadrants
 - ✅ Drag-and-drop between quadrants (desktop)
 - ✅ Inline editing with accessible focus management
 - ✅ WCAG 2.2 AA accessibility compliance

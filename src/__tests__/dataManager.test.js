@@ -34,6 +34,18 @@ describe('Data Manager', () => {
       expect(Array.isArray(data.habits)).toBe(true)
       expect(Array.isArray(data.dumps)).toBe(true)
       expect(Array.isArray(data.schedule)).toBe(true)
+      expect(Array.isArray(data.categories)).toBe(true)
+    })
+
+    it('should include the shared categories in exported data', async () => {
+      localStorage.setItem(
+        'aurorae_categories',
+        JSON.stringify(['Work', 'Personal'])
+      )
+
+      const data = await getDataTemplate()
+
+      expect(data.categories).toEqual(['Personal', 'Work'])
     })
 
     it('should collect dumps (Brain Dump notes) from localStorage', async () => {

@@ -123,14 +123,49 @@ describe('Tasks Component', () => {
     })
   })
 
-  test('sorts task categories alphabetically', () => {
-    const { container } = render(<Tasks />)
-    fireEvent.change(screen.getByLabelText('Sort categories:'), {
-      target: { value: 'category' }
+  test('category tabs filter tasks in each Eisenhower quadrant', async () => {
+    render(<Tasks />)
+    fireEvent.click(screen.getByRole('button', { name: 'Add category' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'New category name' }), {
+      target: { value: 'Work' }
     })
+    fireEvent.click(screen.getByRole('button', { name: 'Save category' }))
 
-    const headers = container.querySelectorAll('.quadrant-header h3')
-    expect(headers[0]).toHaveTextContent('Not Urgent & Important')
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Work task' }
+    })
+    fireEvent.change(screen.getByLabelText('Select category'), {
+      target: { value: 'Work' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Uncategorized task' }
+    })
+    fireEvent.change(screen.getByLabelText('Select category'), {
+      target: { value: '' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Work' }))
+    expect(screen.getByText('Work task')).toBeInTheDocument()
+    expect(screen.queryByText('Uncategorized task')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'All' }))
+    expect(screen.getByText('Work task')).toBeInTheDocument()
+    expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
+  })
+
+  test('uses note categories in the shared task tabs and form', () => {
+    localStorage.setItem(
+      'brainDumpEntries',
+      JSON.stringify([{ id: 'note-1', category: 'Personal' }])
+    )
+    render(<Tasks />)
+
+    expect(screen.getByRole('tab', { name: 'Personal' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('option', { name: 'Personal' })
+    ).toBeInTheDocument()
   })
 
   test('toggles task completion', async () => {

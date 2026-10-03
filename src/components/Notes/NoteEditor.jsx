@@ -2,7 +2,6 @@ import { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { handleEnterKey } from '../../utils/listContinuation'
-import { getUniqueCategories } from '../../utils/notes/noteFilters'
 
 // Editor pane width constraints (percentage of container)
 const MIN_EDITOR_WIDTH_PERCENT = 20
@@ -18,12 +17,14 @@ function NoteEditor({
   currentNoteId,
   title,
   category,
+  categories,
   content,
   preview,
   notes,
   showNoteList,
   onTitleChange,
   onCategoryChange,
+  onCategoryCommit,
   onContentChange,
   onToggleNoteList,
   onNewNote,
@@ -137,12 +138,13 @@ function NoteEditor({
             placeholder='Category...'
             value={category}
             onChange={(e) => onCategoryChange(e.target.value)}
+            onBlur={() => onCategoryCommit(category)}
             disabled={!currentNoteId || currentNote?.locked}
             list='category-suggestions'
             aria-label='Note category'
           />
           <datalist id='category-suggestions'>
-            {getUniqueCategories(notes).map((cat) => (
+            {categories.map((cat) => (
               <option key={cat} value={cat} />
             ))}
           </datalist>
@@ -344,12 +346,14 @@ NoteEditor.propTypes = {
   currentNoteId: PropTypes.string,
   title: PropTypes.string.isRequired,
   category: PropTypes.string.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
   content: PropTypes.string.isRequired,
   preview: PropTypes.string.isRequired,
   notes: PropTypes.array.isRequired,
   showNoteList: PropTypes.bool.isRequired,
   onTitleChange: PropTypes.func.isRequired,
   onCategoryChange: PropTypes.func.isRequired,
+  onCategoryCommit: PropTypes.func.isRequired,
   onContentChange: PropTypes.func.isRequired,
   onToggleNoteList: PropTypes.func.isRequired,
   onNewNote: PropTypes.func.isRequired,

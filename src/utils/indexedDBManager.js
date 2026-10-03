@@ -4,6 +4,7 @@
 import { createLogger } from './logger'
 import { DEFAULT_BACKUP_LIMIT } from './uiConstants'
 import { generateMetadata } from './idGenerator'
+import { loadCategories, saveCategories } from './categoryStorage'
 
 const logger = createLogger('IndexedDB')
 
@@ -558,6 +559,7 @@ export async function exportAllData() {
     versions: JSON.parse(localStorage.getItem('brainDumpVersions') || '[]'),
     entries: JSON.parse(localStorage.getItem('brainDumpEntries') || '[]')
   }
+  data.categories = loadCategories()
 
   // Include tasks from aurorae_tasks (Eisenhower matrix format)
   try {
@@ -678,6 +680,9 @@ export async function importAllData(data) {
           JSON.stringify(data.brainDump.entries)
         )
       }
+    }
+    if (Array.isArray(data.categories)) {
+      saveCategories(data.categories)
     }
 
     // Import tasks to aurorae_tasks (Eisenhower matrix format)

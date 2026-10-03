@@ -1438,7 +1438,7 @@ describe('Notes Component', () => {
 
       render(<Notes />)
 
-      expect(screen.getByText('Personal')).toBeInTheDocument()
+      expect(screen.getAllByText('Personal').length).toBeGreaterThan(0)
     })
 
     test('creates a sub-note linked to the current note', async () => {
@@ -1471,7 +1471,7 @@ describe('Notes Component', () => {
       })
     })
 
-    test('sorts notes by category', () => {
+    test('category tabs filter notes by their shared category', () => {
       localStorage.setItem(
         'brainDumpEntries',
         JSON.stringify([
@@ -1493,14 +1493,14 @@ describe('Notes Component', () => {
           }
         ])
       )
-      const { container } = render(<Notes />)
-      fireEvent.change(screen.getByLabelText('Sort notes'), {
-        target: { value: 'category' }
-      })
+      render(<Notes />)
+      fireEvent.click(screen.getByRole('tab', { name: 'Work' }))
+      expect(screen.getByText('Work entry')).toBeInTheDocument()
+      expect(screen.queryByText('Personal entry')).not.toBeInTheDocument()
 
-      const titles = container.querySelectorAll('.note-item-title')
-      expect(titles[0]).toHaveTextContent('Personal entry')
-      expect(titles[1]).toHaveTextContent('Work entry')
+      fireEvent.click(screen.getByRole('tab', { name: 'All' }))
+      expect(screen.getByText('Work entry')).toBeInTheDocument()
+      expect(screen.getByText('Personal entry')).toBeInTheDocument()
     })
   })
 })

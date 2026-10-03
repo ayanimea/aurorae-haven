@@ -50,10 +50,11 @@ export function useTasksState() {
   })
 
   // Add new task
-  const addTask = (quadrant, text) => {
+  const addTask = (quadrant, text, category = '') => {
     const task = {
       id: generateSecureUUID(),
       text: text.trim(),
+      category,
       completed: false,
       subtasks: [],
       createdAt: new Date().toISOString(),

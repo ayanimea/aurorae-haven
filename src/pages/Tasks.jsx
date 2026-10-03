@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTasksState } from '../hooks/useTasksState'
+import { useCategories } from '../hooks/useCategories'
 import { useDragAndDrop } from '../hooks/useDragAndDrop'
+import CategoryTabs from '../components/common/CategoryTabs'
 import TaskForm from '../components/Tasks/TaskForm'
 import TaskQuadrant from '../components/Tasks/TaskQuadrant'
 
@@ -16,11 +18,13 @@ function Tasks() {
     deleteSubtask,
     moveTask
   } = useTasksState()
+  const { categories, addCategory } = useCategories()
 
   // Form state
   const [newTask, setNewTask] = useState('')
   const [selectedQuadrant, setSelectedQuadrant] = useState('urgent_important')
-  const [categorySort, setCategorySort] = useState('priority')
+  const [taskCategory, setTaskCategory] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState(null)
 
   // Editing state
   const [editingTask, setEditingTask] = useState(null)
@@ -30,11 +34,22 @@ function Tasks() {
   const { handleDragStart, handleDragOver, handleDrop } =
     useDragAndDrop(moveTask)
 
+  const existingCategories = Object.values(tasks)
+    .flat()
+    .map((task) => task.category)
+    .filter(Boolean)
+  const existingCategoryKey = existingCategories.join('\u0000')
+  useEffect(() => {
+    existingCategoryKey.split('\u0000').forEach((category) => {
+      addCategory(category)
+    })
+  }, [existingCategoryKey, addCategory])
+
   const handleAddTask = (e) => {
     e.preventDefault()
     if (!newTask.trim()) return
 
-    addTask(selectedQuadrant, newTask)
+    addTask(selectedQuadrant, newTask, taskCategory)
     setNewTask('')
   }
 
@@ -57,6 +72,11 @@ function Tasks() {
   const cancelEditTask = () => {
     setEditingTask(null)
     setEditText('')
+  }
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category)
+    setTaskCategory(category || '')
   }
 
   const quadrants = [
@@ -85,11 +105,6 @@ function Tasks() {
       colorClass: 'quadrant-green'
     }
   ]
-  const sortedQuadrants =
-    categorySort === 'category'
-      ? [...quadrants].sort((a, b) => a.title.localeCompare(b.title))
-      : quadrants
-
   return (
     <div className='tasks-container'>
       <div className='card'>
@@ -100,32 +115,36 @@ function Tasks() {
           <TaskForm
             newTask={newTask}
             selectedQuadrant={selectedQuadrant}
+            category={taskCategory}
+            categories={categories}
             onTaskChange={setNewTask}
             onQuadrantChange={setSelectedQuadrant}
+            onCategoryChange={setTaskCategory}
             onSubmit={handleAddTask}
           />
         </div>
       </div>
 
-      <div className='task-category-sort'>
-        <label htmlFor='task-category-sort'>Sort categories:</label>
-        <select
-          id='task-category-sort'
-          value={categorySort}
-          onChange={(e) => setCategorySort(e.target.value)}
-          className='quadrant-select'
-        >
-          <option value='priority'>Priority order</option>
-          <option value='category'>Category A–Z</option>
-        </select>
-      </div>
+      <CategoryTabs
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelect={handleCategorySelect}
+        onAddCategory={addCategory}
+      />
 
       <div className='eisenhower-matrix'>
-        {sortedQuadrants.map((quadrant) => (
+        {quadrants.map((quadrant) => (
           <TaskQuadrant
             key={quadrant.key}
             quadrant={quadrant}
-            tasks={tasks[quadrant.key]}
+            tasks={tasks[quadrant.key].filter(
+              (task) =>
+                selectedCategory === null ||
+                (typeof task.category === 'string'
+                  ? task.category.toLowerCase()
+                  : '') ===
+                  selectedCategory.toLowerCase()
+            )}
             editingTask={editingTask}
             editText={editText}
             onToggle={toggleTask}

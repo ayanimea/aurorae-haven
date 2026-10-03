@@ -30,6 +30,7 @@ import { useNotesState } from '../hooks/useNotesState'
 import { useToast } from '../hooks/useToast'
 import { createLogger } from '../utils/logger'
 import { getNoteTemplateById } from '../data/noteTemplates'
+import { useCategories } from '../hooks/useCategories'
 
 const logger = createLogger('Notes')
 
@@ -132,6 +133,17 @@ function Notes() {
     updateNotes,
     clearAutosaveTimeout
   } = useNotesState()
+  const { categories, addCategory } = useCategories()
+  const existingCategoriesKey = notes
+    .map((note) => note.category || '')
+    .filter(Boolean)
+    .join('\u0000')
+
+  useEffect(() => {
+    existingCategoriesKey.split('\u0000').forEach((value) => {
+      addCategory(value)
+    })
+  }, [existingCategoriesKey, addCategory])
 
   const { toastMessage, showToast, showToastNotification } = useToast()
 
@@ -160,7 +172,7 @@ function Notes() {
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
   const [showNewNoteModal, setShowNewNoteModal] = useState(false)
-  const [noteSort, setNoteSort] = useState('original')
+  const [selectedCategory, setSelectedCategory] = useState(null)
   const [contextMenu, setContextMenu] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState(null)
@@ -467,7 +479,7 @@ function Notes() {
       noteContent = noteContent ? `[TOC]\n\n${noteContent}` : '[TOC]\n\n'
     }
 
-    const newNote = createNote(noteContent)
+    const newNote = createNote(noteContent, selectedCategory || '')
     // Use the template name as the starting title for non-blank templates.
     if (newNote && template && template.id !== 'blank') {
       setTitle(template.name)
@@ -496,8 +508,10 @@ function Notes() {
         filteredNotes={filteredNotes}
         currentNoteId={currentNoteId}
         searchQuery={searchQuery}
-        sortMode={noteSort}
-        onSortModeChange={setNoteSort}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategorySelect={setSelectedCategory}
+        onAddCategory={addCategory}
         showNoteList={showNoteList}
         onSearchChange={setSearchQuery}
         onClearSearch={() => setSearchQuery('')}
@@ -516,12 +530,14 @@ function Notes() {
             currentNoteId={currentNoteId}
             title={title}
             category={category}
+            categories={categories}
             content={content}
             preview={preview}
             notes={notes}
             showNoteList={showNoteList}
             onTitleChange={setTitle}
             onCategoryChange={setCategory}
+            onCategoryCommit={addCategory}
             onContentChange={setContent}
             onToggleNoteList={() => setShowNoteList(!showNoteList)}
             onNewNote={handleNewNote}

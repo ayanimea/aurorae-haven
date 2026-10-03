@@ -2,6 +2,7 @@
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import Icon from '../common/Icon'
+import CategoryTabs from '../common/CategoryTabs'
 
 /**
  * Component for displaying and searching the list of notes
@@ -11,8 +12,10 @@ function NotesList({
   filteredNotes,
   currentNoteId,
   searchQuery,
-  sortMode,
-  onSortModeChange,
+  categories,
+  selectedCategory,
+  onCategorySelect,
+  onAddCategory,
   showNoteList,
   onSearchChange,
   onClearSearch,
@@ -24,14 +27,13 @@ function NotesList({
 }) {
   if (!showNoteList) return null
 
-  const orderedNotes =
-    sortMode === 'category'
-      ? [...filteredNotes].sort(
-          (a, b) =>
-            (a.category || '').localeCompare(b.category || '') ||
-            (a.title || '').localeCompare(b.title || '')
-        )
-      : filteredNotes
+  const visibleNotes = filteredNotes.filter(
+    (note) =>
+      selectedCategory === null ||
+      (typeof note.category === 'string'
+        ? note.category.toLowerCase()
+        : '') === selectedCategory.toLowerCase()
+  )
 
   return (
     <div className='note-list-sidebar'>
@@ -84,19 +86,14 @@ function NotesList({
           </button>
         )}
       </div>
-      <label className='note-sort'>
-        <span>Sort notes:</span>
-        <select
-          value={sortMode}
-          onChange={(e) => onSortModeChange(e.target.value)}
-          aria-label='Sort notes'
-        >
-          <option value='original'>Original order</option>
-          <option value='category'>Category A–Z</option>
-        </select>
-      </label>
+      <CategoryTabs
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelect={onCategorySelect}
+        onAddCategory={onAddCategory}
+      />
       <div className='note-list'>
-        {orderedNotes.map((note) => {
+        {visibleNotes.map((note) => {
           const parentNote = note.parentNoteId
             ? notes.find((item) => item.id === note.parentNoteId)
             : null
@@ -145,7 +142,7 @@ function NotesList({
             </div>
           </div>
         })}
-        {filteredNotes.length === 0 && notes.length > 0 && (
+        {visibleNotes.length === 0 && notes.length > 0 && (
           <div className='note-list-empty'>
             No notes found matching &quot;{searchQuery}&quot;
           </div>
@@ -165,8 +162,10 @@ NotesList.propTypes = {
   filteredNotes: PropTypes.array.isRequired,
   currentNoteId: PropTypes.string,
   searchQuery: PropTypes.string.isRequired,
-  sortMode: PropTypes.string.isRequired,
-  onSortModeChange: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedCategory: PropTypes.string,
+  onCategorySelect: PropTypes.func.isRequired,
+  onAddCategory: PropTypes.func.isRequired,
   showNoteList: PropTypes.bool.isRequired,
   onSearchChange: PropTypes.func.isRequired,
   onClearSearch: PropTypes.func.isRequired,
