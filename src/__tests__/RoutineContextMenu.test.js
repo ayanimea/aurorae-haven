@@ -223,5 +223,26 @@ describe('RoutineContextMenu', () => {
       expect(windowKeyDown).not.toHaveBeenCalled()
       window.removeEventListener('keydown', windowKeyDown)
     })
+
+    it('does not intercept navigation keys when focus is outside the menu', () => {
+      render(
+        <div>
+          <RoutineContextMenu {...defaultProps} />
+          <button type='button'>Outside</button>
+        </div>
+      )
+      const outsideButton = screen.getByRole('button', { name: 'Outside' })
+      outsideButton.focus()
+
+      const arrowDown = new KeyboardEvent('keydown', {
+        key: 'ArrowDown',
+        bubbles: true,
+        cancelable: true
+      })
+      fireEvent(outsideButton, arrowDown)
+
+      expect(arrowDown.defaultPrevented).toBe(false)
+      expect(outsideButton).toHaveFocus()
+    })
   })
 })

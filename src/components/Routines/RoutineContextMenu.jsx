@@ -62,6 +62,8 @@ function RoutineContextMenu({ contextMenu, onEdit, onDuplicate, onSchedule, onDe
       if (menuItems.length === 0) return
 
       const currentIndex = menuItems.indexOf(document.activeElement)
+      if (currentIndex === -1) return
+
       let nextIndex
 
       switch (e.key) {
