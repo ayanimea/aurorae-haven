@@ -91,6 +91,8 @@ vi.mock('../components/common/ConfirmModal', () => ({
     return (
       <div
         data-testid='confirm-modal'
+        role='alertdialog'
+        aria-modal='true'
         data-allow-dismiss={String(allowDismiss)}
       >
         <span data-testid='confirm-modal-title'>{title}</span>
@@ -410,6 +412,28 @@ describe('Routines — Schedule routine', () => {
 
     fireEvent.click(screen.getByTestId('confirm-modal-cancel'))
     expect(mockRunner.cancel).toHaveBeenCalledWith(false)
+  })
+
+  it('ignores runner shortcuts from interactive controls and dialogs', async () => {
+    mockRunner.runningRoutine = MORNING_ROUTINE
+    mockRunner.state = { isRunning: true, isPaused: false }
+    await renderWithRoutines()
+
+    const previewButton = screen.getByRole('button', {
+      name: 'Preview routine: Morning Routine'
+    })
+    fireEvent.keyDown(previewButton, { key: ' ' })
+    fireEvent.keyDown(previewButton, { key: 'p' })
+    fireEvent.keyDown(previewButton, { key: 's' })
+
+    expect(mockRunner.complete).not.toHaveBeenCalled()
+    expect(mockRunner.togglePause).not.toHaveBeenCalled()
+    expect(mockRunner.skip).not.toHaveBeenCalled()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    fireEvent.keyDown(screen.getByTestId('confirm-modal'), { key: 'p' })
+
+    expect(mockRunner.togglePause).not.toHaveBeenCalled()
   })
 
   it('opens EventModal with pre-filled routine data when Schedule is clicked', async () => {

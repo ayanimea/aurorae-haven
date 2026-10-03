@@ -276,8 +276,11 @@ function Routines() {
     if (!runner.state || !runner.state.isRunning || showCancelConfirm) return
 
     const handleKeyPress = (e) => {
-      // Ignore if user is typing in an input
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      if (
+        e.target.closest?.(
+          'button, a[href], input, textarea, select, summary, [contenteditable="true"], [tabindex]:not([tabindex="-1"]), [role="button"], [role="menuitem"], [role="menu"], [role="dialog"], [role="alertdialog"], [aria-modal="true"], .modal-overlay'
+        )
+      ) {
         return
       }
 
