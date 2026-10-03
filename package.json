@@ -17,8 +17,6 @@
     "test": "vitest run",
     "test:export": "vitest run src/__tests__/dataManager.test.js -t 'should export aurorae_tasks|should export brainDumpEntries'",
     "lint": "biome lint .",
-    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#package-lock.json'",
-    "lint:css": "stylelint \"**/*.{css,scss}\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "vite build",
@@ -74,9 +72,7 @@
     "cross-env": "^10.1.0",
     "fake-indexeddb": "^6.2.2",
     "jsdom": "^28.0.0",
-    "markdownlint-cli2": "^0.23.1",
     "prettier": "^3.8.0",
-    "stylelint": "^17.0.0",
     "vite": "^7.3.2",
     "vite-plugin-pwa": "^1.0.3",
     "vitest": "^5.0.3"
