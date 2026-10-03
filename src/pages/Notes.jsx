@@ -30,6 +30,7 @@ import { useNotesState } from '../hooks/useNotesState'
 import { useToast } from '../hooks/useToast'
 import { createLogger } from '../utils/logger'
 import { getNoteTemplateById } from '../data/noteTemplates'
+import { useCategories } from '../hooks/useCategories'
 
 const logger = createLogger('Notes')
 
@@ -132,6 +133,7 @@ function Notes() {
     updateNotes,
     clearAutosaveTimeout
   } = useNotesState()
+  const { categories } = useCategories()
 
   const { toastMessage, showToast, showToastNotification } = useToast()
 
@@ -160,6 +162,7 @@ function Notes() {
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
   const [showNewNoteModal, setShowNewNoteModal] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState(null)
   const [contextMenu, setContextMenu] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState(null)
@@ -466,10 +469,60 @@ function Notes() {
       noteContent = noteContent ? `[TOC]\n\n${noteContent}` : '[TOC]\n\n'
     }
 
-    const newNote = createNote(noteContent)
+    const newNote = createNote(noteContent, selectedCategory || '')
     // Use the template name as the starting title for non-blank templates.
     if (newNote && template && template.id !== 'blank') {
       setTitle(template.name)
+    }
+  }
+
+  const handleCreateSubNote = () => {
+    if (!currentNote || currentNote.locked || currentNote.parentNoteId) return
+
+    const subNote = {
+      ...createNewNote(),
+      title: 'Untitled Sub-note',
+      category: category || '',
+      parentNoteId: currentNote.id
+    }
+    const updatedNotes = [...notes, subNote]
+    updateNotes(updatedNotes)
+    loadNote(subNote)
+  }
+
+  const handleNestNote = (noteId, parentId) => {
+    if (noteId === parentId) return
+    const note = notes.find((item) => item.id === noteId)
+    const parent = notes.find((item) => item.id === parentId)
+    if (!note || !parent || note.locked || parent.locked) return
+    if (
+      parent.parentNoteId ||
+      notes.some((item) => item.parentNoteId === noteId)
+    ) {
+      return
+    }
+
+    let ancestor = parent
+    const visited = new Set()
+    while (ancestor) {
+      if (ancestor.id === noteId || visited.has(ancestor.id)) return
+      visited.add(ancestor.id)
+      ancestor = notes.find((item) => item.id === ancestor.parentNoteId)
+    }
+
+    updateNotes(
+      notes.map((item) =>
+        item.id === noteId
+          ? {
+              ...item,
+              parentNoteId: parentId,
+              category: parent.category || ''
+            }
+          : item
+      )
+    )
+    if (noteId === currentNoteId) {
+      setCategory(parent.category || '')
     }
   }
 
@@ -481,12 +534,16 @@ function Notes() {
         filteredNotes={filteredNotes}
         currentNoteId={currentNoteId}
         searchQuery={searchQuery}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategorySelect={setSelectedCategory}
         showNoteList={showNoteList}
         onSearchChange={setSearchQuery}
         onClearSearch={() => setSearchQuery('')}
         onToggleNoteList={() => setShowNoteList(!showNoteList)}
         onFilterClick={() => setShowFilterModal(true)}
         onNoteClick={loadNote}
+        onNestNote={handleNestNote}
         onNoteContextMenu={handleNoteContextMenu}
         onNewNote={handleNewNote}
       />
@@ -499,6 +556,7 @@ function Notes() {
             currentNoteId={currentNoteId}
             title={title}
             category={category}
+            categories={categories}
             content={content}
             preview={preview}
             notes={notes}
@@ -508,6 +566,7 @@ function Notes() {
             onContentChange={setContent}
             onToggleNoteList={() => setShowNoteList(!showNoteList)}
             onNewNote={handleNewNote}
+            onCreateSubNote={handleCreateSubNote}
             onImport={handleImport}
             onExport={handleExport}
             onExportOdt={handleExportOdt}

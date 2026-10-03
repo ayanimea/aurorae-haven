@@ -6,6 +6,8 @@ import {
 } from './indexedDBManager'
 import { createLogger } from './logger'
 import { PAGE_RELOAD_DELAY_MS } from './uiConstants'
+import { saveCategories } from './categoryStorage'
+import { saveSavedTasks } from './savedTasks'
 
 const logger = createLogger('ImportData')
 
@@ -28,6 +30,12 @@ export function importToLocalStorage(data) {
     if (data[field]) {
       localStorage.setItem(field, JSON.stringify(data[field]))
     }
+  }
+  if (Array.isArray(data.categories)) {
+    saveCategories(data.categories)
+  }
+  if (Array.isArray(data.savedTasks)) {
+    saveSavedTasks(data.savedTasks)
   }
 }
 

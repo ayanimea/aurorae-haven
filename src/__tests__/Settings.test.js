@@ -91,6 +91,7 @@ describe('Settings Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
     process.env.VITE_COMPILE_MODE = 'desktop-offline'
   })
 
@@ -102,6 +103,45 @@ describe('Settings Component', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(screen.getByText('Settings')).toBeInTheDocument()
     expect(screen.getByText('Customize your experience')).toBeInTheDocument()
+  })
+
+  test('shows the category manager as a separate Settings card', () => {
+    const { container } = render(
+      <Settings onExport={mockOnExport} onImport={mockOnImport} />
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Task & Note Categories' })
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Add category' })
+    ).toBeVisible()
+    expect(
+      container.querySelector('.settings-category-card')
+    ).toBeInTheDocument()
+  })
+
+  test('creates at most six shared categories in Settings', async () => {
+    localStorage.clear()
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+
+    for (let index = 1; index <= 6; index += 1) {
+      fireEvent.click(screen.getByRole('button', { name: 'Add category' }))
+      fireEvent.change(screen.getByLabelText('New category'), {
+        target: { value: `Category ${index}` }
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Create category' }))
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('6 of 6 categories used')).toBeInTheDocument()
+    })
+    expect(
+      screen.getByRole('button', { name: 'Add category' })
+    ).toBeDisabled()
+    expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toHaveLength(
+      6
+    )
   })
 
   test('renders Data Management section at the top with Export and Import buttons', () => {

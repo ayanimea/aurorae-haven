@@ -1386,6 +1386,7 @@ describe('Notes Component', () => {
     })
 
     test('saves category when editing note', async () => {
+      localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
       const mockEntries = [
         {
           id: 'test-id',
@@ -1400,8 +1401,8 @@ describe('Notes Component', () => {
 
       render(<Notes />)
 
-      const categoryInput = screen.getByPlaceholderText('Category...')
-      fireEvent.change(categoryInput, { target: { value: 'Work' } })
+      const categorySelect = screen.getByLabelText('Note category')
+      fireEvent.change(categorySelect, { target: { value: 'Work' } })
 
       await waitFor(
         () => {
@@ -1438,7 +1439,167 @@ describe('Notes Component', () => {
 
       render(<Notes />)
 
-      expect(screen.getByText('Personal')).toBeInTheDocument()
+      expect(screen.getAllByText('Personal').length).toBeGreaterThan(0)
+    })
+
+    test('creates a sub-note linked to the current note', async () => {
+      localStorage.setItem(
+        'brainDumpEntries',
+        JSON.stringify([
+          {
+            id: 'parent-note',
+            title: 'Parent note',
+            content: 'Parent content',
+            category: 'Work',
+            locked: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ])
+      )
+      render(<Notes />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'New sub-note' }))
+
+      expect(
+        screen.getByPlaceholderText('Note title...')
+      ).toHaveValue('Untitled Sub-note')
+      await waitFor(() => {
+        const entries = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(entries).toHaveLength(2)
+        expect(entries[1].parentNoteId).toBe('parent-note')
+        expect(entries[1].category).toBe('Work')
+      })
+    })
+
+    test('prevents creating or nesting notes beyond two levels', async () => {
+      const notes = [
+        {
+          id: 'parent-note',
+          title: 'Parent note',
+          content: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'child-note',
+          title: 'Child note',
+          content: '',
+          parentNoteId: 'parent-note',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'other-note',
+          title: 'Other note',
+          content: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(notes))
+      const { container } = render(<Notes />)
+
+      fireEvent.click(screen.getByText('Child note', { exact: true }))
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Note title...')).toHaveValue(
+          'Child note'
+        )
+        expect(
+          screen.getByRole('button', { name: 'New sub-note' })
+        ).toBeDisabled()
+      })
+
+      const childNote = screen.getByText('Child note').closest('.note-item')
+      const otherNote = screen.getByText('Other note').closest('.note-item')
+      fireEvent.dragStart(otherNote, {
+        dataTransfer: { setData: vi.fn() }
+      })
+      fireEvent.drop(childNote, {
+        dataTransfer: { getData: () => 'other-note' }
+      })
+
+      await waitFor(() => {
+        const saved = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(
+          saved.find((note) => note.id === 'other-note').parentNoteId
+        ).toBeNull()
+      })
+    })
+
+    test('dragging a note onto another nests it', async () => {
+      const notes = [
+        {
+          id: 'parent-note',
+          title: 'Parent note',
+          content: '',
+          category: 'Work',
+          locked: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'child-note',
+          title: 'Child note',
+          content: '',
+          category: 'Personal',
+          locked: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(notes))
+      const { container } = render(<Notes />)
+      const noteItems = container.querySelectorAll('.note-item')
+      fireEvent.dragStart(noteItems[1], {
+        dataTransfer: { setData: vi.fn() }
+      })
+      fireEvent.dragOver(noteItems[0])
+      fireEvent.drop(noteItems[0], {
+        dataTransfer: { getData: () => 'child-note' }
+      })
+
+      await waitFor(() => {
+        const saved = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(saved.find((note) => note.id === 'child-note').parentNoteId).toBe(
+          'parent-note'
+        )
+        expect(saved.find((note) => note.id === 'child-note').category).toBe(
+          'Work'
+        )
+      })
+    })
+
+    test('category tabs filter notes by their shared category', () => {
+      localStorage.setItem(
+        'brainDumpEntries',
+        JSON.stringify([
+          {
+            id: 'personal-note',
+            title: 'Personal entry',
+            content: '',
+            category: 'Personal',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'work-note',
+            title: 'Work entry',
+            content: '',
+            category: 'Work',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ])
+      )
+      render(<Notes />)
+      fireEvent.click(screen.getByRole('tab', { name: 'Work' }))
+      expect(screen.getByText('Work entry')).toBeInTheDocument()
+      expect(screen.queryByText('Personal entry')).not.toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('tab', { name: 'All' }))
+      expect(screen.getByText('Work entry')).toBeInTheDocument()
+      expect(screen.getByText('Personal entry')).toBeInTheDocument()
     })
   })
 })

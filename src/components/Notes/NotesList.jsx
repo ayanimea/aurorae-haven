@@ -1,7 +1,9 @@
 
+import { useState } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import Icon from '../common/Icon'
+import CategoryTabs from '../common/CategoryTabs'
 
 /**
  * Component for displaying and searching the list of notes
@@ -11,16 +13,29 @@ function NotesList({
   filteredNotes,
   currentNoteId,
   searchQuery,
+  categories,
+  selectedCategory,
+  onCategorySelect,
   showNoteList,
   onSearchChange,
   onClearSearch,
   onToggleNoteList,
   onFilterClick,
   onNoteClick,
+  onNestNote,
   onNoteContextMenu,
   onNewNote
 }) {
+  const [draggedNoteId, setDraggedNoteId] = useState(null)
   if (!showNoteList) return null
+
+  const visibleNotes = filteredNotes.filter(
+    (note) =>
+      selectedCategory === null ||
+      (typeof note.category === 'string'
+        ? note.category.toLowerCase()
+        : '') === selectedCategory.toLowerCase()
+  )
 
   return (
     <div className='note-list-sidebar'>
@@ -73,11 +88,62 @@ function NotesList({
           </button>
         )}
       </div>
+      <CategoryTabs
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelect={onCategorySelect}
+      />
+      <p className='note-list-hint'>
+        Drag a note onto a top-level note to nest it (two levels maximum).
+      </p>
       <div className='note-list'>
-        {filteredNotes.map((note) => (
-          <div
+        {visibleNotes.map((note) => {
+          const parentNote = note.parentNoteId
+            ? notes.find((item) => item.id === note.parentNoteId)
+            : null
+          return <div
             key={note.id}
-            className={clsx('note-item', { active: note.id === currentNoteId })}
+            draggable={!note.locked}
+            className={clsx('note-item', {
+              active: note.id === currentNoteId,
+              'sub-note': Boolean(note.parentNoteId)
+            })}
+            onDragStart={(event) => {
+              if (note.locked) {
+                event.preventDefault()
+                return
+              }
+              setDraggedNoteId(note.id)
+              event.dataTransfer?.setData('text/plain', note.id)
+            }}
+            onDragOver={(event) => {
+              if (
+                draggedNoteId &&
+                draggedNoteId !== note.id &&
+                !note.locked &&
+                !note.parentNoteId &&
+                !notes.some((item) => item.parentNoteId === draggedNoteId)
+              ) {
+                event.preventDefault()
+              }
+            }}
+            onDrop={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              const sourceId =
+                draggedNoteId || event.dataTransfer?.getData('text/plain')
+              if (
+                sourceId &&
+                sourceId !== note.id &&
+                !note.locked &&
+                !note.parentNoteId &&
+                !notes.some((item) => item.parentNoteId === sourceId)
+              ) {
+                onNestNote(sourceId, note.id)
+              }
+              setDraggedNoteId(null)
+            }}
+            onDragEnd={() => setDraggedNoteId(null)}
             onClick={() => onNoteClick(note)}
             onContextMenu={(e) => onNoteContextMenu(e, note)}
             role='button'
@@ -109,10 +175,15 @@ function NotesList({
               {note.category && (
                 <div className='note-item-category'>{note.category}</div>
               )}
+              {note.parentNoteId && (
+                <div className='note-item-parent'>
+                  Sub-note of {parentNote?.title || 'Untitled'}
+                </div>
+              )}
             </div>
           </div>
-        ))}
-        {filteredNotes.length === 0 && notes.length > 0 && (
+        })}
+        {visibleNotes.length === 0 && notes.length > 0 && (
           <div className='note-list-empty'>
             No notes found matching &quot;{searchQuery}&quot;
           </div>
@@ -132,12 +203,16 @@ NotesList.propTypes = {
   filteredNotes: PropTypes.array.isRequired,
   currentNoteId: PropTypes.string,
   searchQuery: PropTypes.string.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedCategory: PropTypes.string,
+  onCategorySelect: PropTypes.func.isRequired,
   showNoteList: PropTypes.bool.isRequired,
   onSearchChange: PropTypes.func.isRequired,
   onClearSearch: PropTypes.func.isRequired,
   onToggleNoteList: PropTypes.func.isRequired,
   onFilterClick: PropTypes.func.isRequired,
   onNoteClick: PropTypes.func.isRequired,
+  onNestNote: PropTypes.func.isRequired,
   onNoteContextMenu: PropTypes.func.isRequired,
   onNewNote: PropTypes.func.isRequired
 }

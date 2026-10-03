@@ -13,11 +13,20 @@ function TaskQuadrant({
   onToggle,
   onEdit,
   onEditTextChange,
+  categories,
+  onCategoryChange,
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  onAddSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
   onDragStart,
+  onNestDrop,
   onDragOver,
+  onDragEnd,
+  savedTasks,
+  onSaveTask,
   onDrop
 }) {
   const isEditing = (task) => {
@@ -51,10 +60,25 @@ function TaskQuadrant({
               onToggle={onToggle}
               onEdit={onEdit}
               onEditTextChange={onEditTextChange}
+              categories={categories}
+              onCategoryChange={onCategoryChange}
               onSaveEdit={onSaveEdit}
               onCancelEdit={onCancelEdit}
               onDelete={onDelete}
+              onAddSubtask={onAddSubtask}
+              onToggleSubtask={onToggleSubtask}
+              onDeleteSubtask={onDeleteSubtask}
               onDragStart={onDragStart}
+              onNestDrop={onNestDrop}
+              onDragOver={onDragOver}
+              onDragEnd={onDragEnd}
+              isSaved={savedTasks.some(
+                (saved) =>
+                  saved.text === task.text &&
+                  saved.quadrant === quadrant.key &&
+                  saved.category === (task.category || '')
+              )}
+              onSaveTask={onSaveTask}
             />
           ))
         )}
@@ -79,11 +103,20 @@ TaskQuadrant.propTypes = {
   onToggle: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onEditTextChange: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onCategoryChange: PropTypes.func.isRequired,
   onSaveEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onAddSubtask: PropTypes.func.isRequired,
+  onToggleSubtask: PropTypes.func.isRequired,
+  onDeleteSubtask: PropTypes.func.isRequired,
   onDragStart: PropTypes.func.isRequired,
+  onNestDrop: PropTypes.func.isRequired,
   onDragOver: PropTypes.func.isRequired,
+  onDragEnd: PropTypes.func.isRequired,
+  savedTasks: PropTypes.array.isRequired,
+  onSaveTask: PropTypes.func.isRequired,
   onDrop: PropTypes.func.isRequired
 }
 

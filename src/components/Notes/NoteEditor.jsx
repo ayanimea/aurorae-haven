@@ -2,7 +2,6 @@ import { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { handleEnterKey } from '../../utils/listContinuation'
-import { getUniqueCategories } from '../../utils/notes/noteFilters'
 
 // Editor pane width constraints (percentage of container)
 const MIN_EDITOR_WIDTH_PERCENT = 20
@@ -18,6 +17,7 @@ function NoteEditor({
   currentNoteId,
   title,
   category,
+  categories,
   content,
   preview,
   notes,
@@ -27,6 +27,7 @@ function NoteEditor({
   onContentChange,
   onToggleNoteList,
   onNewNote,
+  onCreateSubNote,
   onImport,
   onExport,
   onExportOdt,
@@ -130,21 +131,20 @@ function NoteEditor({
             disabled={!currentNoteId || currentNote?.locked}
             aria-label='Note title'
           />
-          <input
-            type='text'
+          <select
             className='note-category-input'
-            placeholder='Category...'
             value={category}
             onChange={(e) => onCategoryChange(e.target.value)}
             disabled={!currentNoteId || currentNote?.locked}
-            list='category-suggestions'
             aria-label='Note category'
-          />
-          <datalist id='category-suggestions'>
-            {getUniqueCategories(notes).map((cat) => (
-              <option key={cat} value={cat} />
+          >
+            <option value=''>No category</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
             ))}
-          </datalist>
+          </select>
         </div>
         <div className='toolbar'>
           <label className='btn' aria-label='Import' title='Import'>
@@ -218,6 +218,20 @@ function NoteEditor({
             title='New note'
           >
             <Icon name='plus' />
+          </button>
+          <button
+            type='button'
+            className='btn'
+            onClick={onCreateSubNote}
+            aria-label='New sub-note'
+            title='New sub-note'
+            disabled={
+              !currentNoteId ||
+              currentNote?.locked ||
+              Boolean(currentNote?.parentNoteId)
+            }
+          >
+            <Icon name='list' />
           </button>
           <button type='button'
             className='btn'
@@ -333,6 +347,7 @@ NoteEditor.propTypes = {
   currentNoteId: PropTypes.string,
   title: PropTypes.string.isRequired,
   category: PropTypes.string.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
   content: PropTypes.string.isRequired,
   preview: PropTypes.string.isRequired,
   notes: PropTypes.array.isRequired,
@@ -342,6 +357,7 @@ NoteEditor.propTypes = {
   onContentChange: PropTypes.func.isRequired,
   onToggleNoteList: PropTypes.func.isRequired,
   onNewNote: PropTypes.func.isRequired,
+  onCreateSubNote: PropTypes.func.isRequired,
   onImport: PropTypes.func.isRequired,
   onExport: PropTypes.func.isRequired,
   onExportOdt: PropTypes.func.isRequired,

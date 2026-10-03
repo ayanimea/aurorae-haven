@@ -29,6 +29,8 @@ import {
 import FileInputButton from '../components/common/FileInputButton'
 import Icon from '../components/common/Icon'
 import { getEnvVar } from '../utils/environment'
+import { useCategories } from '../hooks/useCategories'
+import { MAX_CATEGORY_COUNT } from '../utils/categoryStorage'
 import '../assets/styles/settings.css'
 
 // Time constant
@@ -44,6 +46,9 @@ function Settings({ onExport, onImport }) {
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [messageIsError, setMessageIsError] = useState(false)
   const [isConfiguring, setIsConfiguring] = useState(false)
+  const { categories, addCategory } = useCategories()
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
+  const [newCategory, setNewCategory] = useState('')
   const {
     toastMessage: message,
     showToast,
@@ -111,6 +116,15 @@ function Settings({ onExport, onImport }) {
     setMessageIsError(isError)
     showToastNotification(text, duration)
   }, [showToastNotification])
+
+  const handleAddCategory = (event) => {
+    event.preventDefault()
+    const category = newCategory.trim()
+    if (!category || categories.length >= MAX_CATEGORY_COUNT) return
+    addCategory(category)
+    setNewCategory('')
+    setIsAddingCategory(false)
+  }
 
   const restartAutoSaveIfEnabled = useCallback((autoSaveSettings) => {
     if (autoSaveSettings.enabled) {
@@ -312,12 +326,86 @@ function Settings({ onExport, onImport }) {
   }
 
   return (
-    <div className='card'>
-      <div className='card-h'>
-        <strong>Settings</strong>
-        <span className='small'>Customize your experience</span>
-      </div>
-      <div className='card-b'>
+    <div className='settings-page'>
+      <section className='card settings-category-card' aria-labelledby='category-settings-title'>
+        <div className='card-h'>
+          <h2 id='category-settings-title'>Task &amp; Note Categories</h2>
+          <span className='small'>Shared across Tasks and Brain Dump</span>
+        </div>
+        <div className='card-b'>
+          <p className='settings-hint'>
+            Create up to {MAX_CATEGORY_COUNT} shared categories for organizing
+            tasks and notes.
+          </p>
+          <ul className='settings-category-list' aria-label='Current categories'>
+            {categories.map((category) => (
+              <li key={category}>{category}</li>
+            ))}
+            {categories.length === 0 && <li>No categories created yet</li>}
+          </ul>
+          <p className='settings-hint'>
+            {categories.length} of {MAX_CATEGORY_COUNT} categories used
+          </p>
+          {isAddingCategory ? (
+            <form
+              className='settings-category-form'
+              onSubmit={handleAddCategory}
+            >
+              <label htmlFor='new-category-name' className='settings-label'>
+                New category
+              </label>
+              <input
+                id='new-category-name'
+                className='settings-input'
+                type='text'
+                value={newCategory}
+                onChange={(event) => setNewCategory(event.target.value)}
+                maxLength={40}
+                autoComplete='off'
+                required
+              />
+              <div className='settings-button-group'>
+                <button
+                  type='submit'
+                  className='settings-button settings-button-primary'
+                >
+                  Create category
+                </button>
+                <button
+                  type='button'
+                  className='settings-button'
+                  onClick={() => {
+                    setNewCategory('')
+                    setIsAddingCategory(false)
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              type='button'
+              className='settings-button settings-button-primary'
+              onClick={() => setIsAddingCategory(true)}
+              disabled={categories.length >= MAX_CATEGORY_COUNT}
+              title={
+                categories.length >= MAX_CATEGORY_COUNT
+                  ? `Maximum of ${MAX_CATEGORY_COUNT} categories reached`
+                  : 'Create a shared category'
+              }
+            >
+              Add category
+            </button>
+          )}
+        </div>
+      </section>
+      <div className='card'>
+        <div className='card-h'>
+          <strong>Settings</strong>
+          <span className='small'>Customize your experience</span>
+        </div>
+        <div className='card-b'>
         {/* Data Management — Export / Import at the top */}
         <div className='settings-section'>
           <h3 className='settings-section-title'>Data Management</h3>
@@ -688,6 +776,7 @@ function Settings({ onExport, onImport }) {
           </p>
         </div>
       </div>
+    </div>
     </div>
   )
 }

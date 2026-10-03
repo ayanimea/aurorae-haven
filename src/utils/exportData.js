@@ -6,6 +6,8 @@ import {
   exportAllData as exportFromIndexedDB
 } from './indexedDBManager'
 import { tryCatch, withErrorHandling } from './errorHandler'
+import { loadCategories } from './categoryStorage'
+import { loadSavedTasks } from './savedTasks'
 
 // Data schema field names - centralized to prevent drift
 const DATA_FIELDS = {
@@ -151,6 +153,8 @@ export async function getDataTemplate() {
     versions,
     entries
   }
+  data.categories = loadCategories()
+  data.savedTasks = loadSavedTasks()
 
   // Backward compatibility: include sequences field as alias for routines
   data.sequences = data.routines || []

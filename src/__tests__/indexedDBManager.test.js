@@ -304,6 +304,11 @@ describe('IndexedDBManager', () => {
       await put(STORES.TASKS, { id: 1, title: 'Test Task' })
       await put(STORES.ROUTINES, { id: 'seq1', name: 'Test Sequence' })
       await saveStats('test', { value: 100 })
+      localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
+      localStorage.setItem(
+        'aurorae_saved_tasks',
+        JSON.stringify([{ id: 'saved-1', text: 'Recurring', quadrant: 'urgent_important' }])
+      )
 
       const exported = await exportAllData()
 
@@ -313,6 +318,8 @@ describe('IndexedDBManager', () => {
       expect(exported.routines).toHaveLength(1)
       expect(exported.stats).toHaveLength(1)
       expect(exported.brainDump).toBeDefined()
+      expect(exported.categories).toEqual(['Work'])
+      expect(exported.savedTasks).toHaveLength(1)
     })
 
     test('exportAllData exports aurorae_tasks from localStorage', async () => {
@@ -357,7 +364,11 @@ describe('IndexedDBManager', () => {
           tags: '',
           versions: [],
           entries: []
-        }
+        },
+        categories: ['Work', 'Personal'],
+        savedTasks: [
+          { id: 'saved-1', text: 'Recurring', quadrant: 'urgent_important' }
+        ]
       }
 
       const report = await importAllData(data)
@@ -372,6 +383,13 @@ describe('IndexedDBManager', () => {
 
       const brainDump = localStorage.getItem('brainDumpContent')
       expect(brainDump).toBe('Test content')
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([
+        'Personal',
+        'Work'
+      ])
+      expect(JSON.parse(localStorage.getItem('aurorae_saved_tasks'))).toEqual(
+        data.savedTasks
+      )
     })
 
     test('importAllData clears existing data before import', async () => {

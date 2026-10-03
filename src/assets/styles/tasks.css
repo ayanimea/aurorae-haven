@@ -8,9 +8,22 @@
 
 .add-task-form {
   display: grid;
-  grid-template-columns: 1fr 200px auto;
+  grid-template-columns: minmax(0, 1fr) 200px 160px auto;
   gap: 10px;
   align-items: center;
+}
+
+.task-template-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.task-template-picker select {
+  flex: 1;
+  min-width: 180px;
 }
 
 .quadrant-select {
@@ -180,6 +193,15 @@
   accent-color: var(--mint);
 }
 
+.task-category-select {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  max-width: 180px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
 .task-text {
   flex: 1;
   font-size: 14px;
@@ -215,6 +237,58 @@
   display: flex;
   gap: 4px;
   align-items: center;
+}
+
+.task-subtasks {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  padding-left: 28px;
+}
+
+.task-subtask,
+.task-subtask-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.task-subtask span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.task-subtask span.completed {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+.task-subtask-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--ink);
+}
+
+.task-add-subtask {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--mint);
+  cursor: pointer;
+}
+
+.task-add-subtask:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
 }
 
 .btn-edit,
@@ -296,7 +370,7 @@
   }
 
   .add-task-form {
-    grid-template-columns: 1fr 180px auto;
+    grid-template-columns: minmax(0, 1fr) 170px 140px auto;
     gap: 8px;
   }
 }
@@ -312,6 +386,10 @@
   .add-task-form {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .task-template-picker {
+    align-items: stretch;
   }
 
   /* Card header layout - ensure proper wrapping */

@@ -3,7 +3,7 @@ import { useState } from 'react'
 /**
  * Custom hook for managing drag and drop functionality
  */
-export function useDragAndDrop(onDrop) {
+export function useDragAndDrop(onDrop, onNest) {
   const [draggedTask, setDraggedTask] = useState(null)
 
   const handleDragStart = (quadrant, task) => {
@@ -23,10 +23,24 @@ export function useDragAndDrop(onDrop) {
     setDraggedTask(null)
   }
 
+  const handleNestDrop = (targetQuadrant, targetId) => {
+    if (draggedTask && targetId && draggedTask.task.id !== targetId) {
+      onNest?.(
+        draggedTask.quadrant,
+        targetQuadrant,
+        targetId,
+        draggedTask.task
+      )
+    }
+    setDraggedTask(null)
+  }
+
   return {
     draggedTask,
     handleDragStart,
     handleDragOver,
-    handleDrop
+    handleDrop,
+    handleNestDrop,
+    handleDragEnd: () => setDraggedTask(null)
   }
 }

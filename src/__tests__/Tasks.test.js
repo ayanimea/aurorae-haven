@@ -71,6 +71,20 @@ describe('Tasks Component', () => {
     })
   })
 
+  test('does not create a category while creating a task', async () => {
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Uncategorized task' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([])
+    })
+  })
+
   test('does not add empty task', () => {
     render(<Tasks />)
 
@@ -90,6 +104,167 @@ describe('Tasks Component', () => {
     fireEvent.change(select, { target: { value: 'not_urgent_important' } })
 
     expect(select.value).toBe('not_urgent_important')
+  })
+
+  test('can create and complete subtasks', async () => {
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Parent task' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add subtask to Parent task' }))
+    const subtaskInput = screen.getByRole('textbox', {
+      name: 'New subtask for Parent task'
+    })
+    fireEvent.change(subtaskInput, { target: { value: 'Child task' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save subtask' }))
+
+    const checkbox = await screen.findByRole('checkbox', {
+      name: 'Mark "Child task" as complete'
+    })
+    fireEvent.click(checkbox)
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('checkbox', { name: 'Mark "Child task" as incomplete' })
+      ).toBeChecked()
+      const savedTask = JSON.parse(localStorage.getItem('aurorae_tasks'))
+        .urgent_important[0]
+      expect(savedTask.subtasks[0].text).toBe('Child task')
+      expect(savedTask.subtasks[0].completed).toBe(true)
+    })
+  })
+
+  test('category tabs filter tasks in each Eisenhower quadrant', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Work task' }
+    })
+    fireEvent.change(screen.getByLabelText('Select category'), {
+      target: { value: 'Work' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Uncategorized task' }
+    })
+    fireEvent.change(screen.getByLabelText('Select category'), {
+      target: { value: '' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Work' }))
+    expect(screen.getByText('Work task')).toBeInTheDocument()
+    expect(screen.queryByText('Uncategorized task')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'All' }))
+    expect(screen.getByText('Work task')).toBeInTheDocument()
+    expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
+  })
+
+  test('assigns an existing category to a task after creation', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Categorize later' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Category for task "Categorize later"'
+      }),
+      { target: { value: 'Work' } }
+    )
+
+    await waitFor(() => {
+      const task = JSON.parse(localStorage.getItem('aurorae_tasks'))
+        .urgent_important[0]
+      expect(task.category).toBe('Work')
+    })
+    expect(
+      screen.queryByRole('button', { name: 'Add category' })
+    ).not.toBeInTheDocument()
+  })
+
+  test('dragging a task onto another nests and removes it from its quadrant', async () => {
+    const { container } = render(<Tasks />)
+    const taskInput = screen.getByPlaceholderText('Add a new task...')
+    fireEvent.change(taskInput, { target: { value: 'Parent task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.change(taskInput, { target: { value: 'Child task' } })
+    fireEvent.change(screen.getByLabelText('Select quadrant'), {
+      target: { value: 'not_urgent_important' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    const taskCards = container.querySelectorAll('.task-item')
+    fireEvent.dragStart(taskCards[1])
+    fireEvent.dragOver(taskCards[0])
+    fireEvent.drop(taskCards[0])
+
+    await waitFor(() => {
+      expect(screen.getByText('Child task')).toBeInTheDocument()
+      const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(saved.not_urgent_important).toHaveLength(0)
+      expect(saved.urgent_important[0].subtasks[0].text).toBe('Child task')
+    })
+  })
+
+  test('saves a task for reuse and adds it from saved tasks', async () => {
+    const { container } = render(<Tasks />)
+    const taskInput = screen.getByPlaceholderText('Add a new task...')
+    fireEvent.change(taskInput, { target: { value: 'Recurring task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Save task "Recurring task" for later'
+      })
+    )
+
+    fireEvent.change(screen.getByLabelText('Add task from template:'), {
+      target: { value: `saved:${JSON.parse(localStorage.getItem('aurorae_saved_tasks'))[0].id}` }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add task' }))
+
+    await waitFor(() => {
+      expect(
+        container.querySelectorAll('.task-item .task-text')
+      ).toHaveLength(2)
+      expect(JSON.parse(localStorage.getItem('aurorae_tasks')).urgent_important)
+        .toHaveLength(2)
+    })
+  })
+
+  test('adds a built-in task template', async () => {
+    const { container } = render(<Tasks />)
+    fireEvent.change(screen.getByLabelText('Add task from template:'), {
+      target: { value: 'template:task-water-plants' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add task' }))
+
+    await waitFor(() => {
+      expect(
+        container.querySelector('.task-item .task-text')
+      ).toHaveTextContent('Water Indoor Plants')
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([])
+    })
+  })
+
+  test('uses note categories in the shared task tabs and form', () => {
+    localStorage.setItem(
+      'brainDumpEntries',
+      JSON.stringify([{ id: 'note-1', category: 'Personal' }])
+    )
+    render(<Tasks />)
+
+    expect(screen.getByRole('tab', { name: 'Personal' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('option', { name: 'Personal' })
+    ).toBeInTheDocument()
   })
 
   test('toggles task completion', async () => {

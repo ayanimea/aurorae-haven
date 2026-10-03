@@ -34,6 +34,29 @@ describe('Data Manager', () => {
       expect(Array.isArray(data.habits)).toBe(true)
       expect(Array.isArray(data.dumps)).toBe(true)
       expect(Array.isArray(data.schedule)).toBe(true)
+      expect(Array.isArray(data.categories)).toBe(true)
+    })
+
+    it('should include the shared categories in exported data', async () => {
+      localStorage.setItem(
+        'aurorae_categories',
+        JSON.stringify(['Work', 'Personal'])
+      )
+
+      const data = await getDataTemplate()
+
+      expect(data.categories).toEqual(['Personal', 'Work'])
+    })
+
+    it('should include saved tasks in exported data', async () => {
+      const savedTasks = [
+        { id: 'saved-1', text: 'Recurring', quadrant: 'urgent_important' }
+      ]
+      localStorage.setItem('aurorae_saved_tasks', JSON.stringify(savedTasks))
+
+      const data = await getDataTemplate()
+
+      expect(data.savedTasks).toEqual(savedTasks)
     })
 
     it('should collect dumps (Brain Dump notes) from localStorage', async () => {

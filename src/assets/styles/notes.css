@@ -142,6 +142,63 @@
   margin-bottom: 12px;
 }
 
+.category-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.category-tabs {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 2px;
+}
+
+.category-tabs button,
+.category-add-button,
+.category-tab-form button {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.category-tabs button.active {
+  border-color: var(--mint);
+  color: var(--mint);
+}
+
+.category-tabs button:focus-visible,
+.category-add-button:focus-visible,
+.category-tab-form button:focus-visible,
+.category-tab-form input:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.category-tab-form {
+  display: flex;
+  gap: 4px;
+}
+
+.category-tab-form input {
+  width: 120px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--ink);
+}
+
 .note-search-input {
   width: 100%;
   padding: 8px 32px 8px 10px;
@@ -180,6 +237,12 @@
   gap: 8px;
 }
 
+.note-list-hint {
+  margin: 0 0 8px;
+  color: var(--dim);
+  font-size: 12px;
+}
+
 .note-item {
   padding: 12px;
   border-radius: 10px;
@@ -190,6 +253,16 @@
     background var(--dur) var(--ease),
     border-color var(--dur) var(--ease),
     transform var(--dur) var(--ease);
+}
+
+.note-item.sub-note {
+  margin-left: 12px;
+  border-left: 2px solid var(--mint);
+}
+
+.note-item-parent {
+  color: var(--dim);
+  font-size: 11px;
 }
 
 .note-item:hover {
@@ -830,6 +903,14 @@ textarea:focus {
   cursor: pointer;
 }
 
+.note-item[draggable='true'] {
+  cursor: grab;
+}
+
+.note-item[draggable='true']:active {
+  cursor: grabbing;
+}
+
 .note-toc-toggle--disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -877,4 +958,3 @@ textarea:focus {
   color: var(--mint);
   border-bottom-color: var(--mint);
 }
-
