@@ -114,6 +114,9 @@ describe('Tasks Component', () => {
     })
     fireEvent.click(screen.getByText('Add Task'))
 
+    fireEvent.click(
+      screen.getByRole('button', { name: 'More actions for task "Parent task"' })
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Add subtask to Parent task' }))
     const subtaskInput = screen.getByRole('textbox', {
       name: 'New subtask for Parent task'
@@ -173,6 +176,11 @@ describe('Tasks Component', () => {
       target: { value: 'Categorize later' }
     })
     fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'More actions for task "Categorize later"'
+      })
+    )
     fireEvent.change(
       screen.getByRole('combobox', {
         name: 'Category for task "Categorize later"'
@@ -188,6 +196,68 @@ describe('Tasks Component', () => {
     expect(
       screen.queryByRole('button', { name: 'Add category' })
     ).not.toBeInTheDocument()
+  })
+
+  test('dropping a task onto a subtask makes it a sibling subtask', async () => {
+    const { container } = render(<Tasks />)
+    const taskInput = screen.getByPlaceholderText('Add a new task...')
+    fireEvent.change(taskInput, { target: { value: 'Parent task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'More actions for task "Parent task"' })
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Add subtask to Parent task' }))
+    fireEvent.change(
+      screen.getByRole('textbox', { name: 'New subtask for Parent task' }),
+      { target: { value: 'Existing subtask' } }
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Save subtask' }))
+
+    fireEvent.change(taskInput, { target: { value: 'Dropped task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    const taskCards = container.querySelectorAll('.task-item')
+    const subtask = container.querySelector('.task-subtask')
+    fireEvent.dragStart(taskCards[1])
+    fireEvent.dragOver(subtask)
+    fireEvent.drop(subtask)
+
+    await waitFor(() => {
+      const tasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(tasks.urgent_important).toHaveLength(1)
+      expect(tasks.urgent_important[0].subtasks.map((item) => item.text)).toEqual(
+        ['Existing subtask', 'Dropped task']
+      )
+    })
+  })
+
+  test('dragging a subtask into another quadrant promotes it to a task', async () => {
+    const { container } = render(<Tasks />)
+    const taskInput = screen.getByPlaceholderText('Add a new task...')
+    fireEvent.change(taskInput, { target: { value: 'Parent task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'More actions for task "Parent task"' })
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Add subtask to Parent task' }))
+    fireEvent.change(
+      screen.getByRole('textbox', { name: 'New subtask for Parent task' }),
+      { target: { value: 'Promoted subtask' } }
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Save subtask' }))
+
+    const subtask = container.querySelector('.task-subtask')
+    const targetQuadrant = container.querySelectorAll('.matrix-quadrant')[1]
+    fireEvent.dragStart(subtask)
+    fireEvent.dragOver(targetQuadrant)
+    fireEvent.drop(targetQuadrant)
+
+    await waitFor(() => {
+      const tasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(tasks.urgent_important[0].subtasks).toHaveLength(0)
+      expect(tasks.not_urgent_important[0].text).toBe('Promoted subtask')
+      expect(tasks.not_urgent_important[0].subtasks).toEqual([])
+    })
   })
 
   test('dragging a task onto another nests and removes it from its quadrant', async () => {

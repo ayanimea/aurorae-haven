@@ -16,6 +16,8 @@ The Tasks feature provides an Eisenhower Matrix-based task management interface 
 - ✅ Full CRUD operations (Create, Read, Update, Delete)
 - ✅ Nested subtasks with independent completion and deletion
 - ✅ Drag tasks onto one another to nest them
+- ✅ Drop a task onto a subtask to nest it; drag a subtask to a quadrant to promote it to a task
+- ✅ Use the task More menu to add subtasks or assign categories across desktop and mobile
 - ✅ Save tasks for reuse and create tasks from saved or built-in templates
 - ✅ Shared category tabs with an All tab and per-category Eisenhower quadrants
 - ✅ Assign shared categories when creating or editing tasks; create up to six categories in Settings

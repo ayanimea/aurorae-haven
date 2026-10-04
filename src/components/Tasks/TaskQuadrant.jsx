@@ -22,7 +22,10 @@ function TaskQuadrant({
   onToggleSubtask,
   onDeleteSubtask,
   onDragStart,
+  onSubtaskDragStart,
   onNestDrop,
+  onNestSubtaskDrop,
+  onPromoteSubtask,
   onDragOver,
   onDragEnd,
   savedTasks,
@@ -69,7 +72,10 @@ function TaskQuadrant({
               onToggleSubtask={onToggleSubtask}
               onDeleteSubtask={onDeleteSubtask}
               onDragStart={onDragStart}
+              onSubtaskDragStart={onSubtaskDragStart}
               onNestDrop={onNestDrop}
+              onNestSubtaskDrop={onNestSubtaskDrop}
+              onPromoteSubtask={onPromoteSubtask}
               onDragOver={onDragOver}
               onDragEnd={onDragEnd}
               isSaved={savedTasks.some(
@@ -112,7 +118,10 @@ TaskQuadrant.propTypes = {
   onToggleSubtask: PropTypes.func.isRequired,
   onDeleteSubtask: PropTypes.func.isRequired,
   onDragStart: PropTypes.func.isRequired,
+  onSubtaskDragStart: PropTypes.func.isRequired,
   onNestDrop: PropTypes.func.isRequired,
+  onNestSubtaskDrop: PropTypes.func.isRequired,
+  onPromoteSubtask: PropTypes.func.isRequired,
   onDragOver: PropTypes.func.isRequired,
   onDragEnd: PropTypes.func.isRequired,
   savedTasks: PropTypes.array.isRequired,

@@ -186,10 +186,18 @@ export function useTasksState() {
       if (!parentExists || !sourceExists) return state
       moved = true
 
+      const remainingSourceTasks = sourceTasks.filter(
+        (item) => item.id !== task.id
+      )
+      const nextParentTasks =
+        fromQuadrant === parentQuadrant
+          ? remainingSourceTasks
+          : parentTasks
+
       return {
         ...state,
-        [fromQuadrant]: sourceTasks.filter((item) => item.id !== task.id),
-        [parentQuadrant]: parentTasks.map((item) =>
+        [fromQuadrant]: remainingSourceTasks,
+        [parentQuadrant]: nextParentTasks.map((item) =>
           item.id === parentId
             ? {
                 ...item,
@@ -207,6 +215,49 @@ export function useTasksState() {
       }
     })
     return moved
+  }
+
+  const promoteSubtask = (fromQuadrant, parentId, subtaskId, toQuadrant) => {
+    setTasks((prev) => {
+      const state = prev || createDefaultTasksState()
+      const sourceTasks = state[fromQuadrant] || []
+      const parent = sourceTasks.find((item) => item.id === parentId)
+      const parentSubtasks = Array.isArray(parent?.subtasks)
+        ? parent.subtasks
+        : []
+      const subtask = parentSubtasks.find((item) => item.id === subtaskId)
+      if (!parent || !subtask) return state
+
+      const promotedTask = {
+        ...subtask,
+        category: parent.category || '',
+        subtasks: [],
+        createdAt: new Date().toISOString(),
+        dueDate: null,
+        completedAt: subtask.completed ? Date.now() : null
+      }
+      const remainingSourceTasks = sourceTasks.map((item) =>
+        item.id === parentId
+          ? {
+              ...item,
+              subtasks: parentSubtasks.filter(
+                (child) => child.id !== subtaskId
+              )
+            }
+          : item
+      )
+
+      return {
+        ...state,
+        [fromQuadrant]:
+          fromQuadrant === toQuadrant
+            ? [...remainingSourceTasks, promotedTask]
+            : remainingSourceTasks,
+        ...(fromQuadrant !== toQuadrant && {
+          [toQuadrant]: [...(state[toQuadrant] || []), promotedTask]
+        })
+      }
+    })
   }
 
   // Move task between quadrants
@@ -232,6 +283,7 @@ export function useTasksState() {
     toggleSubtask,
     deleteSubtask,
     nestTask,
+    promoteSubtask,
     moveTask
   }
 }

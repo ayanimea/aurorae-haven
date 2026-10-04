@@ -22,7 +22,10 @@ function TaskItem({
   onToggleSubtask,
   onDeleteSubtask,
   onDragStart,
+  onSubtaskDragStart,
   onNestDrop,
+  onNestSubtaskDrop,
+  onPromoteSubtask,
   onDragOver,
   onDragEnd,
   isSaved,
@@ -93,12 +96,6 @@ function TaskItem({
       tabIndex={isEditing ? -1 : 0}
       role='group'
       aria-label={`Task: ${task.text}. Press Alt + Arrow keys to move between quadrants.`}
-      onClick={(e) => {
-        // Allow click to propagate to child elements (checkbox, edit, delete)
-        if (e.target.classList.contains('task-item')) {
-          // Handle task item click if needed
-        }
-      }}
     >
       <input
         type='checkbox'
@@ -178,29 +175,84 @@ function TaskItem({
             >
               <Icon name='trash' />
             </button>
+            <details
+              className='task-context-menu'
+              onDragStart={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+              }}
+            >
+              <summary
+                role='button'
+                tabIndex={0}
+                aria-label={`More actions for task "${task.text}"`}
+                onKeyDown={(event) => {
+                  const menu = event.currentTarget.parentElement
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    menu.open = !menu.open
+                  } else if (event.key === 'Escape') {
+                    menu.open = false
+                  }
+                }}
+              >
+                More
+              </summary>
+              <div className='task-context-menu-panel'>
+                <button
+                  type='button'
+                  className='task-context-menu-action'
+                  onClick={() => setIsAddingSubtask(true)}
+                  aria-label={`Add subtask to ${task.text}`}
+                >
+                  Add subtask
+                </button>
+                <label className='task-context-menu-label'>
+                  Category
+                  <select
+                    className='task-category-select quadrant-select'
+                    value={task.category || ''}
+                    onChange={(event) =>
+                      onCategoryChange(quadrant, task.id, event.target.value)
+                    }
+                    aria-label={`Category for task "${task.text}"`}
+                  >
+                    <option value=''>No category</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </details>
           </>
         )}
       </div>
-      {!isEditing && (
-        <select
-          className='task-category-select quadrant-select'
-          value={task.category || ''}
-          onChange={(event) =>
-            onCategoryChange(quadrant, task.id, event.target.value)
-          }
-          aria-label={`Category for task "${task.text}"`}
-        >
-          <option value=''>No category</option>
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-      )}
       <div className='task-subtasks'>
         {subtasks.map((subtask) => (
-          <div className='task-subtask' key={subtask.id}>
+          <div
+            className='task-subtask'
+            key={subtask.id}
+            draggable
+            onDragStart={(event) => {
+              event.stopPropagation()
+              onSubtaskDragStart(quadrant, task.id, subtask)
+            }}
+            onDragOver={onDragOver}
+            onDrop={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              onNestSubtaskDrop(quadrant, task.id)
+            }}
+            onDragEnd={(event) => {
+              event.stopPropagation()
+              onDragEnd()
+            }}
+            role='group'
+            aria-label={`Subtask: ${subtask.text}. Drag to a quadrant to make it a task.`}
+          >
             <input
               type='checkbox'
               checked={subtask.completed}
@@ -219,6 +271,17 @@ function TaskItem({
               aria-label={`Delete subtask "${subtask.text}"`}
             >
               <Icon name='trash' />
+            </button>
+            <button
+              type='button'
+              className='task-promote-subtask'
+              onClick={() =>
+                onPromoteSubtask(quadrant, task.id, subtask.id, quadrant)
+              }
+              aria-label={`Make "${subtask.text}" a task`}
+              title='Make task'
+            >
+              Make task
             </button>
           </div>
         ))}
@@ -246,17 +309,7 @@ function TaskItem({
               <Icon name='x' />
             </button>
           </form>
-        ) : (
-          <button
-            type='button'
-            className='task-add-subtask'
-            onClick={() => setIsAddingSubtask(true)}
-            aria-label={`Add subtask to ${task.text}`}
-          >
-            <Icon name='plus' />
-            Add subtask
-          </button>
-        )}
+        ) : null}
       </div>
     </div>
   )
@@ -284,7 +337,10 @@ TaskItem.propTypes = {
   onToggleSubtask: PropTypes.func.isRequired,
   onDeleteSubtask: PropTypes.func.isRequired,
   onDragStart: PropTypes.func.isRequired,
+  onSubtaskDragStart: PropTypes.func.isRequired,
   onNestDrop: PropTypes.func.isRequired,
+  onNestSubtaskDrop: PropTypes.func.isRequired,
+  onPromoteSubtask: PropTypes.func.isRequired,
   onDragOver: PropTypes.func.isRequired,
   onDragEnd: PropTypes.func.isRequired,
   isSaved: PropTypes.bool.isRequired,

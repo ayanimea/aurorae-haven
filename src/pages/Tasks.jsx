@@ -21,6 +21,7 @@ function Tasks() {
     toggleSubtask,
     deleteSubtask,
     nestTask,
+    promoteSubtask,
     moveTask
   } = useTasksState()
   const { categories } = useCategories()
@@ -40,14 +41,17 @@ function Tasks() {
   // Drag and drop
   const {
     handleDragStart,
+    handleSubtaskDragStart,
     handleDragOver,
     handleDrop,
     handleNestDrop,
+    handleNestSubtaskDrop,
     handleDragEnd
   } = useDragAndDrop(
     moveTask,
     (fromQuadrant, toQuadrant, parentId, task) =>
-      nestTask(fromQuadrant, toQuadrant, parentId, task)
+      nestTask(fromQuadrant, toQuadrant, parentId, task),
+    promoteSubtask
   )
 
   const handleAddTask = (e) => {
@@ -224,7 +228,10 @@ function Tasks() {
             onToggleSubtask={toggleSubtask}
             onDeleteSubtask={deleteSubtask}
             onDragStart={handleDragStart}
+            onSubtaskDragStart={handleSubtaskDragStart}
             onNestDrop={handleNestDrop}
+            onNestSubtaskDrop={handleNestSubtaskDrop}
+            onPromoteSubtask={promoteSubtask}
             savedTasks={savedTasks}
             onSaveTask={saveTask}
             onDragOver={handleDragOver}
@@ -237,7 +244,9 @@ function Tasks() {
       <div className='tasks-info'>
         <p className='small'>
           <strong>Tip:</strong> Drag tasks between quadrants to reorganize them,
-          or drop one task onto another to make it a subtask.
+          drop a task onto a subtask to nest it, or drag a subtask to a quadrant
+          to make it a task. Use each task’s More menu to add subtasks or change
+          categories.
           The Eisenhower Matrix helps prioritize tasks by urgency and
           importance.
         </p>
