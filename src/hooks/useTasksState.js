@@ -10,6 +10,46 @@ import { useCrossTabSync } from './useCrossTabSync'
 
 const logger = createLogger('useTasksState')
 
+const IMPORTANT_QUADRANTS = ['urgent_important', 'not_urgent_important']
+const URGENT_QUADRANTS = ['urgent_important', 'urgent_not_important']
+
+function getTaskLimitMessage(state, quadrant, sourceQuadrant = null) {
+  const counts = Object.fromEntries(
+    [
+      ...IMPORTANT_QUADRANTS,
+      'urgent_not_important',
+      'not_urgent_not_important'
+    ].map((key) => [key, (state?.[key] || []).length])
+  )
+
+  if (sourceQuadrant && sourceQuadrant !== quadrant) {
+    counts[sourceQuadrant] = Math.max(0, (counts[sourceQuadrant] || 0) - 1)
+  }
+
+  if (
+    quadrant === 'urgent_important' &&
+    counts.urgent_important >= 4
+  ) {
+    return 'You can have at most 4 Urgent & Important tasks.'
+  }
+
+  if (
+    IMPORTANT_QUADRANTS.includes(quadrant) &&
+    IMPORTANT_QUADRANTS.reduce((total, key) => total + counts[key], 0) >= 10
+  ) {
+    return 'You can have at most 10 Important tasks across all categories.'
+  }
+
+  if (
+    URGENT_QUADRANTS.includes(quadrant) &&
+    URGENT_QUADRANTS.reduce((total, key) => total + counts[key], 0) >= 10
+  ) {
+    return 'You can have at most 10 Urgent tasks across all categories.'
+  }
+
+  return ''
+}
+
 /**
  * Custom hook for managing tasks state in Eisenhower Matrix
  * Handles CRUD operations and localStorage persistence
@@ -51,6 +91,8 @@ export function useTasksState() {
 
   // Add new task
   const addTask = (quadrant, text, category = '') => {
+    if (getTaskLimitMessage(tasks, quadrant)) return null
+
     const task = {
       id: generateSecureUUID(),
       text: text.trim(),
@@ -62,10 +104,14 @@ export function useTasksState() {
       completedAt: null
     }
 
-    setTasks((prev) => ({
-      ...(prev || createDefaultTasksState()),
-      [quadrant]: [...(prev?.[quadrant] || []), task]
-    }))
+    setTasks((prev) => {
+      const state = prev || createDefaultTasksState()
+      if (getTaskLimitMessage(state, quadrant)) return state
+      return {
+        ...state,
+        [quadrant]: [...(state[quadrant] || []), task]
+      }
+    })
 
     return task
   }
@@ -220,6 +266,7 @@ export function useTasksState() {
   const promoteSubtask = (fromQuadrant, parentId, subtaskId, toQuadrant) => {
     setTasks((prev) => {
       const state = prev || createDefaultTasksState()
+      if (getTaskLimitMessage(state, toQuadrant)) return state
       const sourceTasks = state[fromQuadrant] || []
       const parent = sourceTasks.find((item) => item.id === parentId)
       const parentSubtasks = Array.isArray(parent?.subtasks)
@@ -264,11 +311,19 @@ export function useTasksState() {
   const moveTask = (fromQuadrant, toQuadrant, task) => {
     if (fromQuadrant === toQuadrant) return
 
-    setTasks((prev) => ({
-      ...(prev || createDefaultTasksState()),
-      [fromQuadrant]: (prev?.[fromQuadrant] || []).filter((t) => t.id !== task.id),
-      [toQuadrant]: [...(prev?.[toQuadrant] || []), task]
-    }))
+    if (getTaskLimitMessage(tasks, toQuadrant, fromQuadrant)) return
+
+    setTasks((prev) => {
+      const state = prev || createDefaultTasksState()
+      if (getTaskLimitMessage(state, toQuadrant, fromQuadrant)) return state
+      return {
+        ...state,
+        [fromQuadrant]: (state[fromQuadrant] || []).filter(
+          (item) => item.id !== task.id
+        ),
+        [toQuadrant]: [...(state[toQuadrant] || []), task]
+      }
+    })
   }
 
   return {
@@ -284,6 +339,8 @@ export function useTasksState() {
     deleteSubtask,
     nestTask,
     promoteSubtask,
-    moveTask
+    moveTask,
+    getTaskLimitMessage: (quadrant, sourceQuadrant = null) =>
+      getTaskLimitMessage(tasks, quadrant, sourceQuadrant)
   }
 }

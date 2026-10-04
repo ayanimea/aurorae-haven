@@ -22,7 +22,8 @@ function Tasks() {
     deleteSubtask,
     nestTask,
     promoteSubtask,
-    moveTask
+    moveTask,
+    getTaskLimitMessage
   } = useTasksState()
   const { categories } = useCategories()
   const { savedTasks, saveTask } = useSavedTasks()
@@ -33,32 +34,24 @@ function Tasks() {
   const [taskCategory, setTaskCategory] = useState('')
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [taskLimitMessage, setTaskLimitMessage] = useState('')
 
   // Editing state
   const [editingTask, setEditingTask] = useState(null)
   const [editText, setEditText] = useState('')
 
-  // Drag and drop
-  const {
-    handleDragStart,
-    handleSubtaskDragStart,
-    handleDragOver,
-    handleDrop,
-    handleNestDrop,
-    handleNestSubtaskDrop,
-    handleDragEnd
-  } = useDragAndDrop(
-    moveTask,
-    (fromQuadrant, toQuadrant, parentId, task) =>
-      nestTask(fromQuadrant, toQuadrant, parentId, task),
-    promoteSubtask
-  )
-
   const handleAddTask = (e) => {
     e.preventDefault()
     if (!newTask.trim()) return
 
+    const limitMessage = getTaskLimitMessage(selectedQuadrant)
+    if (limitMessage) {
+      setTaskLimitMessage(limitMessage)
+      return
+    }
+
     addTask(selectedQuadrant, newTask, taskCategory)
+    setTaskLimitMessage('')
     setNewTask('')
   }
 
@@ -77,7 +70,14 @@ function Tasks() {
       ) || ''
     const quadrant =
       selectedTemplate.quadrant || selectedQuadrant || 'urgent_important'
+    const limitMessage = getTaskLimitMessage(quadrant)
+    if (limitMessage) {
+      setTaskLimitMessage(limitMessage)
+      return
+    }
+
     addTask(quadrant, selectedTemplate.title || selectedTemplate.text, templateCategory)
+    setTaskLimitMessage('')
     if (templateCategory) {
       setSelectedCategory(templateCategory)
     } else {
@@ -86,6 +86,44 @@ function Tasks() {
     setTaskCategory(templateCategory)
     setSelectedQuadrant(quadrant)
   }
+
+  const handleTaskMove = (fromQuadrant, toQuadrant, task) => {
+    const limitMessage = getTaskLimitMessage(toQuadrant, fromQuadrant)
+    if (limitMessage) {
+      setTaskLimitMessage(limitMessage)
+      return
+    }
+
+    moveTask(fromQuadrant, toQuadrant, task)
+    setTaskLimitMessage('')
+  }
+
+  const handleSubtaskPromotion = (fromQuadrant, parentId, subtaskId, toQuadrant) => {
+    const limitMessage = getTaskLimitMessage(toQuadrant)
+    if (limitMessage) {
+      setTaskLimitMessage(limitMessage)
+      return
+    }
+
+    promoteSubtask(fromQuadrant, parentId, subtaskId, toQuadrant)
+    setTaskLimitMessage('')
+  }
+
+  // Drag and drop
+  const {
+    handleDragStart,
+    handleSubtaskDragStart,
+    handleDragOver,
+    handleDrop,
+    handleNestDrop,
+    handleNestSubtaskDrop,
+    handleDragEnd
+  } = useDragAndDrop(
+    handleTaskMove,
+    (fromQuadrant, toQuadrant, parentId, task) =>
+      nestTask(fromQuadrant, toQuadrant, parentId, task),
+    handleSubtaskPromotion
+  )
 
   const startEditTask = (quadrant, task) => {
     setEditingTask({ quadrant, taskId: task.id })
@@ -156,6 +194,11 @@ function Tasks() {
             onCategoryChange={setTaskCategory}
             onSubmit={handleAddTask}
           />
+          {taskLimitMessage && (
+            <p className='task-limit-message' role='status'>
+              {taskLimitMessage}
+            </p>
+          )}
           <div className='task-template-picker'>
             <label htmlFor='task-template'>Add task from template:</label>
             <select
@@ -231,7 +274,7 @@ function Tasks() {
             onSubtaskDragStart={handleSubtaskDragStart}
             onNestDrop={handleNestDrop}
             onNestSubtaskDrop={handleNestSubtaskDrop}
-            onPromoteSubtask={promoteSubtask}
+            onPromoteSubtask={handleSubtaskPromotion}
             savedTasks={savedTasks}
             onSaveTask={saveTask}
             onDragOver={handleDragOver}
@@ -249,6 +292,10 @@ function Tasks() {
           categories.
           The Eisenhower Matrix helps prioritize tasks by urgency and
           importance.
+        </p>
+        <p className='small'>
+          Limits apply across all categories: 4 Urgent &amp; Important tasks,
+          10 Important tasks, and 10 Urgent tasks.
         </p>
       </div>
     </div>

@@ -24,6 +24,14 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 })
 
+const createTask = (id, category) => ({
+  id,
+  text: id,
+  category,
+  completed: false,
+  subtasks: []
+})
+
 describe('Tasks Component', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -95,6 +103,147 @@ describe('Tasks Component', () => {
 
     const finalEmptyStates = screen.getAllByText('No tasks in this quadrant')
     expect(finalEmptyStates.length).toBe(initialEmptyStates.length)
+  })
+
+  test('limits urgent and important tasks to four across categories', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work', 'Personal']))
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [
+          createTask('Work task 1', 'Work'),
+          createTask('Work task 2', 'Work'),
+          createTask('Personal task 1', 'Personal'),
+          createTask('Personal task 2', 'Personal')
+        ],
+        not_urgent_important: [],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      })
+    )
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Fifth important task' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    expect(
+      screen.getByText('You can have at most 4 Urgent & Important tasks.')
+    ).toHaveAttribute('role', 'status')
+    expect(JSON.parse(localStorage.getItem('aurorae_tasks')).urgent_important)
+      .toHaveLength(4)
+  })
+
+  test('limits important tasks to ten across categories and quadrants', () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work', 'Personal']))
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [
+          createTask('Urgent Work 1', 'Work'),
+          createTask('Urgent Work 2', 'Work'),
+          createTask('Urgent Personal 1', 'Personal'),
+          createTask('Urgent Personal 2', 'Personal')
+        ],
+        not_urgent_important: [
+          createTask('Scheduled Work 1', 'Work'),
+          createTask('Scheduled Work 2', 'Work'),
+          createTask('Scheduled Work 3', 'Work'),
+          createTask('Scheduled Personal 1', 'Personal'),
+          createTask('Scheduled Personal 2', 'Personal'),
+          createTask('Scheduled Personal 3', 'Personal')
+        ],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      })
+    )
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByLabelText('Select quadrant'), {
+      target: { value: 'not_urgent_important' }
+    })
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Eleventh important task' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    expect(
+      screen.getByText('You can have at most 10 Important tasks across all categories.')
+    ).toBeInTheDocument()
+    expect(JSON.parse(localStorage.getItem('aurorae_tasks')).not_urgent_important)
+      .toHaveLength(6)
+  })
+
+  test('limits urgent tasks to ten across categories and quadrants', () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work', 'Personal']))
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [
+          createTask('Urgent Important 1', 'Work'),
+          createTask('Urgent Important 2', 'Work'),
+          createTask('Urgent Important 3', 'Personal'),
+          createTask('Urgent Important 4', 'Personal')
+        ],
+        not_urgent_important: [],
+        urgent_not_important: [
+          createTask('Urgent Delegate 1', 'Work'),
+          createTask('Urgent Delegate 2', 'Work'),
+          createTask('Urgent Delegate 3', 'Work'),
+          createTask('Urgent Delegate 4', 'Personal'),
+          createTask('Urgent Delegate 5', 'Personal'),
+          createTask('Urgent Delegate 6', 'Personal')
+        ],
+        not_urgent_not_important: []
+      })
+    )
+    render(<Tasks />)
+
+    fireEvent.change(screen.getByLabelText('Select quadrant'), {
+      target: { value: 'urgent_not_important' }
+    })
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Eleventh urgent task' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    expect(
+      screen.getByText('You can have at most 10 Urgent tasks across all categories.')
+    ).toBeInTheDocument()
+    expect(JSON.parse(localStorage.getItem('aurorae_tasks')).urgent_not_important)
+      .toHaveLength(6)
+  })
+
+  test('prevents moving a task into a full quadrant', () => {
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [
+          createTask('Urgent task 1', ''),
+          createTask('Urgent task 2', ''),
+          createTask('Urgent task 3', ''),
+          createTask('Urgent task 4', '')
+        ],
+        not_urgent_important: [createTask('Scheduled task', '')],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      })
+    )
+    const { container } = render(<Tasks />)
+    const taskCards = container.querySelectorAll('.task-item')
+    const targetQuadrant = container.querySelector('.matrix-quadrant')
+
+    fireEvent.dragStart(taskCards[4])
+    fireEvent.dragOver(targetQuadrant)
+    fireEvent.drop(targetQuadrant)
+
+    expect(
+      screen.getByText('You can have at most 4 Urgent & Important tasks.')
+    ).toBeInTheDocument()
+    const savedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+    expect(savedTasks.urgent_important).toHaveLength(4)
+    expect(savedTasks.not_urgent_important).toHaveLength(1)
   })
 
   test('can change quadrant selection', () => {
