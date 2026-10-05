@@ -158,6 +158,31 @@ describe('Settings Component', () => {
     )
   })
 
+  test('renames a shared category from its Settings controls', async () => {
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add category' }))
+    fireEvent.change(screen.getByLabelText('New category'), {
+      target: { value: 'Work' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create category' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rename category Work' }))
+    fireEvent.change(screen.getByLabelText('New name for Work'), {
+      target: { value: 'Career' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save name' }))
+
+    await waitFor(() => {
+      expect(
+        JSON.parse(localStorage.getItem('aurorae_categories'))
+      ).toContain('Career')
+    })
+    expect(
+      screen.queryByRole('button', { name: 'Rename category Work' })
+    ).not.toBeInTheDocument()
+  })
+
   test('renders Data Management section at the top with Export and Import buttons', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(screen.getByText('Data Management')).toBeInTheDocument()
