@@ -8,7 +8,13 @@ import PropTypes from 'prop-types'
 import Modal from '../common/Modal'
 import RoutineEditor from './RoutineEditor'
 
-function RoutineEditModal({ isOpen, routine, onClose, onUpdateRoutine }) {
+function RoutineEditModal({
+  isOpen,
+  routine,
+  categories = [],
+  onClose,
+  onUpdateRoutine
+}) {
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSave = async (routineData) => {
@@ -34,6 +40,7 @@ function RoutineEditModal({ isOpen, routine, onClose, onUpdateRoutine }) {
       {routine && (
         <RoutineEditor
           routine={routine}
+          categories={categories}
           onSave={handleSave}
           onCancel={onClose}
           isSaving={isSaving}
@@ -46,6 +53,7 @@ function RoutineEditModal({ isOpen, routine, onClose, onUpdateRoutine }) {
 RoutineEditModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   routine: PropTypes.object,
+  categories: PropTypes.arrayOf(PropTypes.string),
   onClose: PropTypes.func.isRequired,
   onUpdateRoutine: PropTypes.func.isRequired
 }

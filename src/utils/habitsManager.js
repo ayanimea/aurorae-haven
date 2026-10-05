@@ -6,6 +6,8 @@
 import { put, getAll, getById, deleteById, STORES } from './indexedDBManager'
 import { normalizeEntity, updateMetadata } from './idGenerator'
 import { createLogger } from './logger'
+import { getDefaultCategory } from './categoryStorage'
+import { assignItemCategories } from './itemCategories'
 import dayjs from 'dayjs'
 import { publishCrossTabEvent } from './crossTabSync'
 
@@ -32,7 +34,7 @@ export async function createHabit(habitData) {
     throw new Error('Habit name is required')
   }
 
-  const newHabit = normalizeEntity({
+  const newHabit = normalizeEntity(assignItemCategories({
     name: habitData.name,
     description: habitData.description || '',
     category: habitData.category || 'default',
@@ -48,7 +50,7 @@ export async function createHabit(habitData) {
     vacationDates: habitData.vacationDates || [],
     paused: habitData.paused ?? false,
     lastCompleted: habitData.lastCompleted || null
-  })
+  }, habitData.workspaceCategories ?? habitData.workspaceCategory, getDefaultCategory(), 'workspaceCategory'))
   const id = await put(STORES.HABITS, newHabit)
   notifyHabitsChanged('created')
   return id

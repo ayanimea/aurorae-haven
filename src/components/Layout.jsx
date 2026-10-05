@@ -6,6 +6,7 @@ import Icon from './common/Icon'
 import MobileMenu from './Layout/MobileMenu'
 import MoreMenu from './Layout/MoreMenu'
 import StarryBackground from './StarryBackground'
+import { CategoryWorkspaceNav } from '../contexts/CategoryWorkspaceContext'
 
 const OFFLINE_WARNING_DISMISSED_KEY = 'aurorae_offline_warning_dismissed'
 
@@ -462,7 +463,12 @@ function Layout({ children, onExport }) {
         mobileMenuRef={mobileMenuRef}
       />
 
-      <div className='shell'>{children}</div>
+      <div className='shell'>
+        <div className='workspace-layout'>
+          <main className='workspace-main'>{children}</main>
+          <CategoryWorkspaceNav />
+        </div>
+      </div>
     </>
   )
 }

@@ -1,6 +1,7 @@
 
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
 
 /**
  * Component for adding new tasks
@@ -8,8 +9,9 @@ import Icon from '../common/Icon'
 function TaskForm({
   newTask,
   selectedQuadrant,
-  category,
+  categoriesValue,
   categories,
+  defaultCategory,
   onTaskChange,
   onQuadrantChange,
   onCategoryChange,
@@ -38,19 +40,14 @@ function TaskForm({
           Not Urgent & Not Important
         </option>
       </select>
-      <select
-        value={category}
-        onChange={(e) => onCategoryChange(e.target.value)}
-        className='quadrant-select'
-        aria-label='Select category'
-      >
-        <option value=''>No category</option>
-        {categories.map((item) => (
-          <option key={item} value={item}>
-            {item}
-          </option>
-        ))}
-      </select>
+      <CategoryMultiSelect
+        value={categoriesValue}
+        categories={categories}
+        defaultCategory={defaultCategory}
+        onChange={onCategoryChange}
+        label='Categories'
+        className='task-form-categories'
+      />
       <button type='submit' className='btn btn-primary'>
         <Icon name='plus' />
         Add Task
@@ -62,8 +59,9 @@ function TaskForm({
 TaskForm.propTypes = {
   newTask: PropTypes.string.isRequired,
   selectedQuadrant: PropTypes.string.isRequired,
-  category: PropTypes.string.isRequired,
+  categoriesValue: PropTypes.arrayOf(PropTypes.string).isRequired,
   categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  defaultCategory: PropTypes.string.isRequired,
   onTaskChange: PropTypes.func.isRequired,
   onQuadrantChange: PropTypes.func.isRequired,
   onCategoryChange: PropTypes.func.isRequired,

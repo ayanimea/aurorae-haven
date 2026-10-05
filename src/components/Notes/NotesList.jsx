@@ -3,7 +3,6 @@ import { useState } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import Icon from '../common/Icon'
-import CategoryTabs from '../common/CategoryTabs'
 
 /**
  * Component for displaying and searching the list of notes
@@ -13,9 +12,6 @@ function NotesList({
   filteredNotes,
   currentNoteId,
   searchQuery,
-  categories,
-  selectedCategory,
-  onCategorySelect,
   showNoteList,
   onSearchChange,
   onClearSearch,
@@ -29,13 +25,7 @@ function NotesList({
   const [draggedNoteId, setDraggedNoteId] = useState(null)
   if (!showNoteList) return null
 
-  const visibleNotes = filteredNotes.filter(
-    (note) =>
-      selectedCategory === null ||
-      (typeof note.category === 'string'
-        ? note.category.toLowerCase()
-        : '') === selectedCategory.toLowerCase()
-  )
+  const visibleNotes = filteredNotes
 
   return (
     <div className='note-list-sidebar'>
@@ -88,11 +78,6 @@ function NotesList({
           </button>
         )}
       </div>
-      <CategoryTabs
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelect={onCategorySelect}
-      />
       <p className='note-list-hint'>
         Drag a note onto a top-level note to nest it (two levels maximum).
       </p>
@@ -203,9 +188,6 @@ NotesList.propTypes = {
   filteredNotes: PropTypes.array.isRequired,
   currentNoteId: PropTypes.string,
   searchQuery: PropTypes.string.isRequired,
-  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
-  selectedCategory: PropTypes.string,
-  onCategorySelect: PropTypes.func.isRequired,
   showNoteList: PropTypes.bool.isRequired,
   onSearchChange: PropTypes.func.isRequired,
   onClearSearch: PropTypes.func.isRequired,

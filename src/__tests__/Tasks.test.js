@@ -2,6 +2,10 @@ import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Tasks from '../pages/Tasks'
+import {
+  CategoryWorkspaceNav,
+  CategoryWorkspaceProvider
+} from '../contexts/CategoryWorkspaceContext'
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -31,6 +35,14 @@ const createTask = (id, category) => ({
   completed: false,
   subtasks: []
 })
+
+const renderWithWorkspace = (ui) =>
+  render(
+    <CategoryWorkspaceProvider>
+      {ui}
+      <CategoryWorkspaceNav />
+    </CategoryWorkspaceProvider>
+  )
 
 describe('Tasks Component', () => {
   beforeEach(() => {
@@ -234,7 +246,7 @@ describe('Tasks Component', () => {
     const taskCards = container.querySelectorAll('.task-item')
     const targetQuadrant = container.querySelector('.matrix-quadrant')
 
-    fireEvent.dragStart(taskCards[4])
+    fireEvent.dragStart(taskCards[4].querySelector('.task-text'))
     fireEvent.dragOver(targetQuadrant)
     fireEvent.drop(targetQuadrant)
 
@@ -289,30 +301,25 @@ describe('Tasks Component', () => {
     })
   })
 
-  test('category tabs filter tasks in each Eisenhower quadrant', async () => {
+  test('category workspaces filter tasks and include uncategorized tasks', async () => {
     localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
-    render(<Tasks />)
+    renderWithWorkspace(<Tasks />)
 
     fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
       target: { value: 'Work task' }
     })
-    fireEvent.change(screen.getByLabelText('Select category'), {
-      target: { value: 'Work' }
-    })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Work' }))
     fireEvent.click(screen.getByText('Add Task'))
     fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
       target: { value: 'Uncategorized task' }
     })
-    fireEvent.change(screen.getByLabelText('Select category'), {
-      target: { value: '' }
-    })
     fireEvent.click(screen.getByText('Add Task'))
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Work' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Work' }))
     expect(screen.getByText('Work task')).toBeInTheDocument()
-    expect(screen.queryByText('Uncategorized task')).not.toBeInTheDocument()
+    expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'All' }))
+    fireEvent.click(screen.getByRole('button', { name: 'All' }))
     expect(screen.getByText('Work task')).toBeInTheDocument()
     expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
   })
@@ -330,12 +337,7 @@ describe('Tasks Component', () => {
         name: 'More actions for task "Categorize later"'
       })
     )
-    fireEvent.change(
-      screen.getByRole('combobox', {
-        name: 'Category for task "Categorize later"'
-      }),
-      { target: { value: 'Work' } }
-    )
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Work' }))
 
     await waitFor(() => {
       const task = JSON.parse(localStorage.getItem('aurorae_tasks'))
@@ -367,7 +369,7 @@ describe('Tasks Component', () => {
 
     const taskCards = container.querySelectorAll('.task-item')
     const subtask = container.querySelector('.task-subtask')
-    fireEvent.dragStart(taskCards[1])
+    fireEvent.dragStart(taskCards[1].querySelector('.task-text'))
     fireEvent.dragOver(subtask)
     fireEvent.drop(subtask)
 
@@ -409,6 +411,45 @@ describe('Tasks Component', () => {
     })
   })
 
+  test('dragging a subtask onto another task nests only that subtask', async () => {
+    const { container } = render(<Tasks />)
+    const taskInput = screen.getByPlaceholderText('Add a new task...')
+    fireEvent.change(taskInput, { target: { value: 'Source task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'More actions for task "Source task"' })
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Add subtask to Source task' }))
+    fireEvent.change(
+      screen.getByRole('textbox', { name: 'New subtask for Source task' }),
+      { target: { value: 'Moved subtask' } }
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Save subtask' }))
+    fireEvent.change(taskInput, { target: { value: 'Target task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    const sourceTask = screen.getByRole('group', {
+      name: 'Task: Source task. Press Alt + Arrow keys to move between quadrants.'
+    })
+    const targetTask = screen.getByRole('group', {
+      name: 'Task: Target task. Press Alt + Arrow keys to move between quadrants.'
+    })
+    const subtask = container.querySelector('.task-subtask')
+    fireEvent.dragStart(subtask)
+    fireEvent.dragOver(targetTask)
+    fireEvent.drop(targetTask)
+
+    await waitFor(() => {
+      const tasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(tasks.urgent_important).toHaveLength(2)
+      expect(tasks.urgent_important[0].subtasks).toEqual([])
+      expect(tasks.urgent_important[1].subtasks.map((item) => item.text)).toEqual([
+        'Moved subtask'
+      ])
+      expect(sourceTask).toBeInTheDocument()
+    })
+  })
+
   test('dragging a task onto another nests and removes it from its quadrant', async () => {
     const { container } = render(<Tasks />)
     const taskInput = screen.getByPlaceholderText('Add a new task...')
@@ -421,7 +462,7 @@ describe('Tasks Component', () => {
     fireEvent.click(screen.getByText('Add Task'))
 
     const taskCards = container.querySelectorAll('.task-item')
-    fireEvent.dragStart(taskCards[1])
+    fireEvent.dragStart(taskCards[1].querySelector('.task-text'))
     fireEvent.dragOver(taskCards[0])
     fireEvent.drop(taskCards[0])
 
@@ -473,14 +514,14 @@ describe('Tasks Component', () => {
     })
   })
 
-  test('uses note categories in the shared task tabs and form', () => {
+  test('uses note categories in shared workspaces and the task form', () => {
     localStorage.setItem(
       'brainDumpEntries',
       JSON.stringify([{ id: 'note-1', category: 'Personal' }])
     )
-    render(<Tasks />)
+    renderWithWorkspace(<Tasks />)
 
-    expect(screen.getByRole('tab', { name: 'Personal' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Personal' })).toBeInTheDocument()
     expect(
       screen.getByRole('option', { name: 'Personal' })
     ).toBeInTheDocument()
@@ -618,7 +659,7 @@ describe('Tasks Component', () => {
     expect(screen.getByText('Tasks')).toBeInTheDocument()
   })
 
-  test('task items have draggable attribute', async () => {
+  test('task text is the draggable handle', async () => {
     const { container } = render(<Tasks />)
 
     const input = screen.getByPlaceholderText('Add a new task...')
@@ -628,8 +669,9 @@ describe('Tasks Component', () => {
     fireEvent.click(addButton)
 
     await waitFor(() => {
-      const taskItem = container.querySelector('.task-item')
-      expect(taskItem).toHaveAttribute('draggable')
+      const taskText = container.querySelector('.task-text')
+      expect(taskText).toHaveAttribute('draggable')
+      expect(container.querySelector('.task-item')).not.toHaveAttribute('draggable')
     })
   })
 
@@ -783,8 +825,10 @@ describe('Tasks Component', () => {
       const editButton = screen.getByLabelText('Edit task "Drag test"')
       fireEvent.click(editButton)
 
-      const taskItem = container.querySelector('.task-item')
-      expect(taskItem).toHaveAttribute('draggable', 'false')
+      expect(container.querySelector('.task-item')).not.toHaveAttribute('draggable')
+      expect(container.querySelector('.task-edit-input')).not.toHaveAttribute(
+        'draggable'
+      )
     })
   })
 

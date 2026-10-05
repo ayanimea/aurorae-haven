@@ -32,7 +32,14 @@ function convertToNumberOrNull(value) {
   return Number.isNaN(num) ? null : num
 }
 
-function TemplateEditor({ template, onSave, onClose, typeFilter }) {
+function TemplateEditor({
+  template,
+  onSave,
+  onClose,
+  typeFilter,
+  categories = [],
+  activeCategory = null
+}) {
   logger.log('TemplateEditor opened with template:', template)
   const [formData, setFormData] = useState(() => {
     if (template) {
@@ -41,6 +48,9 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
         title: template.title,
         tags: template.tags || [],
         category: template.category || '',
+        workspaceCategory:
+          template.workspaceCategory ??
+          (categories.includes(template.category) ? template.category : ''),
         quadrant: template.quadrant || 'urgent_important',
         dueOffset: template.dueOffset || '',
         steps: template.steps || [],
@@ -55,6 +65,7 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
       title: '',
       tags: [],
       category: '',
+      workspaceCategory: activeCategory || '',
       quadrant: 'urgent_important',
       dueOffset: '',
       steps: [],
@@ -83,6 +94,9 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
         title: template.title,
         tags: template.tags || [],
         category: template.category || '',
+        workspaceCategory:
+          template.workspaceCategory ??
+          (categories.includes(template.category) ? template.category : ''),
         quadrant: template.quadrant || 'urgent_important',
         dueOffset: template.dueOffset || '',
         steps: template.steps || [],
@@ -92,7 +106,7 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
         description: template.description || ''
       })
     }
-  }, [template])
+  }, [template, categories])
 
   const validateForm = () => {
     const newErrors = {}
@@ -257,6 +271,29 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
                 {errors.title}
               </span>
             )}
+          </div>
+
+          <div className='form-group'>
+            <label htmlFor='template-workspace-category'>
+              Workspace category
+            </label>
+            <select
+              id='template-workspace-category'
+              value={formData.workspaceCategory}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  workspaceCategory: e.target.value
+                })
+              }
+            >
+              <option value=''>Uncategorised (shared)</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Tags */}
@@ -475,6 +512,7 @@ TemplateEditor.propTypes = {
     title: PropTypes.string,
     tags: PropTypes.arrayOf(PropTypes.string),
     category: PropTypes.string,
+    workspaceCategory: PropTypes.string,
     quadrant: PropTypes.string,
     dueOffset: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     steps: PropTypes.arrayOf(PropTypes.object),
@@ -488,7 +526,9 @@ TemplateEditor.propTypes = {
   }),
   onSave: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
-  typeFilter: PropTypes.oneOf(['task', 'routine'])
+  typeFilter: PropTypes.oneOf(['task', 'routine']),
+  categories: PropTypes.arrayOf(PropTypes.string),
+  activeCategory: PropTypes.string
 }
 
 export default TemplateEditor

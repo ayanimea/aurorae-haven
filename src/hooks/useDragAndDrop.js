@@ -3,7 +3,7 @@ import { useState } from 'react'
 /**
  * Custom hook for managing drag and drop functionality
  */
-export function useDragAndDrop(onDrop, onNest, onPromoteSubtask) {
+export function useDragAndDrop(onDrop, onNest, onPromoteSubtask, onNestSubtask) {
   const [draggedTask, setDraggedTask] = useState(null)
 
   const handleDragStart = (quadrant, task) => {
@@ -35,18 +35,25 @@ export function useDragAndDrop(onDrop, onNest, onPromoteSubtask) {
   }
 
   const handleNestDrop = (targetQuadrant, targetId) => {
-    if (
-      draggedTask &&
-      !draggedTask.parentId &&
-      targetId &&
-      draggedTask.task.id !== targetId
-    ) {
-      onNest?.(
-        draggedTask.quadrant,
-        targetQuadrant,
-        targetId,
-        draggedTask.task
-      )
+    if (draggedTask && targetId) {
+      if (draggedTask.parentId) {
+        if (draggedTask.parentId !== targetId) {
+          onNestSubtask?.(
+            draggedTask.quadrant,
+            draggedTask.parentId,
+            draggedTask.task.id,
+            targetQuadrant,
+            targetId
+          )
+        }
+      } else if (draggedTask.task.id !== targetId) {
+        onNest?.(
+          draggedTask.quadrant,
+          targetQuadrant,
+          targetId,
+          draggedTask.task
+        )
+      }
     }
     setDraggedTask(null)
   }

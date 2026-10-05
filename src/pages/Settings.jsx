@@ -46,9 +46,16 @@ function Settings({ onExport, onImport }) {
   const [lastSaveTime, setLastSaveTime] = useState(null)
   const [messageIsError, setMessageIsError] = useState(false)
   const [isConfiguring, setIsConfiguring] = useState(false)
-  const { categories, addCategory } = useCategories()
+  const { categories, addCategory, renameCategory, defaultCategory } =
+    useCategories()
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [newCategory, setNewCategory] = useState('')
+  const [renamingCategory, setRenamingCategory] = useState(null)
+  const [renamedCategory, setRenamedCategory] = useState('')
+  const userCategoryCount = categories.filter(
+    (category) => category !== defaultCategory
+  ).length
+  const categoryLimitReached = userCategoryCount >= MAX_CATEGORY_COUNT
   const {
     toastMessage: message,
     showToast,
@@ -120,10 +127,22 @@ function Settings({ onExport, onImport }) {
   const handleAddCategory = (event) => {
     event.preventDefault()
     const category = newCategory.trim()
-    if (!category || categories.length >= MAX_CATEGORY_COUNT) return
+    if (!category || categoryLimitReached) return
     addCategory(category)
     setNewCategory('')
     setIsAddingCategory(false)
+  }
+
+  const handleRenameCategory = async (event) => {
+    event.preventDefault()
+    try {
+      await renameCategory(renamingCategory, renamedCategory)
+      setRenamingCategory(null)
+      setRenamedCategory('')
+      showToastNotification('Category renamed')
+    } catch (error) {
+      showToastNotification(error.message || 'Failed to rename category')
+    }
   }
 
   const restartAutoSaveIfEnabled = useCallback((autoSaveSettings) => {
@@ -334,17 +353,57 @@ function Settings({ onExport, onImport }) {
         </div>
         <div className='card-b'>
           <p className='settings-hint'>
-            Create up to {MAX_CATEGORY_COUNT} shared categories for organizing
-            tasks and notes.
+            The Uncategorised workspace is the default. Create up to{' '}
+            {MAX_CATEGORY_COUNT} additional shared categories.
           </p>
           <ul className='settings-category-list' aria-label='Current categories'>
             {categories.map((category) => (
-              <li key={category}>{category}</li>
+              <li key={category}>
+                {renamingCategory === category ? (
+                  <form onSubmit={handleRenameCategory}>
+                    <label>
+                      New name for {category}
+                      <input
+                        type='text'
+                        value={renamedCategory}
+                        onChange={(event) =>
+                          setRenamedCategory(event.target.value)
+                        }
+                        maxLength={40}
+                        required
+                      />
+                    </label>
+                    <button type='submit'>Save name</button>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setRenamingCategory(null)
+                        setRenamedCategory('')
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <span>{category}</span>
+                    <button
+                      type='button'
+                      aria-label={`Rename category ${category}`}
+                      onClick={() => {
+                        setRenamingCategory(category)
+                        setRenamedCategory(category)
+                      }}
+                    >
+                      Rename
+                    </button>
+                  </>
+                )}
+              </li>
             ))}
-            {categories.length === 0 && <li>No categories created yet</li>}
           </ul>
           <p className='settings-hint'>
-            {categories.length} of {MAX_CATEGORY_COUNT} categories used
+            {userCategoryCount} of {MAX_CATEGORY_COUNT} additional categories used
           </p>
           {isAddingCategory ? (
             <form
@@ -388,9 +447,9 @@ function Settings({ onExport, onImport }) {
               type='button'
               className='settings-button settings-button-primary'
               onClick={() => setIsAddingCategory(true)}
-              disabled={categories.length >= MAX_CATEGORY_COUNT}
+              disabled={categoryLimitReached}
               title={
-                categories.length >= MAX_CATEGORY_COUNT
+                categoryLimitReached
                   ? `Maximum of ${MAX_CATEGORY_COUNT} categories reached`
                   : 'Create a shared category'
               }

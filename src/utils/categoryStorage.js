@@ -1,8 +1,43 @@
 export const CATEGORY_STORAGE_KEY = 'aurorae_categories'
+export const DEFAULT_CATEGORY_STORAGE_KEY = 'aurorae_default_category'
+export const INITIAL_DEFAULT_CATEGORY = 'Uncategorised'
 export const MAX_CATEGORY_COUNT = 6
+const CATEGORY_DATA_STORAGE_KEYS = [
+  ['aurorae_tasks', true],
+  ['aurorae_saved_tasks', true],
+  ['brainDumpEntries', true],
+  ['tasks', true],
+  ['routines', false],
+  ['habits', false],
+  ['dumps', true],
+  ['schedule', true],
+  ['stats', false],
+  ['templates', false]
+]
 
 export function normalizeCategory(category) {
   return typeof category === 'string' ? category.trim() : ''
+}
+
+export function getDefaultCategory() {
+  try {
+    return (
+      normalizeCategory(localStorage.getItem(DEFAULT_CATEGORY_STORAGE_KEY)) ||
+      INITIAL_DEFAULT_CATEGORY
+    )
+  } catch {
+    return INITIAL_DEFAULT_CATEGORY
+  }
+}
+
+export function setDefaultCategory(category) {
+  const value = normalizeCategory(category) || INITIAL_DEFAULT_CATEGORY
+  try {
+    localStorage.setItem(DEFAULT_CATEGORY_STORAGE_KEY, value)
+  } catch {
+    // The in-memory default remains usable when browser storage is unavailable.
+  }
+  return value
 }
 
 function uniqueCategories(categories) {
@@ -16,45 +51,64 @@ function uniqueCategories(categories) {
   return [...byName.values()].sort((a, b) => a.localeCompare(b))
 }
 
+function collectItemCategories(value, categories, includeLegacyCategory) {
+  if (Array.isArray(value)) {
+    value.forEach((item) =>
+      collectItemCategories(item, categories, includeLegacyCategory)
+    )
+    return
+  }
+  if (!value || typeof value !== 'object') return
+
+  for (const [key, item] of Object.entries(value)) {
+    if (
+      (key === 'category' && includeLegacyCategory) ||
+      key === 'workspaceCategory' ||
+      key === 'workspaceCategories'
+    ) {
+      if (Array.isArray(item)) categories.push(...item)
+      else categories.push(item)
+    } else if (item && typeof item === 'object') {
+      collectItemCategories(item, categories, includeLegacyCategory)
+    }
+  }
+}
+
 export function loadCategories() {
   try {
     const stored = JSON.parse(localStorage.getItem(CATEGORY_STORAGE_KEY) || '[]')
-    const categories = Array.isArray(stored) ? stored : []
+    const categories = Array.isArray(stored) ? [...stored] : []
 
-    try {
-      const notes = JSON.parse(localStorage.getItem('brainDumpEntries') || '[]')
-      if (Array.isArray(notes)) {
-        categories.push(
-          ...notes.map((note) =>
-            note && typeof note === 'object' ? note.category : ''
-          )
-        )
+    CATEGORY_DATA_STORAGE_KEYS.forEach(([key, includeLegacyCategory]) => {
+      try {
+        const data = JSON.parse(localStorage.getItem(key) || 'null')
+        collectItemCategories(data, categories, includeLegacyCategory)
+      } catch {
+        // Ignore malformed item data; its own storage layer handles recovery.
       }
-    } catch {
-      // Ignore malformed note data; the note store handles its own recovery.
-    }
+    })
 
-    try {
-      const tasks = JSON.parse(localStorage.getItem('aurorae_tasks') || '{}')
-      if (tasks && typeof tasks === 'object' && !Array.isArray(tasks)) {
-        Object.values(tasks).forEach((quadrant) => {
-          if (Array.isArray(quadrant)) {
-            categories.push(...quadrant.map((task) => task?.category))
-          }
-        })
-      }
-    } catch {
-      // Ignore malformed task data; the task store handles its own recovery.
-    }
-
-    return uniqueCategories(categories)
+    const defaultCategory = getDefaultCategory()
+    return [
+      defaultCategory,
+      ...uniqueCategories(categories).filter(
+        (category) => category.toLowerCase() !== defaultCategory.toLowerCase()
+      )
+    ]
   } catch {
-    return []
+    const defaultCategory = getDefaultCategory()
+    return [defaultCategory]
   }
 }
 
 export function saveCategories(categories) {
-  const normalized = uniqueCategories(categories)
+  const defaultCategory = getDefaultCategory()
+  const normalized = [
+    defaultCategory,
+    ...uniqueCategories(categories).filter(
+      (category) => category.toLowerCase() !== defaultCategory.toLowerCase()
+    )
+  ]
   try {
     localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(normalized))
   } catch {

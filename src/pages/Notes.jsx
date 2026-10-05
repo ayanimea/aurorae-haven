@@ -31,6 +31,8 @@ import { useToast } from '../hooks/useToast'
 import { createLogger } from '../utils/logger'
 import { getNoteTemplateById } from '../data/noteTemplates'
 import { useCategories } from '../hooks/useCategories'
+import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
+import { assignItemCategories, getItemCategories } from '../utils/itemCategories'
 
 const logger = createLogger('Notes')
 
@@ -120,12 +122,13 @@ function Notes() {
     title,
     content,
     category,
+    assignedCategories,
     searchQuery,
     filterOptions,
     filteredNotes,
     setTitle,
     setContent,
-    setCategory,
+    setAssignedCategories,
     setSearchQuery,
     setFilterOptions,
     loadNote,
@@ -134,6 +137,12 @@ function Notes() {
     clearAutosaveTimeout
   } = useNotesState()
   const { categories } = useCategories()
+  const { activeCategory, defaultCategory, matchesCategory } =
+    useCategoryWorkspace()
+  const workspaceNotes = filteredNotes.filter((note) => matchesCategory(note))
+  const workspaceCurrentNote = matchesCategory(currentNote)
+    ? currentNote
+    : null
 
   const { toastMessage, showToast, showToastNotification } = useToast()
 
@@ -143,6 +152,7 @@ function Notes() {
   const titleRef = useRef(title)
   const contentRef = useRef(content)
   const categoryRef = useRef(category)
+  const assignedCategoriesRef = useRef(assignedCategories)
   const showToastRef = useRef(showToastNotification)
   const updateNotesRef = useRef(updateNotes)
   const clearAutosaveTimeoutRef = useRef(clearAutosaveTimeout)
@@ -151,6 +161,7 @@ function Notes() {
   titleRef.current = title
   contentRef.current = content
   categoryRef.current = category
+  assignedCategoriesRef.current = assignedCategories
   showToastRef.current = showToastNotification
   updateNotesRef.current = updateNotes
   clearAutosaveTimeoutRef.current = clearAutosaveTimeout
@@ -162,7 +173,6 @@ function Notes() {
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
   const [showNewNoteModal, setShowNewNoteModal] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState(null)
   const [contextMenu, setContextMenu] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState(null)
@@ -197,12 +207,15 @@ function Notes() {
               ...activeNote,
               title: titleRef.current,
               content: contentRef.current,
-              category: categoryRef.current
+              category: categoryRef.current,
+              workspaceCategories: assignedCategoriesRef.current
             }
             const hasUnsavedActiveNoteChanges =
               mergedActiveNote.title !== activeNote.title ||
               mergedActiveNote.content !== activeNote.content ||
-              mergedActiveNote.category !== activeNote.category
+              mergedActiveNote.category !== activeNote.category ||
+              JSON.stringify(mergedActiveNote.workspaceCategories) !==
+                JSON.stringify(activeNote.workspaceCategories)
 
             if (hasUnsavedActiveNoteChanges) {
               clearAutosaveTimeoutRef.current()
@@ -316,7 +329,11 @@ function Notes() {
         loadNote(updatedNotes[0])
       } else {
         // Auto-create new empty note when deleting the last note
-        const newNote = createNewNote()
+        const newNote = assignItemCategories(
+          createNewNote(),
+          [defaultCategory],
+          defaultCategory
+        )
         const notesWithNew = [newNote]
 
         // Use flushSync to ensure state updates complete synchronously
@@ -469,7 +486,9 @@ function Notes() {
       noteContent = noteContent ? `[TOC]\n\n${noteContent}` : '[TOC]\n\n'
     }
 
-    const newNote = createNote(noteContent, selectedCategory || '')
+    const newNote = createNote(noteContent, [
+      activeCategory || defaultCategory
+    ])
     // Use the template name as the starting title for non-blank templates.
     if (newNote && template && template.id !== 'blank') {
       setTitle(template.name)
@@ -479,12 +498,11 @@ function Notes() {
   const handleCreateSubNote = () => {
     if (!currentNote || currentNote.locked || currentNote.parentNoteId) return
 
-    const subNote = {
+    const subNote = assignItemCategories({
       ...createNewNote(),
       title: 'Untitled Sub-note',
-      category: category || '',
       parentNoteId: currentNote.id
-    }
+    }, assignedCategories, defaultCategory)
     const updatedNotes = [...notes, subNote]
     updateNotes(updatedNotes)
     loadNote(subNote)
@@ -513,16 +531,20 @@ function Notes() {
     updateNotes(
       notes.map((item) =>
         item.id === noteId
-          ? {
-              ...item,
-              parentNoteId: parentId,
-              category: parent.category || ''
-            }
+          ? assignItemCategories(
+              { ...item, parentNoteId: parentId },
+              getItemCategories(parent),
+              defaultCategory
+            )
           : item
       )
     )
     if (noteId === currentNoteId) {
-      setCategory(parent.category || '')
+      setAssignedCategories(
+        getItemCategories(parent).length
+          ? getItemCategories(parent)
+          : [defaultCategory]
+      )
     }
   }
 
@@ -531,12 +553,9 @@ function Notes() {
       {/* Note List Sidebar */}
       <NotesList
         notes={notes}
-        filteredNotes={filteredNotes}
+        filteredNotes={workspaceNotes}
         currentNoteId={currentNoteId}
         searchQuery={searchQuery}
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategorySelect={setSelectedCategory}
         showNoteList={showNoteList}
         onSearchChange={setSearchQuery}
         onClearSearch={() => setSearchQuery('')}
@@ -551,33 +570,40 @@ function Notes() {
       {/* Main Editor Area */}
       <div className='brain-dump-main'>
         <div className='card'>
-          <NoteEditor
-            currentNote={currentNote}
-            currentNoteId={currentNoteId}
-            title={title}
-            category={category}
-            categories={categories}
-            content={content}
-            preview={preview}
-            notes={notes}
-            showNoteList={showNoteList}
-            onTitleChange={setTitle}
-            onCategoryChange={setCategory}
-            onContentChange={setContent}
-            onToggleNoteList={() => setShowNoteList(!showNoteList)}
-            onNewNote={handleNewNote}
-            onCreateSubNote={handleCreateSubNote}
-            onImport={handleImport}
-            onExport={handleExport}
-            onExportOdt={handleExportOdt}
-            onExportAllOdt={handleExportAllOdt}
-            onExportAllOdtZip={handleExportAllOdtZip}
-            onPrint={handlePrint}
-            isPrintSupported={isPrintSupported}
-            onDelete={handleDelete}
-            onLockToggle={handleToggleLock}
-            onShowDetails={() => setShowDetailsModal(true)}
-          />
+          {currentNoteId && !workspaceCurrentNote ? (
+            <p className='empty-state'>
+              Select a note in this workspace or create a new note.
+            </p>
+          ) : (
+            <NoteEditor
+              currentNote={workspaceCurrentNote}
+              currentNoteId={currentNoteId}
+              title={title}
+              assignedCategories={assignedCategories}
+              categories={categories}
+              defaultCategory={defaultCategory}
+              content={content}
+              preview={preview}
+              notes={notes}
+              showNoteList={showNoteList}
+              onTitleChange={setTitle}
+              onAssignedCategoriesChange={setAssignedCategories}
+              onContentChange={setContent}
+              onToggleNoteList={() => setShowNoteList(!showNoteList)}
+              onNewNote={handleNewNote}
+              onCreateSubNote={handleCreateSubNote}
+              onImport={handleImport}
+              onExport={handleExport}
+              onExportOdt={handleExportOdt}
+              onExportAllOdt={handleExportAllOdt}
+              onExportAllOdtZip={handleExportAllOdtZip}
+              onPrint={handlePrint}
+              isPrintSupported={isPrintSupported}
+              onDelete={handleDelete}
+              onLockToggle={handleToggleLock}
+              onShowDetails={() => setShowDetailsModal(true)}
+            />
+          )}
         </div>
       </div>
 

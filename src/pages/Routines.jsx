@@ -10,11 +10,14 @@ import FocusLock from 'react-focus-lock'
 import { useRoutineRunnerContext } from '../contexts/RoutineRunnerContext'
 import { useToast } from '../hooks/useToast'
 import { useCrossTabSync } from '../hooks/useCrossTabSync'
+import { useCategories } from '../hooks/useCategories'
+import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
 import { formatTime } from '../utils/routineRunner'
 import {
   exportRoutines,
   importRoutines,
   getRoutines,
+  getRoutine,
   createRoutine,
   updateRoutine,
   deleteRoutine,
@@ -52,8 +55,14 @@ function Routines() {
   const summaryReturnFocusRef = useRef(null)
   const summaryWasOpenRef = useRef(false)
   const [availableRoutines, setAvailableRoutines] = useState([])
+  const { categories } = useCategories()
+  const { activeCategory, defaultCategory, matchesCategory } =
+    useCategoryWorkspace()
   const [loadingRoutines, setLoadingRoutines] = useState(true)
   const { toastMessage, showToast, showToastNotification } = useToast()
+  const visibleRoutines = availableRoutines.filter((routine) =>
+    matchesCategory(routine, 'workspaceCategory')
+  )
   const fileInputRef = useRef(null)
   const runnerHeadingRef = useRef(null)
 
@@ -368,7 +377,12 @@ function Routines() {
         tags: routine.tags || [],
         steps: routine.steps || [],
         estimatedDuration: routine.totalDuration || 0,
-        energyTag: routine.energyTag
+        energyTag: routine.energyTag,
+        workspaceCategories:
+          routine.workspaceCategories ||
+          [routine.workspaceCategory || activeCategory || defaultCategory],
+        workspaceCategory:
+          routine.workspaceCategory || activeCategory || defaultCategory
       }
 
       await saveTemplate(template)
@@ -396,6 +410,18 @@ function Routines() {
         return
       }
 
+      if (activeCategory && !result.workspaceCategory) {
+        const createdRoutine = await getRoutine(result.id)
+        if (!createdRoutine) {
+          throw new Error('Created routine could not be loaded')
+        }
+        await updateRoutine({
+          ...createdRoutine,
+          workspaceCategories: [activeCategory],
+          workspaceCategory: activeCategory
+        })
+      }
+
       logger.log('Routine created with ID:', result.id)
 
       showToastNotification('Routine created from template')
@@ -415,7 +441,14 @@ function Routines() {
     try {
       logger.log('Creating routine from scratch:', routineData.name)
 
-      const routineId = await createRoutine(routineData)
+      const routineId = await createRoutine({
+        ...routineData,
+        workspaceCategories:
+          routineData.workspaceCategories ??
+          [routineData.workspaceCategory ?? activeCategory ?? defaultCategory],
+        workspaceCategory:
+          routineData.workspaceCategory ?? activeCategory ?? defaultCategory
+      })
       logger.log('Routine created with ID:', routineId)
 
       showToastNotification('Routine created successfully')
@@ -697,7 +730,7 @@ function Routines() {
                 <Icon name='loader' className='icon-spin' />
                 <p className='small'>Loading routines...</p>
               </div>
-            ) : availableRoutines.length === 0 ? (
+            ) : visibleRoutines.length === 0 ? (
               <div className='empty-state'>
                 <svg
                   className='icon'
@@ -726,7 +759,7 @@ function Routines() {
               </div>
             ) : (
               <div className='rseq-routines-list'>
-                {availableRoutines.map((routine) => (
+                {visibleRoutines.map((routine) => (
                   // biome-ignore lint/a11y/noStaticElementInteractions: onContextMenu is a supplementary shortcut; primary management actions are the accessible Edit/Delete buttons
                   <div
                     key={routine.id}
@@ -1049,12 +1082,15 @@ function Routines() {
         onClose={() => setShowCreationModal(false)}
         onSelectTemplate={handleSelectTemplate}
         onCreateRoutine={handleCreateRoutine}
+        categories={categories}
+        activeCategory={activeCategory}
       />
 
       {/* Routine Edit Modal */}
       <RoutineEditModal
         isOpen={showEditModal}
         routine={routineToEdit}
+        categories={categories}
         onClose={() => {
           setShowEditModal(false)
           setRoutineToEdit(null)

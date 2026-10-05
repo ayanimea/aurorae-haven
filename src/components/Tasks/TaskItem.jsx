@@ -1,6 +1,9 @@
 import { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
+import { getDefaultCategory } from '../../utils/categoryStorage'
+import { getItemCategories } from '../../utils/itemCategories'
 
 /**
  * Component for displaying and editing a single task
@@ -83,10 +86,7 @@ function TaskItem({
   return (
     <div
       className={`task-item ${task.completed ? 'completed' : ''}`}
-      draggable={!isEditing}
-      onDragStart={() => onDragStart(quadrant, task)}
       onDragOver={onDragOver}
-      onDragEnd={onDragEnd}
       onDrop={(event) => {
         event.preventDefault()
         event.stopPropagation()
@@ -125,6 +125,9 @@ function TaskItem({
           {/* biome-ignore lint/a11y/noStaticElementInteractions: onDoubleClick is a power-user shortcut; primary edit interaction is via the accessible Edit button */}
           <span
             className='task-text'
+            draggable
+            onDragStart={() => onDragStart(quadrant, task)}
+            onDragEnd={onDragEnd}
             onDoubleClick={() => onEdit(quadrant, task)}
           >
             {task.text}
@@ -209,21 +212,20 @@ function TaskItem({
                 </button>
                 <label className='task-context-menu-label'>
                   Category
-                  <select
-                    className='task-category-select quadrant-select'
-                    value={task.category || ''}
-                    onChange={(event) =>
-                      onCategoryChange(quadrant, task.id, event.target.value)
+                  <CategoryMultiSelect
+                    value={
+                      getItemCategories(task).length
+                        ? getItemCategories(task)
+                        : [getDefaultCategory()]
                     }
-                    aria-label={`Category for task "${task.text}"`}
-                  >
-                    <option value=''>No category</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
+                    categories={categories}
+                    defaultCategory={getDefaultCategory()}
+                    onChange={(value) =>
+                      onCategoryChange(quadrant, task.id, value)
+                    }
+                    label={`Categories for "${task.text}"`}
+                    className='task-context-category-select'
+                  />
                 </label>
               </div>
             </details>
@@ -235,6 +237,7 @@ function TaskItem({
           <div
             className='task-subtask'
             key={subtask.id}
+            data-subtask-id={subtask.id}
             draggable
             onDragStart={(event) => {
               event.stopPropagation()

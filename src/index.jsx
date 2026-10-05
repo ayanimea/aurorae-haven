@@ -28,6 +28,7 @@ import Settings from './pages/Settings.jsx'
 
 // Contexts
 import { RoutineRunnerProvider } from './contexts/RoutineRunnerContext.jsx'
+import { CategoryWorkspaceProvider } from './contexts/CategoryWorkspaceContext.jsx'
 
 // Utils
 import {
@@ -152,8 +153,9 @@ function RouterApp() {
     <BrowserRouter basename={basename}>
       <RoutineRunnerProvider>
       <RedirectHandler />
-      <Layout onExport={handleExport}>
-        <Routes>
+      <CategoryWorkspaceProvider>
+        <Layout onExport={handleExport}>
+          <Routes>
           {/* Figma-aligned landing: Tasks at root */}
           <Route path='/' element={<Tasks />} />
 
@@ -181,8 +183,9 @@ function RouterApp() {
 
           {/* Fallback: unknown routes → home */}
           <Route path='*' element={<Navigate to='/' replace />} />
-        </Routes>
-      </Layout>
+          </Routes>
+        </Layout>
+      </CategoryWorkspaceProvider>
 
       <Toast
         message={toast.message}

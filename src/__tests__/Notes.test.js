@@ -6,6 +6,10 @@ import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import Notes from '../pages/Notes.jsx'
+import {
+  CategoryWorkspaceNav,
+  CategoryWorkspaceProvider
+} from '../contexts/CategoryWorkspaceContext'
 
 // Mock marked and DOMPurify
 vi.mock('marked', () => ({
@@ -44,6 +48,14 @@ const localStorageMock = (() => {
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 })
+
+const renderWithWorkspace = (ui) =>
+  render(
+    <CategoryWorkspaceProvider>
+      {ui}
+      <CategoryWorkspaceNav />
+    </CategoryWorkspaceProvider>
+  )
 
 describe('Notes Component', () => {
   beforeEach(() => {
@@ -1401,8 +1413,7 @@ describe('Notes Component', () => {
 
       render(<Notes />)
 
-      const categorySelect = screen.getByLabelText('Note category')
-      fireEvent.change(categorySelect, { target: { value: 'Work' } })
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Work' }))
 
       await waitFor(
         () => {
@@ -1410,6 +1421,7 @@ describe('Notes Component', () => {
             localStorage.getItem('brainDumpEntries') || '[]'
           )
           expect(entries[0].category).toBe('Work')
+          expect(entries[0].workspaceCategories).toEqual(['Work'])
         },
         { timeout: 1000 }
       )
@@ -1570,7 +1582,7 @@ describe('Notes Component', () => {
       })
     })
 
-    test('category tabs filter notes by their shared category', () => {
+    test('category workspaces filter notes and include uncategorized notes', () => {
       localStorage.setItem(
         'brainDumpEntries',
         JSON.stringify([
@@ -1589,17 +1601,26 @@ describe('Notes Component', () => {
             category: 'Work',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'uncategorized-note',
+            title: 'Uncategorized entry',
+            content: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           }
         ])
       )
-      render(<Notes />)
-      fireEvent.click(screen.getByRole('tab', { name: 'Work' }))
+      renderWithWorkspace(<Notes />)
+      fireEvent.click(screen.getByRole('button', { name: 'Work' }))
       expect(screen.getByText('Work entry')).toBeInTheDocument()
       expect(screen.queryByText('Personal entry')).not.toBeInTheDocument()
+      expect(screen.getByText('Uncategorized entry')).toBeInTheDocument()
 
-      fireEvent.click(screen.getByRole('tab', { name: 'All' }))
+      fireEvent.click(screen.getByRole('button', { name: 'All' }))
       expect(screen.getByText('Work entry')).toBeInTheDocument()
       expect(screen.getByText('Personal entry')).toBeInTheDocument()
+      expect(screen.getByText('Uncategorized entry')).toBeInTheDocument()
     })
   })
 })

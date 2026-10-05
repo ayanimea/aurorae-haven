@@ -6,7 +6,7 @@ import {
   exportAllData as exportFromIndexedDB
 } from './indexedDBManager'
 import { tryCatch, withErrorHandling } from './errorHandler'
-import { loadCategories } from './categoryStorage'
+import { getDefaultCategory, loadCategories } from './categoryStorage'
 import { loadSavedTasks } from './savedTasks'
 
 // Data schema field names - centralized to prevent drift
@@ -154,6 +154,7 @@ export async function getDataTemplate() {
     entries
   }
   data.categories = loadCategories()
+  data.defaultCategory = getDefaultCategory()
   data.savedTasks = loadSavedTasks()
 
   // Backward compatibility: include sequences field as alias for routines

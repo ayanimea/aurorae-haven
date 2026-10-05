@@ -5,6 +5,7 @@ import {
   importJSON,
   SCHEDULE_EVENT_TYPES
 } from '../utils/dataManager'
+import { importToLocalStorage } from '../utils/importData'
 
 describe('Data Manager', () => {
   beforeEach(() => {
@@ -363,6 +364,43 @@ describe('Data Manager', () => {
   })
 
   describe('importJSON', () => {
+    it('restores shared categories and categorized workspace data to localStorage', () => {
+      const tasks = {
+        urgent_important: [
+          { id: 'task-1', text: 'Work task', category: 'Work', subtasks: [] }
+        ],
+        not_urgent_important: [],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      }
+      const notes = [
+        { id: 'note-1', title: 'Work note', content: '', category: 'Work' }
+      ]
+
+      importToLocalStorage({
+        categories: ['Work'],
+        auroraeTasksData: tasks,
+        dumps: notes,
+        brainDump: { entries: notes }
+      })
+
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([
+        'Work'
+      ])
+      expect(JSON.parse(localStorage.getItem('aurorae_tasks'))).toEqual(tasks)
+      expect(JSON.parse(localStorage.getItem('brainDumpEntries'))).toEqual(notes)
+    })
+
+    it('restores notes from legacy dumps-only backups', () => {
+      const notes = [
+        { id: 'legacy-note', title: 'Legacy note', content: '', category: 'Work' }
+      ]
+
+      importToLocalStorage({ dumps: notes })
+
+      expect(JSON.parse(localStorage.getItem('brainDumpEntries'))).toEqual(notes)
+    })
+
     it('should import valid JSON data', async () => {
       const testData = {
         tasks: [],

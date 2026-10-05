@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { handleEnterKey } from '../../utils/listContinuation'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
 
 // Editor pane width constraints (percentage of container)
 const MIN_EDITOR_WIDTH_PERCENT = 20
@@ -16,14 +17,15 @@ function NoteEditor({
   currentNote,
   currentNoteId,
   title,
-  category,
+  assignedCategories,
   categories,
+  defaultCategory,
   content,
   preview,
   notes,
   showNoteList,
   onTitleChange,
-  onCategoryChange,
+  onAssignedCategoriesChange,
   onContentChange,
   onToggleNoteList,
   onNewNote,
@@ -131,20 +133,19 @@ function NoteEditor({
             disabled={!currentNoteId || currentNote?.locked}
             aria-label='Note title'
           />
-          <select
-            className='note-category-input'
-            value={category}
-            onChange={(e) => onCategoryChange(e.target.value)}
+          <CategoryMultiSelect
+            value={
+              assignedCategories.length
+                ? assignedCategories
+                : [defaultCategory]
+            }
+            categories={categories}
+            defaultCategory={defaultCategory}
+            onChange={onAssignedCategoriesChange}
+            label='Note categories'
             disabled={!currentNoteId || currentNote?.locked}
-            aria-label='Note category'
-          >
-            <option value=''>No category</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+            className='note-category-input'
+          />
         </div>
         <div className='toolbar'>
           <label className='btn' aria-label='Import' title='Import'>
@@ -346,14 +347,15 @@ NoteEditor.propTypes = {
   currentNote: PropTypes.object,
   currentNoteId: PropTypes.string,
   title: PropTypes.string.isRequired,
-  category: PropTypes.string.isRequired,
+  assignedCategories: PropTypes.arrayOf(PropTypes.string).isRequired,
   categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  defaultCategory: PropTypes.string.isRequired,
   content: PropTypes.string.isRequired,
   preview: PropTypes.string.isRequired,
   notes: PropTypes.array.isRequired,
   showNoteList: PropTypes.bool.isRequired,
   onTitleChange: PropTypes.func.isRequired,
-  onCategoryChange: PropTypes.func.isRequired,
+  onAssignedCategoriesChange: PropTypes.func.isRequired,
   onContentChange: PropTypes.func.isRequired,
   onToggleNoteList: PropTypes.func.isRequired,
   onNewNote: PropTypes.func.isRequired,

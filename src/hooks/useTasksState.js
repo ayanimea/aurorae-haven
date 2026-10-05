@@ -6,6 +6,8 @@ import {
   loadTasksState,
   saveTasksState
 } from '../utils/tasksStorage'
+import { getDefaultCategory } from '../utils/categoryStorage'
+import { assignItemCategories, getItemCategories } from '../utils/itemCategories'
 import { useCrossTabSync } from './useCrossTabSync'
 
 const logger = createLogger('useTasksState')
@@ -90,19 +92,18 @@ export function useTasksState() {
   })
 
   // Add new task
-  const addTask = (quadrant, text, category = '') => {
+  const addTask = (quadrant, text, category = getDefaultCategory()) => {
     if (getTaskLimitMessage(tasks, quadrant)) return null
 
-    const task = {
+    const task = assignItemCategories({
       id: generateSecureUUID(),
       text: text.trim(),
-      category: typeof category === 'string' ? category.trim() : '',
       completed: false,
       subtasks: [],
       createdAt: new Date().toISOString(),
       dueDate: null,
       completedAt: null
-    }
+    }, category, getDefaultCategory())
 
     setTasks((prev) => {
       const state = prev || createDefaultTasksState()
@@ -150,11 +151,13 @@ export function useTasksState() {
     }))
   }
 
-  const updateTaskCategory = (quadrant, taskId, category) => {
+  const updateTaskCategory = (quadrant, taskId, categories) => {
     setTasks((prev) => ({
       ...(prev || createDefaultTasksState()),
       [quadrant]: (prev?.[quadrant] || []).map((task) =>
-        task.id === taskId ? { ...task, category } : task
+        task.id === taskId
+          ? assignItemCategories(task, categories, getDefaultCategory())
+          : task
       )
     }))
   }
@@ -174,7 +177,11 @@ export function useTasksState() {
               ...task,
               subtasks: [
                 ...(Array.isArray(task.subtasks) ? task.subtasks : []),
-                subtask
+                assignItemCategories(
+                  subtask,
+                  getItemCategories(task),
+                  getDefaultCategory()
+                )
               ]
             }
           : task
@@ -263,6 +270,66 @@ export function useTasksState() {
     return moved
   }
 
+  const nestSubtask = (
+    fromQuadrant,
+    sourceParentId,
+    subtaskId,
+    toQuadrant,
+    targetParentId
+  ) => {
+    if (sourceParentId === targetParentId) return false
+    let moved = false
+
+    setTasks((prev) => {
+      const state = prev || createDefaultTasksState()
+      const sourceTasks = state[fromQuadrant] || []
+      const targetTasks = state[toQuadrant] || []
+      const sourceParent = sourceTasks.find((task) => task.id === sourceParentId)
+      const targetParent = targetTasks.find((task) => task.id === targetParentId)
+      const sourceSubtasks = Array.isArray(sourceParent?.subtasks)
+        ? sourceParent.subtasks
+        : []
+      const subtask = sourceSubtasks.find((item) => item.id === subtaskId)
+      if (!sourceParent || !targetParent || !subtask) return state
+      moved = true
+
+      const updatedSourceTasks = sourceTasks.map((task) =>
+        task.id === sourceParentId
+          ? {
+              ...task,
+              subtasks: (Array.isArray(task.subtasks) ? task.subtasks : []).filter(
+                (item) => item.id !== subtaskId
+              )
+            }
+          : task
+      )
+      const targetTasksAfterRemoval =
+        fromQuadrant === toQuadrant ? updatedSourceTasks : targetTasks
+      const updatedTargetTasks = targetTasksAfterRemoval.map((task) =>
+        task.id === targetParentId
+          ? {
+              ...task,
+              subtasks: [
+                ...(task.subtasks || []),
+                assignItemCategories(
+                  subtask,
+                  getItemCategories(task),
+                  getDefaultCategory()
+                )
+              ]
+            }
+          : task
+      )
+
+      return {
+        ...state,
+        [fromQuadrant]: updatedSourceTasks,
+        [toQuadrant]: updatedTargetTasks
+      }
+    })
+    return moved
+  }
+
   const promoteSubtask = (fromQuadrant, parentId, subtaskId, toQuadrant) => {
     setTasks((prev) => {
       const state = prev || createDefaultTasksState()
@@ -276,8 +343,11 @@ export function useTasksState() {
       if (!parent || !subtask) return state
 
       const promotedTask = {
-        ...subtask,
-        category: parent.category || '',
+        ...assignItemCategories(
+          subtask,
+          getItemCategories(parent),
+          getDefaultCategory()
+        ),
         subtasks: [],
         createdAt: new Date().toISOString(),
         dueDate: null,
@@ -338,6 +408,7 @@ export function useTasksState() {
     toggleSubtask,
     deleteSubtask,
     nestTask,
+    nestSubtask,
     promoteSubtask,
     moveTask,
     getTaskLimitMessage: (quadrant, sourceQuadrant = null) =>

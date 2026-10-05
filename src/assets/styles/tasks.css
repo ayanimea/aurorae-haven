@@ -206,8 +206,12 @@
   line-height: 1.4;
   color: var(--ink);
   word-break: break-word;
-  cursor: default;
+  cursor: grab;
   user-select: text;
+}
+
+.task-text:active {
+  cursor: grabbing;
 }
 
 .task-edit-input {

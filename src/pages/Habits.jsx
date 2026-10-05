@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   getHabits,
   toggleHabitToday,
-  getTodayStats,
   createHabit,
   deleteHabit,
   pauseHabit,
@@ -16,6 +15,10 @@ import { createLogger } from '../utils/logger'
 import { getCategoryColor, CATEGORY_OPTIONS } from '../utils/habitCategories'
 import { triggerConfetti } from '../utils/confetti'
 import { useCrossTabSync } from '../hooks/useCrossTabSync'
+import { useCategories } from '../hooks/useCategories'
+import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
+import { getCurrentDateISO } from '../utils/timeUtils'
+import CategoryMultiSelect from '../components/common/CategoryMultiSelect'
 
 const logger = createLogger('Habits')
 
@@ -57,8 +60,13 @@ function Habits() {
   const [toast, setToast] = useState(null)
   const [newHabitName, setNewHabitName] = useState('')
   const [newHabitCategory, setNewHabitCategory] = useState('default')
+  const [newHabitWorkspaceCategories, setNewHabitWorkspaceCategories] =
+    useState(null)
   const [sortBy, setSortBy] = useState('title')
   const [filters, setFilters] = useState({})
+  const { categories } = useCategories()
+  const { activeCategory, defaultCategory, matchesCategory } =
+    useCategoryWorkspace()
 
   // Phase 5: Touch gesture tracking
   const touchStartX = useRef(null)
@@ -70,16 +78,33 @@ function Habits() {
     try {
       setLoading(true)
       const allHabits = await getHabits({ sortBy, ...filters })
-      setHabits(allHabits)
-      const stats = await getTodayStats()
-      setTodayStats(stats)
+      const workspaceHabits = allHabits.filter((habit) =>
+        matchesCategory(habit, 'workspaceCategory')
+      )
+      setHabits(workspaceHabits)
+      const activeWorkspaceHabits = (
+        await getHabits({ sortBy: 'title' })
+      ).filter(
+        (habit) => !habit.paused && matchesCategory(habit, 'workspaceCategory')
+      )
+      const today = getCurrentDateISO()
+      const completed = activeWorkspaceHabits.filter(
+        (habit) => habit.lastCompleted === today
+      ).length
+      setTodayStats({
+        total: activeWorkspaceHabits.length,
+        completed,
+        percentage: activeWorkspaceHabits.length
+          ? Math.round((completed / activeWorkspaceHabits.length) * 10000) / 100
+          : 0
+      })
     } catch (error) {
       logger.error('Failed to load habits', error)
       setToast({ type: 'error', message: 'Failed to load habits' })
     } finally {
       setLoading(false)
     }
-  }, [sortBy, filters])
+  }, [sortBy, filters, matchesCategory])
 
   useEffect(() => {
     loadHabits()
@@ -214,12 +239,17 @@ function Habits() {
     try {
       await createHabit({
         name: newHabitName.trim(),
-        category: newHabitCategory
+        category: newHabitCategory,
+        workspaceCategories:
+          newHabitWorkspaceCategories ?? [
+            activeCategory || defaultCategory
+          ]
       })
       setToast({ type: 'success', message: 'Habit created!' })
       setShowNewHabitModal(false)
       setNewHabitName('')
       setNewHabitCategory('default')
+      setNewHabitWorkspaceCategories(null)
       await loadHabits()
     } catch (error) {
       logger.error('Failed to create habit', error)
@@ -265,7 +295,12 @@ function Habits() {
       setToast({ type: 'success', message: 'Habit updated' })
       await loadHabits()
       if (selectedHabit?.id === habitId) {
-        setSelectedHabit({ ...selectedHabit, ...updates })
+        const updatedHabit = { ...selectedHabit, ...updates }
+        setSelectedHabit(
+          matchesCategory(updatedHabit, 'workspaceCategory')
+            ? updatedHabit
+            : null
+        )
       }
     } catch (error) {
       logger.error('Failed to update habit', error)
@@ -468,7 +503,7 @@ function Habits() {
         <div className='habits-list'>
           {habits.map((habit) => {
             const isCompletedToday = habit.completions?.includes(
-              new Date().toISOString().split('T')[0]
+              getCurrentDateISO()
             )
             const categoryColor = getCategoryColor(habit.category)
 
@@ -651,6 +686,19 @@ function Habits() {
                   ))}
                 </select>
               </div>
+              <div className='form-group'>
+                <CategoryMultiSelect
+                  value={
+                    newHabitWorkspaceCategories ?? [
+                      activeCategory || defaultCategory
+                    ]
+                  }
+                  categories={categories}
+                  defaultCategory={defaultCategory}
+                  onChange={setNewHabitWorkspaceCategories}
+                  label='Workspace categories'
+                />
+              </div>
 
               <div className='modal-actions'>
                 <button
@@ -681,6 +729,7 @@ function Habits() {
       {selectedHabit && (
         <HabitDetailDrawer
           habit={selectedHabit}
+          categories={categories}
           onClose={() => setSelectedHabit(null)}
           onUpdateHabit={handleUpdateHabit}
         />

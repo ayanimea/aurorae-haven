@@ -3,11 +3,12 @@ import { useTasksState } from '../hooks/useTasksState'
 import { useCategories } from '../hooks/useCategories'
 import { useSavedTasks } from '../hooks/useSavedTasks'
 import { useDragAndDrop } from '../hooks/useDragAndDrop'
-import CategoryTabs from '../components/common/CategoryTabs'
+import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
 import Icon from '../components/common/Icon'
 import TaskForm from '../components/Tasks/TaskForm'
 import TaskQuadrant from '../components/Tasks/TaskQuadrant'
 import { getPredefinedTasks } from '../utils/predefinedTemplates'
+import { getItemCategories, normalizeCategorySelection } from '../utils/itemCategories'
 
 function Tasks() {
   const {
@@ -21,18 +22,20 @@ function Tasks() {
     toggleSubtask,
     deleteSubtask,
     nestTask,
+    nestSubtask,
     promoteSubtask,
     moveTask,
     getTaskLimitMessage
   } = useTasksState()
   const { categories } = useCategories()
+  const { activeCategory, defaultCategory, matchesCategory } =
+    useCategoryWorkspace()
   const { savedTasks, saveTask } = useSavedTasks()
 
   // Form state
   const [newTask, setNewTask] = useState('')
   const [selectedQuadrant, setSelectedQuadrant] = useState('urgent_important')
-  const [taskCategory, setTaskCategory] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [taskCategories, setTaskCategories] = useState(null)
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [taskLimitMessage, setTaskLimitMessage] = useState('')
 
@@ -50,24 +53,30 @@ function Tasks() {
       return
     }
 
-    addTask(selectedQuadrant, newTask, taskCategory)
+    addTask(
+      selectedQuadrant,
+      newTask,
+      taskCategories ?? [activeCategory || defaultCategory]
+    )
     setTaskLimitMessage('')
     setNewTask('')
+    setTaskCategories(null)
   }
 
   const taskTemplates = getPredefinedTasks()
+  const visibleSavedTasks = savedTasks.filter((task) => matchesCategory(task))
   const selectedTemplate =
     taskTemplates.find((template) => `template:${template.id}` === selectedTemplateId) ||
-    savedTasks.find((task) => `saved:${task.id}` === selectedTemplateId)
+    visibleSavedTasks.find((task) => `saved:${task.id}` === selectedTemplateId)
 
   const handleAddFromTemplate = () => {
     if (!selectedTemplate) return
-    const templateCategory =
-      categories.find(
-        (category) =>
-          category.toLowerCase() ===
-          (selectedTemplate.category || '').trim().toLowerCase()
-      ) || ''
+    const templateCategory = normalizeCategorySelection(
+      getItemCategories(selectedTemplate).length
+        ? getItemCategories(selectedTemplate)
+        : [activeCategory || defaultCategory],
+      defaultCategory
+    )
     const quadrant =
       selectedTemplate.quadrant || selectedQuadrant || 'urgent_important'
     const limitMessage = getTaskLimitMessage(quadrant)
@@ -78,12 +87,7 @@ function Tasks() {
 
     addTask(quadrant, selectedTemplate.title || selectedTemplate.text, templateCategory)
     setTaskLimitMessage('')
-    if (templateCategory) {
-      setSelectedCategory(templateCategory)
-    } else {
-      setSelectedCategory(null)
-    }
-    setTaskCategory(templateCategory)
+    setTaskCategories(templateCategory)
     setSelectedQuadrant(quadrant)
   }
 
@@ -122,7 +126,15 @@ function Tasks() {
     handleTaskMove,
     (fromQuadrant, toQuadrant, parentId, task) =>
       nestTask(fromQuadrant, toQuadrant, parentId, task),
-    handleSubtaskPromotion
+    handleSubtaskPromotion,
+    (fromQuadrant, sourceParentId, subtaskId, toQuadrant, targetParentId) =>
+      nestSubtask(
+        fromQuadrant,
+        sourceParentId,
+        subtaskId,
+        toQuadrant,
+        targetParentId
+      )
   )
 
   const startEditTask = (quadrant, task) => {
@@ -144,11 +156,6 @@ function Tasks() {
   const cancelEditTask = () => {
     setEditingTask(null)
     setEditText('')
-  }
-
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category)
-    setTaskCategory(category || '')
   }
 
   const quadrants = [
@@ -187,11 +194,14 @@ function Tasks() {
           <TaskForm
             newTask={newTask}
             selectedQuadrant={selectedQuadrant}
-            category={taskCategory}
+            categoriesValue={
+              taskCategories ?? [activeCategory || defaultCategory]
+            }
             categories={categories}
+            defaultCategory={defaultCategory}
             onTaskChange={setNewTask}
             onQuadrantChange={setSelectedQuadrant}
-            onCategoryChange={setTaskCategory}
+            onCategoryChange={setTaskCategories}
             onSubmit={handleAddTask}
           />
           {taskLimitMessage && (
@@ -208,9 +218,9 @@ function Tasks() {
               className='quadrant-select'
             >
               <option value=''>Choose a saved or built-in task</option>
-              {savedTasks.length > 0 && (
+              {visibleSavedTasks.length > 0 && (
                 <optgroup label='Saved tasks'>
-                  {savedTasks.map((task) => (
+                  {visibleSavedTasks.map((task) => (
                     <option key={task.id} value={`saved:${task.id}`}>
                       {task.text}
                     </option>
@@ -238,24 +248,13 @@ function Tasks() {
         </div>
       </div>
 
-      <CategoryTabs
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelect={handleCategorySelect}
-      />
-
       <div className='eisenhower-matrix'>
         {quadrants.map((quadrant) => (
           <TaskQuadrant
             key={quadrant.key}
             quadrant={quadrant}
             tasks={tasks[quadrant.key].filter(
-              (task) =>
-                selectedCategory === null ||
-                (typeof task.category === 'string'
-                  ? task.category.toLowerCase()
-                  : '') ===
-                  selectedCategory.toLowerCase()
+              (task) => matchesCategory(task)
             )}
             editingTask={editingTask}
             editText={editText}
