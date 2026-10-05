@@ -65,6 +65,10 @@ function Tasks() {
   }
 
   const taskTemplates = getPredefinedTasks()
+  const availableTasks = Object.entries(tasks).flatMap(
+    ([quadrant, quadrantTasks]) =>
+      quadrantTasks.map((task) => ({ ...task, quadrant }))
+  )
   const visibleSavedTasks = savedTasks.filter((task) => matchesCategory(task))
   const selectedTemplate =
     taskTemplates.find((template) => `template:${template.id}` === selectedTemplateId) ||
@@ -72,9 +76,18 @@ function Tasks() {
 
   const handleAddFromTemplate = () => {
     if (!selectedTemplate) return
+    const selectedTemplateCategories = selectedTemplateId.startsWith('template:')
+      ? getItemCategories(
+          {
+            workspaceCategories: selectedTemplate.workspaceCategories,
+            workspaceCategory: selectedTemplate.workspaceCategory
+          },
+          'workspaceCategory'
+        )
+      : getItemCategories(selectedTemplate)
     const templateCategory = normalizeCategorySelection(
-      getItemCategories(selectedTemplate).length
-        ? getItemCategories(selectedTemplate)
+      selectedTemplateCategories.length
+        ? selectedTemplateCategories
         : [activeCategory || defaultCategory],
       defaultCategory
     )
@@ -101,6 +114,10 @@ function Tasks() {
 
     moveTask(fromQuadrant, toQuadrant, task)
     setTaskLimitMessage('')
+  }
+
+  const handleNestTask = (fromQuadrant, parentQuadrant, parentId, task) => {
+    nestTask(fromQuadrant, parentQuadrant, parentId, task)
   }
 
   const handleSubtaskPromotion = (fromQuadrant, parentId, subtaskId, toQuadrant) => {
@@ -305,6 +322,8 @@ function Tasks() {
             onDragEnd={handleDragEnd}
             onDrop={handleDrop}
             onMoveTask={handleTaskMove}
+            availableTasks={availableTasks}
+            onNestTask={handleNestTask}
           />
         ))}
       </div>

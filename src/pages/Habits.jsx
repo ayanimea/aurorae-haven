@@ -291,14 +291,16 @@ function Habits() {
 
   const handleUpdateHabit = async (habitId, updates) => {
     try {
-      await updateHabit(habitId, updates)
+      const updatedHabit = updates ?? habitId
+      const updatedHabitId = updatedHabit.id ?? habitId
+      await updateHabit(updatedHabit)
       setToast({ type: 'success', message: 'Habit updated' })
       await loadHabits()
-      if (selectedHabit?.id === habitId) {
-        const updatedHabit = { ...selectedHabit, ...updates }
+      if (selectedHabit?.id === updatedHabitId) {
+        const refreshedHabit = { ...selectedHabit, ...updatedHabit }
         setSelectedHabit(
-          matchesCategory(updatedHabit, 'workspaceCategory')
-            ? updatedHabit
+          matchesCategory(refreshedHabit, 'workspaceCategory')
+            ? refreshedHabit
             : null
         )
       }

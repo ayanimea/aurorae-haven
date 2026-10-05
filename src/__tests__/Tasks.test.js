@@ -106,7 +106,9 @@ describe('Tasks Component', () => {
     fireEvent.click(screen.getByText('Add Task'))
 
     await waitFor(() => {
-      expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
+      expect(
+        screen.getByText('Uncategorized task', { selector: '.task-text' })
+      ).toBeInTheDocument()
       expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([
         'Uncategorised'
       ])
@@ -329,12 +331,16 @@ describe('Tasks Component', () => {
     fireEvent.click(screen.getByText('Add Task'))
 
     fireEvent.click(screen.getByRole('button', { name: 'Work' }))
-    expect(screen.getByText('Work task')).toBeInTheDocument()
-    expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
+    expect(screen.getByText('Work task', { selector: '.task-text' })).toBeInTheDocument()
+    expect(
+      screen.getByText('Uncategorized task', { selector: '.task-text' })
+    ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'All' }))
-    expect(screen.getByText('Work task')).toBeInTheDocument()
-    expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
+    expect(screen.getByText('Work task', { selector: '.task-text' })).toBeInTheDocument()
+    expect(
+      screen.getByText('Uncategorized task', { selector: '.task-text' })
+    ).toBeInTheDocument()
   })
 
   test('assigns an existing category to a task after creation', async () => {
@@ -490,6 +496,56 @@ describe('Tasks Component', () => {
       const saved = JSON.parse(localStorage.getItem('aurorae_tasks'))
       expect(saved.not_urgent_important).toHaveLength(0)
       expect(saved.urgent_important[0].subtasks[0].text).toBe('Child task')
+    })
+  })
+
+  test('nests an existing task using the More menu controls', async () => {
+    render(<Tasks />)
+    const taskInput = screen.getByPlaceholderText('Add a new task...')
+    fireEvent.change(taskInput, { target: { value: 'Parent task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.change(taskInput, { target: { value: 'Child task' } })
+    fireEvent.click(screen.getByText('Add Task'))
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'More actions for task "Child task"' })
+    )
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Choose parent task for "Child task"'
+      }),
+      { target: { value: JSON.parse(localStorage.getItem('aurorae_tasks')).urgent_important[0].id } }
+    )
+    fireEvent.click(
+      within(
+        screen.getByRole('group', {
+          name: 'Task: Child task. Press Alt + Arrow keys to move between quadrants.'
+        })
+      ).getByRole('button', { name: 'Nest under selected task' })
+    )
+
+    await waitFor(() => {
+      const savedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(savedTasks.urgent_important).toHaveLength(1)
+      expect(savedTasks.urgent_important[0].subtasks[0].text).toBe('Child task')
+    })
+  })
+
+  test('built-in task taxonomy does not become a workspace category', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
+    render(<Tasks />)
+    fireEvent.change(screen.getByLabelText('Add task from template:'), {
+      target: { value: 'template:task-code-review' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add task' }))
+
+    await waitFor(() => {
+      const savedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(savedTasks.urgent_important[0]).toMatchObject({
+        text: 'Review Team Pull Requests',
+        workspaceCategories: ['Uncategorised']
+      })
+      expect(savedTasks.urgent_important[0].category).not.toBe('Development')
     })
   })
 

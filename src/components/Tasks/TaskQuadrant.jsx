@@ -32,7 +32,9 @@ function TaskQuadrant({
   savedTasks,
   onSaveTask,
   onDrop,
-  onMoveTask
+  onMoveTask,
+  availableTasks,
+  onNestTask
 }) {
   const isEditing = (task) => {
     return (
@@ -81,6 +83,8 @@ function TaskQuadrant({
               onDragOver={onDragOver}
               onDragEnd={onDragEnd}
               onMoveTask={onMoveTask}
+              availableTasks={availableTasks}
+              onNestTask={onNestTask}
               isSaved={savedTasks.some(
                 (saved) =>
                   saved.text === task.text &&
@@ -131,7 +135,9 @@ TaskQuadrant.propTypes = {
   savedTasks: PropTypes.array.isRequired,
   onSaveTask: PropTypes.func.isRequired,
   onDrop: PropTypes.func.isRequired,
-  onMoveTask: PropTypes.func.isRequired
+  onMoveTask: PropTypes.func.isRequired,
+  availableTasks: PropTypes.array.isRequired,
+  onNestTask: PropTypes.func.isRequired
 }
 
 export default TaskQuadrant

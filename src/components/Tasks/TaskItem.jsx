@@ -33,12 +33,15 @@ function TaskItem({
   onDragEnd,
   isSaved,
   onSaveTask,
-  onMoveTask
+  onMoveTask,
+  availableTasks,
+  onNestTask
 }) {
   const editInputRef = useRef(null)
   const subtaskInputRef = useRef(null)
   const [isAddingSubtask, setIsAddingSubtask] = useState(false)
   const [subtaskText, setSubtaskText] = useState('')
+  const [selectedParentId, setSelectedParentId] = useState('')
   const subtasks = Array.isArray(task.subtasks) ? task.subtasks : []
 
   // Focus edit input when editing starts
@@ -220,6 +223,46 @@ function TaskItem({
                 >
                   Add subtask
                 </button>
+                <label className='task-context-menu-label'>
+                  Nest under
+                  <select
+                    value={selectedParentId}
+                    onChange={(event) => setSelectedParentId(event.target.value)}
+                    aria-label={`Choose parent task for "${task.text}"`}
+                  >
+                    <option value=''>Choose a parent task</option>
+                    {availableTasks
+                      .filter((candidate) => candidate.id !== task.id)
+                      .map((candidate) => (
+                        <option
+                          key={`${candidate.quadrant}:${candidate.id}`}
+                          value={candidate.id}
+                        >
+                          {candidate.text}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <button
+                  type='button'
+                  className='task-context-menu-action'
+                  disabled={!selectedParentId || subtasks.length > 0}
+                  onClick={() => {
+                    const parentTask = availableTasks.find(
+                      (candidate) => candidate.id === selectedParentId
+                    )
+                    if (parentTask) {
+                      onNestTask(
+                        quadrant,
+                        parentTask.quadrant,
+                        parentTask.id,
+                        task
+                      )
+                    }
+                  }}
+                >
+                  Nest under selected task
+                </button>
                 <div className='task-context-menu-label'>
                   Category
                   <CategoryMultiSelect
@@ -358,7 +401,9 @@ TaskItem.propTypes = {
   onDragEnd: PropTypes.func.isRequired,
   isSaved: PropTypes.bool.isRequired,
   onSaveTask: PropTypes.func.isRequired,
-  onMoveTask: PropTypes.func.isRequired
+  onMoveTask: PropTypes.func.isRequired,
+  availableTasks: PropTypes.array.isRequired,
+  onNestTask: PropTypes.func.isRequired
 }
 
 export default TaskItem

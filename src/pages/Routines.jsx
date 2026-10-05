@@ -26,7 +26,10 @@ import {
 import { saveTemplate } from '../utils/templatesManager'
 import { instantiateTemplate } from '../utils/templateInstantiation'
 import { createLogger } from '../utils/logger'
-import { getItemCategories } from '../utils/itemCategories'
+import {
+  getItemCategories,
+  normalizeCategorySelection
+} from '../utils/itemCategories'
 import ConfirmModal from '../components/common/ConfirmModal'
 import Icon from '../components/common/Icon'
 import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
@@ -113,6 +116,10 @@ function Routines() {
     }
     const endTime = startMins + durationMins >= 1440 ? '23:59' : minutesToTime(startMins + durationMins)
     const startTime = minutesToTime(startMins)
+    const routineCategories = getItemCategories(
+      routineToSchedule,
+      'workspaceCategory'
+    )
     return {
       title: routineToSchedule.name || routineToSchedule.title || '',
       type: 'routine',
@@ -120,9 +127,15 @@ function Routines() {
       startTime,
       endTime,
       travelTime: 0,
-      preparationTime: 0
+      preparationTime: 0,
+      workspaceCategories: normalizeCategorySelection(
+        routineCategories.length
+          ? routineCategories
+          : [activeCategory || defaultCategory],
+        defaultCategory
+      )
     }
-  }, [routineToSchedule])
+  }, [routineToSchedule, activeCategory, defaultCategory])
 
   // TAB-RTN-45: Reduced motion detection
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
@@ -1110,6 +1123,9 @@ function Routines() {
           onSave={handleSaveScheduledRoutine}
           eventType='routine'
           initialData={scheduleInitialData}
+          categories={categories}
+          activeCategory={activeCategory}
+          defaultCategory={defaultCategory}
         />
       )}
 

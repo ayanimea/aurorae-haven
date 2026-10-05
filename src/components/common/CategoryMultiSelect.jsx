@@ -45,7 +45,9 @@ function CategoryMultiSelect({
           <label key={category}>
             <input
               type='checkbox'
-              checked={selected.includes(category)}
+              checked={selected.some(
+                (item) => item.toLowerCase() === category.toLowerCase()
+              )}
               disabled={disabled}
               onChange={(event) => handleChange(category, event.target.checked)}
             />

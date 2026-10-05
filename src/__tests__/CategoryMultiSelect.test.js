@@ -44,4 +44,17 @@ describe('CategoryMultiSelect', () => {
     )
     expect(onChange).toHaveBeenLastCalledWith(['Uncategorised'])
   })
+
+  it('matches selected categories without regard to case', () => {
+    render(
+      <CategoryMultiSelect
+        value={['work']}
+        categories={['Uncategorised', 'Work']}
+        defaultCategory='Uncategorised'
+        onChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('checkbox', { name: 'Work' })).toBeChecked()
+  })
 })
