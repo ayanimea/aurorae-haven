@@ -836,12 +836,12 @@ The files are standard JSON format and can be:
 
 ### Browser Compatibility
 
-| Browser      | Support          | Notes                                                                                |
-| ------------ | ---------------- | ------------------------------------------------------------------------------------ |
-| Chrome 86+   | ✅ Full          | Recommended                                                                          |
-| Edge 86+     | ✅ Full          | Recommended                                                                          |
-| Firefox      | ❌ Not supported | Use manual Export instead                                                            |
-| Safari 15.2+ | ⚠️ Partial       | Enable **Develop → Experimental Features → "File System Access API"** (if available) |
+| Browser | Support | Notes |
+| --- | --- | --- |
+| Chrome 86+ | ✅ Full | Recommended |
+| Edge 86+ | ✅ Full | Recommended |
+| Firefox | ❌ Not supported | Use manual Export instead |
+| Safari 15.2+ | ⚠️ Partial | Enable **Develop → Experimental Features → "File System Access API"** (if available) |
 
 **Note for Safari users**: If you do **not** see a "File System Access API" option under **Develop → Experimental Features**, your Safari version does not support directory-based auto-save. You can still use manual Export/Import as described below.
 
@@ -899,10 +899,10 @@ Each routine row has a **management context menu** accessible via right-click (o
 
 The menu offers two actions:
 
-| Action             | Description                                                      |
-| ------------------ | ---------------------------------------------------------------- |
+| Action | Description |
+| --- | --- |
 | **Modify routine** | Opens the edit form pre-filled with the routine's current settings. |
-| **Remove routine** | Begins the delete confirmation flow (see below).                |
+| **Remove routine** | Begins the delete confirmation flow (see below). |
 
 **Keyboard access:**
 

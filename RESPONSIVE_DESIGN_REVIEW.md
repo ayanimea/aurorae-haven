@@ -554,17 +554,17 @@ The application now uses consistent breakpoints across all pages:
 
 ### Specific Recommendations by Use Case
 
-| Current Modal           | Recommended Alternative                   | Priority |
-| ----------------------- | ----------------------------------------- | -------- |
-| "Add New Habit"         | ✅ Bottom Sheet (current) or Inline Form  | Medium   |
-| "Add New Task"          | Inline Expansion                          | High     |
-| "Add Event" (Schedule)  | ✅ Bottom Sheet (current)                 | ✅ Done  |
-| "Edit Note"             | Full-Page Overlay (mobile)                | Low      |
-| "Habit Detail"          | Side Drawer or Full-Page                  | Medium   |
-| "Calendar Subscription" | Side Drawer                               | Medium   |
-| "Filter Panel"          | Side Drawer                               | High     |
-| "Confirmation Dialogs"  | ✅ Bottom Sheet (current)                 | ✅ Done  |
-| "Error Messages"        | ✅ Toast (current)                        | ✅ Done  |
+| Current Modal | Recommended Alternative | Priority |
+| --- | --- | --- |
+| "Add New Habit" | ✅ Bottom Sheet (current) or Inline Form | Medium |
+| "Add New Task" | Inline Expansion | High |
+| "Add Event" (Schedule) | ✅ Bottom Sheet (current) | ✅ Done |
+| "Edit Note" | Full-Page Overlay (mobile) | Low |
+| "Habit Detail" | Side Drawer or Full-Page | Medium |
+| "Calendar Subscription" | Side Drawer | Medium |
+| "Filter Panel" | Side Drawer | High |
+| "Confirmation Dialogs" | ✅ Bottom Sheet (current) | ✅ Done |
+| "Error Messages" | ✅ Toast (current) | ✅ Done |
 
 ---
 
