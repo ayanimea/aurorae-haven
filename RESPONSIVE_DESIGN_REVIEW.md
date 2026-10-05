@@ -235,11 +235,11 @@ A comprehensive review of the Aurorae Haven application's responsive design was 
 **Before:** Some text as small as 11px (0.68rem)  
 **After:** Minimum 14px (0.875rem) everywhere
 
-| Element             | Before      | After       | Standard  |
-| ------------------- | ----------- | ----------- | --------- |
-| Quadrant subtitle   | 11px ❌     | 12px ✅     | ≥12px     |
-| Task input (mobile) | 13px ❌     | 14px ✅     | ≥14px     |
-| Habit stats         | 0.85rem ❌  | 0.875rem ✅ | ≥0.875rem |
+| Element | Before | After | Standard |
+| --- | --- | --- | --- |
+| Quadrant subtitle | 11px ❌ | 12px ✅ | ≥12px |
+| Task input (mobile) | 13px ❌ | 14px ✅ | ≥14px |
+| Habit stats | 0.85rem ❌ | 0.875rem ✅ | ≥0.875rem |
 
 ### Touch Targets
 
