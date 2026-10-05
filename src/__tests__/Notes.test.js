@@ -162,6 +162,88 @@ describe('Notes Component', () => {
     })
   })
 
+  test('nests an existing note using the accessible parent selector', async () => {
+    localStorage.setItem(
+      'brainDumpEntries',
+      JSON.stringify([
+        {
+          id: 'parent-note',
+          title: 'Parent note',
+          content: '',
+          category: 'Work',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'child-note',
+          title: 'Existing child',
+          content: '',
+          category: 'Work',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ])
+    )
+    render(<Notes />)
+    fireEvent.change(screen.getByLabelText('Choose a parent for Existing child'), {
+      target: { value: 'parent-note' }
+    })
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Nest Existing child under the selected parent'
+      })
+    )
+
+    await waitFor(() => {
+      const notes = JSON.parse(localStorage.getItem('brainDumpEntries'))
+      expect(notes.find((note) => note.id === 'child-note').parentNoteId).toBe(
+        'parent-note'
+      )
+    })
+  })
+
+  test('sorts notes by normalized category with title tie-breaking', () => {
+    localStorage.setItem(
+      'brainDumpEntries',
+      JSON.stringify([
+        {
+          id: 'z-category',
+          title: 'First title',
+          content: '',
+          workspaceCategories: ['Zulu'],
+          createdAt: '2025-01-01',
+          updatedAt: '2025-01-01'
+        },
+        {
+          id: 'same-category-b',
+          title: 'Beta title',
+          content: '',
+          workspaceCategories: ['Alpha'],
+          createdAt: '2025-01-01',
+          updatedAt: '2025-01-01'
+        },
+        {
+          id: 'same-category-a',
+          title: 'Alpha title',
+          content: '',
+          workspaceCategories: ['alpha'],
+          createdAt: '2025-01-01',
+          updatedAt: '2025-01-01'
+        }
+      ])
+    )
+    const { container } = render(<Notes />)
+    fireEvent.change(screen.getByLabelText('Sort notes'), {
+      target: { value: 'category' }
+    })
+
+    expect(
+      [...container.querySelectorAll('.note-item-title')].map(
+        (title) => title.textContent
+      )
+    ).toEqual(['Alpha title', 'Beta title', 'First title'])
+  })
+
   describe('Auto-list continuation', () => {
     test('continues task list on Enter', async () => {
       const mockEntries = [

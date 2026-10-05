@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { flushSync } from 'react-dom'
 import { marked } from 'marked'
 import markedKatex from 'marked-katex-extension'
@@ -176,6 +176,30 @@ function Notes() {
   const [contextMenu, setContextMenu] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState(null)
+  const [noteSortMode, setNoteSortMode] = useState('recent')
+
+  const sortedWorkspaceNotes = useMemo(() => {
+    if (noteSortMode !== 'category') return workspaceNotes
+    const dateValue = (value) => {
+      const date = new Date(value || 0).getTime()
+      return Number.isFinite(date) ? date : 0
+    }
+    return [...workspaceNotes].sort((a, b) => {
+      const categoryOrder = (getItemCategories(a)[0] || '').localeCompare(
+        getItemCategories(b)[0] || '',
+        undefined,
+        { sensitivity: 'base' }
+      )
+      if (categoryOrder) return categoryOrder
+      const titleOrder = (a.title || '').localeCompare(b.title || '', undefined, {
+        sensitivity: 'base'
+      })
+      if (titleOrder) return titleOrder
+      const dateOrder = dateValue(b.updatedAt) - dateValue(a.updatedAt)
+      if (dateOrder) return dateOrder
+      return String(a.id).localeCompare(String(b.id))
+    })
+  }, [workspaceNotes, noteSortMode])
 
   // Configure sanitization on mount
   useEffect(() => {
@@ -553,7 +577,7 @@ function Notes() {
       {/* Note List Sidebar */}
       <NotesList
         notes={notes}
-        filteredNotes={workspaceNotes}
+        filteredNotes={sortedWorkspaceNotes}
         currentNoteId={currentNoteId}
         searchQuery={searchQuery}
         showNoteList={showNoteList}
@@ -565,6 +589,8 @@ function Notes() {
         onNestNote={handleNestNote}
         onNoteContextMenu={handleNoteContextMenu}
         onNewNote={handleNewNote}
+        sortMode={noteSortMode}
+        onSortModeChange={setNoteSortMode}
       />
 
       {/* Main Editor Area */}

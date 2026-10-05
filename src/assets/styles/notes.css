@@ -279,12 +279,34 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  font: inherit;
   font-weight: 600;
   color: var(--ink);
   margin-bottom: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.note-list-sort,
+.note-item-nesting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-list-sort {
+  margin-bottom: 8px;
+}
+
+.note-item-nesting {
+  flex-wrap: wrap;
+  font-size: 12px;
 }
 
 .note-item-lock-icon {

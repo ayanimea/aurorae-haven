@@ -36,30 +36,39 @@ function assignMissingCategories(items, primaryField) {
   return { items: normalized, changed }
 }
 
-function collectCategories(value, categories) {
-  if (Array.isArray(value)) {
-    value.forEach((item) => {
-      collectCategories(item, categories)
+function collectItemCategories(items, categories, legacyField) {
+  if (!Array.isArray(items)) return
+  items.forEach((item) => {
+    if (!item || typeof item !== 'object') return
+    const itemCategories = [
+      ...(Array.isArray(item.workspaceCategories) ? item.workspaceCategories : []),
+      item[legacyField]
+    ]
+    itemCategories.forEach((category) => {
+      if (typeof category === 'string' && category.trim()) {
+        categories.add(category.trim())
+      }
     })
-    return
-  }
-  if (!value || typeof value !== 'object') return
+    collectItemCategories(item.subtasks, categories, legacyField)
+  })
+}
 
-  for (const [key, item] of Object.entries(value)) {
-    if (key === 'workspaceCategories' && Array.isArray(item)) {
-      item.forEach((category) => {
-        if (typeof category === 'string' && category.trim()) {
-          categories.add(category.trim())
-        }
-      })
-    } else if (
-      (key === 'workspaceCategory' || key === 'category') &&
-      typeof item === 'string' &&
-      item.trim()
-    ) {
-      categories.add(item.trim())
-    }
-    if (item && typeof item === 'object') collectCategories(item, categories)
+function collectWorkspaceCategories(data, categories) {
+  const categorizedCollections = [
+    ['tasks', 'category'],
+    ['dumps', 'category'],
+    ['habits', 'workspaceCategory'],
+    ['routines', 'workspaceCategory'],
+    ['schedule', 'category'],
+    ['stats', 'workspaceCategory'],
+    ['savedTasks', 'category']
+  ]
+  for (const [field, legacyField] of categorizedCollections) {
+    collectItemCategories(data[field], categories, legacyField)
+  }
+  collectItemCategories(data.brainDump?.entries, categories, 'category')
+  for (const tasks of Object.values(data.auroraeTasksData || {})) {
+    collectItemCategories(tasks, categories, 'category')
   }
 }
 
@@ -112,7 +121,7 @@ export function normalizeImportedCategories(data) {
       ? result.categories.filter((category) => typeof category === 'string')
       : []
   )
-  collectCategories(result, categories)
+  collectWorkspaceCategories(result, categories)
   if (changed) categories.add(IMPORTED_DEFAULT_CATEGORY)
   const normalizedCategories = [...categories]
   if (

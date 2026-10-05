@@ -298,6 +298,23 @@ describe('templateInstantiation', () => {
       )
     })
 
+    test('preserves normalized workspace categories from the template', async () => {
+      const template = {
+        type: 'routine',
+        title: 'Focused routine',
+        workspaceCategories: ['Work', 'Personal']
+      }
+
+      await instantiateRoutineFromTemplate(template)
+
+      expect(routinesManager.createRoutine).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceCategories: ['Work', 'Personal'],
+          workspaceCategory: 'Work'
+        })
+      )
+    })
+
     test('creates routine with minimal template data', async () => {
       const template = {
         type: 'routine',

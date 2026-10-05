@@ -20,9 +20,12 @@ function NotesList({
   onNoteClick,
   onNestNote,
   onNoteContextMenu,
-  onNewNote
+  onNewNote,
+  sortMode,
+  onSortModeChange
 }) {
   const [draggedNoteId, setDraggedNoteId] = useState(null)
+  const [nestTargets, setNestTargets] = useState({})
   if (!showNoteList) return null
 
   const visibleNotes = filteredNotes
@@ -78,6 +81,17 @@ function NotesList({
           </button>
         )}
       </div>
+      <label className='note-list-sort'>
+        Sort notes
+        <select
+          value={sortMode}
+          onChange={(event) => onSortModeChange(event.target.value)}
+          aria-label='Sort notes'
+        >
+          <option value='recent'>Recently updated</option>
+          <option value='category'>Category A–Z</option>
+        </select>
+      </label>
       <p className='note-list-hint'>
         Drag a note onto a top-level note to nest it (two levels maximum).
       </p>
@@ -86,6 +100,18 @@ function NotesList({
           const parentNote = note.parentNoteId
             ? notes.find((item) => item.id === note.parentNoteId)
             : null
+          const canNest =
+            !note.locked &&
+            !notes.some((item) => item.parentNoteId === note.id)
+          const parentOptions = canNest
+            ? notes.filter(
+                (item) =>
+                  item.id !== note.id &&
+                  !item.locked &&
+                  !item.parentNoteId
+              )
+            : []
+          const nestTarget = nestTargets[note.id] || ''
           return <div
             key={note.id}
             draggable={!note.locked}
@@ -129,30 +155,28 @@ function NotesList({
               setDraggedNoteId(null)
             }}
             onDragEnd={() => setDraggedNoteId(null)}
-            onClick={() => onNoteClick(note)}
             onContextMenu={(e) => onNoteContextMenu(e, note)}
-            role='button'
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onNoteClick(note)
-              }
-            }}
+            role='group'
+            aria-label={`Note: ${note.title || 'Untitled'}`}
           >
-            <div className='note-item-title' title={note.title || 'Untitled'}>
+            <button
+              type='button'
+              className='note-item-title'
+              onClick={() => onNoteClick(note)}
+              title={note.title || 'Untitled'}
+            >
               {note.locked && (
                 <svg
                   className='icon note-item-lock-icon'
                   viewBox='0 0 24 24'
-                  aria-label='Locked'
+                  aria-hidden='true'
                 >
                   <rect x='5' y='11' width='14' height='10' rx='2' ry='2' />
                   <path d='M7 11V7a5 5 0 0 1 10 0v4' />
                 </svg>
               )}
               {note.title || 'Untitled'}
-            </div>
+            </button>
             <div className='note-item-metadata'>
               <div className='note-item-date'>
                 {new Date(note.updatedAt).toLocaleDateString()}
@@ -163,6 +187,45 @@ function NotesList({
               {note.parentNoteId && (
                 <div className='note-item-parent'>
                   Sub-note of {parentNote?.title || 'Untitled'}
+                </div>
+              )}
+              {parentOptions.length > 0 && (
+                <div className='note-item-nesting'>
+                  <label>
+                    Nest under
+                    <select
+                      value={nestTarget}
+                      onChange={(event) =>
+                        setNestTargets((targets) => ({
+                          ...targets,
+                          [note.id]: event.target.value
+                        }))
+                      }
+                      aria-label={`Choose a parent for ${note.title || 'Untitled'}`}
+                    >
+                      <option value=''>Choose a note</option>
+                      {parentOptions.map((parent) => (
+                        <option key={parent.id} value={parent.id}>
+                          Nest under {parent.title || 'Untitled'}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type='button'
+                    className='btn'
+                    aria-label={`Nest ${note.title || 'Untitled'} under the selected parent`}
+                    disabled={!nestTarget}
+                    onClick={() => {
+                      onNestNote(note.id, nestTarget)
+                      setNestTargets((targets) => ({
+                        ...targets,
+                        [note.id]: ''
+                      }))
+                    }}
+                  >
+                    Nest note
+                  </button>
                 </div>
               )}
             </div>
@@ -196,7 +259,9 @@ NotesList.propTypes = {
   onNoteClick: PropTypes.func.isRequired,
   onNestNote: PropTypes.func.isRequired,
   onNoteContextMenu: PropTypes.func.isRequired,
-  onNewNote: PropTypes.func.isRequired
+  onNewNote: PropTypes.func.isRequired,
+  sortMode: PropTypes.string.isRequired,
+  onSortModeChange: PropTypes.func.isRequired
 }
 
 export default NotesList

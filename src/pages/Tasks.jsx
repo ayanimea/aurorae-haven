@@ -38,6 +38,7 @@ function Tasks() {
   const [taskCategories, setTaskCategories] = useState(null)
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [taskLimitMessage, setTaskLimitMessage] = useState('')
+  const [taskSortMode, setTaskSortMode] = useState('priority')
 
   // Editing state
   const [editingTask, setEditingTask] = useState(null)
@@ -189,6 +190,17 @@ function Tasks() {
       <div className='card'>
         <div className='card-h'>
           <strong>Tasks</strong>
+          <label>
+            Sort tasks
+            <select
+              value={taskSortMode}
+              onChange={(event) => setTaskSortMode(event.target.value)}
+              aria-label='Sort tasks'
+            >
+              <option value='priority'>Priority</option>
+              <option value='alphabetical'>A–Z</option>
+            </select>
+          </label>
         </div>
         <div className='card-b'>
           <TaskForm
@@ -253,9 +265,22 @@ function Tasks() {
           <TaskQuadrant
             key={quadrant.key}
             quadrant={quadrant}
-            tasks={tasks[quadrant.key].filter(
-              (task) => matchesCategory(task)
-            )}
+            tasks={tasks[quadrant.key]
+              .filter((task) => matchesCategory(task))
+              .sort((a, b) => {
+                if (taskSortMode === 'alphabetical') {
+                  return (a.text || '').localeCompare(b.text || '', undefined, {
+                    sensitivity: 'base'
+                  })
+                }
+                const aPriority = Number.isFinite(a.priority)
+                  ? a.priority
+                  : Number.POSITIVE_INFINITY
+                const bPriority = Number.isFinite(b.priority)
+                  ? b.priority
+                  : Number.POSITIVE_INFINITY
+                return aPriority === bPriority ? 0 : aPriority - bPriority
+              })}
             editingTask={editingTask}
             editText={editText}
             categories={categories}
@@ -279,6 +304,7 @@ function Tasks() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
             onDrop={handleDrop}
+            onMoveTask={handleTaskMove}
           />
         ))}
       </div>

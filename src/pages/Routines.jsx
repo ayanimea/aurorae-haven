@@ -26,6 +26,7 @@ import {
 import { saveTemplate } from '../utils/templatesManager'
 import { instantiateTemplate } from '../utils/templateInstantiation'
 import { createLogger } from '../utils/logger'
+import { getItemCategories } from '../utils/itemCategories'
 import ConfirmModal from '../components/common/ConfirmModal'
 import Icon from '../components/common/Icon'
 import RoutineCreationModal from '../components/Routines/RoutineCreationModal'
@@ -410,7 +411,7 @@ function Routines() {
         return
       }
 
-      if (activeCategory && !result.workspaceCategory) {
+      if (activeCategory && !getItemCategories(template, 'workspaceCategory').length) {
         const createdRoutine = await getRoutine(result.id)
         if (!createdRoutine) {
           throw new Error('Created routine could not be loaded')

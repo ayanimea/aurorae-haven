@@ -9,6 +9,7 @@ import { validateTemplateData } from './validation'
 import { MS_PER_DAY } from './timeConstants'
 import { createLogger } from './logger'
 import { tryCatch, isQuotaExceededError } from './errorHandler'
+import { getItemCategories } from './itemCategories'
 import {
   createDefaultTasksState,
   loadTasksState,
@@ -201,12 +202,19 @@ export async function instantiateRoutineFromTemplate(template) {
   }
 
   // Create new independent routine
+  const workspaceCategories = getItemCategories(template, 'workspaceCategory')
   const routine = {
     name: template.title,
     steps: template.steps || [],
     tags: template.tags || [],
     energyTag: template.energyTag || null,
     estimatedDuration: template.estimatedDuration || null,
+    ...(workspaceCategories.length
+      ? {
+          workspaceCategories,
+          workspaceCategory: workspaceCategories[0]
+        }
+      : {}),
     createdAt: new Date().toISOString()
   }
 

@@ -86,6 +86,7 @@ import { snapDown, snapUp } from '../schedule/timeUtils'
 import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
 import { SCHEDULING_CONFIG } from '../schedule/config'
 import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
+import { getItemCategories } from '../utils/itemCategories'
 import '../components/ErrorBoundary.css'
 
 /**
@@ -240,8 +241,14 @@ function Schedule() {
       Object.values(loadTasksState()).forEach((quadrantTasks) => {
         if (!Array.isArray(quadrantTasks)) return
         quadrantTasks.forEach((task) => {
-          if (task?.text && task.category) {
-            taskCategories.set(task.text.trim().toLowerCase(), task.category)
+          const titleKey = task?.text?.trim().toLowerCase()
+          if (!titleKey) return
+          const categories = getItemCategories(task)
+          const category = categories.length === 1 ? categories[0] : null
+          if (!taskCategories.has(titleKey)) {
+            taskCategories.set(titleKey, category)
+          } else if (taskCategories.get(titleKey) !== category) {
+            taskCategories.set(titleKey, null)
           }
         })
       })

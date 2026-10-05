@@ -231,8 +231,8 @@ function HabitDetailDrawer({ habit, categories, onClose, onUpdateHabit }) {
 
       <CategoryMultiSelect
         value={
-          getItemCategories(habit).length
-            ? getItemCategories(habit)
+          getItemCategories(habit, 'workspaceCategory').length
+            ? getItemCategories(habit, 'workspaceCategory')
             : [getDefaultCategory()]
         }
         categories={categories}

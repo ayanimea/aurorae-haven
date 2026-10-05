@@ -32,7 +32,8 @@ function TaskItem({
   onDragOver,
   onDragEnd,
   isSaved,
-  onSaveTask
+  onSaveTask,
+  onMoveTask
 }) {
   const editInputRef = useRef(null)
   const subtaskInputRef = useRef(null)
@@ -51,27 +52,36 @@ function TaskItem({
   }, [isEditing, isAddingSubtask])
 
   const handleKeyDown = (e) => {
-    // Keyboard shortcuts for moving tasks between quadrants
-    if (e.altKey && !isEditing) {
-      e.preventDefault()
-      switch (e.key) {
-        case 'ArrowUp':
-          // Move to previous quadrant
-          onDragStart(quadrant, task)
-          // Trigger drop in previous quadrant - handled by parent
-          break
-        case 'ArrowDown':
-          // Move to next quadrant
-          onDragStart(quadrant, task)
-          break
-        case 'ArrowLeft':
-        case 'ArrowRight':
-          // Move to adjacent quadrant
-          onDragStart(quadrant, task)
-          break
-        default:
-          break
+    if (
+      !e.altKey ||
+      isEditing ||
+      ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) ||
+      e.target.isContentEditable
+    ) {
+      return
+    }
+    const adjacentQuadrants = {
+      urgent_important: {
+        ArrowDown: 'not_urgent_important',
+        ArrowRight: 'urgent_not_important'
+      },
+      not_urgent_important: {
+        ArrowUp: 'urgent_important',
+        ArrowRight: 'not_urgent_not_important'
+      },
+      urgent_not_important: {
+        ArrowDown: 'not_urgent_not_important',
+        ArrowLeft: 'urgent_important'
+      },
+      not_urgent_not_important: {
+        ArrowUp: 'urgent_not_important',
+        ArrowLeft: 'not_urgent_important'
       }
+    }
+    const targetQuadrant = adjacentQuadrants[quadrant]?.[e.key]
+    if (targetQuadrant) {
+      e.preventDefault()
+      onMoveTask(quadrant, targetQuadrant, task)
     }
   }
 
@@ -164,7 +174,7 @@ function TaskItem({
             <button
               type='button'
               className='btn-edit'
-              onClick={() => onSaveTask(task)}
+              onClick={() => onSaveTask({ ...task, quadrant })}
               aria-label={isSaved ? `Task "${task.text}" is saved` : `Save task "${task.text}" for later`}
               title={isSaved ? 'Saved for reuse' : 'Save for reuse'}
               disabled={isSaved}
@@ -347,7 +357,8 @@ TaskItem.propTypes = {
   onDragOver: PropTypes.func.isRequired,
   onDragEnd: PropTypes.func.isRequired,
   isSaved: PropTypes.bool.isRequired,
-  onSaveTask: PropTypes.func.isRequired
+  onSaveTask: PropTypes.func.isRequired,
+  onMoveTask: PropTypes.func.isRequired
 }
 
 export default TaskItem

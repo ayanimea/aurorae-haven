@@ -33,6 +33,7 @@ vi.mock('../components/Schedule/FigmaScheduleGrid', () => ({
           <button
             key={e.id}
             data-testid={`event-card-${e.id}`}
+            data-category={e.category || ''}
             onClick={() => onEventClick(e)}
           >
             {e.title}
@@ -355,6 +356,40 @@ describe('Schedule event interactions', () => {
   })
 
   afterEach(() => jest.useRealTimers())
+
+  test('only infers task categories when the title maps to one category', async () => {
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [
+          { text: 'Shared title', category: 'Work' },
+          { text: 'Shared title', category: 'Personal' },
+          { text: 'Unique title', category: 'Work' }
+        ],
+        not_urgent_important: [],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      })
+    )
+    EventService.getEventsForDate.mockResolvedValue([
+      { id: 'ambiguous-task', title: 'Shared title', type: 'task' },
+      { id: 'unique-task', title: 'Unique title', type: 'task' }
+    ])
+
+    render(<Schedule />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('event-card-ambiguous-task')).toHaveAttribute(
+        'data-category',
+        ''
+      )
+      expect(screen.getByTestId('event-card-unique-task')).toHaveAttribute(
+        'data-category',
+        'Work'
+      )
+    })
+    localStorage.removeItem('aurorae_tasks')
+  })
 
   test('clicking event card opens ItemActionModal', async () => {
     const mockEvents = [

@@ -518,6 +518,76 @@ describe('Tasks Component', () => {
     })
   })
 
+  test('saves the original quadrant with a reusable task', async () => {
+    render(<Tasks />)
+    fireEvent.change(screen.getByLabelText('Select quadrant'), {
+      target: { value: 'urgent_not_important' }
+    })
+    fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
+      target: { value: 'Quadrant-specific task' }
+    })
+    fireEvent.click(screen.getByText('Add Task'))
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Save task "Quadrant-specific task" for later'
+      })
+    )
+
+    await waitFor(() => {
+      expect(
+        JSON.parse(localStorage.getItem('aurorae_saved_tasks'))[0].quadrant
+      ).toBe('urgent_not_important')
+    })
+  })
+
+  test('moves a task to an adjacent quadrant with Alt+Arrow', async () => {
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [createTask('Move me', 'Work')],
+        not_urgent_important: [],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      })
+    )
+    render(<Tasks />)
+    fireEvent.keyDown(
+      screen.getByRole('group', { name: /Task: Move me/ }),
+      { key: 'ArrowRight', altKey: true }
+    )
+
+    await waitFor(() => {
+      const savedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(savedTasks.urgent_important).toHaveLength(0)
+      expect(savedTasks.urgent_not_important[0].text).toBe('Move me')
+    })
+  })
+
+  test('sorts each quadrant alphabetically when selected', () => {
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [
+          createTask('Zebra task', 'Work'),
+          createTask('Apple task', 'Work')
+        ],
+        not_urgent_important: [],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      })
+    )
+    const { container } = render(<Tasks />)
+    fireEvent.change(screen.getByLabelText('Sort tasks'), {
+      target: { value: 'alphabetical' }
+    })
+
+    expect(
+      [...container.querySelectorAll('.quadrant-red .task-text')].map(
+        (task) => task.textContent
+      )
+    ).toEqual(['Apple task', 'Zebra task'])
+  })
+
   test('adds a built-in task template', async () => {
     const { container } = render(<Tasks />)
     fireEvent.change(screen.getByLabelText('Add task from template:'), {

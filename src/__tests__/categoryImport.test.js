@@ -35,4 +35,21 @@ describe('legacy category import', () => {
     expect(imported.tasks[0].workspaceCategories).toEqual(['Work', 'Personal'])
     expect(imported.categories).toEqual(['Work', 'Personal'])
   })
+
+  it('discovers categories only from workspace fields for each entity type', () => {
+    const imported = normalizeImportedCategories({
+      categories: ['Work'],
+      habits: [
+        { id: 'habit-1', category: 'green', workspaceCategory: 'Health' }
+      ],
+      templates: [{ id: 'template-1', category: 'morning' }],
+      tasks: [{ id: 'task-1', category: 'Focus' }]
+    })
+
+    expect(imported.categories).toEqual(
+      expect.arrayContaining(['Work', 'Health', 'Focus'])
+    )
+    expect(imported.categories).not.toContain('green')
+    expect(imported.categories).not.toContain('morning')
+  })
 })
