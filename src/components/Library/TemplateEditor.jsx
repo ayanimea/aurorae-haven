@@ -13,6 +13,7 @@ import { getDefaultCategory } from '../../utils/categoryStorage'
 import { getItemCategories } from '../../utils/itemCategories'
 
 const logger = createLogger('TemplateEditor')
+const EMPTY_CATEGORIES = Object.freeze([])
 
 /**
  * Convert a numeric string value to a number or null
@@ -40,7 +41,7 @@ function TemplateEditor({
   onSave,
   onClose,
   typeFilter,
-  categories = [],
+  categories = EMPTY_CATEGORIES,
   activeCategory = null
 }) {
   logger.log('TemplateEditor opened with template:', template)
