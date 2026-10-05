@@ -351,8 +351,11 @@ function Settings({ onExport, onImport }) {
     <div className='settings-page'>
       <section className='card settings-category-card' aria-labelledby='category-settings-title'>
         <div className='card-h'>
-          <h2 id='category-settings-title'>Task &amp; Note Categories</h2>
-          <span className='small'>Shared across Tasks and Brain Dump</span>
+          <h2 id='category-settings-title'>Shared Category Workspaces</h2>
+          <span className='small'>
+            Available across Tasks, Notes, Habits, Routines, Schedule, Stats, and
+            Library
+          </span>
         </div>
         <div className='card-b'>
           <p className='settings-hint'>
@@ -394,6 +397,7 @@ function Settings({ onExport, onImport }) {
                       Theme for {category}
                       <select
                         aria-label={`Theme for ${category}`}
+                        className='settings-select'
                         value={categoryThemes[category] || 'default'}
                         onChange={(event) =>
                           setCategoryTheme(category, event.target.value)

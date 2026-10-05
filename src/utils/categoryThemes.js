@@ -13,7 +13,11 @@ export const CATEGORY_THEME_TEMPLATES = Object.freeze([
 const validThemeIds = new Set(CATEGORY_THEME_TEMPLATES.map(({ id }) => id))
 
 export function normalizeCategoryThemes(assignments) {
-  if (!assignments || typeof assignments !== 'object' || Array.isArray(assignments)) {
+  if (
+    !assignments ||
+    typeof assignments !== 'object' ||
+    Array.isArray(assignments)
+  ) {
     return {}
   }
 

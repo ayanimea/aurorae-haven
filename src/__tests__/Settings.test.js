@@ -111,13 +111,25 @@ describe('Settings Component', () => {
     )
 
     expect(
-      screen.getByRole('heading', { name: 'Task & Note Categories' })
+      screen.getByRole('heading', { name: 'Shared Category Workspaces' })
     ).toBeVisible()
     expect(
       screen.getByRole('button', { name: 'Add category' })
     ).toBeVisible()
     expect(
       container.querySelector('.settings-category-card')
+    ).toBeInTheDocument()
+  })
+
+  test('offers the built-in themes for each category', () => {
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+
+    const themeSelect = screen.getByLabelText('Theme for Uncategorised')
+    expect(themeSelect).toHaveValue('default')
+    expect(themeSelect).toHaveDisplayValue('Default color scheme')
+    expect(screen.getByRole('option', { name: 'Red Nebula' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('option', { name: 'Black/White Clusters of Galaxies' })
     ).toBeInTheDocument()
   })
 
@@ -142,7 +154,7 @@ describe('Settings Component', () => {
       screen.getByRole('button', { name: 'Add category' })
     ).toBeDisabled()
     expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toHaveLength(
-      6
+      7
     )
   })
 
