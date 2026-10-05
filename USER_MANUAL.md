@@ -899,10 +899,10 @@ Each routine row has a **management context menu** accessible via right-click (o
 
 The menu offers two actions:
 
-| Action | Description |
-|---|---|
+| Action             | Description                                                      |
+| ------------------ | ---------------------------------------------------------------- |
 | **Modify routine** | Opens the edit form pre-filled with the routine's current settings. |
-| **Remove routine** | Begins the delete confirmation flow (see below). |
+| **Remove routine** | Begins the delete confirmation flow (see below).                |
 
 **Keyboard access:**
 
@@ -929,4 +929,4 @@ This two-step flow prevents accidental deletions and is fully keyboard- and scre
 
 ---
 
-_Aurorae Haven: Calm productivity for neurodivergent minds_ 🌌
+*Aurorae Haven: Calm productivity for neurodivergent minds* 🌌

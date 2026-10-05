@@ -466,7 +466,12 @@ function Layout({ children, onExport }) {
       <div className='shell'>
         <div className='workspace-layout'>
           <main className='workspace-main'>{children}</main>
-          <CategoryWorkspaceNav />
+          <aside
+            className='category-workspace-sidebar'
+            aria-label='Category selection'
+          >
+            <CategoryWorkspaceNav />
+          </aside>
         </div>
       </div>
     </>

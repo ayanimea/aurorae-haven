@@ -1,20 +1,22 @@
 .workspace-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
   align-items: flex-start;
   gap: 1rem;
   width: 100%;
 }
 
 .workspace-main {
-  flex: 1;
   min-width: 0;
 }
 
-.category-workspace-nav {
+.category-workspace-sidebar {
   position: sticky;
   top: calc(var(--appbar-height) + 1rem);
+}
+
+.category-workspace-nav {
   display: flex;
-  flex: 0 0 180px;
   flex-direction: column;
   gap: 0.35rem;
   max-height: calc(100vh - var(--appbar-height) - 2rem);
@@ -49,6 +51,11 @@
 .category-workspace-nav button:focus-visible {
   border-color: var(--line);
   background: var(--surface);
+}
+
+.category-workspace-nav button:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
 }
 
 .category-workspace-nav button.active {
@@ -89,17 +96,19 @@
 
 @media (max-width: 760px) {
   .workspace-layout {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .workspace-main {
     width: 100%;
   }
 
-  .category-workspace-nav {
+  .category-workspace-sidebar {
     position: static;
     order: -1;
-    flex: none;
+  }
+
+  .category-workspace-nav {
     flex-direction: row;
     width: 100%;
     max-height: none;

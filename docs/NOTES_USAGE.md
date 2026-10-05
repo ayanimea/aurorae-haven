@@ -330,8 +330,8 @@ When creating a new note, a **template picker** opens so you can choose a starti
 
 **Built-in templates:**
 
-| Template | Description |
-|----------|-------------|
+| Template | Description                                  |
+| -------- | -------------------------------------------- |
 | 📄 Blank | Empty note |
 | 📔 Daily Journal | Morning check-in, tasks, evening reflection |
 | 🗓️ Meeting Notes | Agenda, decisions, action items table |
@@ -469,15 +469,15 @@ Bug found in login #bug #critical
 
 ## Keyboard Reference Card
 
-| Shortcut        | Action               |
-| --------------- | -------------------- |
+| Shortcut        | Action                                      |
+| --------------- | ------------------------------------------- |
 | `Ctrl/Cmd + S`  | Export all notes as markdown (ZIP if multiple) |
-| `Ctrl/Cmd + H`  | View version history |
-| `Escape`        | Close modal          |
-| `Enter`         | Continue list        |
-| `Enter` (twice) | Exit list            |
-| `Tab`           | Next element         |
-| `Shift + Tab`   | Previous element     |
+| `Ctrl/Cmd + H`  | View version history                        |
+| `Escape`        | Close modal                                 |
+| `Enter`         | Continue list                               |
+| `Enter` (twice) | Exit list                                   |
+| `Tab`           | Next element                                |
+| `Shift + Tab`   | Previous element                            |
 
 ## Examples
 

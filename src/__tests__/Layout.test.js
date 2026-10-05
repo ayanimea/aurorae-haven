@@ -29,6 +29,22 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
   })
 
   describe('TAB-NAV-01: Three-zone structure', () => {
+    test('renders the category selector in a visible sidebar landmark', () => {
+      renderWithRouter(
+        <Layout onExport={mockOnExport}>
+          <div>Content</div>
+        </Layout>
+      )
+
+      const sidebar = screen.getByRole('complementary', {
+        name: 'Category selection'
+      })
+      expect(
+        within(sidebar).getByRole('navigation', { name: 'Category workspaces' })
+      ).toBeInTheDocument()
+      expect(within(sidebar).getByRole('button', { name: 'All' })).toBeVisible()
+    })
+
     test('renders figma-inspired animated background layer', () => {
       renderWithRouter(
         <Layout onExport={mockOnExport}>
