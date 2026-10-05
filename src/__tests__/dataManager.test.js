@@ -7,6 +7,13 @@ import {
 } from '../utils/dataManager'
 import { importToLocalStorage } from '../utils/importData'
 
+const withUnassignedCategories = (items, primaryField = 'category') =>
+  items.map((item) => ({
+    ...item,
+    workspaceCategories: ['Unassigned'],
+    [primaryField]: 'Unassigned'
+  }))
+
 describe('Data Manager', () => {
   beforeEach(() => {
     // Clear localStorage before each test
@@ -46,7 +53,7 @@ describe('Data Manager', () => {
 
       const data = await getDataTemplate()
 
-      expect(data.categories).toEqual(['Personal', 'Work'])
+      expect(data.categories).toEqual(['Uncategorised', 'Personal', 'Work'])
     })
 
     it('should include saved tasks in exported data', async () => {
@@ -385,6 +392,7 @@ describe('Data Manager', () => {
       })
 
       expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([
+        'Uncategorised',
         'Work'
       ])
       expect(JSON.parse(localStorage.getItem('aurorae_tasks'))).toEqual(tasks)
@@ -476,16 +484,20 @@ describe('Data Manager', () => {
       const result = await importJSON(mockFile)
 
       expect(result).toBe(true)
-      expect(JSON.parse(localStorage.getItem('tasks'))).toEqual(testData.tasks)
+      expect(JSON.parse(localStorage.getItem('tasks'))).toEqual(
+        withUnassignedCategories(testData.tasks)
+      )
       expect(JSON.parse(localStorage.getItem('routines'))).toEqual(
-        testData.routines
+        withUnassignedCategories(testData.routines, 'workspaceCategory')
       )
       expect(JSON.parse(localStorage.getItem('habits'))).toEqual(
-        testData.habits
+        withUnassignedCategories(testData.habits, 'workspaceCategory')
       )
-      expect(JSON.parse(localStorage.getItem('dumps'))).toEqual(testData.dumps)
+      expect(JSON.parse(localStorage.getItem('dumps'))).toEqual(
+        withUnassignedCategories(testData.dumps)
+      )
       expect(JSON.parse(localStorage.getItem('schedule'))).toEqual(
-        testData.schedule
+        withUnassignedCategories(testData.schedule)
       )
     })
 
@@ -536,7 +548,7 @@ describe('Data Manager', () => {
       await importJSON(mockFile)
 
       const storedSchedule = JSON.parse(localStorage.getItem('schedule'))
-      expect(storedSchedule).toEqual(schedule)
+      expect(storedSchedule).toEqual(withUnassignedCategories(schedule))
     })
 
     it('should import tasks array', async () => {
@@ -564,7 +576,7 @@ describe('Data Manager', () => {
       await importJSON(mockFile)
 
       const storedTasks = JSON.parse(localStorage.getItem('tasks'))
-      expect(storedTasks).toEqual(tasksData)
+      expect(storedTasks).toEqual(withUnassignedCategories(tasksData))
     })
 
     it('should roundtrip export and import tasks correctly', async () => {
@@ -599,7 +611,7 @@ describe('Data Manager', () => {
 
       // Verify
       const importedTasks = JSON.parse(localStorage.getItem('tasks'))
-      expect(importedTasks).toEqual(tasksData)
+      expect(importedTasks).toEqual(withUnassignedCategories(tasksData))
     })
 
     it('should export and import all data types with nominal example', async () => {
@@ -682,19 +694,19 @@ describe('Data Manager', () => {
 
       // Verify all data types were restored
       expect(JSON.parse(localStorage.getItem('tasks'))).toEqual(
-        nominalData.tasks
+        withUnassignedCategories(nominalData.tasks)
       )
       expect(JSON.parse(localStorage.getItem('routines'))).toEqual(
-        nominalData.routines
+        withUnassignedCategories(nominalData.routines, 'workspaceCategory')
       )
       expect(JSON.parse(localStorage.getItem('habits'))).toEqual(
-        nominalData.habits
+        withUnassignedCategories(nominalData.habits, 'workspaceCategory')
       )
       expect(JSON.parse(localStorage.getItem('dumps'))).toEqual(
         nominalData.dumps
       )
       expect(JSON.parse(localStorage.getItem('schedule'))).toEqual(
-        nominalData.schedule
+        withUnassignedCategories(nominalData.schedule)
       )
     })
 
@@ -801,7 +813,9 @@ describe('Data Manager', () => {
         // Verify restoration
         const restored = JSON.parse(localStorage.getItem('tasks'))
         expect(restored.length).toBe(4)
-        expect(restored.find((t) => t.id === 2)).toEqual(initialTasks[1])
+        expect(restored.find((t) => t.id === 2)).toEqual(
+          withUnassignedCategories([initialTasks[1]])[0]
+        )
       })
 
       it('should restore deleted Sequences after import', async () => {
@@ -841,7 +855,10 @@ describe('Data Manager', () => {
         const restored = JSON.parse(localStorage.getItem('routines'))
         expect(restored.length).toBe(2)
         expect(restored.find((s) => s.id === 'seq-1')).toEqual(
-          initialSequences[0]
+          withUnassignedCategories(
+            [initialSequences[0]],
+            'workspaceCategory'
+          )[0]
         )
       })
 
@@ -871,7 +888,9 @@ describe('Data Manager', () => {
         // Verify restoration
         const restored = JSON.parse(localStorage.getItem('habits'))
         expect(restored.length).toBe(3)
-        expect(restored.find((h) => h.id === 2)).toEqual(initialHabits[1])
+        expect(restored.find((h) => h.id === 2)).toEqual(
+          withUnassignedCategories([initialHabits[1]], 'workspaceCategory')[0]
+        )
       })
 
       it('should restore deleted Schedule events after import', async () => {
@@ -915,7 +934,9 @@ describe('Data Manager', () => {
         // Verify restoration
         const restored = JSON.parse(localStorage.getItem('schedule'))
         expect(restored.length).toBe(2)
-        expect(restored.find((s) => s.id === 1)).toEqual(initialSchedule[0])
+        expect(restored.find((s) => s.id === 1)).toEqual(
+          withUnassignedCategories([initialSchedule[0]])[0]
+        )
       })
 
       it('should restore all data types after deleting items from multiple tabs', async () => {
@@ -964,19 +985,19 @@ describe('Data Manager', () => {
 
         // Verify all data restored
         expect(JSON.parse(localStorage.getItem('tasks'))).toEqual(
-          initialData.tasks
+          withUnassignedCategories(initialData.tasks)
         )
         expect(JSON.parse(localStorage.getItem('routines'))).toEqual(
-          initialData.routines
+          withUnassignedCategories(initialData.routines, 'workspaceCategory')
         )
         expect(JSON.parse(localStorage.getItem('habits'))).toEqual(
-          initialData.habits
+          withUnassignedCategories(initialData.habits, 'workspaceCategory')
         )
         expect(JSON.parse(localStorage.getItem('dumps'))).toEqual(
           initialData.dumps
         )
         expect(JSON.parse(localStorage.getItem('schedule'))).toEqual(
-          initialData.schedule
+          withUnassignedCategories(initialData.schedule)
         )
       })
     })

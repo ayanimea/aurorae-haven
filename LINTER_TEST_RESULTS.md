@@ -1,5 +1,7 @@
 # Linter and Test Suite Results
 
+> **Historical snapshot:** The results below describe an earlier run and are not a statement about the current branch. Test counts and lint output change over time. Run the commands in `package.json` to check the current state.
+
 ## Summary
 
 Successfully fixed the linter and verified all tests pass.
@@ -53,7 +55,7 @@ Test Files: 69 passed (69)
 Tests:      1637 passed | 15 skipped | 17 todo (1669)
 Duration:   14.716s
 
-✓ All tests pass
+✓ All tests passed in that historical run
 ```
 
 ## Code Coverage Summary

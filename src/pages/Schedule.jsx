@@ -157,7 +157,12 @@ function Schedule() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [eventToDelete, setEventToDelete] = useState(null)
   const [showActionModal, setShowActionModal] = useState(false)
-  const { activeCategory, matchesCategory } = useCategoryWorkspace()
+  const {
+    activeCategory,
+    categories,
+    defaultCategory,
+    matchesCategory
+  } = useCategoryWorkspace()
 
   // Dev-only: Lazy-loaded FloatingDevButtons component
   const [FloatingDevButtons, setFloatingDevButtons] = useState(null)
@@ -362,7 +367,14 @@ function Schedule() {
       // computation, which both apply the same snapping internally.
       let cleanEventData = {
         ...rawCleanData,
-        category: rawCleanData.category ?? activeCategory ?? ''
+        category:
+          rawCleanData.workspaceCategories?.[0] ??
+          rawCleanData.category ??
+          activeCategory ??
+          defaultCategory,
+        workspaceCategories:
+          rawCleanData.workspaceCategories ??
+          [rawCleanData.category ?? activeCategory ?? defaultCategory]
       }
       if (rawCleanData.startTime && rawCleanData.endTime && !rawCleanData.allDay) {
         const rawStart = timeToMinutes(rawCleanData.startTime)
@@ -445,7 +457,11 @@ function Schedule() {
         if (_isNewCreation) {
           try {
             if (cleanEventData.type === EVENT_TYPES.TASK) {
-              addTaskToStorage(cleanEventData.title, cleanEventData.category)
+              addTaskToStorage(
+                cleanEventData.title,
+                cleanEventData.category,
+                cleanEventData.workspaceCategories
+              )
             } else if (cleanEventData.type === EVENT_TYPES.ROUTINE) {
               const durationMinutes =
                 timeToMinutes(cleanEventData.endTime) -
@@ -454,6 +470,7 @@ function Schedule() {
               // Only name and estimatedDuration are required for a minimal routine entry.
               await createRoutine({
                 name: cleanEventData.title,
+                workspaceCategories: cleanEventData.workspaceCategories,
                 workspaceCategory: cleanEventData.category,
                 estimatedDuration: Math.max(0, durationMinutes) * 60
               })
@@ -888,6 +905,9 @@ function Schedule() {
           onDelete={handleDeleteFromModal}
           eventType={selectedEventType}
           initialData={selectedEvent}
+          categories={categories}
+          activeCategory={activeCategory}
+          defaultCategory={defaultCategory}
         />
 
         {/* ── Action Modal (edit / delete choice) ──────────────────────────── */}

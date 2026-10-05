@@ -154,11 +154,24 @@ export function useTasksState() {
   const updateTaskCategory = (quadrant, taskId, categories) => {
     setTasks((prev) => ({
       ...(prev || createDefaultTasksState()),
-      [quadrant]: (prev?.[quadrant] || []).map((task) =>
-        task.id === taskId
-          ? assignItemCategories(task, categories, getDefaultCategory())
-          : task
-      )
+      [quadrant]: (prev?.[quadrant] || []).map((task) => {
+        if (task.id !== taskId) return task
+        const updatedTask = assignItemCategories(
+          task,
+          categories,
+          getDefaultCategory()
+        )
+        return {
+          ...updatedTask,
+          subtasks: (Array.isArray(task.subtasks) ? task.subtasks : []).map((subtask) =>
+            assignItemCategories(
+              subtask,
+              categories,
+              getDefaultCategory()
+            )
+          )
+        }
+      })
     }))
   }
 

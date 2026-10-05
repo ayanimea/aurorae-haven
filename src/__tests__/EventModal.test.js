@@ -90,6 +90,33 @@ describe('EventModal Component', () => {
     expect(screen.getByText('Schedule Task')).toBeInTheDocument()
   })
 
+  test('saves schedule events with their selected workspace categories', async () => {
+    render(
+      <EventModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onSave={mockOnSave}
+        eventType='task'
+        categories={['Uncategorised', 'Work', 'Personal']}
+        activeCategory='Work'
+        defaultCategory='Uncategorised'
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText(/Title/), {
+      target: { value: 'Prepare report' }
+    })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Personal' }))
+    fireEvent.submit(screen.getByLabelText(/Title/).closest('form'))
+
+    await waitFor(() => expect(mockOnSave).toHaveBeenCalled())
+    expect(mockOnSave.mock.calls[0][0]).toMatchObject({
+      title: 'Prepare report',
+      category: 'Work',
+      workspaceCategories: ['Work', 'Personal']
+    })
+  })
+
   test('does not render when closed', () => {
     render(
       <EventModal
@@ -255,6 +282,8 @@ describe('EventModal Component', () => {
         type: 'task',
         travelTime: 0,
         preparationTime: 0,
+        category: 'Uncategorised',
+        workspaceCategories: ['Uncategorised'],
         _isNewCreation: true
       })
     })

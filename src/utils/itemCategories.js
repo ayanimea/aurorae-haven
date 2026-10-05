@@ -1,9 +1,23 @@
+export const IMPORTED_UNASSIGNED_CATEGORY = 'Unassigned'
+const DEFAULT_CATEGORY = 'Uncategorised'
+
+export function isUnassignedCategory(category, defaultCategory) {
+  if (typeof category !== 'string') return false
+  const key = category.trim().toLowerCase()
+  const defaultKey = (defaultCategory || DEFAULT_CATEGORY).trim().toLowerCase()
+  return (
+    key === defaultKey ||
+    key === IMPORTED_UNASSIGNED_CATEGORY.toLowerCase()
+  )
+}
+
 export function getItemCategories(item, legacyField = 'category') {
   if (!item || typeof item !== 'object') return []
 
-  const values = Array.isArray(item.workspaceCategories)
+  const values = Array.isArray(item.workspaceCategories) &&
+    item.workspaceCategories.length
     ? item.workspaceCategories
-    : Array.isArray(item.categories)
+    : Array.isArray(item.categories) && item.categories.length
       ? item.categories
       : [item[legacyField]]
 
@@ -21,14 +35,14 @@ export function getItemCategories(item, legacyField = 'category') {
 }
 
 export function normalizeCategorySelection(values, defaultCategory) {
+  const fallbackCategory = defaultCategory || DEFAULT_CATEGORY
   const categories = getItemCategories({
     workspaceCategories: Array.isArray(values) ? values : [values]
   })
-  const defaultKey = defaultCategory.trim().toLowerCase()
-  if (categories.some((category) => category.toLowerCase() === defaultKey)) {
-    return [defaultCategory]
+  if (categories.some((category) => isUnassignedCategory(category, defaultCategory))) {
+    return [fallbackCategory]
   }
-  return categories.length ? categories : [defaultCategory]
+  return categories.length ? categories : [fallbackCategory]
 }
 
 export function assignItemCategories(
@@ -58,12 +72,11 @@ export function matchesItemCategories(
 
   const categories = getItemCategories(item, legacyField)
   const activeKey = activeCategory.toLowerCase()
-  const defaultKey = defaultCategory.toLowerCase()
   const isUncategorised =
     categories.length === 0 ||
-    categories.some((category) => category.toLowerCase() === defaultKey)
+    categories.some((category) => isUnassignedCategory(category, defaultCategory))
 
-  if (activeKey === defaultKey) return isUncategorised
+  if (isUnassignedCategory(activeCategory, defaultCategory)) return isUncategorised
   return (
     isUncategorised ||
     categories.some((category) => category.toLowerCase() === activeKey)

@@ -1,5 +1,7 @@
 # Comprehensive Responsive Design Review - Findings & Recommendations
 
+> **Historical review:** This snapshot is dated January 2026. It is not a current review of every page and does not certify WCAG conformance. Recheck the affected screens after UI changes.
+
 **Date**: January 26, 2026  
 **Reviewer**: GitHub Copilot  
 **Scope**: All core pages on mobile, tablet, and small desktop viewports
@@ -16,7 +18,7 @@ A comprehensive review of the Aurorae Haven application's responsive design was 
 - **1 new CSS file** created (habits.css)
 - **0 linting errors** after fixes
 - **0 security vulnerabilities** detected
-- **100% accessibility compliance** for font sizes and touch targets
+- Font sizes and touch targets were reviewed at the time; this is not a current accessibility certification
 
 ---
 

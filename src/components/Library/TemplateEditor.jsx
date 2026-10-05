@@ -8,6 +8,9 @@ import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { createLogger } from '../../utils/logger'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
+import { getDefaultCategory } from '../../utils/categoryStorage'
+import { getItemCategories } from '../../utils/itemCategories'
 
 const logger = createLogger('TemplateEditor')
 
@@ -48,9 +51,26 @@ function TemplateEditor({
         title: template.title,
         tags: template.tags || [],
         category: template.category || '',
-        workspaceCategory:
-          template.workspaceCategory ??
-          (categories.includes(template.category) ? template.category : ''),
+        workspaceCategories:
+          getItemCategories(
+            {
+              ...template,
+              category: categories.includes(template.category)
+                ? template.category
+                : undefined
+            },
+            'workspaceCategory'
+          ).length
+            ? getItemCategories(
+                {
+                  ...template,
+                  category: categories.includes(template.category)
+                    ? template.category
+                    : undefined
+                },
+                'workspaceCategory'
+              )
+            : [activeCategory || getDefaultCategory()],
         quadrant: template.quadrant || 'urgent_important',
         dueOffset: template.dueOffset || '',
         steps: template.steps || [],
@@ -65,7 +85,7 @@ function TemplateEditor({
       title: '',
       tags: [],
       category: '',
-      workspaceCategory: activeCategory || '',
+      workspaceCategories: [activeCategory || getDefaultCategory()],
       quadrant: 'urgent_important',
       dueOffset: '',
       steps: [],
@@ -94,9 +114,26 @@ function TemplateEditor({
         title: template.title,
         tags: template.tags || [],
         category: template.category || '',
-        workspaceCategory:
-          template.workspaceCategory ??
-          (categories.includes(template.category) ? template.category : ''),
+        workspaceCategories:
+          getItemCategories(
+            {
+              ...template,
+              category: categories.includes(template.category)
+                ? template.category
+                : undefined
+            },
+            'workspaceCategory'
+          ).length
+            ? getItemCategories(
+                {
+                  ...template,
+                  category: categories.includes(template.category)
+                    ? template.category
+                    : undefined
+                },
+                'workspaceCategory'
+              )
+            : [activeCategory || getDefaultCategory()],
         quadrant: template.quadrant || 'urgent_important',
         dueOffset: template.dueOffset || '',
         steps: template.steps || [],
@@ -106,7 +143,7 @@ function TemplateEditor({
         description: template.description || ''
       })
     }
-  }, [template, categories])
+  }, [template, categories, activeCategory])
 
   const validateForm = () => {
     const newErrors = {}
@@ -140,6 +177,7 @@ function TemplateEditor({
     // Convert numeric fields to numbers (or null if empty)
     const templateData = {
       ...formData,
+      workspaceCategory: formData.workspaceCategories[0],
       dueOffset: convertToNumberOrNull(formData.dueOffset),
       estimatedDuration: convertToNumberOrNull(formData.estimatedDuration),
       steps: formData.steps.map((step) => ({
@@ -273,28 +311,18 @@ function TemplateEditor({
             )}
           </div>
 
-          <div className='form-group'>
-            <label htmlFor='template-workspace-category'>
-              Workspace category
-            </label>
-            <select
-              id='template-workspace-category'
-              value={formData.workspaceCategory}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  workspaceCategory: e.target.value
-                })
-              }
-            >
-              <option value=''>Uncategorised (shared)</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CategoryMultiSelect
+            value={formData.workspaceCategories}
+            categories={categories}
+            defaultCategory={getDefaultCategory()}
+            onChange={(workspaceCategories) =>
+              setFormData({
+                ...formData,
+                workspaceCategories
+              })
+            }
+            label='Workspace categories'
+          />
 
           {/* Tags */}
           <div className='form-group'>
@@ -513,6 +541,7 @@ TemplateEditor.propTypes = {
     tags: PropTypes.arrayOf(PropTypes.string),
     category: PropTypes.string,
     workspaceCategory: PropTypes.string,
+    workspaceCategories: PropTypes.arrayOf(PropTypes.string),
     quadrant: PropTypes.string,
     dueOffset: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     steps: PropTypes.arrayOf(PropTypes.object),

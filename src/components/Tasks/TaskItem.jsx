@@ -210,7 +210,7 @@ function TaskItem({
                 >
                   Add subtask
                 </button>
-                <label className='task-context-menu-label'>
+                <div className='task-context-menu-label'>
                   Category
                   <CategoryMultiSelect
                     value={
@@ -226,7 +226,7 @@ function TaskItem({
                     label={`Categories for "${task.text}"`}
                     className='task-context-category-select'
                   />
-                </label>
+                </div>
               </div>
             </details>
           </>

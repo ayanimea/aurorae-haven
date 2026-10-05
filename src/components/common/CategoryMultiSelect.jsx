@@ -1,5 +1,8 @@
 import PropTypes from 'prop-types'
-import { normalizeCategorySelection } from '../../utils/itemCategories'
+import {
+  isUnassignedCategory,
+  normalizeCategorySelection
+} from '../../utils/itemCategories'
 
 function CategoryMultiSelect({
   value,
@@ -10,15 +13,24 @@ function CategoryMultiSelect({
   className = '',
   disabled = false
 }) {
-  const selected = Array.isArray(value) ? value : []
+  const selected = normalizeCategorySelection(value, defaultCategory)
+  const visibleCategories = categories.filter(
+    (category) =>
+      !isUnassignedCategory(category, defaultCategory) ||
+      category.toLowerCase() === defaultCategory.toLowerCase()
+  )
 
   const handleChange = (category, checked) => {
-    const current = selected.filter((item) => item !== defaultCategory)
+    const current = selected.filter(
+      (item) => !isUnassignedCategory(item, defaultCategory)
+    )
     const next = checked
-      ? category === defaultCategory
+      ? isUnassignedCategory(category, defaultCategory)
         ? [defaultCategory]
         : [...current, category]
-      : current.filter((item) => item !== category)
+      : current.filter(
+          (item) => item.toLowerCase() !== category.toLowerCase()
+        )
     onChange(normalizeCategorySelection(next, defaultCategory))
   }
 
@@ -29,7 +41,7 @@ function CategoryMultiSelect({
     >
       <legend>{label}</legend>
       <div className='category-multi-select-options'>
-        {categories.map((category) => (
+        {visibleCategories.map((category) => (
           <label key={category}>
             <input
               type='checkbox'

@@ -7,6 +7,8 @@
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Category Workspaces](#category-workspaces)
+- [Data Import and Export](#data-import-and-export)
 - [LaTeX and Mathematical Equations](#latex-and-mathematical-equations)
 - [Displaying Images](#displaying-images)
 - [Complete Markdown Reference](#complete-markdown-reference)
@@ -37,6 +39,37 @@ Aurorae Haven's Brain Dump feature supports rich markdown formatting, including:
 - **Accessible content** following WCAG 2.2 AA standards
 
 This manual provides complete documentation on these features with practical examples.
+
+---
+
+## Category Workspaces
+
+Use the workspace navigation beside the page content to switch what you are viewing.
+
+- **All** shows items from every category.
+- A **category** shows items assigned to it. Categories are shared across Tasks, Notes, Habits, Routines, Schedule, Stats, and Library.
+- **Uncategorised** is the default category. It can be renamed. It cannot be combined with another category on the same item.
+- Items with no category remain visible in category workspaces. A legacy backup import labels missing categories **Unassigned**.
+
+### Add or rename a category
+
+1. Open **Settings**.
+2. Use the **Categories** section to add or rename a category.
+3. Return to an item and select one or more categories. Choose **Uncategorised** on its own when the item should remain unassigned.
+
+### Schedule and other workspaces
+
+The Schedule keeps its calendar visible in every workspace. When viewing a category, turn **Show other tasks as category names** on or off to control whether tasks from other categories appear as category-name labels.
+
+---
+
+## Data Import and Export
+
+- Use the app-wide JSON import/export controls for a complete backup.
+- Notes can also be imported from and exported to Markdown files.
+- Importing an older backup without category data assigns **Unassigned** to its items and stores the updated data in the app.
+
+For a calm, low-effort workflow, start with one category or use **All**. You can change categories later; there is no need to organise everything before using the app.
 
 ---
 

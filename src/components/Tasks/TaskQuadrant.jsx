@@ -1,6 +1,7 @@
 
 import PropTypes from 'prop-types'
 import TaskItem from './TaskItem'
+import { getItemCategories } from '../../utils/itemCategories'
 
 /**
  * Component for displaying a quadrant of the Eisenhower Matrix
@@ -82,7 +83,8 @@ function TaskQuadrant({
                 (saved) =>
                   saved.text === task.text &&
                   saved.quadrant === quadrant.key &&
-                  saved.category === (task.category || '')
+                  JSON.stringify(getItemCategories(saved)) ===
+                    JSON.stringify(getItemCategories(task))
               )}
               onSaveTask={onSaveTask}
             />

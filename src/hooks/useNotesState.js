@@ -137,14 +137,28 @@ export function useNotesState() {
           return latestNotes // Don't update if note was deleted
         }
 
+        const normalizedCategories = normalizeCategorySelection(
+          assignedCategories,
+          getDefaultCategory()
+        )
         const updatedNotes = updateNote(latestNotes, currentNoteId, {
           title,
           content,
-          category: assignedCategories[0] || category || '',
-          workspaceCategories: assignedCategories
+          category: normalizedCategories[0] || category || '',
+          workspaceCategories: normalizedCategories
         })
-        saveNotesToStorage(updatedNotes)
-        return updatedNotes
+        const notesWithInheritedCategories = updatedNotes.map((note) =>
+          note.parentNoteId === currentNoteId
+            ? assignItemCategories(
+                note,
+                normalizedCategories,
+                getDefaultCategory(),
+                'category'
+              )
+            : note
+        )
+        saveNotesToStorage(notesWithInheritedCategories)
+        return notesWithInheritedCategories
       })
     }, 500) // Debounce autosave
 

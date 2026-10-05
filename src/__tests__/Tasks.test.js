@@ -1,5 +1,11 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within
+} from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Tasks from '../pages/Tasks'
 import {
@@ -101,7 +107,9 @@ describe('Tasks Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Uncategorized task')).toBeInTheDocument()
-      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([])
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([
+        'Uncategorised'
+      ])
     })
   })
 
@@ -308,7 +316,12 @@ describe('Tasks Component', () => {
     fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
       target: { value: 'Work task' }
     })
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Work' }))
+    fireEvent.click(
+      within(screen.getByRole('group', { name: 'Categories' })).getByRole(
+        'checkbox',
+        { name: 'Work' }
+      )
+    )
     fireEvent.click(screen.getByText('Add Task'))
     fireEvent.change(screen.getByPlaceholderText('Add a new task...'), {
       target: { value: 'Uncategorized task' }
@@ -337,7 +350,13 @@ describe('Tasks Component', () => {
         name: 'More actions for task "Categorize later"'
       })
     )
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Work' }))
+    fireEvent.click(
+      within(
+        screen.getByRole('group', {
+          name: 'Categories for "Categorize later"'
+        })
+      ).getByRole('checkbox', { name: 'Work' })
+    )
 
     await waitFor(() => {
       const task = JSON.parse(localStorage.getItem('aurorae_tasks'))
@@ -510,7 +529,9 @@ describe('Tasks Component', () => {
       expect(
         container.querySelector('.task-item .task-text')
       ).toHaveTextContent('Water Indoor Plants')
-      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([])
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([
+        'Uncategorised'
+      ])
     })
   })
 
@@ -523,7 +544,10 @@ describe('Tasks Component', () => {
 
     expect(screen.getByRole('button', { name: 'Personal' })).toBeInTheDocument()
     expect(
-      screen.getByRole('option', { name: 'Personal' })
+      within(screen.getByRole('group', { name: 'Categories' })).getByRole(
+        'checkbox',
+        { name: 'Personal' }
+      )
     ).toBeInTheDocument()
   })
 
@@ -807,7 +831,9 @@ describe('Tasks Component', () => {
       const editButton = screen.getByLabelText('Edit task "Checkbox test"')
       fireEvent.click(editButton)
 
-      const checkbox = screen.getByRole('checkbox')
+      const checkbox = screen.getByLabelText(
+        'Mark "Checkbox test" as complete'
+      )
       expect(checkbox).toBeDisabled()
     })
   })

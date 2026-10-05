@@ -1,3 +1,5 @@
+import { isUnassignedCategory } from './itemCategories'
+
 export const CATEGORY_STORAGE_KEY = 'aurorae_categories'
 export const DEFAULT_CATEGORY_STORAGE_KEY = 'aurorae_default_category'
 export const INITIAL_DEFAULT_CATEGORY = 'Uncategorised'
@@ -53,9 +55,9 @@ function uniqueCategories(categories) {
 
 function collectItemCategories(value, categories, includeLegacyCategory) {
   if (Array.isArray(value)) {
-    value.forEach((item) =>
+    value.forEach((item) => {
       collectItemCategories(item, categories, includeLegacyCategory)
-    )
+    })
     return
   }
   if (!value || typeof value !== 'object') return
@@ -92,7 +94,8 @@ export function loadCategories() {
     return [
       defaultCategory,
       ...uniqueCategories(categories).filter(
-        (category) => category.toLowerCase() !== defaultCategory.toLowerCase()
+        (category) =>
+          !isUnassignedCategory(category, defaultCategory)
       )
     ]
   } catch {
@@ -106,7 +109,8 @@ export function saveCategories(categories) {
   const normalized = [
     defaultCategory,
     ...uniqueCategories(categories).filter(
-      (category) => category.toLowerCase() !== defaultCategory.toLowerCase()
+      (category) =>
+        !isUnassignedCategory(category, defaultCategory)
     )
   ]
   try {

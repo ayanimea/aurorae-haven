@@ -168,9 +168,9 @@ export async function renameCategory(oldName, newName) {
     }
   }
 
-  LOCAL_DATA_KEYS.forEach(([key, includeLegacyCategory]) =>
+  LOCAL_DATA_KEYS.forEach(([key, includeLegacyCategory]) => {
     renameLocalData(key, oldKey, newCategory, includeLegacyCategory)
-  )
+  })
 
   const updatedCategories = categories.map((category) =>
     category.toLowerCase() === oldKey ? newCategory : category

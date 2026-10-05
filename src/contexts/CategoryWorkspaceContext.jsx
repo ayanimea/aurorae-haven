@@ -2,12 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import PropTypes from 'prop-types'
 import { useCategories } from '../hooks/useCategories'
 import { matchesItemCategories } from '../utils/itemCategories'
+import { INITIAL_DEFAULT_CATEGORY } from '../utils/categoryStorage'
 
 const WORKSPACE_STORAGE_KEY = 'aurorae_workspace_category'
 const CategoryWorkspaceContext = createContext(null)
 const DEFAULT_WORKSPACE_CONTEXT = {
   categories: [],
   activeCategory: null,
+  defaultCategory: INITIAL_DEFAULT_CATEGORY,
   setActiveCategory: () => {},
   matchesCategory: () => true
 }
@@ -83,8 +85,14 @@ export function CategoryWorkspaceProvider({ children }) {
   )
 
   const value = useMemo(
-    () => ({ categories, activeCategory, setActiveCategory, matchesCategory }),
-    [categories, activeCategory, setActiveCategory, matchesCategory]
+    () => ({
+      categories,
+      activeCategory,
+      defaultCategory,
+      setActiveCategory,
+      matchesCategory
+    }),
+    [categories, activeCategory, defaultCategory, setActiveCategory, matchesCategory]
   )
 
   return (

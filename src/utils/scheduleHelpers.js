@@ -33,7 +33,7 @@ function isPlainObject(value) {
  * @returns {Object|null} The created task object, or null when title is empty
  * @throws {Error} If localStorage write fails
  */
-export function addTaskToStorage(title, category = '') {
+export function addTaskToStorage(title, category = '', workspaceCategories = []) {
   const normalizedTitle = typeof title === 'string' ? title.trim() : ''
   if (normalizedTitle.length === 0) {
     return null
@@ -43,6 +43,10 @@ export function addTaskToStorage(title, category = '') {
     id: generateSecureUUID(),
     text: normalizedTitle,
     category: typeof category === 'string' ? category : '',
+    workspaceCategories:
+      Array.isArray(workspaceCategories) && workspaceCategories.length
+        ? workspaceCategories
+        : [category],
     completed: false,
     createdAt: new Date().toISOString(),
     dueDate: null,

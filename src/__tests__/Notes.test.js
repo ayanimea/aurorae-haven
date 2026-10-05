@@ -1374,7 +1374,7 @@ describe('Notes Component', () => {
       )
       expect(entries.length).toBe(1)
       expect(entries[0].category).toBeDefined()
-      expect(entries[0].category).toBe('')
+      expect(entries[0].category).toBe('Uncategorised')
     })
 
     test('migrates notes without category field', () => {
