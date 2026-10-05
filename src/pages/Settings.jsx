@@ -30,6 +30,8 @@ import FileInputButton from '../components/common/FileInputButton'
 import Icon from '../components/common/Icon'
 import { getEnvVar } from '../utils/environment'
 import { useCategories } from '../hooks/useCategories'
+import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
+import { CATEGORY_THEME_TEMPLATES } from '../utils/categoryThemes'
 import { MAX_CATEGORY_COUNT } from '../utils/categoryStorage'
 import '../assets/styles/settings.css'
 
@@ -48,6 +50,7 @@ function Settings({ onExport, onImport }) {
   const [isConfiguring, setIsConfiguring] = useState(false)
   const { categories, addCategory, renameCategory, defaultCategory } =
     useCategories()
+  const { categoryThemes, setCategoryTheme } = useCategoryWorkspace()
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [newCategory, setNewCategory] = useState('')
   const [renamingCategory, setRenamingCategory] = useState(null)
@@ -387,6 +390,22 @@ function Settings({ onExport, onImport }) {
                 ) : (
                   <>
                     <span>{category}</span>
+                    <label className='settings-category-theme'>
+                      Theme for {category}
+                      <select
+                        aria-label={`Theme for ${category}`}
+                        value={categoryThemes[category] || 'default'}
+                        onChange={(event) =>
+                          setCategoryTheme(category, event.target.value)
+                        }
+                      >
+                        {CATEGORY_THEME_TEMPLATES.map((theme) => (
+                          <option key={theme.id} value={theme.id}>
+                            {theme.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <button
                       type='button'
                       aria-label={`Rename category ${category}`}

@@ -18,9 +18,12 @@ Aurorae Haven is a client-side React application built with Vite. This page is a
 - `src/utils/itemCategories.js` normalizes multi-category assignments and checks whether an item belongs in a workspace.
 - `src/utils/categoryManager.js` propagates a rename through browser storage.
 - `src/utils/categoryImport.js` migrates legacy imported records without category data.
+- `src/utils/categoryThemes.js` validates and persists category-to-built-in-theme IDs; template definitions and original SVG backgrounds ship with the app.
 - `src/components/common/CategoryMultiSelect.jsx` provides the shared accessible assignment control.
 
 Categories are shared across Tasks, Notes, Habits, Routines, Schedule, Stats, and Library. **Uncategorised** is the default and exclusive category. Legacy imports with missing categories use **Unassigned**; those items remain visible in every named workspace.
+
+Category themes are presentation-only. The active category selects a built-in theme on the document root; the **All** workspace clears that override. JSON backups contain only category-to-theme IDs, and import ignores unknown IDs.
 
 ## Feature code
 

@@ -134,7 +134,9 @@ describe('Settings Component', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('6 of 6 categories used')).toBeInTheDocument()
+      expect(
+        screen.getByText('6 of 6 additional categories used')
+      ).toBeInTheDocument()
     })
     expect(
       screen.getByRole('button', { name: 'Add category' })
@@ -207,7 +209,7 @@ describe('Settings Component', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(screen.getByText('Appearance')).toBeInTheDocument()
-    expect(screen.getByLabelText(/theme/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Theme', { exact: true })).toBeInTheDocument()
   })
 
   test('shows Grant Access button when stored handle is available and handle is lost', async () => {

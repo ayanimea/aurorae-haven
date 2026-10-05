@@ -55,6 +55,14 @@ Use the workspace navigation beside the page content to switch what you are view
 
 1. Open **Settings**.
 2. Use the **Categories** section to add or rename a category.
+
+### Choose a category theme
+
+1. In **Settings**, find the category.
+2. Choose **Theme for [category]**. The preview applies to the whole app while that category workspace is selected.
+3. Choose **Default color scheme** to remove the category override. **All** always uses the default appearance.
+
+The built-in choices are Red Nebula, Green Aurora, Yellow Quasar, Black Planetary Nebula, White/Purple Galaxy, and Black/White Clusters of Galaxies. Theme backgrounds are decorative; text and controls stay in the foreground. JSON backups save the selected built-in theme name for each category, not the built-in template data.
 3. Return to an item and select one or more categories. Choose **Uncategorised** on its own when the item should remain unassigned.
 
 ### Schedule and other workspaces

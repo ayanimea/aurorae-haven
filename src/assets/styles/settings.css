@@ -25,10 +25,19 @@
 }
 
 .settings-category-list li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   padding: 0.35rem 0.65rem;
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--ink);
+}
+
+.settings-category-theme {
+  display: grid;
+  gap: 0.25rem;
 }
 
 .settings-category-form {

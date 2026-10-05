@@ -11,6 +11,7 @@ import {
   setDefaultCategory
 } from './categoryStorage'
 import { loadSavedTasks, saveSavedTasks } from './savedTasks'
+import { loadCategoryThemes, saveCategoryThemes } from './categoryThemes'
 import { normalizeImportedCategories } from './categoryImport'
 
 const logger = createLogger('IndexedDB')
@@ -569,6 +570,7 @@ export async function exportAllData() {
   data.categories = loadCategories()
   data.defaultCategory = getDefaultCategory()
   data.savedTasks = loadSavedTasks()
+  data.categoryThemes = loadCategoryThemes()
 
   // Include tasks from aurorae_tasks (Eisenhower matrix format)
   try {
@@ -700,6 +702,7 @@ export async function importAllData(data) {
     if (Array.isArray(data.savedTasks)) {
       saveSavedTasks(data.savedTasks)
     }
+    saveCategoryThemes(data.categoryThemes)
 
     // Import tasks to aurorae_tasks (Eisenhower matrix format)
     if (data.auroraeTasksData && typeof data.auroraeTasksData === 'object') {

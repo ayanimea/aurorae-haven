@@ -3,14 +3,17 @@ import PropTypes from 'prop-types'
 import { useCategories } from '../hooks/useCategories'
 import { matchesItemCategories } from '../utils/itemCategories'
 import { INITIAL_DEFAULT_CATEGORY } from '../utils/categoryStorage'
+import { loadCategoryThemes, saveCategoryThemes } from '../utils/categoryThemes'
 
 const WORKSPACE_STORAGE_KEY = 'aurorae_workspace_category'
 const CategoryWorkspaceContext = createContext(null)
 const DEFAULT_WORKSPACE_CONTEXT = {
   categories: [],
   activeCategory: null,
+  categoryThemes: {},
   defaultCategory: INITIAL_DEFAULT_CATEGORY,
   setActiveCategory: () => {},
+  setCategoryTheme: () => {},
   matchesCategory: () => true
 }
 
@@ -25,6 +28,15 @@ function loadWorkspaceCategory() {
 export function CategoryWorkspaceProvider({ children }) {
   const { categories, defaultCategory } = useCategories()
   const [activeCategory, setActiveCategoryState] = useState(loadWorkspaceCategory)
+  const [categoryThemes, setCategoryThemes] = useState(loadCategoryThemes)
+
+  const setCategoryTheme = useCallback((category, themeId) => {
+    const current = loadCategoryThemes()
+    const updated = { ...current }
+    if (themeId === 'default') delete updated[category]
+    else updated[category] = themeId
+    setCategoryThemes(saveCategoryThemes(updated))
+  }, [])
 
   const setActiveCategory = useCallback((category) => {
     const value = typeof category === 'string' && category.trim()
@@ -43,6 +55,8 @@ export function CategoryWorkspaceProvider({ children }) {
     const syncWorkspace = (event) => {
       if (event.key === WORKSPACE_STORAGE_KEY) {
         setActiveCategoryState(event.newValue || null)
+      } else if (event.key === 'aurorae_category_themes') {
+        setCategoryThemes(loadCategoryThemes())
       }
     }
     const renameWorkspace = (event) => {
@@ -51,6 +65,19 @@ export function CategoryWorkspaceProvider({ children }) {
         event.detail?.oldCategory?.toLowerCase()
       ) {
         setActiveCategoryState(event.detail.newCategory)
+        setCategoryThemes(
+          saveCategoryThemes(
+            Object.fromEntries(
+              Object.entries(loadCategoryThemes()).map(([category, theme]) => [
+                category.toLowerCase() ===
+                event.detail.oldCategory.toLowerCase()
+                  ? event.detail.newCategory
+                  : category,
+                theme
+              ])
+            )
+          )
+        )
         try {
           localStorage.setItem(
             WORKSPACE_STORAGE_KEY,
@@ -68,6 +95,15 @@ export function CategoryWorkspaceProvider({ children }) {
       window.removeEventListener('aurorae:category-renamed', renameWorkspace)
     }
   }, [activeCategory])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const themeId = activeCategory
+      ? categoryThemes[activeCategory]
+      : undefined
+    if (themeId) root.dataset.categoryTheme = themeId
+    else delete root.dataset.categoryTheme
+  }, [activeCategory, categoryThemes])
 
   useEffect(() => {
     if (
@@ -90,9 +126,11 @@ export function CategoryWorkspaceProvider({ children }) {
       activeCategory,
       defaultCategory,
       setActiveCategory,
+      categoryThemes,
+      setCategoryTheme,
       matchesCategory
     }),
-    [categories, activeCategory, defaultCategory, setActiveCategory, matchesCategory]
+    [categories, activeCategory, defaultCategory, setActiveCategory, categoryThemes, setCategoryTheme, matchesCategory]
   )
 
   return (

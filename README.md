@@ -12,6 +12,7 @@
 - **Tasks**: Prioritise using the Eisenhower matrix, add nested subtasks, and reuse saved tasks
 - **Shared workspaces**: Switch between All or a category to filter Tasks, Notes, Habits, Routines, Schedule, Stats, and Library
 - **Categories**: Create and rename up to six custom categories in Settings. Assign several categories to an item; the default **Uncategorised** category is exclusive
+- **Workspace themes**: Choose one of six built-in, accessible color-and-background themes per category in Settings; **All** always uses the default appearance. Backups store only theme names, not template definitions.
 - **Template Library**: Browse predefined task and routine templates in Library, use them from Settings, or choose them while creating routines
 - **Habits**: Track streaks and small wins
 - **Notes & Brain Dump**: Write Markdown, nest notes, and import or export notes as Markdown

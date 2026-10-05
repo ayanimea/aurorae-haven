@@ -56,6 +56,18 @@ describe('Data Manager', () => {
       expect(data.categories).toEqual(['Uncategorised', 'Personal', 'Work'])
     })
 
+    it('exports category theme IDs without bundling theme definitions', async () => {
+      localStorage.setItem(
+        'aurorae_category_themes',
+        JSON.stringify({ Work: 'red-nebula' })
+      )
+
+      const data = await getDataTemplate()
+
+      expect(data.categoryThemes).toEqual({ Work: 'red-nebula' })
+      expect(data.categoryThemes).not.toHaveProperty('templates')
+    })
+
     it('should include saved tasks in exported data', async () => {
       const savedTasks = [
         { id: 'saved-1', text: 'Recurring', quadrant: 'urgent_important' }
@@ -371,6 +383,20 @@ describe('Data Manager', () => {
   })
 
   describe('importJSON', () => {
+    it('restores valid category theme IDs and drops unknown templates', () => {
+      importToLocalStorage({
+        categories: ['Work'],
+        categoryThemes: {
+          Work: 'green-aurora',
+          Unknown: 'not-a-built-in-theme'
+        }
+      })
+
+      expect(
+        JSON.parse(localStorage.getItem('aurorae_category_themes'))
+      ).toEqual({ Work: 'green-aurora' })
+    })
+
     it('restores shared categories and categorized workspace data to localStorage', () => {
       const tasks = {
         urgent_important: [

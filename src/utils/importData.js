@@ -9,6 +9,7 @@ import { PAGE_RELOAD_DELAY_MS } from './uiConstants'
 import { saveCategories, setDefaultCategory } from './categoryStorage'
 import { saveSavedTasks } from './savedTasks'
 import { normalizeImportedCategories } from './categoryImport'
+import { saveCategoryThemes } from './categoryThemes'
 
 const logger = createLogger('ImportData')
 
@@ -55,6 +56,7 @@ export function importToLocalStorage(data) {
   if (Array.isArray(data.savedTasks)) {
     saveSavedTasks(data.savedTasks)
   }
+  saveCategoryThemes(data.categoryThemes)
 }
 
 // Import success message constant

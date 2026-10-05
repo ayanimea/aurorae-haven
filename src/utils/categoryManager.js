@@ -11,6 +11,7 @@ import {
   put,
   STORES
 } from './indexedDBManager'
+import { loadCategoryThemes, renameCategoryTheme, saveCategoryThemes } from './categoryThemes'
 
 const LOCAL_DATA_KEYS = [
   ['aurorae_tasks', true],
@@ -171,6 +172,9 @@ export async function renameCategory(oldName, newName) {
   LOCAL_DATA_KEYS.forEach(([key, includeLegacyCategory]) => {
     renameLocalData(key, oldKey, newCategory, includeLegacyCategory)
   })
+  saveCategoryThemes(
+    renameCategoryTheme(loadCategoryThemes(), oldCategory, newCategory)
+  )
 
   const updatedCategories = categories.map((category) =>
     category.toLowerCase() === oldKey ? newCategory : category
