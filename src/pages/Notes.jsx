@@ -630,7 +630,6 @@ function Notes() {
       {/* Filter Modal */}
       {showFilterModal && (
         <FilterModal
-          notes={notes}
           filterOptions={filterOptions}
           onFilterChange={setFilterOptions}
           onClose={() => setShowFilterModal(false)}

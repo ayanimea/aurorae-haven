@@ -1,15 +1,13 @@
 
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
-import { getUniqueCategories } from '../../utils/notes/noteFilters'
 
 /**
- * Modal for filtering notes by category and date
+ * Modal for filtering notes by date
  */
-function FilterModal({ notes, filterOptions, onFilterChange, onClose }) {
+function FilterModal({ filterOptions, onFilterChange, onClose }) {
   const handleClearFilters = () => {
     onFilterChange({
-      category: '',
       dateFilter: 'all',
       customStart: '',
       customEnd: ''
@@ -42,30 +40,6 @@ function FilterModal({ notes, filterOptions, onFilterChange, onClose }) {
           </button>
         </div>
         <div className='modal-body'>
-          <div className='filter-section'>
-            <label htmlFor='category-filter'>
-              <strong>Category:</strong>
-            </label>
-            <select
-              id='category-filter'
-              value={filterOptions.category}
-              onChange={(e) =>
-                onFilterChange({
-                  ...filterOptions,
-                  category: e.target.value
-                })
-              }
-              className='filter-select'
-            >
-              <option value=''>All Categories</option>
-              {getUniqueCategories(notes).map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className='filter-section'>
             <label htmlFor='date-filter'>
               <strong>Date Filter:</strong>
@@ -141,9 +115,7 @@ function FilterModal({ notes, filterOptions, onFilterChange, onClose }) {
 }
 
 FilterModal.propTypes = {
-  notes: PropTypes.array.isRequired,
   filterOptions: PropTypes.shape({
-    category: PropTypes.string,
     dateFilter: PropTypes.string,
     customStart: PropTypes.string,
     customEnd: PropTypes.string

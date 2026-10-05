@@ -1434,6 +1434,8 @@ describe('Notes Component', () => {
       fireEvent.click(filterButton)
 
       expect(screen.getByText('Filter Notes')).toBeInTheDocument()
+      expect(screen.queryByLabelText('Category:')).not.toBeInTheDocument()
+      expect(screen.getByLabelText('Date Filter:')).toBeInTheDocument()
     })
 
     test('displays category in note list item', () => {

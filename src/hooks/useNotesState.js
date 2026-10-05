@@ -54,7 +54,6 @@ export function useNotesState() {
   const [assignedCategories, setAssignedCategoriesState] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterOptions, setFilterOptions] = useState({
-    category: '',
     dateFilter: 'all',
     customStart: '',
     customEnd: ''
