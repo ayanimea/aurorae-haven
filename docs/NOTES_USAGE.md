@@ -6,8 +6,19 @@ This guide explains how to use the enhanced Brain Dump features in Aurorae Haven
 
 1. Navigate to the Brain Dump tab in the app
 2. Start typing your thoughts in the markdown editor
-3. See live preview below with rendered markdown
+3. See the rendered preview beside the editor on wide screens, or below it on small screens
 4. Use the toolbar buttons to access advanced features
+
+## Categories and sub-notes
+
+- Choose **All** or a category from the workspace navigation. Categories are shared with Tasks, Habits, Routines, Schedule, Stats, and Library.
+- Create or rename categories in **Settings**. A note can have several categories.
+- **Uncategorised** is the default and can only be assigned on its own.
+- Notes without a category stay visible in every category workspace. Old backups imported without category data are assigned **Unassigned**.
+- Choose **New sub-note** to create a child note. It inherits the parent's categories. Drag one unlocked note onto another to nest it.
+- Deleting a parent note moves its direct sub-notes to the parent's level.
+
+If organising feels like extra work, use **All** and add categories later.
 
 ## Basic Features
 
@@ -320,7 +331,7 @@ When creating a new note, a **template picker** opens so you can choose a starti
 **Built-in templates:**
 
 | Template | Description |
-|----------|-------------|
+| --- | --- |
 | 📄 Blank | Empty note |
 | 📔 Daily Journal | Morning check-in, tasks, evening reflection |
 | 🗓️ Meeting Notes | Agenda, decisions, action items table |
@@ -422,11 +433,11 @@ Bug found in login #bug #critical
 
 ### Preview Not Updating
 
-**Cause:** External libraries (marked.js, DOMPurify) not loaded
+**Cause:** Markdown preview dependencies or content processing failed
 **Solution:**
 
 - Check browser console for errors
-- Ensure CDN is accessible
+- Check whether the required app assets loaded
 - Check Content Security Policy
 
 ### OPFS Not Working
@@ -458,15 +469,15 @@ Bug found in login #bug #critical
 
 ## Keyboard Reference Card
 
-| Shortcut        | Action               |
-| --------------- | -------------------- |
+| Shortcut        | Action                                         |
+| --------------- | ---------------------------------------------- |
 | `Ctrl/Cmd + S`  | Export all notes as markdown (ZIP if multiple) |
-| `Ctrl/Cmd + H`  | View version history |
-| `Escape`        | Close modal          |
-| `Enter`         | Continue list        |
-| `Enter` (twice) | Exit list            |
-| `Tab`           | Next element         |
-| `Shift + Tab`   | Previous element     |
+| `Ctrl/Cmd + H`  | View version history                           |
+| `Escape`        | Close modal                                    |
+| `Enter`         | Continue list                                  |
+| `Enter` (twice) | Exit list                                      |
+| `Tab`           | Next element                                   |
+| `Shift + Tab`   | Previous element                               |
 
 ## Examples
 

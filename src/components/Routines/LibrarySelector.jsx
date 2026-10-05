@@ -28,10 +28,14 @@ import TemplateEditor from '../Library/TemplateEditor'
 import Icon from '../common/Icon'
 import { createLogger } from '../../utils/logger'
 import { withErrorHandling } from '../../utils/errorHandler'
+import { useCategories } from '../../hooks/useCategories'
+import { useCategoryWorkspace } from '../../contexts/CategoryWorkspaceContext'
 
 const logger = createLogger('LibrarySelector')
 
 function LibrarySelector({ onSelectTemplate }) {
+  const { categories } = useCategories()
+  const { activeCategory } = useCategoryWorkspace()
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
   const [useIndexedDB, setUseIndexedDB] = useState(false)
@@ -374,6 +378,8 @@ function LibrarySelector({ onSelectTemplate }) {
       {showEditor && (
         <TemplateEditor
           template={editingTemplate}
+          categories={categories}
+          activeCategory={activeCategory}
           onSave={handleSaveTemplate}
           onClose={() => {
             setShowEditor(false)

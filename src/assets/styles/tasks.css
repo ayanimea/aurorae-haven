@@ -8,9 +8,22 @@
 
 .add-task-form {
   display: grid;
-  grid-template-columns: 1fr 200px auto;
+  grid-template-columns: minmax(0, 1fr) 200px 160px auto;
   gap: 10px;
   align-items: center;
+}
+
+.task-template-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.task-template-picker select {
+  flex: 1;
+  min-width: 180px;
 }
 
 .quadrant-select {
@@ -180,14 +193,25 @@
   accent-color: var(--mint);
 }
 
+.task-category-select {
+  width: 100%;
+  max-width: none;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
 .task-text {
   flex: 1;
   font-size: 14px;
   line-height: 1.4;
   color: var(--ink);
   word-break: break-word;
-  cursor: default;
+  cursor: grab;
   user-select: text;
+}
+
+.task-text:active {
+  cursor: grabbing;
 }
 
 .task-edit-input {
@@ -215,6 +239,119 @@
   display: flex;
   gap: 4px;
   align-items: center;
+  position: relative;
+}
+
+.task-context-menu {
+  position: relative;
+}
+
+.task-context-menu summary {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.task-context-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.task-context-menu summary:focus-visible,
+.task-context-menu-action:focus-visible,
+.task-promote-subtask:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.task-context-menu-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: var(--z-dropdown, 20);
+  display: grid;
+  gap: 8px;
+  width: min(240px, calc(100vw - 48px));
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.task-context-menu-action {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.task-context-menu-label {
+  display: grid;
+  gap: 4px;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.task-promote-subtask {
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.task-subtask[draggable='true'] {
+  cursor: grab;
+}
+
+.task-subtask[draggable='true']:active {
+  cursor: grabbing;
+}
+
+.task-subtasks {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  padding-left: 28px;
+}
+
+.task-subtask,
+.task-subtask-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.task-subtask span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.task-subtask span.completed {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+.task-subtask-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--ink);
 }
 
 .btn-edit,
@@ -296,7 +433,7 @@
   }
 
   .add-task-form {
-    grid-template-columns: 1fr 180px auto;
+    grid-template-columns: minmax(0, 1fr) 170px 140px auto;
     gap: 8px;
   }
 }
@@ -312,6 +449,10 @@
   .add-task-form {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .task-template-picker {
+    align-items: stretch;
   }
 
   /* Card header layout - ensure proper wrapping */

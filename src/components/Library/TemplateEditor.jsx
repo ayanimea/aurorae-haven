@@ -8,8 +8,12 @@ import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { createLogger } from '../../utils/logger'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
+import { getDefaultCategory } from '../../utils/categoryStorage'
+import { getItemCategories } from '../../utils/itemCategories'
 
 const logger = createLogger('TemplateEditor')
+const EMPTY_CATEGORIES = Object.freeze([])
 
 /**
  * Convert a numeric string value to a number or null
@@ -32,7 +36,14 @@ function convertToNumberOrNull(value) {
   return Number.isNaN(num) ? null : num
 }
 
-function TemplateEditor({ template, onSave, onClose, typeFilter }) {
+function TemplateEditor({
+  template,
+  onSave,
+  onClose,
+  typeFilter,
+  categories = EMPTY_CATEGORIES,
+  activeCategory = null
+}) {
   logger.log('TemplateEditor opened with template:', template)
   const [formData, setFormData] = useState(() => {
     if (template) {
@@ -41,6 +52,26 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
         title: template.title,
         tags: template.tags || [],
         category: template.category || '',
+        workspaceCategories:
+          getItemCategories(
+            {
+              ...template,
+              category: categories.includes(template.category)
+                ? template.category
+                : undefined
+            },
+            'workspaceCategory'
+          ).length
+            ? getItemCategories(
+                {
+                  ...template,
+                  category: categories.includes(template.category)
+                    ? template.category
+                    : undefined
+                },
+                'workspaceCategory'
+              )
+            : [activeCategory || getDefaultCategory()],
         quadrant: template.quadrant || 'urgent_important',
         dueOffset: template.dueOffset || '',
         steps: template.steps || [],
@@ -55,6 +86,7 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
       title: '',
       tags: [],
       category: '',
+      workspaceCategories: [activeCategory || getDefaultCategory()],
       quadrant: 'urgent_important',
       dueOffset: '',
       steps: [],
@@ -83,6 +115,26 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
         title: template.title,
         tags: template.tags || [],
         category: template.category || '',
+        workspaceCategories:
+          getItemCategories(
+            {
+              ...template,
+              category: categories.includes(template.category)
+                ? template.category
+                : undefined
+            },
+            'workspaceCategory'
+          ).length
+            ? getItemCategories(
+                {
+                  ...template,
+                  category: categories.includes(template.category)
+                    ? template.category
+                    : undefined
+                },
+                'workspaceCategory'
+              )
+            : [activeCategory || getDefaultCategory()],
         quadrant: template.quadrant || 'urgent_important',
         dueOffset: template.dueOffset || '',
         steps: template.steps || [],
@@ -92,7 +144,7 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
         description: template.description || ''
       })
     }
-  }, [template])
+  }, [template, categories, activeCategory])
 
   const validateForm = () => {
     const newErrors = {}
@@ -126,6 +178,7 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
     // Convert numeric fields to numbers (or null if empty)
     const templateData = {
       ...formData,
+      workspaceCategory: formData.workspaceCategories[0],
       dueOffset: convertToNumberOrNull(formData.dueOffset),
       estimatedDuration: convertToNumberOrNull(formData.estimatedDuration),
       steps: formData.steps.map((step) => ({
@@ -258,6 +311,19 @@ function TemplateEditor({ template, onSave, onClose, typeFilter }) {
               </span>
             )}
           </div>
+
+          <CategoryMultiSelect
+            value={formData.workspaceCategories}
+            categories={categories}
+            defaultCategory={getDefaultCategory()}
+            onChange={(workspaceCategories) =>
+              setFormData({
+                ...formData,
+                workspaceCategories
+              })
+            }
+            label='Workspace categories'
+          />
 
           {/* Tags */}
           <div className='form-group'>
@@ -475,6 +541,8 @@ TemplateEditor.propTypes = {
     title: PropTypes.string,
     tags: PropTypes.arrayOf(PropTypes.string),
     category: PropTypes.string,
+    workspaceCategory: PropTypes.string,
+    workspaceCategories: PropTypes.arrayOf(PropTypes.string),
     quadrant: PropTypes.string,
     dueOffset: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     steps: PropTypes.arrayOf(PropTypes.object),
@@ -488,7 +556,9 @@ TemplateEditor.propTypes = {
   }),
   onSave: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
-  typeFilter: PropTypes.oneOf(['task', 'routine'])
+  typeFilter: PropTypes.oneOf(['task', 'routine']),
+  categories: PropTypes.arrayOf(PropTypes.string),
+  activeCategory: PropTypes.string
 }
 
 export default TemplateEditor

@@ -130,9 +130,9 @@ import Button from '../components/common/Button'
 
 ## Custom Hooks
 
-### 4. useBrainDumpState (`src/hooks/useBrainDumpState.js`)
+### 4. useNotesState (`src/hooks/useNotesState.js`)
 
-**Purpose**: Manages BrainDump notes state and operations
+**Purpose**: Manages Notes state, autosaving, filters, and category assignments.
 
 **Returns**:
 
@@ -143,19 +143,20 @@ const {
   currentNote, // Current note object
   title, // Current note title
   content, // Current note content
-  category, // Current note category
+  category, // Primary category for compatibility
+  assignedCategories, // All workspace categories for the current note
   searchQuery, // Search query
   filterOptions, // Filter settings
   filteredNotes, // Filtered notes array
   setTitle, // Update title
   setContent, // Update content
-  setCategory, // Update category
+  setAssignedCategories, // Update all workspace categories
   setSearchQuery, // Update search
   setFilterOptions, // Update filters
   loadNote, // Load a note
   createNote, // Create new note
   updateNotes // Update notes array
-} = useBrainDumpState()
+} = useNotesState()
 ```
 
 **Features**:
@@ -163,6 +164,7 @@ const {
 - Automatic localStorage persistence
 - Migration from old format
 - Debounced autosave (500ms)
+- Shared multi-category assignment; sub-notes follow their parent's categories
 - Note filtering and searching
 - Memoized computed values
 
@@ -180,6 +182,8 @@ const {
   toggleTask, // Toggle completion
   deleteTask, // Delete task
   editTask, // Edit task text
+  updateTaskCategory, // Assign workspace categories
+  addSubtask, // Add a child task
   moveTask // Move task between quadrants
 } = useTasksState()
 ```
@@ -189,6 +193,7 @@ const {
 - Automatic localStorage persistence
 - Secure UUID generation
 - Quadrant-based organization
+- Shared multi-category assignment; subtasks inherit their parent's categories
 - Error handling for storage quota
 
 ### 6. useDragAndDrop (`src/hooks/useDragAndDrop.js`)

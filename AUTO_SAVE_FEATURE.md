@@ -72,12 +72,12 @@ aurorae_save_2026-01-08_143025_a1b2c3d4.json
 
 ## Browser Compatibility
 
-| Browser | Version | Support                                     |
-| ------- | ------- | ------------------------------------------- |
-| Chrome  | 86+     | ✅ Full                                     |
-| Edge    | 86+     | ✅ Full                                     |
-| Firefox | All     | ❌ No (API not implemented)                 |
-| Safari  | 15.2+   | ⚠️ Partial (requires experimental features) |
+| Browser | Version | Support |
+| --- | --- | --- |
+| Chrome | 86+ | ✅ Full |
+| Edge | 86+ | ✅ Full |
+| Firefox | All | ❌ No (API not implemented) |
+| Safari | 15.2+ | ⚠️ Partial (requires experimental features) |
 
 **Fallback**: Manual export/import and IndexedDB backups remain available for all browsers.
 

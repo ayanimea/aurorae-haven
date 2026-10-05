@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
 import { handleEnterKey } from '../../utils/listContinuation'
-import { getUniqueCategories } from '../../utils/notes/noteFilters'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
 
 // Editor pane width constraints (percentage of container)
 const MIN_EDITOR_WIDTH_PERCENT = 20
@@ -17,16 +17,19 @@ function NoteEditor({
   currentNote,
   currentNoteId,
   title,
-  category,
+  assignedCategories,
+  categories,
+  defaultCategory,
   content,
   preview,
   notes,
   showNoteList,
   onTitleChange,
-  onCategoryChange,
+  onAssignedCategoriesChange,
   onContentChange,
   onToggleNoteList,
   onNewNote,
+  onCreateSubNote,
   onImport,
   onExport,
   onExportOdt,
@@ -130,21 +133,19 @@ function NoteEditor({
             disabled={!currentNoteId || currentNote?.locked}
             aria-label='Note title'
           />
-          <input
-            type='text'
-            className='note-category-input'
-            placeholder='Category...'
-            value={category}
-            onChange={(e) => onCategoryChange(e.target.value)}
+          <CategoryMultiSelect
+            value={
+              assignedCategories.length
+                ? assignedCategories
+                : [defaultCategory]
+            }
+            categories={categories}
+            defaultCategory={defaultCategory}
+            onChange={onAssignedCategoriesChange}
+            label='Note categories'
             disabled={!currentNoteId || currentNote?.locked}
-            list='category-suggestions'
-            aria-label='Note category'
+            className='note-category-input'
           />
-          <datalist id='category-suggestions'>
-            {getUniqueCategories(notes).map((cat) => (
-              <option key={cat} value={cat} />
-            ))}
-          </datalist>
         </div>
         <div className='toolbar'>
           <label className='btn' aria-label='Import' title='Import'>
@@ -218,6 +219,20 @@ function NoteEditor({
             title='New note'
           >
             <Icon name='plus' />
+          </button>
+          <button
+            type='button'
+            className='btn'
+            onClick={onCreateSubNote}
+            aria-label='New sub-note'
+            title='New sub-note'
+            disabled={
+              !currentNoteId ||
+              currentNote?.locked ||
+              Boolean(currentNote?.parentNoteId)
+            }
+          >
+            <Icon name='list' />
           </button>
           <button type='button'
             className='btn'
@@ -332,16 +347,19 @@ NoteEditor.propTypes = {
   currentNote: PropTypes.object,
   currentNoteId: PropTypes.string,
   title: PropTypes.string.isRequired,
-  category: PropTypes.string.isRequired,
+  assignedCategories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  defaultCategory: PropTypes.string.isRequired,
   content: PropTypes.string.isRequired,
   preview: PropTypes.string.isRequired,
   notes: PropTypes.array.isRequired,
   showNoteList: PropTypes.bool.isRequired,
   onTitleChange: PropTypes.func.isRequired,
-  onCategoryChange: PropTypes.func.isRequired,
+  onAssignedCategoriesChange: PropTypes.func.isRequired,
   onContentChange: PropTypes.func.isRequired,
   onToggleNoteList: PropTypes.func.isRequired,
   onNewNote: PropTypes.func.isRequired,
+  onCreateSubNote: PropTypes.func.isRequired,
   onImport: PropTypes.func.isRequired,
   onExport: PropTypes.func.isRequired,
   onExportOdt: PropTypes.func.isRequired,

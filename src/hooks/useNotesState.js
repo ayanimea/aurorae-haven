@@ -7,6 +7,12 @@ import {
   loadNotesFromStorage
 } from '../utils/notes/noteOperations'
 import { filterNotes as filterNotesUtil } from '../utils/notes/noteFilters'
+import {
+  assignItemCategories,
+  getItemCategories,
+  normalizeCategorySelection
+} from '../utils/itemCategories'
+import { getDefaultCategory } from '../utils/categoryStorage'
 
 /**
  * Custom hook for managing Notes state
@@ -45,9 +51,9 @@ export function useNotesState() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('')
+  const [assignedCategories, setAssignedCategoriesState] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterOptions, setFilterOptions] = useState({
-    category: '',
     dateFilter: 'all',
     customStart: '',
     customEnd: ''
@@ -66,7 +72,14 @@ export function useNotesState() {
     setTitle(note.title)
     setContent(note.content)
     setCategory(note.category || '')
+    setAssignedCategoriesState(getItemCategories(note))
   }, [])
+
+  const setAssignedCategories = (values) => {
+    const normalized = normalizeCategorySelection(values, getDefaultCategory())
+    setAssignedCategoriesState(normalized)
+    setCategory(normalized[0])
+  }
 
   // Load first note on mount if available
   // biome-ignore lint/correctness/useExhaustiveDependencies: notes[0]?.id is intentionally used instead of notes[0] to avoid re-loading when note content changes
@@ -123,13 +136,28 @@ export function useNotesState() {
           return latestNotes // Don't update if note was deleted
         }
 
+        const normalizedCategories = normalizeCategorySelection(
+          assignedCategories,
+          getDefaultCategory()
+        )
         const updatedNotes = updateNote(latestNotes, currentNoteId, {
           title,
           content,
-          category
+          category: normalizedCategories[0] || category || '',
+          workspaceCategories: normalizedCategories
         })
-        saveNotesToStorage(updatedNotes)
-        return updatedNotes
+        const notesWithInheritedCategories = updatedNotes.map((note) =>
+          note.parentNoteId === currentNoteId
+            ? assignItemCategories(
+                note,
+                normalizedCategories,
+                getDefaultCategory(),
+                'category'
+              )
+            : note
+        )
+        saveNotesToStorage(notesWithInheritedCategories)
+        return notesWithInheritedCategories
       })
     }, 500) // Debounce autosave
 
@@ -140,11 +168,17 @@ export function useNotesState() {
       clearTimeout(saveTimeout)
       autosaveTimeoutRef.current = null
     }
-  }, [currentNoteId, title, content, category, currentNote])
+  }, [currentNoteId, title, content, category, assignedCategories, currentNote])
 
   // Create new note, optionally with initial content from a template
-  const createNote = (initialContent = '') => {
-    const newNote = { ...createNewNote(), content: initialContent }
+  const createNote = (
+    initialContent = '',
+    initialCategories = [getDefaultCategory()]
+  ) => {
+    const newNote = assignItemCategories({
+      ...createNewNote(),
+      content: initialContent
+    }, initialCategories, getDefaultCategory())
     const updatedNotes = [...notes, newNote]
     setNotes(updatedNotes)
     saveNotesToStorage(updatedNotes)
@@ -174,6 +208,7 @@ export function useNotesState() {
     title,
     content,
     category,
+    assignedCategories,
     searchQuery,
     filterOptions,
     filteredNotes,
@@ -181,7 +216,11 @@ export function useNotesState() {
     setNotes,
     setTitle,
     setContent,
-    setCategory,
+    setCategory: (value) => {
+      setCategory(value)
+      setAssignedCategoriesState(value ? [value] : [])
+    },
+    setAssignedCategories,
     setSearchQuery,
     setFilterOptions,
     // Actions

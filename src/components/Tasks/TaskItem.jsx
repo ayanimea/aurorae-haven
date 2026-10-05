@@ -1,6 +1,9 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
+import { getDefaultCategory } from '../../utils/categoryStorage'
+import { getItemCategories } from '../../utils/itemCategories'
 
 /**
  * Component for displaying and editing a single task
@@ -13,60 +16,99 @@ function TaskItem({
   onToggle,
   onEdit,
   onEditTextChange,
+  categories,
+  onCategoryChange,
   onSaveEdit,
   onCancelEdit,
   onDelete,
-  onDragStart
+  onAddSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
+  onDragStart,
+  onSubtaskDragStart,
+  onNestDrop,
+  onNestSubtaskDrop,
+  onPromoteSubtask,
+  onDragOver,
+  onDragEnd,
+  isSaved,
+  onSaveTask,
+  onMoveTask,
+  availableTasks,
+  onNestTask
 }) {
   const editInputRef = useRef(null)
+  const subtaskInputRef = useRef(null)
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false)
+  const [subtaskText, setSubtaskText] = useState('')
+  const [selectedParentId, setSelectedParentId] = useState('')
+  const subtasks = Array.isArray(task.subtasks) ? task.subtasks : []
 
   // Focus edit input when editing starts
   useEffect(() => {
     if (isEditing && editInputRef.current) {
       editInputRef.current.focus()
     }
-  }, [isEditing])
+    if (isAddingSubtask && subtaskInputRef.current) {
+      subtaskInputRef.current.focus()
+    }
+  }, [isEditing, isAddingSubtask])
 
   const handleKeyDown = (e) => {
-    // Keyboard shortcuts for moving tasks between quadrants
-    if (e.altKey && !isEditing) {
-      e.preventDefault()
-      switch (e.key) {
-        case 'ArrowUp':
-          // Move to previous quadrant
-          onDragStart(quadrant, task)
-          // Trigger drop in previous quadrant - handled by parent
-          break
-        case 'ArrowDown':
-          // Move to next quadrant
-          onDragStart(quadrant, task)
-          break
-        case 'ArrowLeft':
-        case 'ArrowRight':
-          // Move to adjacent quadrant
-          onDragStart(quadrant, task)
-          break
-        default:
-          break
+    if (
+      !e.altKey ||
+      isEditing ||
+      ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) ||
+      e.target.isContentEditable
+    ) {
+      return
+    }
+    const adjacentQuadrants = {
+      urgent_important: {
+        ArrowDown: 'not_urgent_important',
+        ArrowRight: 'urgent_not_important'
+      },
+      not_urgent_important: {
+        ArrowUp: 'urgent_important',
+        ArrowRight: 'not_urgent_not_important'
+      },
+      urgent_not_important: {
+        ArrowDown: 'not_urgent_not_important',
+        ArrowLeft: 'urgent_important'
+      },
+      not_urgent_not_important: {
+        ArrowUp: 'urgent_not_important',
+        ArrowLeft: 'not_urgent_important'
       }
     }
+    const targetQuadrant = adjacentQuadrants[quadrant]?.[e.key]
+    if (targetQuadrant) {
+      e.preventDefault()
+      onMoveTask(quadrant, targetQuadrant, task)
+    }
+  }
+
+  const handleAddSubtask = (e) => {
+    e.preventDefault()
+    if (!subtaskText.trim()) return
+    onAddSubtask(quadrant, task.id, subtaskText)
+    setSubtaskText('')
+    setIsAddingSubtask(false)
   }
 
   return (
     <div
       className={`task-item ${task.completed ? 'completed' : ''}`}
-      draggable={!isEditing}
-      onDragStart={() => onDragStart(quadrant, task)}
+      onDragOver={onDragOver}
+      onDrop={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onNestDrop(quadrant, task.id)
+      }}
       onKeyDown={handleKeyDown}
       tabIndex={isEditing ? -1 : 0}
-      role='button'
+      role='group'
       aria-label={`Task: ${task.text}. Press Alt + Arrow keys to move between quadrants.`}
-      onClick={(e) => {
-        // Allow click to propagate to child elements (checkbox, edit, delete)
-        if (e.target.classList.contains('task-item')) {
-          // Handle task item click if needed
-        }
-      }}
     >
       <input
         type='checkbox'
@@ -96,6 +138,9 @@ function TaskItem({
           {/* biome-ignore lint/a11y/noStaticElementInteractions: onDoubleClick is a power-user shortcut; primary edit interaction is via the accessible Edit button */}
           <span
             className='task-text'
+            draggable
+            onDragStart={() => onDragStart(quadrant, task)}
+            onDragEnd={onDragEnd}
             onDoubleClick={() => onEdit(quadrant, task)}
           >
             {task.text}
@@ -129,6 +174,16 @@ function TaskItem({
             >
               <Icon name='edit' />
             </button>
+            <button
+              type='button'
+              className='btn-edit'
+              onClick={() => onSaveTask({ ...task, quadrant })}
+              aria-label={isSaved ? `Task "${task.text}" is saved` : `Save task "${task.text}" for later`}
+              title={isSaved ? 'Saved for reuse' : 'Save for reuse'}
+              disabled={isSaved}
+            >
+              <Icon name='check' />
+            </button>
             <button type="button"
               className='btn-delete'
               onClick={() => onDelete(quadrant, task.id)}
@@ -136,8 +191,181 @@ function TaskItem({
             >
               <Icon name='trash' />
             </button>
+            <details
+              className='task-context-menu'
+              onDragStart={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+              }}
+            >
+              <summary
+                role='button'
+                tabIndex={0}
+                aria-label={`More actions for task "${task.text}"`}
+                onKeyDown={(event) => {
+                  const menu = event.currentTarget.parentElement
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    menu.open = !menu.open
+                  } else if (event.key === 'Escape') {
+                    menu.open = false
+                  }
+                }}
+              >
+                More
+              </summary>
+              <div className='task-context-menu-panel'>
+                <button
+                  type='button'
+                  className='task-context-menu-action'
+                  onClick={() => setIsAddingSubtask(true)}
+                  aria-label={`Add subtask to ${task.text}`}
+                >
+                  Add subtask
+                </button>
+                <label className='task-context-menu-label'>
+                  Nest under
+                  <select
+                    value={selectedParentId}
+                    onChange={(event) => setSelectedParentId(event.target.value)}
+                    aria-label={`Choose parent task for "${task.text}"`}
+                  >
+                    <option value=''>Choose a parent task</option>
+                    {availableTasks
+                      .filter((candidate) => candidate.id !== task.id)
+                      .map((candidate) => (
+                        <option
+                          key={`${candidate.quadrant}:${candidate.id}`}
+                          value={candidate.id}
+                        >
+                          {candidate.text}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <button
+                  type='button'
+                  className='task-context-menu-action'
+                  disabled={!selectedParentId || subtasks.length > 0}
+                  onClick={() => {
+                    const parentTask = availableTasks.find(
+                      (candidate) => candidate.id === selectedParentId
+                    )
+                    if (parentTask) {
+                      onNestTask(
+                        quadrant,
+                        parentTask.quadrant,
+                        parentTask.id,
+                        task
+                      )
+                    }
+                  }}
+                >
+                  Nest under selected task
+                </button>
+                <div className='task-context-menu-label'>
+                  Category
+                  <CategoryMultiSelect
+                    value={
+                      getItemCategories(task).length
+                        ? getItemCategories(task)
+                        : [getDefaultCategory()]
+                    }
+                    categories={categories}
+                    defaultCategory={getDefaultCategory()}
+                    onChange={(value) =>
+                      onCategoryChange(quadrant, task.id, value)
+                    }
+                    label={`Categories for "${task.text}"`}
+                    className='task-context-category-select'
+                  />
+                </div>
+              </div>
+            </details>
           </>
         )}
+      </div>
+      <div className='task-subtasks'>
+        {subtasks.map((subtask) => (
+          <div
+            className='task-subtask'
+            key={subtask.id}
+            data-subtask-id={subtask.id}
+            draggable
+            onDragStart={(event) => {
+              event.stopPropagation()
+              onSubtaskDragStart(quadrant, task.id, subtask)
+            }}
+            onDragOver={onDragOver}
+            onDrop={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              onNestSubtaskDrop(quadrant, task.id)
+            }}
+            onDragEnd={(event) => {
+              event.stopPropagation()
+              onDragEnd()
+            }}
+            role='group'
+            aria-label={`Subtask: ${subtask.text}. Drag to a quadrant to make it a task.`}
+          >
+            <input
+              type='checkbox'
+              checked={subtask.completed}
+              onChange={() =>
+                onToggleSubtask(quadrant, task.id, subtask.id)
+              }
+              aria-label={`Mark "${subtask.text}" as ${subtask.completed ? 'incomplete' : 'complete'}`}
+            />
+            <span className={subtask.completed ? 'completed' : ''}>
+              {subtask.text}
+            </span>
+            <button
+              type='button'
+              className='btn-delete'
+              onClick={() => onDeleteSubtask(quadrant, task.id, subtask.id)}
+              aria-label={`Delete subtask "${subtask.text}"`}
+            >
+              <Icon name='trash' />
+            </button>
+            <button
+              type='button'
+              className='task-promote-subtask'
+              onClick={() =>
+                onPromoteSubtask(quadrant, task.id, subtask.id, quadrant)
+              }
+              aria-label={`Make "${subtask.text}" a task`}
+              title='Make task'
+            >
+              Make task
+            </button>
+          </div>
+        ))}
+        {isAddingSubtask ? (
+          <form className='task-subtask-form' onSubmit={handleAddSubtask}>
+            <input
+              ref={subtaskInputRef}
+              type='text'
+              value={subtaskText}
+              onChange={(e) => setSubtaskText(e.target.value)}
+              aria-label={`New subtask for ${task.text}`}
+            />
+            <button type='submit' className='btn' aria-label='Save subtask'>
+              <Icon name='check' />
+            </button>
+            <button
+              type='button'
+              className='btn'
+              onClick={() => {
+                setSubtaskText('')
+                setIsAddingSubtask(false)
+              }}
+              aria-label='Cancel subtask'
+            >
+              <Icon name='x' />
+            </button>
+          </form>
+        ) : null}
       </div>
     </div>
   )
@@ -147,7 +375,8 @@ TaskItem.propTypes = {
   task: PropTypes.shape({
     id: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
-    completed: PropTypes.bool.isRequired
+    completed: PropTypes.bool.isRequired,
+    category: PropTypes.string
   }).isRequired,
   quadrant: PropTypes.string.isRequired,
   isEditing: PropTypes.bool.isRequired,
@@ -155,10 +384,26 @@ TaskItem.propTypes = {
   onToggle: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onEditTextChange: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onCategoryChange: PropTypes.func.isRequired,
   onSaveEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
-  onDragStart: PropTypes.func.isRequired
+  onAddSubtask: PropTypes.func.isRequired,
+  onToggleSubtask: PropTypes.func.isRequired,
+  onDeleteSubtask: PropTypes.func.isRequired,
+  onDragStart: PropTypes.func.isRequired,
+  onSubtaskDragStart: PropTypes.func.isRequired,
+  onNestDrop: PropTypes.func.isRequired,
+  onNestSubtaskDrop: PropTypes.func.isRequired,
+  onPromoteSubtask: PropTypes.func.isRequired,
+  onDragOver: PropTypes.func.isRequired,
+  onDragEnd: PropTypes.func.isRequired,
+  isSaved: PropTypes.bool.isRequired,
+  onSaveTask: PropTypes.func.isRequired,
+  onMoveTask: PropTypes.func.isRequired,
+  availableTasks: PropTypes.array.isRequired,
+  onNestTask: PropTypes.func.isRequired
 }
 
 export default TaskItem

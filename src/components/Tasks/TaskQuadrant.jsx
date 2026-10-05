@@ -1,6 +1,7 @@
 
 import PropTypes from 'prop-types'
 import TaskItem from './TaskItem'
+import { getItemCategories } from '../../utils/itemCategories'
 
 /**
  * Component for displaying a quadrant of the Eisenhower Matrix
@@ -13,12 +14,27 @@ function TaskQuadrant({
   onToggle,
   onEdit,
   onEditTextChange,
+  categories,
+  onCategoryChange,
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  onAddSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
   onDragStart,
+  onSubtaskDragStart,
+  onNestDrop,
+  onNestSubtaskDrop,
+  onPromoteSubtask,
   onDragOver,
-  onDrop
+  onDragEnd,
+  savedTasks,
+  onSaveTask,
+  onDrop,
+  onMoveTask,
+  availableTasks,
+  onNestTask
 }) {
   const isEditing = (task) => {
     return (
@@ -51,10 +67,32 @@ function TaskQuadrant({
               onToggle={onToggle}
               onEdit={onEdit}
               onEditTextChange={onEditTextChange}
+              categories={categories}
+              onCategoryChange={onCategoryChange}
               onSaveEdit={onSaveEdit}
               onCancelEdit={onCancelEdit}
               onDelete={onDelete}
+              onAddSubtask={onAddSubtask}
+              onToggleSubtask={onToggleSubtask}
+              onDeleteSubtask={onDeleteSubtask}
               onDragStart={onDragStart}
+              onSubtaskDragStart={onSubtaskDragStart}
+              onNestDrop={onNestDrop}
+              onNestSubtaskDrop={onNestSubtaskDrop}
+              onPromoteSubtask={onPromoteSubtask}
+              onDragOver={onDragOver}
+              onDragEnd={onDragEnd}
+              onMoveTask={onMoveTask}
+              availableTasks={availableTasks}
+              onNestTask={onNestTask}
+              isSaved={savedTasks.some(
+                (saved) =>
+                  saved.text === task.text &&
+                  saved.quadrant === quadrant.key &&
+                  JSON.stringify(getItemCategories(saved)) ===
+                    JSON.stringify(getItemCategories(task))
+              )}
+              onSaveTask={onSaveTask}
             />
           ))
         )}
@@ -79,12 +117,27 @@ TaskQuadrant.propTypes = {
   onToggle: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onEditTextChange: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onCategoryChange: PropTypes.func.isRequired,
   onSaveEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onAddSubtask: PropTypes.func.isRequired,
+  onToggleSubtask: PropTypes.func.isRequired,
+  onDeleteSubtask: PropTypes.func.isRequired,
   onDragStart: PropTypes.func.isRequired,
+  onSubtaskDragStart: PropTypes.func.isRequired,
+  onNestDrop: PropTypes.func.isRequired,
+  onNestSubtaskDrop: PropTypes.func.isRequired,
+  onPromoteSubtask: PropTypes.func.isRequired,
   onDragOver: PropTypes.func.isRequired,
-  onDrop: PropTypes.func.isRequired
+  onDragEnd: PropTypes.func.isRequired,
+  savedTasks: PropTypes.array.isRequired,
+  onSaveTask: PropTypes.func.isRequired,
+  onDrop: PropTypes.func.isRequired,
+  onMoveTask: PropTypes.func.isRequired,
+  availableTasks: PropTypes.array.isRequired,
+  onNestTask: PropTypes.func.isRequired
 }
 
 export default TaskQuadrant

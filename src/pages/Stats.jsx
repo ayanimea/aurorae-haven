@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { getStatsByType, isIndexedDBAvailable } from '../utils/indexedDBManager'
 import { createLogger } from '../utils/logger'
 import { useCrossTabSync } from '../hooks/useCrossTabSync'
+import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
 
 const logger = createLogger('Stats')
 
 function Stats() {
+  const { matchesCategory } = useCategoryWorkspace()
   const [stats, setStats] = useState({
     taskCompletions: [],
     habitStreaks: [],
@@ -32,16 +34,31 @@ function Stats() {
       ])
 
       setStats({
-        taskCompletions: taskStats,
-        habitStreaks: habitStats,
-        routineTimes: routineStats
+        taskCompletions: taskStats.filter((stat) =>
+          matchesCategory(
+            { workspaceCategory: stat.workspaceCategory ?? stat.category },
+            'workspaceCategory'
+          )
+        ),
+        habitStreaks: habitStats.filter((stat) =>
+          matchesCategory(
+            { workspaceCategory: stat.workspaceCategory ?? stat.category },
+            'workspaceCategory'
+          )
+        ),
+        routineTimes: routineStats.filter((stat) =>
+          matchesCategory(
+            { workspaceCategory: stat.workspaceCategory ?? stat.category },
+            'workspaceCategory'
+          )
+        )
       })
     } catch (e) {
       logger.error('Failed to load stats:', e)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [matchesCategory])
 
   useEffect(() => {
     void loadStats()

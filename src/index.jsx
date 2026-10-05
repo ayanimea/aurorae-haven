@@ -1,5 +1,5 @@
 // src/index.js
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   BrowserRouter,
@@ -15,19 +15,20 @@ import './assets/styles/styles.css'
 import Layout from './components/Layout.jsx'
 import Toast from './components/Toast.jsx'
 
-// Pages
-import Home from './pages/Home.jsx'
-import Schedule from './pages/Schedule.jsx'
-import Routines from './pages/Routines.jsx'
-import Notes from './pages/Notes.jsx'
-import Tasks from './pages/Tasks.jsx'
-import Habits from './pages/Habits.jsx'
-import Stats from './pages/Stats.jsx'
-import Library from './pages/Library.jsx'
-import Settings from './pages/Settings.jsx'
+// Pages are loaded on demand so feature libraries don't block the initial bundle.
+const Home = lazy(() => import('./pages/Home.jsx'))
+const Schedule = lazy(() => import('./pages/Schedule.jsx'))
+const Routines = lazy(() => import('./pages/Routines.jsx'))
+const Notes = lazy(() => import('./pages/Notes.jsx'))
+const Tasks = lazy(() => import('./pages/Tasks.jsx'))
+const Habits = lazy(() => import('./pages/Habits.jsx'))
+const Stats = lazy(() => import('./pages/Stats.jsx'))
+const Library = lazy(() => import('./pages/Library.jsx'))
+const Settings = lazy(() => import('./pages/Settings.jsx'))
 
 // Contexts
 import { RoutineRunnerProvider } from './contexts/RoutineRunnerContext.jsx'
+import { CategoryWorkspaceProvider } from './contexts/CategoryWorkspaceContext.jsx'
 
 // Utils
 import {
@@ -152,8 +153,10 @@ function RouterApp() {
     <BrowserRouter basename={basename}>
       <RoutineRunnerProvider>
       <RedirectHandler />
-      <Layout onExport={handleExport}>
-        <Routes>
+      <CategoryWorkspaceProvider>
+        <Layout onExport={handleExport}>
+          <Suspense fallback={<div className='small' role='status'>Loading page…</div>}>
+          <Routes>
           {/* Figma-aligned landing: Tasks at root */}
           <Route path='/' element={<Tasks />} />
 
@@ -181,8 +184,10 @@ function RouterApp() {
 
           {/* Fallback: unknown routes → home */}
           <Route path='*' element={<Navigate to='/' replace />} />
-        </Routes>
-      </Layout>
+          </Routes>
+          </Suspense>
+        </Layout>
+      </CategoryWorkspaceProvider>
 
       <Toast
         message={toast.message}

@@ -1,8 +1,50 @@
 /* Settings page styles */
 /* Auto-save configuration UI */
 
+.settings-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-category-card .card-h h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
 .settings-section {
   margin-bottom: 2rem;
+}
+
+.settings-category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0.75rem 0;
+  list-style: none;
+}
+
+.settings-category-list li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+}
+
+.settings-category-theme {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.settings-category-form {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 400px;
+  margin-top: 0.75rem;
 }
 
 .settings-section-title {

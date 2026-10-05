@@ -17,6 +17,7 @@
 
 /* Navigation: appbar, tabs, mobile menu */
 @import './navigation.css';
+@import './category-workspace.css';
 
 /* Feature-specific styles */
 @import './schedule.css';

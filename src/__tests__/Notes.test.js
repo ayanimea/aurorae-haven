@@ -6,6 +6,10 @@ import { vi } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import Notes from '../pages/Notes.jsx'
+import {
+  CategoryWorkspaceNav,
+  CategoryWorkspaceProvider
+} from '../contexts/CategoryWorkspaceContext'
 
 // Mock marked and DOMPurify
 vi.mock('marked', () => ({
@@ -44,6 +48,14 @@ const localStorageMock = (() => {
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 })
+
+const renderWithWorkspace = (ui) =>
+  render(
+    <CategoryWorkspaceProvider>
+      {ui}
+      <CategoryWorkspaceNav />
+    </CategoryWorkspaceProvider>
+  )
 
 describe('Notes Component', () => {
   beforeEach(() => {
@@ -148,6 +160,88 @@ describe('Notes Component', () => {
         expect(preview.innerHTML).toContain('# Heading')
       })
     })
+  })
+
+  test('nests an existing note using the accessible parent selector', async () => {
+    localStorage.setItem(
+      'brainDumpEntries',
+      JSON.stringify([
+        {
+          id: 'parent-note',
+          title: 'Parent note',
+          content: '',
+          category: 'Work',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'child-note',
+          title: 'Existing child',
+          content: '',
+          category: 'Work',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ])
+    )
+    render(<Notes />)
+    fireEvent.change(screen.getByLabelText('Choose a parent for Existing child'), {
+      target: { value: 'parent-note' }
+    })
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Nest Existing child under the selected parent'
+      })
+    )
+
+    await waitFor(() => {
+      const notes = JSON.parse(localStorage.getItem('brainDumpEntries'))
+      expect(notes.find((note) => note.id === 'child-note').parentNoteId).toBe(
+        'parent-note'
+      )
+    })
+  })
+
+  test('sorts notes by normalized category with title tie-breaking', () => {
+    localStorage.setItem(
+      'brainDumpEntries',
+      JSON.stringify([
+        {
+          id: 'z-category',
+          title: 'First title',
+          content: '',
+          workspaceCategories: ['Zulu'],
+          createdAt: '2025-01-01',
+          updatedAt: '2025-01-01'
+        },
+        {
+          id: 'same-category-b',
+          title: 'Beta title',
+          content: '',
+          workspaceCategories: ['Alpha'],
+          createdAt: '2025-01-01',
+          updatedAt: '2025-01-01'
+        },
+        {
+          id: 'same-category-a',
+          title: 'Alpha title',
+          content: '',
+          workspaceCategories: ['alpha'],
+          createdAt: '2025-01-01',
+          updatedAt: '2025-01-01'
+        }
+      ])
+    )
+    const { container } = render(<Notes />)
+    fireEvent.change(screen.getByLabelText('Sort notes'), {
+      target: { value: 'category' }
+    })
+
+    expect(
+      [...container.querySelectorAll('.note-item-title')].map(
+        (title) => title.textContent
+      )
+    ).toEqual(['Alpha title', 'Beta title', 'First title'])
   })
 
   describe('Auto-list continuation', () => {
@@ -1362,7 +1456,7 @@ describe('Notes Component', () => {
       )
       expect(entries.length).toBe(1)
       expect(entries[0].category).toBeDefined()
-      expect(entries[0].category).toBe('')
+      expect(entries[0].category).toBe('Uncategorised')
     })
 
     test('migrates notes without category field', () => {
@@ -1386,6 +1480,7 @@ describe('Notes Component', () => {
     })
 
     test('saves category when editing note', async () => {
+      localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
       const mockEntries = [
         {
           id: 'test-id',
@@ -1400,8 +1495,7 @@ describe('Notes Component', () => {
 
       render(<Notes />)
 
-      const categoryInput = screen.getByPlaceholderText('Category...')
-      fireEvent.change(categoryInput, { target: { value: 'Work' } })
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Work' }))
 
       await waitFor(
         () => {
@@ -1409,6 +1503,7 @@ describe('Notes Component', () => {
             localStorage.getItem('brainDumpEntries') || '[]'
           )
           expect(entries[0].category).toBe('Work')
+          expect(entries[0].workspaceCategories).toEqual(['Work'])
         },
         { timeout: 1000 }
       )
@@ -1421,6 +1516,8 @@ describe('Notes Component', () => {
       fireEvent.click(filterButton)
 
       expect(screen.getByText('Filter Notes')).toBeInTheDocument()
+      expect(screen.queryByLabelText('Category:')).not.toBeInTheDocument()
+      expect(screen.getByLabelText('Date Filter:')).toBeInTheDocument()
     })
 
     test('displays category in note list item', () => {
@@ -1438,7 +1535,176 @@ describe('Notes Component', () => {
 
       render(<Notes />)
 
-      expect(screen.getByText('Personal')).toBeInTheDocument()
+      expect(screen.getAllByText('Personal').length).toBeGreaterThan(0)
+    })
+
+    test('creates a sub-note linked to the current note', async () => {
+      localStorage.setItem(
+        'brainDumpEntries',
+        JSON.stringify([
+          {
+            id: 'parent-note',
+            title: 'Parent note',
+            content: 'Parent content',
+            category: 'Work',
+            locked: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ])
+      )
+      render(<Notes />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'New sub-note' }))
+
+      expect(
+        screen.getByPlaceholderText('Note title...')
+      ).toHaveValue('Untitled Sub-note')
+      await waitFor(() => {
+        const entries = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(entries).toHaveLength(2)
+        expect(entries[1].parentNoteId).toBe('parent-note')
+        expect(entries[1].category).toBe('Work')
+      })
+    })
+
+    test('prevents creating or nesting notes beyond two levels', async () => {
+      const notes = [
+        {
+          id: 'parent-note',
+          title: 'Parent note',
+          content: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'child-note',
+          title: 'Child note',
+          content: '',
+          parentNoteId: 'parent-note',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'other-note',
+          title: 'Other note',
+          content: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(notes))
+      const { container } = render(<Notes />)
+
+      fireEvent.click(screen.getByText('Child note', { exact: true }))
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Note title...')).toHaveValue(
+          'Child note'
+        )
+        expect(
+          screen.getByRole('button', { name: 'New sub-note' })
+        ).toBeDisabled()
+      })
+
+      const childNote = screen.getByText('Child note').closest('.note-item')
+      const otherNote = screen.getByText('Other note').closest('.note-item')
+      fireEvent.dragStart(otherNote, {
+        dataTransfer: { setData: vi.fn() }
+      })
+      fireEvent.drop(childNote, {
+        dataTransfer: { getData: () => 'other-note' }
+      })
+
+      await waitFor(() => {
+        const saved = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(
+          saved.find((note) => note.id === 'other-note').parentNoteId
+        ).toBeNull()
+      })
+    })
+
+    test('dragging a note onto another nests it', async () => {
+      const notes = [
+        {
+          id: 'parent-note',
+          title: 'Parent note',
+          content: '',
+          category: 'Work',
+          locked: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'child-note',
+          title: 'Child note',
+          content: '',
+          category: 'Personal',
+          locked: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('brainDumpEntries', JSON.stringify(notes))
+      const { container } = render(<Notes />)
+      const noteItems = container.querySelectorAll('.note-item')
+      fireEvent.dragStart(noteItems[1], {
+        dataTransfer: { setData: vi.fn() }
+      })
+      fireEvent.dragOver(noteItems[0])
+      fireEvent.drop(noteItems[0], {
+        dataTransfer: { getData: () => 'child-note' }
+      })
+
+      await waitFor(() => {
+        const saved = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(saved.find((note) => note.id === 'child-note').parentNoteId).toBe(
+          'parent-note'
+        )
+        expect(saved.find((note) => note.id === 'child-note').category).toBe(
+          'Work'
+        )
+      })
+    })
+
+    test('category workspaces filter notes and include uncategorized notes', () => {
+      localStorage.setItem(
+        'brainDumpEntries',
+        JSON.stringify([
+          {
+            id: 'personal-note',
+            title: 'Personal entry',
+            content: '',
+            category: 'Personal',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'work-note',
+            title: 'Work entry',
+            content: '',
+            category: 'Work',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'uncategorized-note',
+            title: 'Uncategorized entry',
+            content: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ])
+      )
+      renderWithWorkspace(<Notes />)
+      fireEvent.click(screen.getByRole('button', { name: 'Work' }))
+      expect(screen.getByText('Work entry')).toBeInTheDocument()
+      expect(screen.queryByText('Personal entry')).not.toBeInTheDocument()
+      expect(screen.getByText('Uncategorized entry')).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: 'All' }))
+      expect(screen.getByText('Work entry')).toBeInTheDocument()
+      expect(screen.getByText('Personal entry')).toBeInTheDocument()
+      expect(screen.getByText('Uncategorized entry')).toBeInTheDocument()
     })
   })
 })

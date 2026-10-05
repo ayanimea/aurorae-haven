@@ -170,7 +170,13 @@ describe('scheduleHelpers', () => {
 
     it('should search routines by title', async () => {
       getRoutines.mockResolvedValue([
-        { id: 'r1', title: 'Morning Routine', totalDuration: 1800 },
+        {
+          id: 'r1',
+          title: 'Morning Routine',
+          totalDuration: 1800,
+          workspaceCategories: ['Work'],
+          workspaceCategory: 'Work'
+        },
         { id: 'r2', title: 'Evening Routine', totalDuration: 900 }
       ])
 
@@ -178,13 +184,34 @@ describe('scheduleHelpers', () => {
       expect(results).toHaveLength(1)
       expect(results[0].title).toBe('Morning Routine')
       expect(results[0].type).toBe('routine')
+      expect(results[0].workspaceCategories).toEqual(['Work'])
+      expect(results[0].workspaceCategory).toBe('Work')
     })
 
     it('should search tasks by text', async () => {
+      localStorage.setItem(
+        'aurorae_tasks',
+        JSON.stringify({
+          urgent_important: [
+            {
+              id: '1',
+              text: 'Buy groceries',
+              completed: false,
+              workspaceCategories: ['Home'],
+              category: 'Home'
+            }
+          ],
+          not_urgent_important: [],
+          urgent_not_important: [],
+          not_urgent_not_important: []
+        })
+      )
       const results = await searchRoutinesAndTasks('groceries', 'task')
       expect(results).toHaveLength(1)
       expect(results[0].title).toBe('Buy groceries')
       expect(results[0].type).toBe('task')
+      expect(results[0].workspaceCategories).toEqual(['Home'])
+      expect(results[0].category).toBe('Home')
     })
 
     it('should prioritize important tasks in results', async () => {
@@ -222,6 +249,45 @@ describe('scheduleHelpers', () => {
   })
 
   describe('getAllRoutinesAndTasks', () => {
+    it('preserves workspace categories in results', async () => {
+      getRoutines.mockResolvedValue([
+        {
+          id: 'r1',
+          title: 'Work Routine',
+          workspaceCategories: ['Work'],
+          workspaceCategory: 'Work'
+        }
+      ])
+      localStorage.setItem(
+        'aurorae_tasks',
+        JSON.stringify({
+          urgent_important: [
+            {
+              id: '1',
+              text: 'Work task',
+              completed: false,
+              workspaceCategories: ['Work'],
+              category: 'Work'
+            }
+          ],
+          not_urgent_important: [],
+          urgent_not_important: [],
+          not_urgent_not_important: []
+        })
+      )
+
+      const results = await getAllRoutinesAndTasks(null)
+
+      expect(results.find((item) => item.type === 'routine')).toMatchObject({
+        workspaceCategories: ['Work'],
+        workspaceCategory: 'Work'
+      })
+      expect(results.find((item) => item.type === 'task')).toMatchObject({
+        workspaceCategories: ['Work'],
+        category: 'Work'
+      })
+    })
+
     it('should get all routines and tasks sorted by priority', async () => {
       getRoutines.mockResolvedValue([
         { id: 'r1', title: 'Routine 1', totalDuration: 1800 }

@@ -2,6 +2,8 @@
 
 This document contains all specifications extracted from the AuroraeHaven_Specs.docx file.
 
+> This is a requirements catalog, not a description of the current app. Check marks reflect the original extraction snapshot, not a fresh implementation audit. For current behavior, see the README and user manual.
+
 **Generated**: 2025-10-08
 **Source**: docs/AuroraeHaven_Specs.docx
 **Total Specifications**: 640

@@ -22,6 +22,108 @@
   --figma-input-focus-border: rgba(130, 160, 255, 0.24);
 }
 
+:root[data-category-theme='red-nebula'] {
+  --ink: #fff1f2;
+  --dim: #f1c5cc;
+  --mint: #ff9aa8;
+  --paper: #260c14;
+  --bg-sky-top: #260d1d;
+  --bg-sky-mid: #180b19;
+  --bg-sky-bottom: #0b0812;
+}
+
+:root[data-category-theme='green-aurora'] {
+  --ink: #edfff4;
+  --dim: #bce9cf;
+  --mint: #8ef0b2;
+  --paper: #082719;
+  --bg-sky-top: #09251f;
+  --bg-sky-mid: #081a1c;
+  --bg-sky-bottom: #061012;
+}
+
+:root[data-category-theme='yellow-quasar'] {
+  --ink: #fff8e6;
+  --dim: #f3dfad;
+  --mint: #ffe08a;
+  --paper: #30200a;
+  --bg-sky-top: #33200a;
+  --bg-sky-mid: #1b140b;
+  --bg-sky-bottom: #0e0d0b;
+}
+
+:root[data-category-theme='planetary-nebula'] {
+  --ink: #f2f6ff;
+  --dim: #c5d2ea;
+  --mint: #9de6ff;
+  --paper: #071725;
+  --bg-sky-top: #0b1322;
+  --bg-sky-mid: #090d17;
+  --bg-sky-bottom: #05070c;
+}
+
+:root[data-category-theme='white-purple-galaxy'] {
+  --ink: #fffaff;
+  --dim: #e0d2fa;
+  --mint: #d2bfff;
+  --paper: #21123b;
+  --bg-sky-top: #261845;
+  --bg-sky-mid: #17102c;
+  --bg-sky-bottom: #0b0916;
+}
+
+:root[data-category-theme='galaxy-clusters'] {
+  --ink: #ffffff;
+  --dim: #d5d9e2;
+  --mint: #f1f4f8;
+  --paper: #20252c;
+  --bg-sky-top: #20242b;
+  --bg-sky-mid: #101216;
+  --bg-sky-bottom: #050608;
+}
+
+:root[data-category-theme] {
+  --figma-bg-start: var(--bg-sky-top);
+  --figma-bg-mid: var(--bg-sky-mid);
+  --figma-bg-deep: var(--bg-sky-mid);
+  --figma-bg-end: var(--bg-sky-bottom);
+  --figma-text: var(--ink);
+  --figma-text-muted: var(--dim);
+  --figma-surface: color-mix(in srgb, var(--bg-sky-bottom) 82%, transparent);
+  --figma-panel-bg: color-mix(in srgb, var(--bg-sky-bottom) 82%, transparent);
+  --figma-panel-border: color-mix(in srgb, var(--ink) 18%, transparent);
+  --glass-hi: color-mix(in srgb, var(--bg-sky-mid) 86%, transparent);
+  --glass-lo: color-mix(in srgb, var(--bg-sky-mid) 72%, transparent);
+  --line: color-mix(in srgb, var(--ink) 22%, transparent);
+  --surface: color-mix(in srgb, var(--bg-sky-mid) 96%, black);
+  --surface-border: color-mix(in srgb, var(--ink) 30%, var(--bg-sky-mid));
+  --surface-raised: color-mix(in srgb, var(--ink) 25%, var(--bg-sky-mid));
+}
+
+:root[data-category-theme='red-nebula'] .app-background {
+  background: linear-gradient(rgba(8, 4, 10, 0.62), rgba(8, 4, 10, 0.78)), url('../themes/red-nebula.svg') center / cover no-repeat;
+}
+
+:root[data-category-theme='green-aurora'] .app-background {
+  background: linear-gradient(rgba(3, 8, 9, 0.62), rgba(3, 8, 9, 0.78)), url('../themes/green-aurora.svg') center / cover no-repeat;
+}
+
+:root[data-category-theme='yellow-quasar'] .app-background {
+  background: linear-gradient(rgba(11, 8, 4, 0.64), rgba(11, 8, 4, 0.8)), url('../themes/yellow-quasar.svg') center / cover no-repeat;
+}
+
+:root[data-category-theme='planetary-nebula'] .app-background {
+  background: linear-gradient(rgba(3, 5, 9, 0.6), rgba(3, 5, 9, 0.8)), url('../themes/planetary-nebula.svg') center / cover no-repeat;
+}
+
+:root[data-category-theme='white-purple-galaxy'] .app-background {
+  background: linear-gradient(rgba(7, 5, 12, 0.64), rgba(7, 5, 12, 0.8)), url('../themes/white-purple-galaxy.svg') center / cover no-repeat;
+}
+
+:root[data-category-theme='galaxy-clusters'] .app-background {
+  background: linear-gradient(rgba(2, 3, 5, 0.64), rgba(2, 3, 5, 0.8)), url('../themes/galaxy-clusters.svg') center / cover no-repeat;
+}
+
 body {
   font-family: var(--font-primary);
   color: var(--figma-text);

@@ -2,7 +2,8 @@
 
 > **Aurorae Haven** is a productivity app designed for neurodivergent users.
 > It helps manage routines, tasks, habits, notes, and stats with a calm, astro-themed interface.
-> Features include Markdown import/export, gamification, reminders, and secure local or mobile use.
+> Notes support Markdown import/export. Full-app backups use JSON. Some completion flows include haptics or confetti; scheduled reminders remain planned.
+> **Reading this roadmap:** It contains historical milestones and future ideas. Items marked as planned are not current app features.
 
 ---
 
@@ -13,7 +14,7 @@
 - Basic task manager
 - JSON export/import
 - Early design tokens (colours, typography)
-- LocalStorage persistence
+- Initial localStorage persistence (historical; storage is now split between localStorage and IndexedDB)
 
 ---
 
@@ -45,8 +46,8 @@
 ## v2.0 – Analytics & Gamification 🌟
 
 - Advanced statistics dashboards (charts, streaks, trends)
-- XP, levelling, achievements, streaks, confetti/haptics
-- Notifications & reminders (tasks, routines, habits)
+- Broader XP, levelling, achievements, streaks, and feedback features
+- Scheduled notifications and reminders for tasks, routines, and habits
 - **Android .APK packaging** (PWA → APK with build instructions)
 - Extended documentation (stats, gamification, notifications)
 

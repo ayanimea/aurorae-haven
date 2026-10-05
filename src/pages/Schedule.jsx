@@ -77,6 +77,7 @@ import { EVENT_TYPES } from '../utils/scheduleConstants'
 import { getSettings, VALID_GUIDANCE_LEVELS } from '../utils/settingsManager'
 import { isDevelopment } from '../utils/environment'
 import { addTaskToStorage } from '../utils/scheduleHelpers'
+import { loadTasksState } from '../utils/tasksStorage'
 import { createRoutine } from '../utils/routinesManager'
 import { timeToMinutes, minutesToTime } from '../utils/timeUtils'
 import { validateStructural } from '../schedule/structuralConstraints'
@@ -84,6 +85,8 @@ import { generateSuggestions } from '../schedule/suggestionEngine'
 import { snapDown, snapUp } from '../schedule/timeUtils'
 import { getMemoizedDayLoad, getDayDurationMinutes } from '../schedule/loadComputation'
 import { SCHEDULING_CONFIG } from '../schedule/config'
+import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
+import { getItemCategories } from '../utils/itemCategories'
 import '../components/ErrorBoundary.css'
 
 /**
@@ -138,6 +141,7 @@ function Schedule() {
   const [view, setView] = useState('day') // 'day' | 'week' | 'month'
   const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState([])
+  const [showOtherCategoryTasks, setShowOtherCategoryTasks] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [suggestions, setSuggestions] = useState([])
@@ -154,6 +158,12 @@ function Schedule() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [eventToDelete, setEventToDelete] = useState(null)
   const [showActionModal, setShowActionModal] = useState(false)
+  const {
+    activeCategory,
+    categories,
+    defaultCategory,
+    matchesCategory
+  } = useCategoryWorkspace()
 
   // Dev-only: Lazy-loaded FloatingDevButtons component
   const [FloatingDevButtons, setFloatingDevButtons] = useState(null)
@@ -227,7 +237,34 @@ function Schedule() {
         )
       }
 
-      setEvents(loadedEvents)
+      const taskCategories = new Map()
+      Object.values(loadTasksState()).forEach((quadrantTasks) => {
+        if (!Array.isArray(quadrantTasks)) return
+        quadrantTasks.forEach((task) => {
+          const titleKey = task?.text?.trim().toLowerCase()
+          if (!titleKey) return
+          const categories = getItemCategories(task)
+          const category = categories.length === 1 ? categories[0] : null
+          if (!taskCategories.has(titleKey)) {
+            taskCategories.set(titleKey, category)
+          } else if (taskCategories.get(titleKey) !== category) {
+            taskCategories.set(titleKey, null)
+          }
+        })
+      })
+      setEvents(
+        loadedEvents.map((event) =>
+          event.type === EVENT_TYPES.TASK && !event.category
+            ? {
+                ...event,
+                category:
+                  taskCategories.get(
+                    (event.title || '').trim().toLowerCase()
+                  ) || ''
+              }
+            : event
+        )
+      )
     } catch (_err) {
       setError('Failed to load events. Please try again.')
     } finally {
@@ -245,7 +282,42 @@ function Schedule() {
 
   // Expand midnight-spanning events into per-day segments (mirrors FigmaScheduleGrid's own expansion)
   // so that the load badge correctly accounts for continuation segments on the viewed day.
-  const expandedEvents = useMemo(() => expandMidnightSpanningEvents(events), [events])
+  const workspaceEvents = useMemo(
+    () =>
+      events.flatMap((event) => {
+        if (matchesCategory(event)) return [event]
+        if (
+          activeCategory &&
+          showOtherCategoryTasks &&
+          event.type === EVENT_TYPES.TASK &&
+          event.category
+        ) {
+          return [
+            {
+              ...event,
+              title: event.category,
+              description: '',
+              workspaceRedacted: true
+            }
+          ]
+        }
+        return []
+      }),
+    [events, matchesCategory, activeCategory, showOtherCategoryTasks]
+  )
+  const redactedEventIds = useMemo(
+    () =>
+      new Set(
+        workspaceEvents
+          .filter((event) => event.workspaceRedacted)
+          .map((event) => String(event.id))
+      ),
+    [workspaceEvents]
+  )
+  const expandedEvents = useMemo(
+    () => expandMidnightSpanningEvents(workspaceEvents),
+    [workspaceEvents]
+  )
 
   // Compute load ratio for visible day(s) to show load awareness indicator
   const { loadThresholdHigh, loadThresholdOver } = SCHEDULING_CONFIG
@@ -300,7 +372,17 @@ function Schedule() {
       // Snap timed event start/end to the configured interval (start down, end up).
       // This keeps stored values consistent with structural validation and load
       // computation, which both apply the same snapping internally.
-      let cleanEventData = rawCleanData
+      let cleanEventData = {
+        ...rawCleanData,
+        category:
+          rawCleanData.workspaceCategories?.[0] ??
+          rawCleanData.category ??
+          activeCategory ??
+          defaultCategory,
+        workspaceCategories:
+          rawCleanData.workspaceCategories ??
+          [rawCleanData.category ?? activeCategory ?? defaultCategory]
+      }
       if (rawCleanData.startTime && rawCleanData.endTime && !rawCleanData.allDay) {
         const rawStart = timeToMinutes(rawCleanData.startTime)
         const rawEnd = timeToMinutes(rawCleanData.endTime)
@@ -309,7 +391,7 @@ function Schedule() {
         const snappedStart = snapDown(rawStart)
         const snappedEnd = snapUp(normalEnd)
         cleanEventData = {
-          ...rawCleanData,
+          ...cleanEventData,
           startTime: minutesToTime(snappedStart),
           endTime: formatSnappedEndTime(snappedEnd, wasMidnightSpanning)
         }
@@ -382,7 +464,11 @@ function Schedule() {
         if (_isNewCreation) {
           try {
             if (cleanEventData.type === EVENT_TYPES.TASK) {
-              addTaskToStorage(cleanEventData.title)
+              addTaskToStorage(
+                cleanEventData.title,
+                cleanEventData.category,
+                cleanEventData.workspaceCategories
+              )
             } else if (cleanEventData.type === EVENT_TYPES.ROUTINE) {
               const durationMinutes =
                 timeToMinutes(cleanEventData.endTime) -
@@ -391,6 +477,8 @@ function Schedule() {
               // Only name and estimatedDuration are required for a minimal routine entry.
               await createRoutine({
                 name: cleanEventData.title,
+                workspaceCategories: cleanEventData.workspaceCategories,
+                workspaceCategory: cleanEventData.category,
                 estimatedDuration: Math.max(0, durationMinutes) * 60
               })
             }
@@ -479,12 +567,14 @@ function Schedule() {
 
   // Click on an event card → open ItemActionModal (edit/delete choice)
   const handleGridEventClick = useCallback((evt) => {
+    if (evt.workspaceRedacted) return
     setEventToDelete(evt)
     setShowActionModal(true)
   }, [])
 
   // Drag an event card to a new time slot → preserve duration, update day + startTime
   const handleEventDrop = useCallback(async (evtId, newDay, newHour) => {
+    if (redactedEventIds.has(String(evtId))) return
     const evt = events.find((e) => String(e.id) === String(evtId))
     if (!evt) return
     try {
@@ -512,7 +602,7 @@ function Schedule() {
     } catch (_err) {
       setError('Failed to move event. Please try again.')
     }
-  }, [events, loadEvents])
+  }, [events, loadEvents, redactedEventIds])
 
   // Click on an empty slot → open EventModal to create new event
   const handleSlotClick = useCallback(({ day, startTime, endTime }) => {
@@ -652,6 +742,18 @@ function Schedule() {
             )}
           </div>
           <div className='figma-schedule-controls'>
+            {activeCategory && (
+              <label className='schedule-other-category-toggle'>
+                <input
+                  type='checkbox'
+                  checked={showOtherCategoryTasks}
+                  onChange={(event) =>
+                    setShowOtherCategoryTasks(event.target.checked)
+                  }
+                />
+                Show other tasks as category names
+              </label>
+            )}
             <button
               type='button'
               className='figma-schedule-nav-btn'
@@ -730,7 +832,7 @@ function Schedule() {
           )}
           <div role='region' aria-label='Event calendar'>
             <FigmaScheduleGrid
-              events={events}
+              events={workspaceEvents}
               viewMode={view}
               date={date}
               onEventClick={handleGridEventClick}
@@ -810,6 +912,9 @@ function Schedule() {
           onDelete={handleDeleteFromModal}
           eventType={selectedEventType}
           initialData={selectedEvent}
+          categories={categories}
+          activeCategory={activeCategory}
+          defaultCategory={defaultCategory}
         />
 
         {/* ── Action Modal (edit / delete choice) ──────────────────────────── */}

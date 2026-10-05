@@ -1,5 +1,11 @@
 import { useState } from 'react'
 import PropTypes from 'prop-types'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
+import { getDefaultCategory } from '../../utils/categoryStorage'
+import {
+  assignItemCategories,
+  getItemCategories
+} from '../../utils/itemCategories'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { getCategoryColor } from '../../utils/habitCategories'
@@ -12,7 +18,7 @@ import logger from '../../utils/logger'
  * TAB-HAB-28: Vacation toggle
  * TAB-HAB-29: Brain Dump link integration
  */
-function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
+function HabitDetailDrawer({ habit, categories, onClose, onUpdateHabit }) {
   // Call hooks before any conditional returns
   const navigate = useNavigate()
   const [showVacationMode, setShowVacationMode] = useState(false)
@@ -222,6 +228,28 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
           ✕
         </button>
       </div>
+
+      <CategoryMultiSelect
+        value={
+          getItemCategories(habit, 'workspaceCategory').length
+            ? getItemCategories(habit, 'workspaceCategory')
+            : [getDefaultCategory()]
+        }
+        categories={categories}
+        defaultCategory={getDefaultCategory()}
+        onChange={(workspaceCategories) =>
+          onUpdateHabit(
+            habit.id,
+            assignItemCategories(
+              habit,
+              workspaceCategories,
+              getDefaultCategory(),
+              'workspaceCategory'
+            )
+          )
+        }
+        label='Workspace categories'
+      />
 
       {/* Stats */}
       <div className='card-b' style={{ marginBottom: '1.5rem' }}>
@@ -666,6 +694,7 @@ function HabitDetailDrawer({ habit, onClose, onUpdateHabit }) {
 
 HabitDetailDrawer.propTypes = {
   habit: PropTypes.object,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
   onClose: PropTypes.func.isRequired,
   onUpdateHabit: PropTypes.func.isRequired
 }

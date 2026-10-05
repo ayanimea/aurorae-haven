@@ -202,4 +202,34 @@ describe('TemplateEditor', () => {
       )
     })
   })
+
+  test('allows assigning a shared workspace category to a template', async () => {
+    const onSave = jest.fn()
+
+    render(
+      <TemplateEditor
+        template={null}
+        categories={['Uncategorised', 'Work', 'Personal']}
+        activeCategory='Work'
+        onSave={onSave}
+        onClose={jest.fn()}
+      />
+    )
+
+    expect(screen.getByLabelText('Work')).toBeChecked()
+    fireEvent.click(screen.getByLabelText('Personal'))
+    fireEvent.change(screen.getByLabelText(/title/i), {
+      target: { value: 'Weekly review' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: /create template/i }))
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceCategory: 'Work',
+          workspaceCategories: ['Work', 'Personal']
+        })
+      )
+    })
+  })
 })

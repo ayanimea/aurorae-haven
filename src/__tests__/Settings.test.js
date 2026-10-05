@@ -91,6 +91,7 @@ describe('Settings Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
     process.env.VITE_COMPILE_MODE = 'desktop-offline'
   })
 
@@ -102,6 +103,84 @@ describe('Settings Component', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
     expect(screen.getByText('Settings')).toBeInTheDocument()
     expect(screen.getByText('Customize your experience')).toBeInTheDocument()
+  })
+
+  test('shows the category manager as a separate Settings card', () => {
+    const { container } = render(
+      <Settings onExport={mockOnExport} onImport={mockOnImport} />
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Shared Category Workspaces' })
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Add category' })
+    ).toBeVisible()
+    expect(
+      container.querySelector('.settings-category-card')
+    ).toBeInTheDocument()
+  })
+
+  test('offers the built-in themes for each category', () => {
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+
+    const themeSelect = screen.getByLabelText('Theme for Uncategorised')
+    expect(themeSelect).toHaveValue('default')
+    expect(themeSelect).toHaveDisplayValue('Default color scheme')
+    expect(screen.getByRole('option', { name: 'Red Nebula' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('option', { name: 'Black/White Clusters of Galaxies' })
+    ).toBeInTheDocument()
+  })
+
+  test('creates at most six shared categories in Settings', async () => {
+    localStorage.clear()
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+
+    for (let index = 1; index <= 6; index += 1) {
+      fireEvent.click(screen.getByRole('button', { name: 'Add category' }))
+      fireEvent.change(screen.getByLabelText('New category'), {
+        target: { value: `Category ${index}` }
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Create category' }))
+    }
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('6 of 6 additional categories used')
+      ).toBeInTheDocument()
+    })
+    expect(
+      screen.getByRole('button', { name: 'Add category' })
+    ).toBeDisabled()
+    expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toHaveLength(
+      7
+    )
+  })
+
+  test('renames a shared category from its Settings controls', async () => {
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add category' }))
+    fireEvent.change(screen.getByLabelText('New category'), {
+      target: { value: 'Work' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create category' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rename category Work' }))
+    fireEvent.change(screen.getByLabelText('New name for Work'), {
+      target: { value: 'Career' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save name' }))
+
+    await waitFor(() => {
+      expect(
+        JSON.parse(localStorage.getItem('aurorae_categories'))
+      ).toContain('Career')
+    })
+    expect(
+      screen.queryByRole('button', { name: 'Rename category Work' })
+    ).not.toBeInTheDocument()
   })
 
   test('renders Data Management section at the top with Export and Import buttons', () => {
@@ -167,7 +246,7 @@ describe('Settings Component', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 
     expect(screen.getByText('Appearance')).toBeInTheDocument()
-    expect(screen.getByLabelText(/theme/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Theme', { exact: true })).toBeInTheDocument()
   })
 
   test('shows Grant Access button when stored handle is available and handle is lost', async () => {

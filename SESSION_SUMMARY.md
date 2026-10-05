@@ -1,4 +1,6 @@
-# Debugging Session Summary: Routines Added as Tasks Bug
+# Historical Debugging Record: Routine Template Routing
+
+> This is a record of an earlier investigation, not current troubleshooting guidance. The notes below captured an unresolved report and environment-specific limitations at that time. The current Library normalizes template types and routes templates through `instantiateTemplate()`; check current tests and reproduce the issue before using the historical hypotheses.
 
 ## Issue
 

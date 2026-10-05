@@ -17,6 +17,11 @@ import {
 } from '../../utils/scheduleConstants'
 import { instantiateRoutineFromTemplate } from '../../utils/scheduleHelpers'
 import { createLogger } from '../../utils/logger'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
+import {
+  getItemCategories,
+  normalizeCategorySelection
+} from '../../utils/itemCategories'
 
 const logger = createLogger('EventModal')
 
@@ -63,7 +68,10 @@ function EventModal({
   onSave,
   onDelete,
   eventType,
-  initialData = null
+  initialData = null,
+  categories = [],
+  activeCategory = null,
+  defaultCategory = 'Uncategorised'
 }) {
   // Validate eventType and use default if invalid
   // Note: PropTypes validation will also warn about invalid types in development
@@ -78,7 +86,8 @@ function EventModal({
     endTime: getCurrentTimePlusMinutes(60),
     type: validatedEventType,
     travelTime: 0,
-    preparationTime: 0
+    preparationTime: 0,
+    workspaceCategories: [activeCategory || defaultCategory]
   })
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -110,7 +119,11 @@ function EventModal({
               ? initialData.type
               : validatedEventType,
           travelTime: initialData.travelTime || 0,
-          preparationTime: initialData.preparationTime || 0
+          preparationTime: initialData.preparationTime || 0,
+          workspaceCategories: normalizeCategorySelection(
+            getItemCategories(initialData, 'category'),
+            defaultCategory
+          )
         })
 
         setIsDragToSchedule(isDragToSchedule)
@@ -129,7 +142,8 @@ function EventModal({
           endTime: getCurrentTimePlusMinutes(60),
           type: validatedEventType,
           travelTime: 0,
-          preparationTime: 0
+          preparationTime: 0,
+          workspaceCategories: [activeCategory || defaultCategory]
         })
         setIsDragToSchedule(false)
         // For routine/task, start with search; for meeting/habit, show form directly
@@ -141,7 +155,7 @@ function EventModal({
       setError('')
       setIsNewCreation(false)
     }
-  }, [isOpen, initialData, validatedEventType])
+  }, [isOpen, initialData, validatedEventType, activeCategory, defaultCategory])
 
   // Focus management - auto-focus title input when modal opens
   useEffect(() => {
@@ -238,6 +252,14 @@ function EventModal({
       const trimmedData = {
         ...formData,
         title: formData.title.trim(),
+        workspaceCategories: normalizeCategorySelection(
+          formData.workspaceCategories,
+          defaultCategory
+        ),
+        category: normalizeCategorySelection(
+          formData.workspaceCategories,
+          defaultCategory
+        )[0],
         ...(initialData?.id ? { id: initialData.id } : {}),
         ...(isNewCreation ? { _isNewCreation: true } : {})
       }
@@ -317,7 +339,11 @@ function EventModal({
         setFormData((prev) => ({
           ...prev,
           title: instantiatedRoutine.title,
-          type: isDragToSchedule ? EVENT_TYPES.ROUTINE : validatedEventType
+          type: isDragToSchedule ? EVENT_TYPES.ROUTINE : validatedEventType,
+          workspaceCategories: normalizeCategorySelection(
+            getItemCategories(instantiatedRoutine, 'workspaceCategory'),
+            defaultCategory
+          )
         }))
       } catch (err) {
         logger.error('Failed to instantiate routine from template:', err)
@@ -341,7 +367,11 @@ function EventModal({
       setFormData((prev) => ({
         ...prev,
         title: item.title,
-        type: isDragToSchedule ? item.type : validatedEventType
+        type: isDragToSchedule ? item.type : validatedEventType,
+        workspaceCategories: normalizeCategorySelection(
+          getItemCategories(item, item.type === EVENT_TYPES.ROUTINE ? 'workspaceCategory' : 'category'),
+          defaultCategory
+        )
       }))
     }
     setShowManualForm(true)
@@ -409,6 +439,17 @@ function EventModal({
                 ref={titleInputRef}
               />
             </div>
+
+            <CategoryMultiSelect
+              value={formData.workspaceCategories}
+              categories={categories}
+              defaultCategory={defaultCategory}
+              onChange={(workspaceCategories) =>
+                handleChange('workspaceCategories', workspaceCategories)
+              }
+              label='Workspace categories'
+              disabled={isSubmitting}
+            />
 
             <div className='form-group'>
               <label htmlFor='event-date'>
