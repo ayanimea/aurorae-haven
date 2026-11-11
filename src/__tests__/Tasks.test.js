@@ -499,6 +499,47 @@ describe('Tasks Component', () => {
     })
   })
 
+  test('nesting a task assigns the parent workspace categories', async () => {
+    localStorage.setItem(
+      'aurorae_categories',
+      JSON.stringify(['Work', 'Personal'])
+    )
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [
+          {
+            ...createTask('Parent task', 'Work'),
+            workspaceCategories: ['Work', 'Personal']
+          },
+          {
+            ...createTask('Child task', 'Other'),
+            workspaceCategories: ['Other']
+          }
+        ],
+        not_urgent_important: [],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      })
+    )
+    const { container } = renderWithWorkspace(<Tasks />)
+    const taskCards = container.querySelectorAll('.task-item')
+    const parent = taskCards[0].querySelector('.task-text')
+    const child = taskCards[1].querySelector('.task-text')
+
+    fireEvent.dragStart(child)
+    fireEvent.dragOver(parent)
+    fireEvent.drop(parent)
+
+    await waitFor(() => {
+      const tasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(tasks.urgent_important).toHaveLength(1)
+      expect(tasks.urgent_important[0].subtasks[0].workspaceCategories).toEqual(
+        ['Work', 'Personal']
+      )
+    })
+  })
+
   test('nests an existing task using the More menu controls', async () => {
     render(<Tasks />)
     const taskInput = screen.getByPlaceholderText('Add a new task...')

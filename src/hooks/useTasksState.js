@@ -269,11 +269,15 @@ export function useTasksState() {
                 ...item,
                 subtasks: [
                   ...(Array.isArray(item.subtasks) ? item.subtasks : []),
-                  {
-                    id: task.id,
-                    text: task.text,
-                    completed: task.completed
-                  }
+                  assignItemCategories(
+                    {
+                      id: task.id,
+                      text: task.text,
+                      completed: task.completed
+                    },
+                    getItemCategories(item),
+                    getDefaultCategory()
+                  )
                 ]
               }
             : item

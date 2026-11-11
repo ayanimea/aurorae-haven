@@ -152,6 +152,20 @@ describe('templatesManager', () => {
       expect(mockDB.transaction).toHaveBeenCalledWith('templates', 'readwrite')
     })
 
+    test('persists workspace categories for a new template', async () => {
+      await saveTemplate({
+        type: 'task',
+        title: 'Categorized Task',
+        category: 'Work',
+        workspaceCategory: 'Work',
+        workspaceCategories: ['Work', 'Personal']
+      })
+
+      const savedTemplate = mockDB.mockDataStore.get('test-uuid-123')
+      expect(savedTemplate.workspaceCategory).toBe('Work')
+      expect(savedTemplate.workspaceCategories).toEqual(['Work', 'Personal'])
+    })
+
     test('saves a new routine template', async () => {
       const template = {
         type: 'routine',
