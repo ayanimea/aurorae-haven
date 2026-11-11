@@ -359,7 +359,7 @@ function Settings({ onExport, onImport }) {
         </div>
         <div className='card-b'>
           <p className='settings-hint'>
-            The Uncategorised workspace is the default. Create up to{' '}
+            The {defaultCategory} workspace is the default. Create up to{' '}
             {MAX_CATEGORY_COUNT} additional shared categories.
           </p>
           <ul className='settings-category-list' aria-label='Current categories'>

@@ -1,16 +1,19 @@
 .workspace-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 190px;
+  grid-template-areas: 'main sidebar';
   align-items: flex-start;
   gap: 1rem;
   width: 100%;
 }
 
 .workspace-main {
+  grid-area: main;
   min-width: 0;
 }
 
 .category-workspace-sidebar {
+  grid-area: sidebar;
   position: sticky;
   top: calc(var(--appbar-height) + 1rem);
 }
@@ -97,6 +100,9 @@
 @media (max-width: 760px) {
   .workspace-layout {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'sidebar'
+      'main';
   }
 
   .workspace-main {
@@ -105,7 +111,6 @@
 
   .category-workspace-sidebar {
     position: static;
-    order: -1;
   }
 
   .category-workspace-nav {

@@ -32,26 +32,16 @@ function Stats() {
         getStatsByType('habit_streak'),
         getStatsByType('routine_time')
       ])
+      const matchesStatCategory = (stat) =>
+        matchesCategory(
+          stat,
+          stat.workspaceCategory ? 'workspaceCategory' : 'category'
+        )
 
       setStats({
-        taskCompletions: taskStats.filter((stat) =>
-          matchesCategory(
-            { workspaceCategory: stat.workspaceCategory ?? stat.category },
-            'workspaceCategory'
-          )
-        ),
-        habitStreaks: habitStats.filter((stat) =>
-          matchesCategory(
-            { workspaceCategory: stat.workspaceCategory ?? stat.category },
-            'workspaceCategory'
-          )
-        ),
-        routineTimes: routineStats.filter((stat) =>
-          matchesCategory(
-            { workspaceCategory: stat.workspaceCategory ?? stat.category },
-            'workspaceCategory'
-          )
-        )
+        taskCompletions: taskStats.filter(matchesStatCategory),
+        habitStreaks: habitStats.filter(matchesStatCategory),
+        routineTimes: routineStats.filter(matchesStatCategory)
       })
     } catch (e) {
       logger.error('Failed to load stats:', e)

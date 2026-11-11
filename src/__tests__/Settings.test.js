@@ -121,6 +121,18 @@ describe('Settings Component', () => {
     ).toBeInTheDocument()
   })
 
+  test('uses the renamed default category in workspace guidance', () => {
+    localStorage.setItem('aurorae_default_category', 'General')
+    render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
+
+    expect(
+      screen.getByText(/The General workspace is the default/)
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/The Uncategorised workspace is the default/)
+    ).not.toBeInTheDocument()
+  })
+
   test('offers the built-in themes for each category', () => {
     render(<Settings onExport={mockOnExport} onImport={mockOnImport} />)
 

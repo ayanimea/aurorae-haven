@@ -39,6 +39,11 @@ describe('Layout Component - Global Navbar (TAB-NAV)', () => {
       const sidebar = screen.getByRole('complementary', {
         name: 'Category selection'
       })
+      const main = screen.getByRole('main')
+      expect(
+        sidebar.compareDocumentPosition(main) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy()
       expect(
         within(sidebar).getByRole('navigation', { name: 'Category workspaces' })
       ).toBeInTheDocument()
