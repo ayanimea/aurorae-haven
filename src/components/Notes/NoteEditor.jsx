@@ -110,6 +110,7 @@ function NoteEditor({
               className='btn btn-icon toggle-notes-btn'
               onClick={onToggleNoteList}
               aria-label='Show notes list'
+              aria-expanded={showNoteList}
               title='Show notes list'
             >
               <svg

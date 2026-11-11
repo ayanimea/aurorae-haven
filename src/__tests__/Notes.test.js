@@ -62,6 +62,22 @@ describe('Notes Component', () => {
     localStorage.clear()
   })
 
+  test('announces whether the notes list is expanded', () => {
+    render(<Notes />)
+
+    const hideNotesList = screen.getByRole('button', { name: 'Hide notes list' })
+    expect(hideNotesList).toHaveAttribute('aria-expanded', 'true')
+
+    fireEvent.click(hideNotesList)
+    const showNotesList = screen.getByRole('button', { name: 'Show notes list' })
+    expect(showNotesList).toHaveAttribute('aria-expanded', 'false')
+
+    fireEvent.click(showNotesList)
+    expect(
+      screen.getByRole('button', { name: 'Hide notes list' })
+    ).toHaveAttribute('aria-expanded', 'true')
+  })
+
   describe('Basic functionality', () => {
     test('renders Notes component', () => {
       render(<Notes />)

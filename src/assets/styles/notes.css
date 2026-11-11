@@ -579,17 +579,13 @@ textarea {
   /* Stack editor and preview vertically on mobile portrait */
   .note-editor-split {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0;
   }
 
-  /* Make resize handle horizontal on mobile */
+  /* The editor and preview are stacked here, so horizontal resizing has no effect. */
   .resize-handle {
-    width: 100%;
-    height: 4px;
-    min-width: 0;
-    min-height: 4px;
-    cursor: row-resize;
+    display: none;
   }
 
   /* Ensure editor and preview have minimum height on mobile */

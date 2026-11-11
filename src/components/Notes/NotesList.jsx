@@ -39,6 +39,7 @@ function NotesList({
             className='btn btn-icon toggle-notes-btn'
             onClick={onToggleNoteList}
             aria-label='Hide notes list'
+            aria-expanded={showNoteList}
             title='Hide notes list'
           >
             <Icon name='menu' />

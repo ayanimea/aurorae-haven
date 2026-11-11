@@ -509,3 +509,10 @@
     padding: 8px 10px;
   }
 }
+
+@media (max-width: 600px) {
+  .eisenhower-matrix {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+}
