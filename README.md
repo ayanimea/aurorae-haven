@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-11-11 19:31:39 UTC
+**Last Updated**: 2026-11-11 19:44:01 UTC
 **Source Branch**: add-subtask-and-category-sorting
-**Source Commit**: 86c341e
+**Source Commit**: 98a81ac
 
 ---
 
