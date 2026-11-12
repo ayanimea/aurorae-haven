@@ -24,7 +24,7 @@ The app works directly from your file system - just download, extract, and doubl
 - ✅ Service worker for offline functionality
 - ✅ PWA manifest for installation
 - ✅ All assets optimized and minified
-- ✅ Total size: 1267 KB compressed
+- ✅ Total size: 1261 KB compressed
 
 ## 📚 Full Documentation
 
@@ -42,9 +42,9 @@ Back to the main repository:
 
 This branch is automatically updated on every build. Check the commit timestamp to see when the package was last updated.
 
-**Last Updated**: 2026-11-11 19:44:01 UTC
+**Last Updated**: 2026-11-12 09:25:11 UTC
 **Source Branch**: add-subtask-and-category-sorting
-**Source Commit**: 98a81ac
+**Source Commit**: 0b53981
 
 ---
 
