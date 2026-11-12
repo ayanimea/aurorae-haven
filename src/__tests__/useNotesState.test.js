@@ -80,39 +80,6 @@ describe('useNotesState category synchronization', () => {
           sourceTabId: 'another-tab',
           payload: { oldCategory: 'Work', newCategory: 'Projects' }
         })
-
-        it('preserves pending category edits after a same-tab rename', () => {
-          localStorage.setItem(
-            'brainDumpEntries',
-            JSON.stringify([
-              {
-                id: 'note-1',
-                title: 'Review',
-                content: '',
-                category: 'Work',
-                workspaceCategories: ['Work']
-              }
-            ])
-          )
-          const { result } = renderHook(() => useNotesState())
-          act(() => result.current.setAssignedCategories(['Work', 'Personal']))
-          const stored = JSON.parse(localStorage.getItem('brainDumpEntries'))
-          stored[0].category = 'Projects'
-          stored[0].workspaceCategories = ['Projects']
-          localStorage.setItem('brainDumpEntries', JSON.stringify(stored))
-
-          act(() => {
-            window.dispatchEvent(
-              new CustomEvent('aurorae:category-renamed', {
-                detail: { oldCategory: 'Work', newCategory: 'Projects' }
-              })
-            )
-          })
-          expect(result.current.assignedCategories).toEqual([
-            'Projects',
-            'Personal'
-          ])
-        })
       })
       expect(result.current.assignedCategories).toEqual([
         'Projects',
@@ -130,5 +97,35 @@ describe('useNotesState category synchronization', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('preserves pending category edits after a same-tab rename', () => {
+    localStorage.setItem(
+      'brainDumpEntries',
+      JSON.stringify([
+        {
+          id: 'note-1',
+          title: 'Review',
+          content: '',
+          category: 'Work',
+          workspaceCategories: ['Work']
+        }
+      ])
+    )
+    const { result } = renderHook(() => useNotesState())
+    act(() => result.current.setAssignedCategories(['Work', 'Personal']))
+    const stored = JSON.parse(localStorage.getItem('brainDumpEntries'))
+    stored[0].category = 'Projects'
+    stored[0].workspaceCategories = ['Projects']
+    localStorage.setItem('brainDumpEntries', JSON.stringify(stored))
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('aurorae:category-renamed', {
+          detail: { oldCategory: 'Work', newCategory: 'Projects' }
+        })
+      )
+    })
+    expect(result.current.assignedCategories).toEqual(['Projects', 'Personal'])
   })
 })
