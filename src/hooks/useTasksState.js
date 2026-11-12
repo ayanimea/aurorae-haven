@@ -91,6 +91,12 @@ export function useTasksState() {
     includeSelf: false
   })
 
+  useEffect(() => {
+    window.addEventListener('aurorae:category-renamed', syncFromStorage)
+    return () =>
+      window.removeEventListener('aurorae:category-renamed', syncFromStorage)
+  }, [syncFromStorage])
+
   // Add new task
   const addTask = (quadrant, text, category = getDefaultCategory()) => {
     if (getTaskLimitMessage(tasks, quadrant)) return null

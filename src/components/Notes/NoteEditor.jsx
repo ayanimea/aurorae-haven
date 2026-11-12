@@ -144,7 +144,9 @@ function NoteEditor({
             defaultCategory={defaultCategory}
             onChange={onAssignedCategoriesChange}
             label='Note categories'
-            disabled={!currentNoteId || currentNote?.locked}
+            disabled={
+              !currentNoteId || currentNote?.locked || currentNote?.parentNoteId
+            }
             className='note-category-input'
           />
         </div>

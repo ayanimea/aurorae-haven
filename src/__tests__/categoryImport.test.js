@@ -52,4 +52,22 @@ describe('legacy category import', () => {
     expect(imported.categories).not.toContain('green')
     expect(imported.categories).not.toContain('morning')
   })
+
+  it('normalizes and discovers categories from legacy sequences', () => {
+    const imported = normalizeImportedCategories({
+      sequences: [
+        { id: 'sequence-1', title: 'Legacy routine' },
+        {
+          id: 'sequence-2',
+          title: 'Categorized routine',
+          workspaceCategory: 'Wellness'
+        }
+      ]
+    })
+
+    expect(imported.sequences[0].workspaceCategories).toEqual(['Unassigned'])
+    expect(imported.categories).toEqual(
+      expect.arrayContaining(['Unassigned', 'Wellness'])
+    )
+  })
 })

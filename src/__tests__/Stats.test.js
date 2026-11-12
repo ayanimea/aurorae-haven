@@ -15,10 +15,11 @@ vi.mock('../utils/indexedDBManager', () => ({
 }))
 
 vi.mock('../contexts/CategoryWorkspaceContext', () => ({
-  useCategoryWorkspace: () => ({
-    matchesCategory: (stat, field) =>
+  useCategoryWorkspace: (() => {
+    const matchesCategory = (stat, field) =>
       (stat.workspaceCategories || [stat[field]]).includes('Work')
-  })
+    return () => ({ matchesCategory })
+  })()
 }))
 
 describe('Stats page category filtering', () => {

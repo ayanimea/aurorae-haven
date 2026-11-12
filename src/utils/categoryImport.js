@@ -64,6 +64,10 @@ function collectWorkspaceCategories(data, categories) {
     ['savedTasks', 'category']
   ]
   for (const [field, legacyField] of categorizedCollections) {
+    if (field === 'routines' && !Array.isArray(data.routines)) {
+      collectItemCategories(data.sequences, categories, legacyField)
+      continue
+    }
     collectItemCategories(data[field], categories, legacyField)
   }
   collectItemCategories(data.brainDump?.entries, categories, 'category')
@@ -87,7 +91,8 @@ export function normalizeImportedCategories(data) {
   normalize(data.tasks, 'tasks', 'category')
   normalize(data.dumps, 'dumps', 'category')
   normalize(data.habits, 'habits', 'workspaceCategory')
-  normalize(data.routines, 'routines', 'workspaceCategory')
+  const routines = Array.isArray(data.routines) ? data.routines : data.sequences
+  normalize(routines, Array.isArray(data.routines) ? 'routines' : 'sequences', 'workspaceCategory')
   normalize(data.schedule, 'schedule', 'category')
   normalize(data.stats, 'stats', 'workspaceCategory')
   normalize(data.savedTasks, 'savedTasks', 'category')

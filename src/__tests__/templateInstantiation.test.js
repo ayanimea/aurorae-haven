@@ -55,6 +55,25 @@ describe('templateInstantiation', () => {
       expect(savedTasks.not_urgent_important[0].text).toBe('Plan vacation')
     })
 
+    test('preserves workspace categories from a task template', () => {
+      const result = instantiateTaskFromTemplate({
+        type: 'task',
+        title: 'Plan project',
+        category: 'Work',
+        workspaceCategories: ['Work', 'Personal']
+      })
+
+      expect(result.task).toMatchObject({
+        category: 'Work',
+        workspaceCategories: ['Work', 'Personal']
+      })
+      const savedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(savedTasks.urgent_important[0]).toMatchObject({
+        category: 'Work',
+        workspaceCategories: ['Work', 'Personal']
+      })
+    })
+
     test('creates a task with due date offset', () => {
       const template = {
         type: 'task',

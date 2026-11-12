@@ -260,6 +260,33 @@ describe('Notes Component', () => {
     ).toEqual(['Alpha title', 'Beta title', 'First title'])
   })
 
+  test('sorts notes by most recently updated by default', () => {
+    localStorage.setItem(
+      'brainDumpEntries',
+      JSON.stringify([
+        {
+          id: 'older',
+          title: 'Older note',
+          content: '',
+          updatedAt: '2025-01-01'
+        },
+        {
+          id: 'newer',
+          title: 'Newer note',
+          content: '',
+          updatedAt: '2025-02-01'
+        }
+      ])
+    )
+    const { container } = render(<Notes />)
+
+    expect(
+      [...container.querySelectorAll('.note-item-title')].map(
+        (title) => title.textContent
+      )
+    ).toEqual(['Newer note', 'Older note'])
+  })
+
   describe('Auto-list continuation', () => {
     test('continues task list on Enter', async () => {
       const mockEntries = [
@@ -1582,6 +1609,75 @@ describe('Notes Component', () => {
         expect(entries[1].parentNoteId).toBe('parent-note')
         expect(entries[1].category).toBe('Work')
       })
+      expect(
+        screen.getByRole('group', { name: 'Note categories' })
+      ).toBeDisabled()
+    })
+
+    test('saves pending parent edits before creating a sub-note', async () => {
+      localStorage.setItem(
+        'brainDumpEntries',
+        JSON.stringify([
+          {
+            id: 'parent-note',
+            title: 'Parent note',
+            content: 'Old content',
+            category: 'Work',
+            locked: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ])
+      )
+      render(<Notes />)
+
+      fireEvent.change(screen.getByPlaceholderText('Note title...'), {
+        target: { value: 'Edited parent title' }
+      })
+      fireEvent.change(
+        screen.getByPlaceholderText('Start writing your note in Markdown...'),
+        { target: { value: 'Unsaved parent content' } }
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'New sub-note' }))
+
+      await waitFor(() => {
+        const entries = JSON.parse(localStorage.getItem('brainDumpEntries'))
+        expect(entries.find((note) => note.id === 'parent-note')).toMatchObject({
+          title: 'Edited parent title',
+          content: 'Unsaved parent content'
+        })
+        expect(entries.find((note) => note.parentNoteId === 'parent-note'))
+          .toMatchObject({
+            category: 'Work',
+            workspaceCategories: ['Work']
+          })
+      })
+    })
+
+    test('keeps list and create controls available in an empty hidden-list state', () => {
+      localStorage.setItem('aurorae_categories', JSON.stringify(['Work', 'Personal']))
+      localStorage.setItem(
+        'brainDumpEntries',
+        JSON.stringify([
+          {
+            id: 'work-note',
+            title: 'Work note',
+            content: '',
+            category: 'Work',
+            updatedAt: new Date().toISOString()
+          }
+        ])
+      )
+      renderWithWorkspace(<Notes />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'Hide notes list' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Personal' }))
+
+      expect(screen.getByText('Select a note in this workspace or create a new note.'))
+        .toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Show notes list' }))
+        .toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'New note' })).toBeInTheDocument()
     })
 
     test('prevents creating or nesting notes beyond two levels', async () => {
@@ -1661,13 +1757,14 @@ describe('Notes Component', () => {
         }
       ]
       localStorage.setItem('brainDumpEntries', JSON.stringify(notes))
-      const { container } = render(<Notes />)
-      const noteItems = container.querySelectorAll('.note-item')
-      fireEvent.dragStart(noteItems[1], {
+      render(<Notes />)
+      const parentNote = screen.getByText('Parent note').closest('.note-item')
+      const childNote = screen.getByText('Child note').closest('.note-item')
+      fireEvent.dragStart(childNote, {
         dataTransfer: { setData: vi.fn() }
       })
-      fireEvent.dragOver(noteItems[0])
-      fireEvent.drop(noteItems[0], {
+      fireEvent.dragOver(parentNote)
+      fireEvent.drop(parentNote, {
         dataTransfer: { getData: () => 'child-note' }
       })
 

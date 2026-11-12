@@ -56,18 +56,22 @@ function TemplateEditor({
           getItemCategories(
             {
               ...template,
-              category: categories.includes(template.category)
-                ? template.category
-                : undefined
+              workspaceCategory:
+                template.workspaceCategory ||
+                (categories.includes(template.category)
+                  ? template.category
+                  : undefined)
             },
             'workspaceCategory'
           ).length
             ? getItemCategories(
                 {
                   ...template,
-                  category: categories.includes(template.category)
-                    ? template.category
-                    : undefined
+                  workspaceCategory:
+                    template.workspaceCategory ||
+                    (categories.includes(template.category)
+                      ? template.category
+                      : undefined)
                 },
                 'workspaceCategory'
               )
@@ -119,18 +123,22 @@ function TemplateEditor({
           getItemCategories(
             {
               ...template,
-              category: categories.includes(template.category)
-                ? template.category
-                : undefined
+              workspaceCategory:
+                template.workspaceCategory ||
+                (categories.includes(template.category)
+                  ? template.category
+                  : undefined)
             },
             'workspaceCategory'
           ).length
             ? getItemCategories(
                 {
                   ...template,
-                  category: categories.includes(template.category)
-                    ? template.category
-                    : undefined
+                  workspaceCategory:
+                    template.workspaceCategory ||
+                    (categories.includes(template.category)
+                      ? template.category
+                      : undefined)
                 },
                 'workspaceCategory'
               )

@@ -12,6 +12,19 @@ import {
   STORES
 } from './indexedDBManager'
 import { loadCategoryThemes, renameCategoryTheme, saveCategoryThemes } from './categoryThemes'
+import { IMPORTED_UNASSIGNED_CATEGORY } from './itemCategories'
+import { publishCrossTabEvent } from './crossTabSync'
+
+const CATEGORY_RENAMED_DOMAINS = [
+  'tasks',
+  'savedTasks',
+  'notes',
+  'routines',
+  'habits',
+  'schedule',
+  'stats',
+  'templates'
+]
 
 const LOCAL_DATA_KEYS = [
   ['aurorae_tasks', true],
@@ -134,6 +147,9 @@ export async function renameCategory(oldName, newName) {
   if (!oldCategory || !newCategory) {
     throw new Error('Category names cannot be empty')
   }
+  if (newCategory.toLowerCase() === IMPORTED_UNASSIGNED_CATEGORY.toLowerCase()) {
+    throw new Error(`${IMPORTED_UNASSIGNED_CATEGORY} is a reserved category`)
+  }
 
   const oldKey = oldCategory.toLowerCase()
   const categories = loadCategories()
@@ -194,6 +210,14 @@ export async function renameCategory(oldName, newName) {
   } catch {
     // The active workspace remains unchanged in memory if storage is unavailable.
   }
+
+  CATEGORY_RENAMED_DOMAINS.forEach((domain) => {
+    publishCrossTabEvent({
+      domain,
+      action: 'categories-renamed',
+      payload: { oldCategory: existingCategory, newCategory }
+    })
+  })
 
   return newCategory
 }

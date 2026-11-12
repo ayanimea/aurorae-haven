@@ -13,6 +13,7 @@ import {
   normalizeCategorySelection
 } from '../utils/itemCategories'
 import { getDefaultCategory } from '../utils/categoryStorage'
+import { useCrossTabSync } from './useCrossTabSync'
 
 /**
  * Custom hook for managing Notes state
@@ -96,6 +97,36 @@ export function useNotesState() {
     () => notes.find((n) => n.id === currentNoteId),
     [notes, currentNoteId]
   )
+
+  const syncNotesFromStorage = useCallback(
+    (event) => {
+      const storageNotes = loadNotesFromStorage()
+      setNotes(storageNotes)
+      if (event?.action === 'categories-renamed') {
+        const selectedNote = storageNotes.find(
+          (note) => note.id === currentNoteId
+        )
+        if (selectedNote) {
+          setCategory(selectedNote.category || '')
+          setAssignedCategoriesState(getItemCategories(selectedNote))
+        }
+      }
+    },
+    [currentNoteId]
+  )
+
+  useCrossTabSync(syncNotesFromStorage, {
+    filter: (event) => event.domain === 'notes',
+    includeSelf: false
+  })
+
+  useEffect(() => {
+    const syncRenamedNotes = () =>
+      syncNotesFromStorage({ action: 'categories-renamed' })
+    window.addEventListener('aurorae:category-renamed', syncRenamedNotes)
+    return () =>
+      window.removeEventListener('aurorae:category-renamed', syncRenamedNotes)
+  }, [syncNotesFromStorage])
 
   // Filter notes based on search query and filter options
   const filteredNotes = useMemo(

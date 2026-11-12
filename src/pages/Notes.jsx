@@ -32,7 +32,11 @@ import { createLogger } from '../utils/logger'
 import { getNoteTemplateById } from '../data/noteTemplates'
 import { useCategories } from '../hooks/useCategories'
 import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
-import { assignItemCategories, getItemCategories } from '../utils/itemCategories'
+import {
+  assignItemCategories,
+  getItemCategories,
+  normalizeCategorySelection
+} from '../utils/itemCategories'
 
 const logger = createLogger('Notes')
 
@@ -179,10 +183,19 @@ function Notes() {
   const [noteSortMode, setNoteSortMode] = useState('recent')
 
   const sortedWorkspaceNotes = useMemo(() => {
-    if (noteSortMode !== 'category') return workspaceNotes
     const dateValue = (value) => {
       const date = new Date(value || 0).getTime()
       return Number.isFinite(date) ? date : 0
+    }
+    if (noteSortMode === 'recent') {
+      return [...workspaceNotes].sort((a, b) => {
+        const dateOrder = dateValue(b.updatedAt) - dateValue(a.updatedAt)
+        if (dateOrder) return dateOrder
+        const titleOrder = (a.title || '').localeCompare(b.title || '', undefined, {
+          sensitivity: 'base'
+        })
+        return titleOrder || String(a.id).localeCompare(String(b.id))
+      })
     }
     return [...workspaceNotes].sort((a, b) => {
       const categoryOrder = (getItemCategories(a)[0] || '').localeCompare(
@@ -522,13 +535,39 @@ function Notes() {
   const handleCreateSubNote = () => {
     if (!currentNote || currentNote.locked || currentNote.parentNoteId) return
 
+    const parentCategories = normalizeCategorySelection(
+      assignedCategoriesRef.current,
+      defaultCategory
+    )
+    const savedNotes = notesRef.current.map((note) => {
+      if (note.id === currentNoteIdRef.current) {
+        return {
+          ...note,
+          title: titleRef.current,
+          content: contentRef.current,
+          category: parentCategories[0],
+          workspaceCategories: parentCategories,
+          updatedAt: new Date().toISOString()
+        }
+      }
+      return note.parentNoteId === currentNoteIdRef.current
+        ? assignItemCategories(
+            note,
+            parentCategories,
+            defaultCategory,
+            'category'
+          )
+        : note
+    })
     const subNote = assignItemCategories({
       ...createNewNote(),
       title: 'Untitled Sub-note',
       parentNoteId: currentNote.id
-    }, assignedCategories, defaultCategory)
-    const updatedNotes = [...notes, subNote]
+    }, parentCategories, defaultCategory, 'category')
+    const updatedNotes = [...savedNotes, subNote]
+    clearAutosaveTimeout()
     updateNotes(updatedNotes)
+    notesRef.current = updatedNotes
     loadNote(subNote)
   }
 
@@ -597,9 +636,27 @@ function Notes() {
       <div className='brain-dump-main'>
         <div className='card'>
           {currentNoteId && !workspaceCurrentNote ? (
-            <p className='empty-state'>
-              Select a note in this workspace or create a new note.
-            </p>
+            <div className='empty-state'>
+              <p>Select a note in this workspace or create a new note.</p>
+              {!showNoteList && (
+                <div className='empty-state-actions'>
+                  <button
+                    type='button'
+                    className='btn'
+                    onClick={() => setShowNoteList(true)}
+                  >
+                    Show notes list
+                  </button>
+                  <button
+                    type='button'
+                    className='btn'
+                    onClick={handleNewNote}
+                  >
+                    New note
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <NoteEditor
               currentNote={workspaceCurrentNote}

@@ -4,6 +4,7 @@ import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 import EventService from '../services/EventService'
+import { CategoryWorkspaceProvider } from '../contexts/CategoryWorkspaceContext'
 
 // Mock Icon component
 vi.mock('../components/common/Icon', () => ({
@@ -214,6 +215,33 @@ describe('Schedule Component with Figma UI', () => {
     render(<Schedule />)
     await waitFor(() => {
       expect(EventService.getEventsForDate).toHaveBeenCalled()
+    })
+  })
+
+  test('keeps the day load indicator based on all workspace events', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work', 'Personal']))
+    localStorage.setItem('aurorae_workspace_category', 'Work')
+    EventService.getEventsForDate.mockResolvedValue([
+      {
+        id: 'personal-event',
+        title: 'Personal commitment',
+        day: '2025-09-16',
+        startTime: '08:00',
+        endTime: '17:00',
+        type: 'meeting',
+        category: 'Personal'
+      }
+    ])
+
+    render(
+      <CategoryWorkspaceProvider>
+        <Schedule />
+      </CategoryWorkspaceProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('status', { name: 'Day over capacity' }))
+        .toBeInTheDocument()
     })
   })
 

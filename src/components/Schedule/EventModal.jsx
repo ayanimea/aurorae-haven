@@ -121,7 +121,11 @@ function EventModal({
           travelTime: initialData.travelTime || 0,
           preparationTime: initialData.preparationTime || 0,
           workspaceCategories: normalizeCategorySelection(
-            getItemCategories(initialData, 'category'),
+            getItemCategories(initialData, 'category').length
+              ? getItemCategories(initialData, 'category')
+              : initialData.id
+                ? []
+                : [activeCategory || defaultCategory],
             defaultCategory
           )
         })

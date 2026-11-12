@@ -9,7 +9,11 @@ import { validateTemplateData } from './validation'
 import { MS_PER_DAY } from './timeConstants'
 import { createLogger } from './logger'
 import { tryCatch, isQuotaExceededError } from './errorHandler'
-import { getItemCategories } from './itemCategories'
+import {
+  assignItemCategories,
+  getItemCategories
+} from './itemCategories'
+import { getDefaultCategory } from './categoryStorage'
 import {
   createDefaultTasksState,
   loadTasksState,
@@ -31,7 +35,7 @@ function createTaskFromTemplate(template, quadrant = null) {
     ? new Date(Date.now() + template.dueOffset * MS_PER_DAY).toISOString()
     : null
 
-  return {
+  return assignItemCategories({
     id: generateSecureUUID(),
     text: template.title,
     completed: false,
@@ -39,7 +43,7 @@ function createTaskFromTemplate(template, quadrant = null) {
     dueDate,
     completedAt: null,
     quadrant: taskQuadrant
-  }
+  }, getItemCategories(template), getDefaultCategory())
 }
 
 /**

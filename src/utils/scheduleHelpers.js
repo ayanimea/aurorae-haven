@@ -18,6 +18,11 @@ import {
   loadTasksState,
   mutateTasksState
 } from './tasksStorage'
+import { getDefaultCategory } from './categoryStorage'
+import {
+  getItemCategories,
+  normalizeCategorySelection
+} from './itemCategories'
 
 const logger = createLogger('ScheduleHelpers')
 function isPlainObject(value) {
@@ -291,8 +296,13 @@ export async function instantiateRoutineFromTemplate(template) {
       steps: Array.isArray(template.steps) ? template.steps : [],
       tags: Array.isArray(template.tags) ? template.tags : [],
       energyTag: template.energyTag,
-      estimatedDuration: template.duration || template.estimatedDuration || 0
+      estimatedDuration: template.duration || template.estimatedDuration || 0,
+      workspaceCategories: normalizeCategorySelection(
+        getItemCategories(template, 'workspaceCategory'),
+        getDefaultCategory()
+      )
     }
+    routineData.workspaceCategory = routineData.workspaceCategories[0]
 
     const routineId = await createRoutine(routineData)
     logger.log(`Created routine from template: ${template.title}`)

@@ -426,7 +426,9 @@ describe('scheduleHelpers', () => {
         ],
         tags: ['morning', 'energy'],
         energyTag: 'high',
-        estimatedDuration: 1200
+        estimatedDuration: 1200,
+        workspaceCategories: ['Work', 'Personal'],
+        workspaceCategory: 'Work'
       }
 
       const result = await instantiateRoutineFromTemplate(template)
@@ -436,7 +438,9 @@ describe('scheduleHelpers', () => {
         steps: template.steps,
         tags: ['morning', 'energy'],
         energyTag: 'high',
-        estimatedDuration: 1200
+        estimatedDuration: 1200,
+        workspaceCategories: ['Work', 'Personal'],
+        workspaceCategory: 'Work'
       })
       expect(result.id).toBe('new-routine-id')
       expect(result.title).toBe('Morning Launch')

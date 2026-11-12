@@ -13,6 +13,7 @@ import {
   DEFAULT_CATEGORY_STORAGE_KEY,
   getDefaultCategory
 } from '../utils/categoryStorage'
+import { subscribeCrossTabEvents } from '../utils/crossTabSync'
 
 describe('category renaming', () => {
   beforeEach(() => {
@@ -94,5 +95,43 @@ describe('category renaming', () => {
       JSON.parse(localStorage.getItem('aurorae_tasks')).urgent_important[0]
         .category
     ).toBe('Inbox')
+  })
+
+  it('rejects renaming a category to the reserved Unassigned placeholder', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Uncategorised', 'Work']))
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({ urgent_important: [{ id: 'task-1', category: 'Work' }] })
+    )
+
+    await expect(renameCategory('Work', 'Unassigned')).rejects.toThrow(
+      'Unassigned is a reserved category'
+    )
+
+    expect(
+      JSON.parse(localStorage.getItem('aurorae_tasks')).urgent_important[0]
+        .category
+    ).toBe('Work')
+  })
+
+  it('publishes affected domain updates after renaming categories', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Uncategorised', 'Work']))
+    const events = []
+    const unsubscribe = subscribeCrossTabEvents((event) => events.push(event), {
+      includeSelf: true
+    })
+
+    try {
+      await renameCategory('Work', 'Projects')
+    } finally {
+      unsubscribe()
+    }
+
+    expect(events.map((event) => event.domain)).toEqual(
+      expect.arrayContaining(['tasks', 'notes', 'savedTasks'])
+    )
+    expect(events.every((event) => event.action === 'categories-renamed')).toBe(
+      true
+    )
   })
 })

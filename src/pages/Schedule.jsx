@@ -195,8 +195,14 @@ function Schedule() {
     if (event.domain === 'tasks') {
       loadEventsRef.current?.()
     }
+    if (event.domain === 'schedule') {
+      loadEventsRef.current?.()
+    }
   }, {
-    filter: (event) => event.domain === 'settings' || event.domain === 'tasks'
+    filter: (event) =>
+      event.domain === 'settings' ||
+      event.domain === 'tasks' ||
+      event.domain === 'schedule'
   })
 
   // Dev-only: Dynamically load FloatingDevButtons to prevent bundling in production
@@ -315,8 +321,8 @@ function Schedule() {
     [workspaceEvents]
   )
   const expandedEvents = useMemo(
-    () => expandMidnightSpanningEvents(workspaceEvents),
-    [workspaceEvents]
+    () => expandMidnightSpanningEvents(events),
+    [events]
   )
 
   // Compute load ratio for visible day(s) to show load awareness indicator

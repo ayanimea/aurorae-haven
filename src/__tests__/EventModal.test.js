@@ -442,6 +442,58 @@ describe('EventModal Component', () => {
       })
     })
 
+    test('defaults a new slot event to the active workspace', async () => {
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          eventType='task'
+          activeCategory='Work'
+          defaultCategory='Uncategorised'
+          categories={['Uncategorised', 'Work']}
+          initialData={{
+            title: '',
+            day: '2025-09-20',
+            startTime: '14:00',
+            endTime: '15:30',
+            type: null
+          }}
+        />
+      )
+
+      await waitFor(() => {
+        expect(screen.getByRole('checkbox', { name: 'Work' })).toBeChecked()
+      })
+    })
+
+    test('preserves the uncategorized fallback for existing events', () => {
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          eventType='meeting'
+          activeCategory='Work'
+          defaultCategory='Uncategorised'
+          categories={['Uncategorised', 'Work']}
+          initialData={{
+            id: 'existing-event',
+            title: 'Existing event',
+            day: '2025-09-20',
+            startTime: '14:00',
+            endTime: '15:30',
+            type: 'meeting'
+          }}
+        />
+      )
+
+      expect(
+        screen.getByRole('checkbox', { name: 'Uncategorised' })
+      ).toBeChecked()
+      expect(screen.getByRole('checkbox', { name: 'Work' })).not.toBeChecked()
+    })
+
     test('shows SearchableEventSelector for drag-to-schedule with null type', () => {
       // Reset the last props captured
       lastSearchableEventSelectorProps = null
