@@ -7,6 +7,8 @@
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Category Workspaces](#category-workspaces)
+- [Data Import and Export](#data-import-and-export)
 - [LaTeX and Mathematical Equations](#latex-and-mathematical-equations)
 - [Displaying Images](#displaying-images)
 - [Complete Markdown Reference](#complete-markdown-reference)
@@ -37,6 +39,45 @@ Aurorae Haven's Brain Dump feature supports rich markdown formatting, including:
 - **Accessible content** following WCAG 2.2 AA standards
 
 This manual provides complete documentation on these features with practical examples.
+
+---
+
+## Category Workspaces
+
+Use the workspace navigation beside the page content to switch what you are viewing.
+
+- **All** shows items from every category.
+- A **category** shows items assigned to it. Categories are shared across Tasks, Notes, Habits, Routines, Schedule, Stats, and Library.
+- **Uncategorised** is the default category. It can be renamed. It cannot be combined with another category on the same item.
+- Items with no category remain visible in category workspaces. A legacy backup import labels missing categories **Unassigned**.
+
+### Add or rename a category
+
+1. Open **Settings**.
+2. Use the **Categories** section to add or rename a category.
+
+### Choose a category theme
+
+1. In **Settings**, find the category.
+2. Choose **Theme for [category]**. The preview applies to the whole app while that category workspace is selected.
+3. Choose **Default color scheme** to remove the category override. **All** always uses the default appearance.
+
+The built-in choices are Red Nebula, Green Aurora, Yellow Quasar, Black Planetary Nebula, White/Purple Galaxy, and Black/White Clusters of Galaxies. Theme backgrounds are decorative; text and controls stay in the foreground. JSON backups save the selected built-in theme name for each category, not the built-in template data.
+3. Return to an item and select one or more categories. Choose **Uncategorised** on its own when the item should remain unassigned.
+
+### Schedule and other workspaces
+
+The Schedule keeps its calendar visible in every workspace. When viewing a category, turn **Show other tasks as category names** on or off to control whether tasks from other categories appear as category-name labels.
+
+---
+
+## Data Import and Export
+
+- Use the app-wide JSON import/export controls for a complete backup.
+- Notes can also be imported from and exported to Markdown files.
+- Importing an older backup without category data assigns **Unassigned** to its items and stores the updated data in the app.
+
+For a calm, low-effort workflow, start with one category or use **All**. You can change categories later; there is no need to organise everything before using the app.
 
 ---
 
@@ -795,12 +836,12 @@ The files are standard JSON format and can be:
 
 ### Browser Compatibility
 
-| Browser      | Support          | Notes                                                                                |
-| ------------ | ---------------- | ------------------------------------------------------------------------------------ |
-| Chrome 86+   | ✅ Full          | Recommended                                                                          |
-| Edge 86+     | ✅ Full          | Recommended                                                                          |
-| Firefox      | ❌ Not supported | Use manual Export instead                                                            |
-| Safari 15.2+ | ⚠️ Partial       | Enable **Develop → Experimental Features → "File System Access API"** (if available) |
+| Browser | Support | Notes |
+| --- | --- | --- |
+| Chrome 86+ | ✅ Full | Recommended |
+| Edge 86+ | ✅ Full | Recommended |
+| Firefox | ❌ Not supported | Use manual Export instead |
+| Safari 15.2+ | ⚠️ Partial | Enable **Develop → Experimental Features → "File System Access API"** (if available) |
 
 **Note for Safari users**: If you do **not** see a "File System Access API" option under **Develop → Experimental Features**, your Safari version does not support directory-based auto-save. You can still use manual Export/Import as described below.
 
@@ -859,7 +900,7 @@ Each routine row has a **management context menu** accessible via right-click (o
 The menu offers two actions:
 
 | Action | Description |
-|---|---|
+| --- | --- |
 | **Modify routine** | Opens the edit form pre-filled with the routine's current settings. |
 | **Remove routine** | Begins the delete confirmation flow (see below). |
 
@@ -888,4 +929,4 @@ This two-step flow prevents accidental deletions and is fully keyboard- and scre
 
 ---
 
-_Aurorae Haven: Calm productivity for neurodivergent minds_ 🌌
+*Aurorae Haven: Calm productivity for neurodivergent minds* 🌌

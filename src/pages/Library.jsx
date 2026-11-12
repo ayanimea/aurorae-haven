@@ -34,6 +34,8 @@ import FilterModal from '../components/Library/FilterModal'
 import ConfirmModal from '../components/common/ConfirmModal'
 import { createLogger } from '../utils/logger'
 import { withErrorHandling } from '../utils/errorHandler'
+import { useCategories } from '../hooks/useCategories'
+import { useCategoryWorkspace } from '../contexts/CategoryWorkspaceContext'
 
 const logger = createLogger('Library')
 
@@ -42,6 +44,8 @@ function Library() {
   const [loading, setLoading] = useState(true)
   const [useIndexedDB, setUseIndexedDB] = useState(false)
   const { toastMessage, showToast, showToastNotification } = useToast()
+  const { categories } = useCategories()
+  const { activeCategory, matchesCategory } = useCategoryWorkspace()
 
   // UI state
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
@@ -136,8 +140,18 @@ function Library() {
     // Apply sorting
     result = sortTemplates(result, sortBy)
 
-    return result
-  }, [templates, searchQuery, sortBy, filters])
+    return result.filter((template) =>
+      matchesCategory(
+        {
+          ...template,
+          workspaceCategory:
+            template.workspaceCategory ||
+            (categories.includes(template.category) ? template.category : '')
+        },
+        'workspaceCategory'
+      )
+    )
+  }, [templates, searchQuery, sortBy, filters, categories, matchesCategory])
 
   const handleNewTemplate = () => {
     setEditingTemplate(null)
@@ -454,6 +468,8 @@ function Library() {
       {showEditor && (
         <TemplateEditor
           template={editingTemplate}
+          categories={categories}
+          activeCategory={activeCategory}
           onSave={handleSaveTemplate}
           onClose={() => {
             setShowEditor(false)

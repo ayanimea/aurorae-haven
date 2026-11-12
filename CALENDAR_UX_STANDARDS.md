@@ -191,7 +191,6 @@ Based on analysis of leading calendar applications and UX best practices, the fo
 ## References
 
 - [Calendar UI Examples: 33 Inspiring Designs](https://www.eleken.co/blog-posts/calendar-ui)
-- [Designing Calendar Views: Best UI Practices](https://thedailyfrontend.com/designing-calendar-views-best-ui-practices/)
 - [Calendar Design: UX/UI Tips for Functionality](https://pageflows.com/resources/exploring-calendar-design/)
 - [Google Calendar Best Practices](https://developers.google.com/workspace/add-ons/calendar/building-calendar-interfaces)
 

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000">
+  <defs>
+    <radialGradient id="cluster"><stop stop-color="#fff" stop-opacity=".9"/><stop offset=".06" stop-color="#d7e0ef" stop-opacity=".65"/><stop offset=".32" stop-color="#9fb7d7" stop-opacity=".17"/><stop offset="1" stop-color="#080a0e" stop-opacity="0"/></radialGradient>
+    <linearGradient id="space" x2="0" y2="1"><stop stop-color="#171a20"/><stop offset="1" stop-color="#050608"/></linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#space)"/>
+  <circle cx="470" cy="420" r="420" fill="url(#cluster)"/>
+  <circle cx="1190" cy="640" r="500" fill="url(#cluster)"/>
+  <path d="M390 400c340 50 480 220 830 220" fill="none" stroke="#edf2fb" stroke-opacity=".2" stroke-width="2"/>
+  <g fill="#fff"><circle cx="140" cy="170" r="2"/><circle cx="790" cy="160" r="1.5"/><circle cx="1460" cy="220" r="2"/><circle cx="280" cy="840" r="1"/><circle cx="900" cy="860" r="2"/><circle cx="1370" cy="900" r="1.5"/></g>
+</svg>

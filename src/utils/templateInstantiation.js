@@ -9,6 +9,8 @@ import { validateTemplateData } from './validation'
 import { MS_PER_DAY } from './timeConstants'
 import { createLogger } from './logger'
 import { tryCatch, isQuotaExceededError } from './errorHandler'
+import { assignItemCategories, getItemCategories } from './itemCategories'
+import { getDefaultCategory } from './categoryStorage'
 import {
   createDefaultTasksState,
   loadTasksState,
@@ -29,16 +31,23 @@ function createTaskFromTemplate(template, quadrant = null) {
   const dueDate = template.dueOffset
     ? new Date(Date.now() + template.dueOffset * MS_PER_DAY).toISOString()
     : null
+  const workspaceCategories = getItemCategories(template, 'workspaceCategory')
 
-  return {
-    id: generateSecureUUID(),
-    text: template.title,
-    completed: false,
-    createdAt: new Date().toISOString(),
-    dueDate,
-    completedAt: null,
-    quadrant: taskQuadrant
-  }
+  return assignItemCategories(
+    {
+      id: generateSecureUUID(),
+      text: template.title,
+      completed: false,
+      createdAt: new Date().toISOString(),
+      dueDate,
+      completedAt: null,
+      quadrant: taskQuadrant
+    },
+    workspaceCategories.length
+      ? workspaceCategories
+      : getItemCategories(template),
+    getDefaultCategory()
+  )
 }
 
 /**
@@ -201,12 +210,19 @@ export async function instantiateRoutineFromTemplate(template) {
   }
 
   // Create new independent routine
+  const workspaceCategories = getItemCategories(template, 'workspaceCategory')
   const routine = {
     name: template.title,
     steps: template.steps || [],
     tags: template.tags || [],
     energyTag: template.energyTag || null,
     estimatedDuration: template.estimatedDuration || null,
+    ...(workspaceCategories.length
+      ? {
+          workspaceCategories,
+          workspaceCategory: workspaceCategories[0]
+        }
+      : {}),
     createdAt: new Date().toISOString()
   }
 

@@ -1,6 +1,7 @@
 
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
 
 /**
  * Component for adding new tasks
@@ -8,8 +9,12 @@ import Icon from '../common/Icon'
 function TaskForm({
   newTask,
   selectedQuadrant,
+  categoriesValue,
+  categories,
+  defaultCategory,
   onTaskChange,
   onQuadrantChange,
+  onCategoryChange,
   onSubmit
 }) {
   return (
@@ -35,6 +40,14 @@ function TaskForm({
           Not Urgent & Not Important
         </option>
       </select>
+      <CategoryMultiSelect
+        value={categoriesValue}
+        categories={categories}
+        defaultCategory={defaultCategory}
+        onChange={onCategoryChange}
+        label='Categories'
+        className='task-form-categories'
+      />
       <button type='submit' className='btn btn-primary'>
         <Icon name='plus' />
         Add Task
@@ -46,8 +59,12 @@ function TaskForm({
 TaskForm.propTypes = {
   newTask: PropTypes.string.isRequired,
   selectedQuadrant: PropTypes.string.isRequired,
+  categoriesValue: PropTypes.arrayOf(PropTypes.string).isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  defaultCategory: PropTypes.string.isRequired,
   onTaskChange: PropTypes.func.isRequired,
   onQuadrantChange: PropTypes.func.isRequired,
+  onCategoryChange: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired
 }
 

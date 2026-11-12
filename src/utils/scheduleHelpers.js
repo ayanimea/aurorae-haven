@@ -18,6 +18,11 @@ import {
   loadTasksState,
   mutateTasksState
 } from './tasksStorage'
+import { getDefaultCategory } from './categoryStorage'
+import {
+  getItemCategories,
+  normalizeCategorySelection
+} from './itemCategories'
 
 const logger = createLogger('ScheduleHelpers')
 function isPlainObject(value) {
@@ -33,7 +38,7 @@ function isPlainObject(value) {
  * @returns {Object|null} The created task object, or null when title is empty
  * @throws {Error} If localStorage write fails
  */
-export function addTaskToStorage(title) {
+export function addTaskToStorage(title, category = '', workspaceCategories = []) {
   const normalizedTitle = typeof title === 'string' ? title.trim() : ''
   if (normalizedTitle.length === 0) {
     return null
@@ -42,6 +47,11 @@ export function addTaskToStorage(title) {
   const task = {
     id: generateSecureUUID(),
     text: normalizedTitle,
+    category: typeof category === 'string' ? category : '',
+    workspaceCategories:
+      Array.isArray(workspaceCategories) && workspaceCategories.length
+        ? workspaceCategories
+        : [category],
     completed: false,
     createdAt: new Date().toISOString(),
     dueDate: null,
@@ -210,6 +220,9 @@ async function searchRoutineTemplates(query) {
           type: 'routine',
           sourceType: 'template',
           isTemplate: true,
+          workspaceCategories: template.workspaceCategories,
+          workspaceCategory: template.workspaceCategory,
+          category: template.category,
           duration: template.estimatedDuration || 0,
           tags: template.tags || [],
           steps: template.steps || [],
@@ -235,6 +248,9 @@ async function searchRoutineTemplates(query) {
           sourceType: 'predefined-template',
           isTemplate: true,
           isPredefined: true,
+          workspaceCategories: template.workspaceCategories,
+          workspaceCategory: template.workspaceCategory,
+          category: template.category,
           duration: template.estimatedDuration || 0,
           tags: template.tags || [],
           steps: template.steps || [],
@@ -275,13 +291,21 @@ export async function instantiateRoutineFromTemplate(template) {
     }
 
     // Create the routine from the template
+    const templateCategories = getItemCategories(template, 'workspaceCategory')
     const routineData = {
       title: template.title.trim(),
       steps: Array.isArray(template.steps) ? template.steps : [],
       tags: Array.isArray(template.tags) ? template.tags : [],
       energyTag: template.energyTag,
-      estimatedDuration: template.duration || template.estimatedDuration || 0
+      estimatedDuration: template.duration || template.estimatedDuration || 0,
+      workspaceCategories: normalizeCategorySelection(
+        templateCategories.length
+          ? templateCategories
+          : getItemCategories(template),
+        getDefaultCategory()
+      )
     }
+    routineData.workspaceCategory = routineData.workspaceCategories[0]
 
     const routineId = await createRoutine(routineData)
     logger.log(`Created routine from template: ${template.title}`)
@@ -343,6 +367,9 @@ export async function searchRoutinesAndTasks(query, eventType = null) {
             title: routine.title || routine.name,
             type: 'routine',
             sourceType: 'routine',
+            workspaceCategories: routine.workspaceCategories,
+            workspaceCategory: routine.workspaceCategory,
+            category: routine.category,
             duration: routine.totalDuration || routine.estimatedDuration || 0,
             tags: routine.tags || [],
             isImportant: false,
@@ -374,6 +401,9 @@ export async function searchRoutinesAndTasks(query, eventType = null) {
           title: task.text,
           type: 'task',
           sourceType: 'task',
+          workspaceCategories: task.workspaceCategories,
+          workspaceCategory: task.workspaceCategory,
+          category: task.category,
           quadrant: task.quadrant,
           quadrantLabel: task.quadrantLabel,
           isImportant: task.isImportant,
@@ -429,6 +459,9 @@ export async function getAllRoutinesAndTasks(eventType = null) {
           title: routine.title || routine.name,
           type: 'routine',
           sourceType: 'routine',
+          workspaceCategories: routine.workspaceCategories,
+          workspaceCategory: routine.workspaceCategory,
+          category: routine.category,
           duration: routine.totalDuration || routine.estimatedDuration || 0,
           tags: routine.tags || [],
           isImportant: false,
@@ -451,6 +484,9 @@ export async function getAllRoutinesAndTasks(eventType = null) {
             type: 'routine',
             sourceType: 'template',
             isTemplate: true,
+            workspaceCategories: template.workspaceCategories,
+            workspaceCategory: template.workspaceCategory,
+            category: template.category,
             duration: template.estimatedDuration || 0,
             tags: template.tags || [],
             steps: template.steps || [],
@@ -473,6 +509,9 @@ export async function getAllRoutinesAndTasks(eventType = null) {
             sourceType: 'predefined-template',
             isTemplate: true,
             isPredefined: true,
+            workspaceCategories: template.workspaceCategories,
+            workspaceCategory: template.workspaceCategory,
+            category: template.category,
             duration: template.estimatedDuration || 0,
             tags: template.tags || [],
             steps: template.steps || [],
@@ -495,6 +534,9 @@ export async function getAllRoutinesAndTasks(eventType = null) {
         title: task.text,
         type: 'task',
         sourceType: 'task',
+        workspaceCategories: task.workspaceCategories,
+        workspaceCategory: task.workspaceCategory,
+        category: task.category,
         quadrant: task.quadrant,
         quadrantLabel: task.quadrantLabel,
         isImportant: task.isImportant,

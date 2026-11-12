@@ -485,9 +485,9 @@ Ask for clarification or preserve the existing structure.
   .layout-schedule .card .card-h > div:first-child button:first-child,
   .layout-schedule .card .card-h > div:first-child button:last-child {
     padding: 8px !important;
-    min-height: 36px !important;
-    min-width: 36px !important;
-    width: 36px !important;
+    min-height: 44px !important;
+    min-width: 44px !important;
+    width: 44px !important;
     flex-shrink: 0 !important;
   }
 
@@ -496,7 +496,7 @@ Ask for clarification or preserve the existing structure.
     flex: 1 !important;
     font-size: 13px !important;
     padding: 8px 12px !important;
-    min-height: 36px !important;
+    min-height: 44px !important;
     text-align: center !important;
     font-weight: 600 !important;
   }

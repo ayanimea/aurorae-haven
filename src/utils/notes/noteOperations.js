@@ -800,6 +800,7 @@ export function createNewNote() {
     title: 'Untitled Note',
     content: '',
     category: '',
+    parentNoteId: null,
     locked: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -819,6 +820,7 @@ export function createNoteFromImport(filename, content) {
     title: noteTitle,
     content,
     category: '',
+    parentNoteId: null,
     locked: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -859,7 +861,14 @@ export function updateNote(notes, noteId, updates) {
  * @returns {Array} - Updated notes array
  */
 export function deleteNote(notes, noteId) {
-  return notes.filter((n) => n.id !== noteId)
+  const deletedNote = notes.find((note) => note.id === noteId)
+  return notes
+    .filter((note) => note.id !== noteId)
+    .map((note) =>
+      note.parentNoteId === noteId
+        ? { ...note, parentNoteId: deletedNote?.parentNoteId ?? null }
+        : note
+    )
 }
 
 /**
@@ -869,11 +878,15 @@ export function deleteNote(notes, noteId) {
  */
 export function migrateNotes(notes) {
   const needsMigration = notes.some(
-    (note) => note.category === undefined || note.locked === undefined
+    (note) =>
+      note.category === undefined ||
+      note.parentNoteId === undefined ||
+      note.locked === undefined
   )
   const migratedNotes = notes.map((note) => ({
     ...note,
     category: note.category ?? '',
+    parentNoteId: note.parentNoteId ?? null,
     locked: note.locked ?? false
   }))
   return { migratedNotes, needsMigration }

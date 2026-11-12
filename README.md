@@ -1,8 +1,7 @@
 # 🌌 Aurorae Haven
 
-> **A calm, astro-themed productivity app designed for neurodivergent users.**
-> Manage routines, tasks, habits, notes, and stats with Markdown import/export, reminders, gamification, and secure
-> local/mobile use.
+> **A calm, astro-themed productivity app designed with neurodivergent people in mind.**
+> Keep tasks, notes, habits, routines, and schedule items in shared category workspaces.
 
 ---
 
@@ -10,16 +9,20 @@
 
 - **Progressive Web App (PWA)**: Install on any device, works offline
 - **Routines**: Create, edit, and run daily routines with timers. Create routines from templates via an integrated library modal
-- **Tasks**: Prioritise using the Eisenhower matrix
-- **Template Library**: 13+ predefined task and routine templates to get started quickly. Access from Settings or inline when creating routines
+- **Tasks**: Prioritise using the Eisenhower matrix, add nested subtasks, and reuse saved tasks
+- **Shared workspaces**: Switch between All or a category to filter Tasks, Notes, Habits, Routines, Schedule, Stats, and Library
+- **Categories**: Create and rename up to six custom categories in Settings. Assign several categories to an item; the default **Uncategorised** category is exclusive
+- **Workspace themes**: Choose one of six built-in, accessible color-and-background themes per category in Settings; **All** always uses the default appearance. Backups store only theme names, not template definitions.
+- **Template Library**: Browse predefined task and routine templates in Library, use them from Settings, or choose them while creating routines
 - **Habits**: Track streaks and small wins
-- **Notes & Brain Dump**: Markdown-ready with comprehensive import/export (`.json` for full backup, `.md` for content only)
+- **Notes & Brain Dump**: Write Markdown, nest notes, and import or export notes as Markdown
+- **Data backup**: Export or import a full-app JSON backup. Older imports without categories are assigned **Unassigned**
 - **Stats Foundation**: Track routine time and structured progress with IndexedDB
 - **Auto-Backup**: Automatic backups every 24 hours to prevent data loss
-- **IndexedDB Storage**: Fast, reliable structured data storage (up to 50MB+)
+- **Browser storage**: Structured records use IndexedDB where supported; tasks, notes, and shared categories use local storage. Available space depends on the browser and device
 - **File Attachments**: OPFS support for attaching files to notes
-- **Gamification** _(v2.0+)_: XP, levels, achievements, confetti/haptics
-- **Reminders** _(v2.0+)_: Tasks, routines, and habits notifications
+- **Feedback**: Some completion flows provide confetti or haptic feedback
+- **Reminders**: Scheduled task, routine, and habit reminders are planned; current toast messages are immediate in-app feedback
 - **Secure by design**: Strict CSP, modular code, no inline scripts
 - **Multi-mode builds**: Android packaging, offline desktop distribution, and online web deployment
 
@@ -111,7 +114,7 @@ Aurorae Haven is now a Progressive Web App! You can install it on your device:
 ### Development Setup
 
 - **Dependencies**:
-  - Node.js 14+ (for building)
+  - Node.js 22.22.0 or newer (see `package.json`)
   - Modern browser (Chrome, Firefox, Edge, Safari)
 
 - **Build Instructions**:

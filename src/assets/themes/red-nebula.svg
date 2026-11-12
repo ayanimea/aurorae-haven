@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000">
+  <defs>
+    <radialGradient id="nebula"><stop stop-color="#ff446b" stop-opacity=".75"/><stop offset=".46" stop-color="#ac1748" stop-opacity=".4"/><stop offset="1" stop-color="#170916" stop-opacity="0"/></radialGradient>
+    <linearGradient id="space" x2="0" y2="1"><stop stop-color="#351027"/><stop offset="1" stop-color="#090a16"/></linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#space)"/>
+  <ellipse cx="1090" cy="420" rx="630" ry="370" fill="url(#nebula)" transform="rotate(-18 1090 420)"/>
+  <path d="M510 700c230-370 560-440 970-480M820 920c150-260 330-430 610-520" fill="none" stroke="#ff91ac" stroke-opacity=".3" stroke-width="3"/>
+  <g fill="#fff1f5"><circle cx="230" cy="180" r="2"/><circle cx="420" cy="540" r="1.5"/><circle cx="1320" cy="180" r="2"/><circle cx="1480" cy="710" r="1.5"/><circle cx="740" cy="270" r="1"/><circle cx="1040" cy="810" r="2"/></g>
+</svg>

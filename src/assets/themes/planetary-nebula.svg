@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000">
+  <defs>
+    <radialGradient id="shell"><stop stop-color="#090b12" offset=".38"/><stop stop-color="#b8f4ff" stop-opacity=".85" offset=".43"/><stop stop-color="#66aaff" stop-opacity=".18" offset=".5"/><stop stop-color="#090b12" stop-opacity="0" offset=".72"/></radialGradient>
+    <linearGradient id="space" x2="0" y2="1"><stop stop-color="#141a29"/><stop offset="1" stop-color="#05070c"/></linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#space)"/>
+  <circle cx="1050" cy="460" r="390" fill="url(#shell)"/>
+  <ellipse cx="1050" cy="460" rx="380" ry="120" fill="none" stroke="#c8f5ff" stroke-opacity=".38" stroke-width="12" transform="rotate(-20 1050 460)"/>
+  <g fill="#f2f6ff"><circle cx="200" cy="200" r="2"/><circle cx="380" cy="730" r="1.5"/><circle cx="1430" cy="180" r="2"/><circle cx="1340" cy="800" r="1"/><circle cx="700" cy="130" r="1.5"/><circle cx="630" cy="850" r="2"/></g>
+</svg>

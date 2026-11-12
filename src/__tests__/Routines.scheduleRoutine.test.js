@@ -454,6 +454,33 @@ describe('Routines — Schedule routine', () => {
     expect(screen.getByTestId('modal-end').textContent).toBe('10:30')
   })
 
+  it('passes routine workspace categories to EventModal', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
+    await renderWithRoutines([
+      {
+        ...MORNING_ROUTINE,
+        workspaceCategories: ['Work'],
+        workspaceCategory: 'Work'
+      }
+    ])
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: /Schedule Morning Routine/i })
+      )
+    })
+
+    expect(eventModalSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        initialData: expect.objectContaining({
+          workspaceCategories: ['Work']
+        }),
+        categories: expect.arrayContaining(['Work']),
+        defaultCategory: 'Uncategorised'
+      })
+    )
+  })
+
   it('calls EventService.createEvent and closes modal on successful save', async () => {
     await renderWithRoutines()
 

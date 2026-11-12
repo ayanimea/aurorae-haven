@@ -6,6 +6,10 @@ import {
 } from './indexedDBManager'
 import { createLogger } from './logger'
 import { PAGE_RELOAD_DELAY_MS } from './uiConstants'
+import { saveCategories, setDefaultCategory } from './categoryStorage'
+import { saveSavedTasks } from './savedTasks'
+import { normalizeImportedCategories } from './categoryImport'
+import { saveCategoryThemes } from './categoryThemes'
 
 const logger = createLogger('ImportData')
 
@@ -24,11 +28,35 @@ const DATA_FIELDS = {
  * @returns {void}
  */
 export function importToLocalStorage(data) {
+  data = normalizeImportedCategories(data)
+  if (typeof data.defaultCategory === 'string') {
+    setDefaultCategory(data.defaultCategory)
+  }
   for (const field of Object.values(DATA_FIELDS)) {
     if (data[field]) {
       localStorage.setItem(field, JSON.stringify(data[field]))
     }
   }
+  if (
+    data.auroraeTasksData &&
+    typeof data.auroraeTasksData === 'object' &&
+    !Array.isArray(data.auroraeTasksData)
+  ) {
+    localStorage.setItem('aurorae_tasks', JSON.stringify(data.auroraeTasksData))
+  }
+  const brainDumpEntries = Array.isArray(data.brainDump?.entries)
+    ? data.brainDump.entries
+    : data.dumps
+  if (Array.isArray(brainDumpEntries)) {
+    localStorage.setItem('brainDumpEntries', JSON.stringify(brainDumpEntries))
+  }
+  if (Array.isArray(data.categories)) {
+    saveCategories(data.categories)
+  }
+  if (Array.isArray(data.savedTasks)) {
+    saveSavedTasks(data.savedTasks)
+  }
+  saveCategoryThemes(data.categoryThemes)
 }
 
 // Import success message constant
@@ -79,11 +107,12 @@ export async function importJSON(file) {
             `Import validation failed: ${validation.errors.join(', ')}`
           )
         }
+        const normalizedData = normalizeImportedCategories(obj)
 
         // Try IndexedDB first if available, fallback to localStorage
         if (isIndexedDBAvailable()) {
           try {
-            await importToIndexedDB(obj)
+            await importToIndexedDB(normalizedData)
             resolve(true)
             return
           } catch (e) {
@@ -92,12 +121,12 @@ export async function importJSON(file) {
               e
             )
             // Use localStorage as fallback when IndexedDB fails
-            importToLocalStorage(obj)
+            importToLocalStorage(normalizedData)
             resolve(true)
           }
         } else {
           // Use localStorage when IndexedDB is not available
-          importToLocalStorage(obj)
+          importToLocalStorage(normalizedData)
           resolve(true)
         }
       } catch (e) {

@@ -12,18 +12,6 @@ const MONTH_START_DAY = 1
 const YEAR_START_MONTH = 0
 
 /**
- * Get unique categories from all notes
- * @param {Array} notes - Array of note objects
- * @returns {Array} - Sorted array of unique categories
- */
-export function getUniqueCategories(notes) {
-  const categories = notes
-    .map((note) => note.category)
-    .filter((cat) => cat && cat.trim())
-  return [...new Set(categories)].sort()
-}
-
-/**
  * Apply date filter to a note
  * @param {Object} note - Note object with updatedAt property
  * @param {Object} filterOptions - Filter options object
@@ -87,7 +75,7 @@ export function applyDateFilter(note, filterOptions) {
 }
 
 /**
- * Filter notes based on search query, category, and date
+ * Filter notes based on search query and date
  * @param {Array} notes - Array of note objects
  * @param {string} searchQuery - Text to search for
  * @param {Object} filterOptions - Filter options object
@@ -101,11 +89,6 @@ export function filterNotes(notes, searchQuery, filterOptions) {
       const titleMatch = (note.title || '').toLowerCase().includes(query)
       const contentMatch = (note.content || '').toLowerCase().includes(query)
       if (!titleMatch && !contentMatch) return false
-    }
-
-    // Category filter
-    if (filterOptions.category && note.category !== filterOptions.category) {
-      return false
     }
 
     // Date filter

@@ -4,6 +4,15 @@
 import { createLogger } from './logger'
 import { DEFAULT_BACKUP_LIMIT } from './uiConstants'
 import { generateMetadata } from './idGenerator'
+import {
+  getDefaultCategory,
+  loadCategories,
+  saveCategories,
+  setDefaultCategory
+} from './categoryStorage'
+import { loadSavedTasks, saveSavedTasks } from './savedTasks'
+import { loadCategoryThemes, saveCategoryThemes } from './categoryThemes'
+import { normalizeImportedCategories } from './categoryImport'
 
 const logger = createLogger('IndexedDB')
 
@@ -558,6 +567,10 @@ export async function exportAllData() {
     versions: JSON.parse(localStorage.getItem('brainDumpVersions') || '[]'),
     entries: JSON.parse(localStorage.getItem('brainDumpEntries') || '[]')
   }
+  data.categories = loadCategories()
+  data.defaultCategory = getDefaultCategory()
+  data.savedTasks = loadSavedTasks()
+  data.categoryThemes = loadCategoryThemes()
 
   // Include tasks from aurorae_tasks (Eisenhower matrix format)
   try {
@@ -580,6 +593,7 @@ export async function exportAllData() {
  * @returns {Promise<object>}
  */
 export async function importAllData(data) {
+  data = normalizeImportedCategories(data)
   const importReport = {
     success: false,
     imported: {},
@@ -672,13 +686,23 @@ export async function importAllData(data) {
           JSON.stringify(data.brainDump.versions)
         )
       }
-      if (data.brainDump.entries) {
-        localStorage.setItem(
-          'brainDumpEntries',
-          JSON.stringify(data.brainDump.entries)
-        )
-      }
     }
+    const brainDumpEntries = Array.isArray(data.brainDump?.entries)
+      ? data.brainDump.entries
+      : data.dumps
+    if (Array.isArray(brainDumpEntries)) {
+      localStorage.setItem('brainDumpEntries', JSON.stringify(brainDumpEntries))
+    }
+    if (Array.isArray(data.categories)) {
+      if (typeof data.defaultCategory === 'string') {
+        setDefaultCategory(data.defaultCategory)
+      }
+      saveCategories(data.categories)
+    }
+    if (Array.isArray(data.savedTasks)) {
+      saveSavedTasks(data.savedTasks)
+    }
+    saveCategoryThemes(data.categoryThemes)
 
     // Import tasks to aurorae_tasks (Eisenhower matrix format)
     if (data.auroraeTasksData && typeof data.auroraeTasksData === 'object') {

@@ -4,6 +4,7 @@ import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import Schedule from '../pages/Schedule'
 import EventService from '../services/EventService'
+import { CategoryWorkspaceProvider } from '../contexts/CategoryWorkspaceContext'
 
 // Mock Icon component
 vi.mock('../components/common/Icon', () => ({
@@ -33,6 +34,7 @@ vi.mock('../components/Schedule/FigmaScheduleGrid', () => ({
           <button
             key={e.id}
             data-testid={`event-card-${e.id}`}
+            data-category={e.category || ''}
             onClick={() => onEventClick(e)}
           >
             {e.title}
@@ -216,6 +218,54 @@ describe('Schedule Component with Figma UI', () => {
     })
   })
 
+  test('keeps the day load indicator based on all workspace events', async () => {
+    localStorage.setItem('aurorae_categories', JSON.stringify(['Work', 'Personal']))
+    localStorage.setItem('aurorae_workspace_category', 'Work')
+    EventService.getEventsForDate.mockResolvedValue([
+      {
+        id: 'personal-event',
+        title: 'Personal commitment',
+        day: '2025-09-16',
+        startTime: '08:00',
+        endTime: '17:00',
+        type: 'meeting',
+        category: 'Personal'
+      }
+    ])
+
+    render(
+      <CategoryWorkspaceProvider>
+        <Schedule />
+      </CategoryWorkspaceProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('status', { name: 'Day over capacity' }))
+        .toBeInTheDocument()
+    })
+  })
+
+  test('reloads events after a category rename in the same tab', async () => {
+    EventService.getEventsForDate.mockResolvedValue([])
+    render(<Schedule />)
+
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledTimes(1)
+    })
+
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent('aurorae:category-renamed', {
+          detail: { oldCategory: 'Work', newCategory: 'Projects' }
+        })
+      )
+    })
+
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledTimes(2)
+    })
+  })
+
   test('renders period legend items', async () => {
     render(<Schedule />)
     await waitFor(() => {
@@ -355,6 +405,40 @@ describe('Schedule event interactions', () => {
   })
 
   afterEach(() => jest.useRealTimers())
+
+  test('only infers task categories when the title maps to one category', async () => {
+    localStorage.setItem(
+      'aurorae_tasks',
+      JSON.stringify({
+        urgent_important: [
+          { text: 'Shared title', category: 'Work' },
+          { text: 'Shared title', category: 'Personal' },
+          { text: 'Unique title', category: 'Work' }
+        ],
+        not_urgent_important: [],
+        urgent_not_important: [],
+        not_urgent_not_important: []
+      })
+    )
+    EventService.getEventsForDate.mockResolvedValue([
+      { id: 'ambiguous-task', title: 'Shared title', type: 'task' },
+      { id: 'unique-task', title: 'Unique title', type: 'task' }
+    ])
+
+    render(<Schedule />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('event-card-ambiguous-task')).toHaveAttribute(
+        'data-category',
+        ''
+      )
+      expect(screen.getByTestId('event-card-unique-task')).toHaveAttribute(
+        'data-category',
+        'Work'
+      )
+    })
+    localStorage.removeItem('aurorae_tasks')
+  })
 
   test('clicking event card opens ItemActionModal', async () => {
     const mockEvents = [

@@ -1,5 +1,7 @@
 # Comprehensive Responsive Design Review - Findings & Recommendations
 
+> **Historical review:** This snapshot is dated January 2026. It is not a current review of every page and does not certify WCAG conformance. Recheck the affected screens after UI changes.
+
 **Date**: January 26, 2026  
 **Reviewer**: GitHub Copilot  
 **Scope**: All core pages on mobile, tablet, and small desktop viewports
@@ -16,7 +18,7 @@ A comprehensive review of the Aurorae Haven application's responsive design was 
 - **1 new CSS file** created (habits.css)
 - **0 linting errors** after fixes
 - **0 security vulnerabilities** detected
-- **100% accessibility compliance** for font sizes and touch targets
+- Font sizes and touch targets were reviewed at the time; this is not a current accessibility certification
 
 ---
 
@@ -233,11 +235,11 @@ A comprehensive review of the Aurorae Haven application's responsive design was 
 **Before:** Some text as small as 11px (0.68rem)  
 **After:** Minimum 14px (0.875rem) everywhere
 
-| Element             | Before     | After       | Standard  |
-| ------------------- | ---------- | ----------- | --------- |
-| Quadrant subtitle   | 11px ❌    | 12px ✅     | ≥12px     |
-| Task input (mobile) | 13px ❌    | 14px ✅     | ≥14px     |
-| Habit stats         | 0.85rem ❌ | 0.875rem ✅ | ≥0.875rem |
+| Element | Before | After | Standard |
+| --- | --- | --- | --- |
+| Quadrant subtitle | 11px ❌ | 12px ✅ | ≥12px |
+| Task input (mobile) | 13px ❌ | 14px ✅ | ≥14px |
+| Habit stats | 0.85rem ❌ | 0.875rem ✅ | ≥0.875rem |
 
 ### Touch Targets
 
@@ -552,17 +554,17 @@ The application now uses consistent breakpoints across all pages:
 
 ### Specific Recommendations by Use Case
 
-| Current Modal           | Recommended Alternative                  | Priority |
-| ----------------------- | ---------------------------------------- | -------- |
-| "Add New Habit"         | ✅ Bottom Sheet (current) or Inline Form | Medium   |
-| "Add New Task"          | Inline Expansion                         | High     |
-| "Add Event" (Schedule)  | ✅ Bottom Sheet (current)                | ✅ Done  |
-| "Edit Note"             | Full-Page Overlay (mobile)               | Low      |
-| "Habit Detail"          | Side Drawer or Full-Page                 | Medium   |
-| "Calendar Subscription" | Side Drawer                              | Medium   |
-| "Filter Panel"          | Side Drawer                              | High     |
-| "Confirmation Dialogs"  | ✅ Bottom Sheet (current)                | ✅ Done  |
-| "Error Messages"        | ✅ Toast (current)                       | ✅ Done  |
+| Current Modal | Recommended Alternative | Priority |
+| --- | --- | --- |
+| "Add New Habit" | ✅ Bottom Sheet (current) or Inline Form | Medium |
+| "Add New Task" | Inline Expansion | High |
+| "Add Event" (Schedule) | ✅ Bottom Sheet (current) | ✅ Done |
+| "Edit Note" | Full-Page Overlay (mobile) | Low |
+| "Habit Detail" | Side Drawer or Full-Page | Medium |
+| "Calendar Subscription" | Side Drawer | Medium |
+| "Filter Panel" | Side Drawer | High |
+| "Confirmation Dialogs" | ✅ Bottom Sheet (current) | ✅ Done |
+| "Error Messages" | ✅ Toast (current) | ✅ Done |
 
 ---
 

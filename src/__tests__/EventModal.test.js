@@ -90,6 +90,33 @@ describe('EventModal Component', () => {
     expect(screen.getByText('Schedule Task')).toBeInTheDocument()
   })
 
+  test('saves schedule events with their selected workspace categories', async () => {
+    render(
+      <EventModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onSave={mockOnSave}
+        eventType='task'
+        categories={['Uncategorised', 'Work', 'Personal']}
+        activeCategory='Work'
+        defaultCategory='Uncategorised'
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText(/Title/), {
+      target: { value: 'Prepare report' }
+    })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Personal' }))
+    fireEvent.submit(screen.getByLabelText(/Title/).closest('form'))
+
+    await waitFor(() => expect(mockOnSave).toHaveBeenCalled())
+    expect(mockOnSave.mock.calls[0][0]).toMatchObject({
+      title: 'Prepare report',
+      category: 'Work',
+      workspaceCategories: ['Work', 'Personal']
+    })
+  })
+
   test('does not render when closed', () => {
     render(
       <EventModal
@@ -255,6 +282,8 @@ describe('EventModal Component', () => {
         type: 'task',
         travelTime: 0,
         preparationTime: 0,
+        category: 'Uncategorised',
+        workspaceCategories: ['Uncategorised'],
         _isNewCreation: true
       })
     })
@@ -411,6 +440,58 @@ describe('EventModal Component', () => {
         expect(screen.getByLabelText(/Start Time/i)).toHaveValue('14:00')
         expect(screen.getByLabelText(/End Time/i)).toHaveValue('15:30')
       })
+    })
+
+    test('defaults a new slot event to the active workspace', async () => {
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          eventType='task'
+          activeCategory='Work'
+          defaultCategory='Uncategorised'
+          categories={['Uncategorised', 'Work']}
+          initialData={{
+            title: '',
+            day: '2025-09-20',
+            startTime: '14:00',
+            endTime: '15:30',
+            type: null
+          }}
+        />
+      )
+
+      await waitFor(() => {
+        expect(screen.getByRole('checkbox', { name: 'Work' })).toBeChecked()
+      })
+    })
+
+    test('preserves the uncategorized fallback for existing events', () => {
+      render(
+        <EventModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          eventType='meeting'
+          activeCategory='Work'
+          defaultCategory='Uncategorised'
+          categories={['Uncategorised', 'Work']}
+          initialData={{
+            id: 'existing-event',
+            title: 'Existing event',
+            day: '2025-09-20',
+            startTime: '14:00',
+            endTime: '15:30',
+            type: 'meeting'
+          }}
+        />
+      )
+
+      expect(
+        screen.getByRole('checkbox', { name: 'Uncategorised' })
+      ).toBeChecked()
+      expect(screen.getByRole('checkbox', { name: 'Work' })).not.toBeChecked()
     })
 
     test('shows SearchableEventSelector for drag-to-schedule with null type', () => {

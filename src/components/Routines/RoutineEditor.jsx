@@ -6,10 +6,27 @@
 import { useState } from 'react'
 import PropTypes from 'prop-types'
 import Icon from '../common/Icon'
+import CategoryMultiSelect from '../common/CategoryMultiSelect'
+import { getDefaultCategory } from '../../utils/categoryStorage'
+import { getItemCategories } from '../../utils/itemCategories'
 
-function RoutineEditor({ routine = null, onSave, onCancel, isSaving = false }) {
+function RoutineEditor({
+  routine = null,
+  categories = [],
+  activeCategory = null,
+  onSave,
+  onCancel,
+  isSaving = false
+}) {
   const [name, setName] = useState(routine?.name || routine?.title || '')
   const [tags, setTags] = useState(routine?.tags?.join(', ') || '')
+  const [workspaceCategories, setWorkspaceCategories] = useState(
+    routine
+      ? getItemCategories(routine, 'workspaceCategory').length
+        ? getItemCategories(routine, 'workspaceCategory')
+        : [getDefaultCategory()]
+      : [activeCategory || getDefaultCategory()]
+  )
   const [steps, setSteps] = useState(
     routine?.steps || [
       {
@@ -70,6 +87,8 @@ function RoutineEditor({ routine = null, onSave, onCancel, isSaving = false }) {
       ...(routine?.id && { id: routine.id }),
       name: name.trim(),
       title: name.trim(), // For compatibility
+      workspaceCategories,
+      workspaceCategory: workspaceCategories[0],
       tags: tags
         .split(',')
         .map((t) => t.trim())
@@ -106,6 +125,15 @@ function RoutineEditor({ routine = null, onSave, onCancel, isSaving = false }) {
       </div>
 
       {/* Tags */}
+      <CategoryMultiSelect
+        value={workspaceCategories}
+        categories={categories}
+        defaultCategory={getDefaultCategory()}
+        onChange={setWorkspaceCategories}
+        label='Workspace categories'
+        disabled={isSaving}
+      />
+
       <div className='form-group' style={{ marginBottom: '16px' }}>
         <label htmlFor='routine-tags' className='form-label'>
           Tags (comma-separated)
@@ -287,6 +315,8 @@ function RoutineEditor({ routine = null, onSave, onCancel, isSaving = false }) {
 
 RoutineEditor.propTypes = {
   routine: PropTypes.object,
+  categories: PropTypes.arrayOf(PropTypes.string),
+  activeCategory: PropTypes.string,
   onSave: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   isSaving: PropTypes.bool

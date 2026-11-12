@@ -222,6 +222,8 @@ export async function saveTemplate(template) {
       lastUsed: template.lastUsed || null,
       // Task-specific fields
       category: template.category || null,
+      workspaceCategory: template.workspaceCategory || null,
+      workspaceCategories: template.workspaceCategories || [],
       quadrant: template.quadrant || null,
       dueOffset: template.dueOffset || null,
       // Routine-specific fields

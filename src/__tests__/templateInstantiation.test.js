@@ -55,6 +55,39 @@ describe('templateInstantiation', () => {
       expect(savedTasks.not_urgent_important[0].text).toBe('Plan vacation')
     })
 
+    test('preserves workspace categories from a task template', () => {
+      const result = instantiateTaskFromTemplate({
+        type: 'task',
+        title: 'Plan project',
+        category: 'Work',
+        workspaceCategories: ['Work', 'Personal']
+      })
+
+      expect(result.task).toMatchObject({
+        category: 'Work',
+        workspaceCategories: ['Work', 'Personal']
+      })
+      const savedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(savedTasks.urgent_important[0]).toMatchObject({
+        category: 'Work',
+        workspaceCategories: ['Work', 'Personal']
+      })
+    })
+
+    test('prefers a singular workspace category over the task template category', () => {
+      const result = instantiateTaskFromTemplate({
+        type: 'task',
+        title: 'Plan project',
+        category: 'Development',
+        workspaceCategory: 'Work'
+      })
+
+      expect(result.task).toMatchObject({
+        category: 'Work',
+        workspaceCategories: ['Work']
+      })
+    })
+
     test('creates a task with due date offset', () => {
       const template = {
         type: 'task',
@@ -294,6 +327,23 @@ describe('templateInstantiation', () => {
           tags: ['health', 'morning'],
           energyTag: 'high',
           estimatedDuration: 1860
+        })
+      )
+    })
+
+    test('preserves normalized workspace categories from the template', async () => {
+      const template = {
+        type: 'routine',
+        title: 'Focused routine',
+        workspaceCategories: ['Work', 'Personal']
+      }
+
+      await instantiateRoutineFromTemplate(template)
+
+      expect(routinesManager.createRoutine).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceCategories: ['Work', 'Personal'],
+          workspaceCategory: 'Work'
         })
       )
     })
@@ -610,6 +660,23 @@ describe('templateInstantiation', () => {
         return Promise.resolve(
           routines.map((r, i) => `routine_batch_${Date.now()}_${i}`)
         )
+      })
+    })
+
+    test('preserves a singular workspace category for batch-created tasks', async () => {
+      await instantiateTemplatesBatch([
+        {
+          type: 'task',
+          title: 'Plan project',
+          category: 'Development',
+          workspaceCategory: 'Work'
+        }
+      ])
+
+      const savedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(savedTasks.urgent_important[0]).toMatchObject({
+        category: 'Work',
+        workspaceCategories: ['Work']
       })
     })
 

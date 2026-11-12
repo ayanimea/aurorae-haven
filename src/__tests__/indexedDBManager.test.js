@@ -24,6 +24,13 @@ import {
   STORES
 } from '../utils/indexedDBManager'
 
+const withImportedDefaultCategory = (items, primaryField) =>
+  items.map((item) => ({
+    ...item,
+    workspaceCategories: ['Unassigned'],
+    [primaryField]: 'Unassigned'
+  }))
+
 describe('IndexedDBManager', () => {
   beforeEach(async () => {
     // Clear all stores before each test
@@ -304,6 +311,11 @@ describe('IndexedDBManager', () => {
       await put(STORES.TASKS, { id: 1, title: 'Test Task' })
       await put(STORES.ROUTINES, { id: 'seq1', name: 'Test Sequence' })
       await saveStats('test', { value: 100 })
+      localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
+      localStorage.setItem(
+        'aurorae_saved_tasks',
+        JSON.stringify([{ id: 'saved-1', text: 'Recurring', quadrant: 'urgent_important' }])
+      )
 
       const exported = await exportAllData()
 
@@ -313,6 +325,8 @@ describe('IndexedDBManager', () => {
       expect(exported.routines).toHaveLength(1)
       expect(exported.stats).toHaveLength(1)
       expect(exported.brainDump).toBeDefined()
+      expect(exported.categories).toEqual(['Uncategorised', 'Work'])
+      expect(exported.savedTasks).toHaveLength(1)
     })
 
     test('exportAllData exports aurorae_tasks from localStorage', async () => {
@@ -357,7 +371,11 @@ describe('IndexedDBManager', () => {
           tags: '',
           versions: [],
           entries: []
-        }
+        },
+        categories: ['Work', 'Personal'],
+        savedTasks: [
+          { id: 'saved-1', text: 'Recurring', quadrant: 'urgent_important' }
+        ]
       }
 
       const report = await importAllData(data)
@@ -372,6 +390,14 @@ describe('IndexedDBManager', () => {
 
       const brainDump = localStorage.getItem('brainDumpContent')
       expect(brainDump).toBe('Test content')
+      expect(JSON.parse(localStorage.getItem('aurorae_categories'))).toEqual([
+        'Uncategorised',
+        'Personal',
+        'Work'
+      ])
+      expect(JSON.parse(localStorage.getItem('aurorae_saved_tasks'))).toEqual(
+        withImportedDefaultCategory(data.savedTasks, 'category')
+      )
     })
 
     test('importAllData clears existing data before import', async () => {
@@ -430,7 +456,16 @@ describe('IndexedDBManager', () => {
       expect(report.imported.auroraeTasksData).toBe(true)
 
       const storedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
-      expect(storedTasks).toEqual(tasksData)
+      expect(storedTasks).toEqual({
+        ...tasksData,
+        urgent_important: [
+          {
+            ...tasksData.urgent_important[0],
+            category: 'Unassigned',
+            workspaceCategories: ['Unassigned']
+          }
+        ]
+      })
     })
 
     test('importAllData handles missing auroraeTasksData gracefully', async () => {
@@ -616,22 +651,38 @@ describe('IndexedDBManager', () => {
 
       // Verify all data was restored correctly
       const restoredTasks = await getAll(STORES.TASKS)
-      expect(restoredTasks).toEqual(nominalTasks)
+      expect(restoredTasks).toEqual(
+        nominalTasks.map((task) => ({
+          ...task,
+          category: 'Unassigned',
+          workspaceCategories: ['Unassigned']
+        }))
+      )
 
       const restoredSequences = await getAll(STORES.ROUTINES)
-      expect(restoredSequences).toEqual(nominalRoutines)
+      expect(restoredSequences).toEqual(
+        withImportedDefaultCategory(nominalRoutines, 'workspaceCategory')
+      )
 
       const restoredHabits = await getAll(STORES.HABITS)
-      expect(restoredHabits).toEqual(nominalHabits)
+      expect(restoredHabits).toEqual(
+        withImportedDefaultCategory(nominalHabits, 'workspaceCategory')
+      )
 
       const restoredDumps = await getAll(STORES.DUMPS)
-      expect(restoredDumps).toEqual(nominalDumps)
+      expect(restoredDumps).toEqual(
+        withImportedDefaultCategory(nominalDumps, 'category')
+      )
 
       const restoredSchedule = await getAll(STORES.SCHEDULE)
-      expect(restoredSchedule).toEqual(nominalSchedule)
+      expect(restoredSchedule).toEqual(
+        withImportedDefaultCategory(nominalSchedule, 'category')
+      )
 
       const restoredStats = await getAll(STORES.STATS)
-      expect(restoredStats).toEqual(nominalStats)
+      expect(restoredStats).toEqual(
+        withImportedDefaultCategory(nominalStats, 'workspaceCategory')
+      )
 
       const restoredFileRefs = await getAll(STORES.FILE_REFS)
       expect(restoredFileRefs).toEqual(nominalFileRefs)
@@ -639,7 +690,13 @@ describe('IndexedDBManager', () => {
       const restoredAuroraeTasks = JSON.parse(
         localStorage.getItem('aurorae_tasks')
       )
-      expect(restoredAuroraeTasks).toEqual(nominalAuroraeTasks)
+      expect(restoredAuroraeTasks).toEqual({
+        ...nominalAuroraeTasks,
+        urgent_important: withImportedDefaultCategory(
+          nominalAuroraeTasks.urgent_important,
+          'category'
+        )
+      })
 
       expect(localStorage.getItem('brainDumpContent')).toBe(
         nominalBrainDump.content
@@ -654,7 +711,9 @@ describe('IndexedDBManager', () => {
       const restoredEntries = JSON.parse(
         localStorage.getItem('brainDumpEntries')
       )
-      expect(restoredEntries).toEqual(nominalBrainDump.entries)
+      expect(restoredEntries).toEqual(
+        withImportedDefaultCategory(nominalBrainDump.entries, 'category')
+      )
     })
   })
 

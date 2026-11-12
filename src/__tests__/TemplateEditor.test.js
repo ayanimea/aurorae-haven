@@ -202,4 +202,66 @@ describe('TemplateEditor', () => {
       )
     })
   })
+
+  test('allows assigning a shared workspace category to a template', async () => {
+    const onSave = jest.fn()
+
+    render(
+      <TemplateEditor
+        template={null}
+        categories={['Uncategorised', 'Work', 'Personal']}
+        activeCategory='Work'
+        onSave={onSave}
+        onClose={jest.fn()}
+      />
+    )
+
+    expect(screen.getByLabelText('Work')).toBeChecked()
+    fireEvent.click(screen.getByLabelText('Personal'))
+    fireEvent.change(screen.getByLabelText(/title/i), {
+      target: { value: 'Weekly review' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: /create template/i }))
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceCategory: 'Work',
+          workspaceCategories: ['Work', 'Personal']
+        })
+      )
+    })
+  })
+
+  test('uses a recognized legacy category when editing a template', async () => {
+    const onSave = jest.fn()
+
+    render(
+      <TemplateEditor
+        template={{
+          id: 'legacy-template',
+          type: 'task',
+          title: 'Legacy task',
+          category: 'Work'
+        }}
+        categories={['Uncategorised', 'Work', 'Personal']}
+        activeCategory='Personal'
+        onSave={onSave}
+        onClose={jest.fn()}
+      />
+    )
+
+    expect(screen.getByLabelText('Work')).toBeChecked()
+    expect(screen.getByLabelText('Personal')).not.toBeChecked()
+    fireEvent.click(screen.getByRole('button', { name: /update template/i }))
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceCategory: 'Work',
+          workspaceCategories: ['Work']
+        })
+      )
+    })
+  })
 })

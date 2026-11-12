@@ -14,7 +14,9 @@ function RoutineCreationModal({
   isOpen,
   onClose,
   onSelectTemplate,
-  onCreateRoutine
+  onCreateRoutine,
+  categories = [],
+  activeCategory = null
 }) {
   const [view, setView] = useState('options') // 'options', 'library', 'editor'
   const [isCreating, setIsCreating] = useState(false)
@@ -145,6 +147,8 @@ function RoutineCreationModal({
           </div>
 
           <RoutineEditor
+            categories={categories}
+            activeCategory={activeCategory}
             onSave={handleSaveRoutine}
             onCancel={handleBackToOptions}
             isSaving={isCreating}
@@ -159,7 +163,9 @@ RoutineCreationModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSelectTemplate: PropTypes.func.isRequired,
-  onCreateRoutine: PropTypes.func.isRequired
+  onCreateRoutine: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string),
+  activeCategory: PropTypes.string
 }
 
 export default RoutineCreationModal

@@ -445,6 +445,28 @@ describe('Habits Component', () => {
   })
 
   describe('Habit Details', () => {
+    test('persists workspace category changes to the existing habit', async () => {
+      localStorage.setItem('aurorae_categories', JSON.stringify(['Work']))
+      const habitId = await createHabit({
+        name: 'Workspace Habit',
+        workspaceCategories: ['Work']
+      })
+
+      render(<Habits />)
+      fireEvent.click(await screen.findByText('Workspace Habit'))
+      await screen.findByLabelText(/close drawer/i)
+      fireEvent.click(
+        screen.getByRole('checkbox', { name: 'Uncategorised' })
+      )
+
+      await waitFor(async () => {
+        const habits = await getHabits()
+        expect(habits).toHaveLength(1)
+        expect(habits[0].id).toBe(habitId)
+        expect(habits[0].workspaceCategories).toEqual(['Uncategorised'])
+      })
+    })
+
     test('opens detail drawer when habit card is clicked', async () => {
       await createHabit({ name: 'Detail Habit' })
 
