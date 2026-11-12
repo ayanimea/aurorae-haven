@@ -291,6 +291,7 @@ export async function instantiateRoutineFromTemplate(template) {
     }
 
     // Create the routine from the template
+    const templateCategories = getItemCategories(template, 'workspaceCategory')
     const routineData = {
       title: template.title.trim(),
       steps: Array.isArray(template.steps) ? template.steps : [],
@@ -298,7 +299,9 @@ export async function instantiateRoutineFromTemplate(template) {
       energyTag: template.energyTag,
       estimatedDuration: template.duration || template.estimatedDuration || 0,
       workspaceCategories: normalizeCategorySelection(
-        getItemCategories(template, 'workspaceCategory'),
+        templateCategories.length
+          ? templateCategories
+          : getItemCategories(template),
         getDefaultCategory()
       )
     }

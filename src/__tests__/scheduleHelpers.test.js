@@ -459,6 +459,22 @@ describe('scheduleHelpers', () => {
         'Database error'
       )
     })
+
+    it('uses the legacy category when a routine template has no workspace fields', async () => {
+      createRoutine.mockResolvedValue('legacy-routine-id')
+
+      await instantiateRoutineFromTemplate({
+        title: 'Legacy routine',
+        category: 'Work'
+      })
+
+      expect(createRoutine).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceCategory: 'Work',
+          workspaceCategories: ['Work']
+        })
+      )
+    })
   })
 
   describe('clusterEvents', () => {

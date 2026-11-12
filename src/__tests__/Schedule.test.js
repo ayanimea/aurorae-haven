@@ -245,6 +245,27 @@ describe('Schedule Component with Figma UI', () => {
     })
   })
 
+  test('reloads events after a category rename in the same tab', async () => {
+    EventService.getEventsForDate.mockResolvedValue([])
+    render(<Schedule />)
+
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledTimes(1)
+    })
+
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent('aurorae:category-renamed', {
+          detail: { oldCategory: 'Work', newCategory: 'Projects' }
+        })
+      )
+    })
+
+    await waitFor(() => {
+      expect(EventService.getEventsForDate).toHaveBeenCalledTimes(2)
+    })
+  })
+
   test('renders period legend items', async () => {
     render(<Schedule />)
     await waitFor(() => {

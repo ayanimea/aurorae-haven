@@ -205,6 +205,13 @@ function Schedule() {
       event.domain === 'schedule'
   })
 
+  useEffect(() => {
+    const refreshEvents = () => loadEventsRef.current?.()
+    window.addEventListener('aurorae:category-renamed', refreshEvents)
+    return () =>
+      window.removeEventListener('aurorae:category-renamed', refreshEvents)
+  }, [])
+
   // Dev-only: Dynamically load FloatingDevButtons to prevent bundling in production
   useEffect(() => {
     if (isDevelopment()) {

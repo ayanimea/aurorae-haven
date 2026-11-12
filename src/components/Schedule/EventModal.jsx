@@ -123,7 +123,7 @@ function EventModal({
           workspaceCategories: normalizeCategorySelection(
             getItemCategories(initialData, 'category').length
               ? getItemCategories(initialData, 'category')
-              : initialData.id
+              : initialData.id !== undefined && initialData.id !== null
                 ? []
                 : [activeCategory || defaultCategory],
             defaultCategory
