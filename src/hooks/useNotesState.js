@@ -107,8 +107,21 @@ export function useNotesState() {
           (note) => note.id === currentNoteId
         )
         if (selectedNote) {
-          setCategory(selectedNote.category || '')
-          setAssignedCategoriesState(getItemCategories(selectedNote))
+          const { oldCategory, newCategory } = event.payload || {}
+          if (
+            typeof oldCategory === 'string' &&
+            typeof newCategory === 'string'
+          ) {
+            const rename = (value) =>
+              value.toLowerCase() === oldCategory.toLowerCase()
+                ? newCategory
+                : value
+            setCategory((value) => rename(value))
+            setAssignedCategoriesState((values) => values.map(rename))
+          } else {
+            setCategory(selectedNote.category || '')
+            setAssignedCategoriesState(getItemCategories(selectedNote))
+          }
         }
       }
     },
@@ -121,8 +134,11 @@ export function useNotesState() {
   })
 
   useEffect(() => {
-    const syncRenamedNotes = () =>
-      syncNotesFromStorage({ action: 'categories-renamed' })
+    const syncRenamedNotes = (event) =>
+      syncNotesFromStorage({
+        action: 'categories-renamed',
+        payload: event.detail
+      })
     window.addEventListener('aurorae:category-renamed', syncRenamedNotes)
     return () =>
       window.removeEventListener('aurorae:category-renamed', syncRenamedNotes)
@@ -206,10 +222,14 @@ export function useNotesState() {
     initialContent = '',
     initialCategories = [getDefaultCategory()]
   ) => {
-    const newNote = assignItemCategories({
-      ...createNewNote(),
-      content: initialContent
-    }, initialCategories, getDefaultCategory())
+    const newNote = assignItemCategories(
+      {
+        ...createNewNote(),
+        content: initialContent
+      },
+      initialCategories,
+      getDefaultCategory()
+    )
     const updatedNotes = [...notes, newNote]
     setNotes(updatedNotes)
     saveNotesToStorage(updatedNotes)

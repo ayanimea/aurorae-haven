@@ -31,6 +31,7 @@ function createTaskFromTemplate(template, quadrant = null) {
   const dueDate = template.dueOffset
     ? new Date(Date.now() + template.dueOffset * MS_PER_DAY).toISOString()
     : null
+  const workspaceCategories = getItemCategories(template, 'workspaceCategory')
 
   return assignItemCategories(
     {
@@ -42,7 +43,9 @@ function createTaskFromTemplate(template, quadrant = null) {
       completedAt: null,
       quadrant: taskQuadrant
     },
-    getItemCategories(template),
+    workspaceCategories.length
+      ? workspaceCategories
+      : getItemCategories(template),
     getDefaultCategory()
   )
 }

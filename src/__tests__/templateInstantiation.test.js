@@ -74,6 +74,20 @@ describe('templateInstantiation', () => {
       })
     })
 
+    test('prefers a singular workspace category over the task template category', () => {
+      const result = instantiateTaskFromTemplate({
+        type: 'task',
+        title: 'Plan project',
+        category: 'Development',
+        workspaceCategory: 'Work'
+      })
+
+      expect(result.task).toMatchObject({
+        category: 'Work',
+        workspaceCategories: ['Work']
+      })
+    })
+
     test('creates a task with due date offset', () => {
       const template = {
         type: 'task',
@@ -646,6 +660,23 @@ describe('templateInstantiation', () => {
         return Promise.resolve(
           routines.map((r, i) => `routine_batch_${Date.now()}_${i}`)
         )
+      })
+    })
+
+    test('preserves a singular workspace category for batch-created tasks', async () => {
+      await instantiateTemplatesBatch([
+        {
+          type: 'task',
+          title: 'Plan project',
+          category: 'Development',
+          workspaceCategory: 'Work'
+        }
+      ])
+
+      const savedTasks = JSON.parse(localStorage.getItem('aurorae_tasks'))
+      expect(savedTasks.urgent_important[0]).toMatchObject({
+        category: 'Work',
+        workspaceCategories: ['Work']
       })
     })
 
