@@ -660,7 +660,7 @@ describe('Tasks Component', () => {
     })
   })
 
-  test('sorts each quadrant alphabetically when selected', () => {
+  test('sorts tasks within quadrants without reordering the quadrants', () => {
     localStorage.setItem(
       'aurorae_tasks',
       JSON.stringify({
@@ -668,7 +668,10 @@ describe('Tasks Component', () => {
           createTask('Zebra task', 'Work'),
           createTask('Apple task', 'Work')
         ],
-        not_urgent_important: [],
+        not_urgent_important: [
+          createTask('Later task', 'Work'),
+          createTask('Earlier task', 'Work')
+        ],
         urgent_not_important: [],
         not_urgent_not_important: []
       })
@@ -683,6 +686,21 @@ describe('Tasks Component', () => {
         (task) => task.textContent
       )
     ).toEqual(['Apple task', 'Zebra task'])
+    expect(
+      [...container.querySelectorAll('.quadrant-blue .task-text')].map(
+        (task) => task.textContent
+      )
+    ).toEqual(['Earlier task', 'Later task'])
+    expect(
+      [...container.querySelectorAll('.matrix-quadrant h3')].map(
+        (heading) => heading.textContent
+      )
+    ).toEqual([
+      'Urgent & Important',
+      'Not Urgent & Important',
+      'Urgent & Not Important',
+      'Not Urgent & Not Important'
+    ])
   })
 
   test('adds a built-in task template', async () => {
